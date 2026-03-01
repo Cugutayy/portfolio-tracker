@@ -39,6 +39,11 @@ const MARKET_ITEMS = {
 let mktCache={};
 let mktFetching=false;
 let mktRetryTimer=null;
+let mktCacheLoaded=false; // true when bulk cache has been fetched
+
+// Symbol mapping: cache endpoint uses Yahoo canonical symbols, local items may differ
+const SYM_MAP={'XU100.IS':'^XU100','XU030.IS':'^XU030'};
+function cSym(s){return SYM_MAP[s]||s;}
 
 async function fetchOneMkt(sym){
   try{
@@ -57,34 +62,70 @@ async function fetchOneMkt(sym){
   return false;
 }
 
+// FAST PATH: Fetch all prices from our serverless cache in ONE request
+async function fetchMarketCache(){
+  try{
+    const resp=await fetch('/.netlify/functions/prices-cache');
+    if(!resp.ok) throw new Error('Cache HTTP '+resp.status);
+    const data=await resp.json();
+    if(data?.prices){
+      const allItems=Object.values(MARKET_ITEMS).flat();
+      allItems.forEach(item=>{
+        const key=cSym(item.sym);
+        const p=data.prices[key];
+        if(p){
+          mktCache[item.sym]={price:p.price,change:p.change,changePct:p.changePct,ok:true,cur:p.currency||''};
+        }
+      });
+      mktCacheLoaded=true;
+      console.log('[Markets] Cache loaded:',data.count+'/'+data.total,'symbols');
+      return true;
+    }
+  }catch(e){
+    console.warn('[Markets] Cache unavailable, falling back to individual fetch:',e.message);
+  }
+  return false;
+}
+
 async function fetchAllMarketPrices(){
   if(mktFetching) return;
   mktFetching=true;
   const btn=document.getElementById('mktRefreshBtn');
   if(btn){btn.disabled=true;btn.textContent=LANG==='tr'?'Yukleniyor...':'Loading...';}
   const countEl=document.getElementById('mktCount');
-
   const allItems=Object.values(MARKET_ITEMS).flat();
-  let done=0;
-  for(let i=0;i<allItems.length;i+=5){
-    const batch=allItems.slice(i,i+5);
-    await Promise.all(batch.map(item=>fetchOneMkt(item.sym)));
-    done+=batch.length;
+
+  // Step 1: Try bulk cache first (instant)
+  const cacheOk=await fetchMarketCache();
+  if(cacheOk){
     updateMktCards();
     if(countEl){
       const ok=Object.values(mktCache).filter(v=>v.ok).length;
       countEl.textContent=`${ok}/${allItems.length}`;
     }
-    if(i+5<allItems.length) await new Promise(r=>setTimeout(r,80));
   }
+
+  // Step 2: Fetch any missing items individually (fallback)
+  const missing=allItems.filter(item=>!mktCache[item.sym]?.ok);
+  if(missing.length>0){
+    for(let i=0;i<missing.length;i+=5){
+      const batch=missing.slice(i,i+5);
+      await Promise.all(batch.map(item=>fetchOneMkt(item.sym)));
+      updateMktCards();
+      if(countEl){
+        const ok=Object.values(mktCache).filter(v=>v.ok).length;
+        countEl.textContent=`${ok}/${allItems.length}`;
+      }
+      if(i+5<missing.length) await new Promise(r=>setTimeout(r,80));
+    }
+  }
+
   mktFetching=false;
   if(btn){btn.disabled=false;btn.textContent=LANG==='tr'?'Guncelle':'Refresh';}
 
-  // Check how many failed — schedule retry for failed ones
+  // Schedule retry for still-failed items
   const failed=allItems.filter(item=>!mktCache[item.sym]?.ok);
-  if(failed.length>0){
-    scheduleRetry(failed);
-  }
+  if(failed.length>0) scheduleRetry(failed);
 }
 
 function scheduleRetry(failedItems){

@@ -81,6 +81,10 @@ async function init(){
   ov.style.opacity='0';
   setTimeout(()=>{ov.style.display='none';initScrollReveal();},400);
   startCountdown();
+  // PRE-FETCH market data in background so it's ready when user clicks Piyasalar
+  fetchMarketCache().then(ok=>{
+    if(ok) console.log('[Init] Market cache pre-loaded');
+  }).catch(()=>{});
   // Update market status every minute + bell check
   setInterval(()=>{updateMarketStatus();checkMarketBell();}, 60000);
   checkMarketBell(); // init state
