@@ -1,0 +1,11 @@
+{
+  "name": "portfolio-tracker",
+  "version": "5.0.0",
+  "description": "Responsible Investment — Portfolio Tracking System",
+  "author": "S. Çağatay Sönmez",
+  "license": "MIT",
+  "scripts": {
+    "dev": "npx serve .",
+    "build": "echo 'Static site — no build needed'"
+  }
+}
