@@ -189,12 +189,22 @@ function injectTodayToHistory(){
   const today = todayStr();
   const lastDate = HISTORY.dates[HISTORY.dates.length - 1];
 
-  // If today is already the last date, update with any live prices we have
+  // If today is already the last date, update ONLY with fresh live prices
   if(today === lastDate){
     INSTRS.forEach(ins => {
-      if(ins.id === 'dep' || ins.id === 'bond') return; // these are calculated, not fetched
+      if(ins.id === 'dep' || ins.id === 'bond' || ins.id === 'fund') return; // calculated, not fetched
       const lp = livePrices[ins.id]?.price;
-      if(lp) HISTORY[ins.id][HISTORY[ins.id].length - 1] = lp;
+      if(lp && lp > 0) {
+        // Sanity check: live price should be within 50% of previous day
+        const idx = HISTORY[ins.id].length - 1;
+        const prevPrice = idx > 0 ? HISTORY[ins.id][idx - 1] : lp;
+        const ratio = lp / prevPrice;
+        if(ratio > 0.5 && ratio < 2.0) {
+          HISTORY[ins.id][idx] = lp;
+        } else {
+          console.warn(`[HISTORY] Rejected suspicious live price for ${ins.id}: ${lp} (prev: ${prevPrice}, ratio: ${ratio.toFixed(2)})`);
+        }
+      }
     });
     if(HISTORY.xu100 && livePrices.xu100?.price) HISTORY.xu100[HISTORY.xu100.length-1]=livePrices.xu100.price;
     console.log('[HISTORY] Updated today:', today, 'with live prices');
@@ -222,12 +232,16 @@ function injectTodayToHistory(){
           arr.push(+(lastVal + 10000 * dailyNetRate).toFixed(2));
         } else if(ins.id === 'bond'){
           arr.push(+(lastVal + 100 * 0.30 / 365).toFixed(2));
-        } else if(ins.id === 'fund'){
-          const lp = livePrices.fund?.price;
-          arr.push(lp || lastVal);
         } else {
+          // Only use live price for TODAY, carry-forward for past missing days
           const lp = (dateStr === today) ? livePrices[ins.id]?.price : null;
-          arr.push(lp || lastVal);
+          if(lp && lp > 0){
+            // Sanity check
+            const ratio = lp / lastVal;
+            arr.push((ratio > 0.5 && ratio < 2.0) ? lp : lastVal);
+          } else {
+            arr.push(lastVal);
+          }
         }
       });
       // Carry forward BIST-100 benchmark

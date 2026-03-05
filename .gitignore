@@ -2,3 +2,7 @@ node_modules/
 .netlify/
 .DS_Store
 *.log
+
+# Eski Netlify dosyaları (Cloudflare Pages'a geçildi)
+netlify/
+netlify.toml
