@@ -5,7 +5,7 @@ const https = require('https');
 
 const SYMBOLS = {
   // Indices
-  '^XU100': 'BIST-100', '^XU030': 'BIST-30',
+  'XU100.IS': 'BIST-100', 'XU030.IS': 'BIST-30',
   '^GSPC': 'S&P 500', '^IXIC': 'NASDAQ', '^DJI': 'Dow Jones',
   '^FTSE': 'FTSE 100', '^GDAXI': 'DAX',
   // BIST Stocks

@@ -8,21 +8,28 @@ let curChartTab = 'portfolio';
 // ════════════════════════════════════════════════════════════════
 // FETCH HELPERS
 // ════════════════════════════════════════════════════════════════
-async function safeGet(url, timeout=12000) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeout);
-  try {
-    const r = await fetch(url, { signal: ctrl.signal });
-    clearTimeout(timer);
-    if (!r.ok) throw new Error(`HTTP ${r.status} (${r.statusText})`);
-    return await r.json();
-  } catch(e) {
-    clearTimeout(timer);
-    if (e.name === 'AbortError') throw new Error('Timeout (12s)');
-    if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError'))
-      throw new Error('Network error — CORS or connectivity issue');
-    if (e.message.includes('451')) throw new Error('Region blocked');
-    throw e;
+async function safeGet(url, timeout=15000, retries=1) {
+  for(let attempt=0; attempt<=retries; attempt++){
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeout);
+    try {
+      const r = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!r.ok) throw new Error(`HTTP ${r.status} (${r.statusText})`);
+      return await r.json();
+    } catch(e) {
+      clearTimeout(timer);
+      if(attempt < retries){
+        console.log(`[safeGet] Retry ${attempt+1}/${retries}: ${url.slice(0,60)}...`);
+        await new Promise(r=>setTimeout(r,500));
+        continue;
+      }
+      if (e.name === 'AbortError') throw new Error('Timeout (15s)');
+      if (e.message.includes('Failed to fetch') || e.message.includes('NetworkError'))
+        throw new Error('Network error — CORS or connectivity issue');
+      if (e.message.includes('451')) throw new Error('Region blocked');
+      throw e;
+    }
   }
 }
 

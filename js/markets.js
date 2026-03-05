@@ -1,7 +1,7 @@
 const MARKET_ITEMS = {
   indices: [
-    {sym:'^XU100',name:'BIST-100',link:'https://www.investing.com/indices/ise-100'},
-    {sym:'^XU030',name:'BIST-30',link:'https://www.investing.com/indices/ise-30'},
+    {sym:'XU100.IS',name:'BIST-100',link:'https://www.investing.com/indices/ise-100'},
+    {sym:'XU030.IS',name:'BIST-30',link:'https://www.investing.com/indices/ise-30'},
     {sym:'^GSPC',name:'S&P 500',link:'https://www.investing.com/indices/us-spx-500'},
     {sym:'^IXIC',name:'NASDAQ',link:'https://www.investing.com/indices/nasdaq-composite'},
     {sym:'^DJI',name:'Dow Jones',link:'https://www.investing.com/indices/us-30'},
@@ -41,8 +41,8 @@ let mktFetching=false;
 let mktRetryTimer=null;
 let mktCacheLoaded=false; // true when bulk cache has been fetched
 
-// Symbol mapping: cache endpoint uses Yahoo canonical symbols, local items may differ
-const SYM_MAP={'XU100.IS':'^XU100','XU030.IS':'^XU030'};
+// Symbol mapping (if cache uses different symbols than local)
+const SYM_MAP={};
 function cSym(s){return SYM_MAP[s]||s;}
 
 async function fetchOneMkt(sym){
