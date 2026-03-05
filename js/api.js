@@ -27,6 +27,10 @@ async function safeGet(url, timeout=12000) {
 }
 
 function yahooProxy(symbol) {
+  // Use Netlify function when deployed, allorigins as fallback for local dev
+  if(window.location.hostname.includes('netlify.app') || window.location.hostname.includes('snmez.xyz')){
+    return `/.netlify/functions/prices?sym=${encodeURIComponent(symbol)}`;
+  }
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1d`;
   return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
 }

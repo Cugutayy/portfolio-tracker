@@ -37,6 +37,36 @@ const SAMPLE_PORTFOLIO = [
     link:null},
 ];
 
+// ── Donut hover/click handlers ──
+function sampleDonutHover(idx, enter){
+  const slices=document.querySelectorAll('.sample-donut-slice');
+  const center=document.getElementById('sampleDonutCenter');
+  const sub=document.getElementById('sampleDonutSub');
+  const mono="font-family:'Geist Mono',monospace";
+  if(enter){
+    const item=SAMPLE_PORTFOLIO[idx];
+    const name=typeof item.name==='object'?L(item.name):item.name;
+    slices.forEach((s,i)=>{
+      s.setAttribute('stroke-width', i===idx?'30':'18');
+      s.style.filter = i===idx?'brightness(1.15)':'brightness(0.7)';
+    });
+    if(center) center.innerHTML=`<span style="${mono};font-size:0.9rem;font-weight:700;color:${item.color}">%${item.weight}</span>`;
+    if(sub) sub.innerHTML=`<span style="font-size:0.50rem">${name}</span><br><span style="${mono};font-size:0.48rem;color:var(--muted)">${fmt(item.amount,0)} TL</span>`;
+  } else {
+    const total=SAMPLE_PORTFOLIO.reduce((s,i)=>s+i.amount,0);
+    slices.forEach(s=>{
+      s.setAttribute('stroke-width','24');
+      s.style.filter='none';
+    });
+    if(center) center.textContent=fmt(total,0)+' TL';
+    if(sub) sub.textContent='10 '+(LANG==='tr'?'enstrüman':'instruments');
+  }
+}
+function sampleDonutClick(idx){
+  const item=SAMPLE_PORTFOLIO[idx];
+  if(item.link) window.open(item.link,'_blank');
+}
+
 function renderSample(){
   const el=document.getElementById('sampleSection');
   if(!el) return;
@@ -44,15 +74,19 @@ function renderSample(){
   const mono="font-family:'Geist Mono',monospace";
   const total=SAMPLE_PORTFOLIO.reduce((s,i)=>s+i.amount,0);
 
+  // Interactive donut with hover
   let donutSvg='', offset=0;
   const r=70,c=2*Math.PI*r;
   SAMPLE_PORTFOLIO.forEach((item,idx)=>{
     const pct=item.weight/100;
     const dash=pct*c;
     const gap=c-dash;
-    donutSvg+=`<circle cx="90" cy="90" r="${r}" fill="none" stroke="${item.color}" stroke-width="24"
+    donutSvg+=`<circle class="sample-donut-slice" data-idx="${idx}" cx="90" cy="90" r="${r}" fill="none" stroke="${item.color}" stroke-width="24"
       stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${-offset}" stroke-linecap="butt"
-      style="opacity:0"><animate attributeName="opacity" from="0" to="1" begin="${idx*0.12}s" dur="0.4s" fill="freeze"/>
+      style="opacity:0;cursor:pointer;transition:stroke-width 0.25s ease,filter 0.25s ease"
+      onmouseenter="sampleDonutHover(${idx},true)" onmouseleave="sampleDonutHover(${idx},false)"
+      onclick="sampleDonutClick(${idx})">
+      <animate attributeName="opacity" from="0" to="1" begin="${idx*0.12}s" dur="0.4s" fill="freeze"/>
     </circle>`;
     offset+=dash;
   });
@@ -70,11 +104,12 @@ function renderSample(){
       :'Research-based globally diversified portfolio with 10 instruments. 100,000 TL budget, 6 asset classes, 5 geographies.'}</div>
   </div>`;
 
+  // Donut + legend
   h+=`<div style="display:grid;grid-template-columns:220px 1fr;gap:24px;margin-bottom:24px;align-items:start">
-    <div style="text-align:center">
+    <div style="text-align:center;position:relative">
       <svg viewBox="0 0 180 180" style="width:200px;height:200px;transform:rotate(-90deg)">${donutSvg}</svg>
-      <div style="font-family:'Instrument Serif',serif;font-size:1.2rem;color:var(--text);margin-top:-110px;position:relative;z-index:1">${fmt(total,0)} TL</div>
-      <div style="font-size:0.52rem;color:var(--muted);margin-top:4px;position:relative;z-index:1">10 ${tr?'enstrüman':'instruments'}</div>
+      <div id="sampleDonutCenter" style="font-family:'Instrument Serif',serif;font-size:1.2rem;color:var(--text);margin-top:-110px;position:relative;z-index:1">${fmt(total,0)} TL</div>
+      <div id="sampleDonutSub" style="font-size:0.52rem;color:var(--muted);margin-top:4px;position:relative;z-index:1">10 ${tr?'enstrüman':'instruments'}</div>
     </div>
     <div>
       <div style="font-size:0.62rem;font-weight:600;color:var(--text);margin-bottom:10px">${tr?'Varlık Sınıfı Dağılımı':'Asset Class Breakdown'}</div>
@@ -89,6 +124,7 @@ function renderSample(){
     </div>
   </div>`;
 
+  // Table
   h+=`<table class="instr-table" style="margin-bottom:20px">
     <thead><tr>
       <th style="text-align:left">${tr?'Enstrüman':'Instrument'}</th>
@@ -100,7 +136,7 @@ function renderSample(){
 
   SAMPLE_PORTFOLIO.forEach((item,idx)=>{
     const name=typeof item.name==='object'?L(item.name):item.name;
-    const linkHtml=item.link?`<a href="${item.link}" target="_blank" rel="noopener" class="ext-link" title="Investing.com">↗</a>`:'';
+    const linkHtml=item.link?`<a href="${item.link}" target="_blank" rel="noopener" class="ext-link" title="Yahoo Finance">↗</a>`:'';
     h+=`<tr style="animation:anaIn ${0.3+idx*0.05}s ease-out both">
       <td style="text-align:left">
         <div class="iname-row">
@@ -118,6 +154,7 @@ function renderSample(){
   });
   h+=`</tbody></table>`;
 
+  // Strategy
   h+=`<div class="ana-card" style="padding:18px;margin-bottom:16px;animation:anaIn 0.5s ease-out both">
     <div class="ana-title">${tr?'Yatırım Stratejisi':'Investment Strategy'}</div>
     <div style="font-size:0.58rem;line-height:1.7;color:var(--text2)">
@@ -133,6 +170,7 @@ function renderSample(){
     </div>
   </div>`;
 
+  // Geographic breakdown
   h+=`<div class="ana-card" style="padding:18px;animation:anaIn 0.55s ease-out both">
     <div class="ana-title">${tr?'Coğrafi Dağılım':'Geographic Distribution'}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">

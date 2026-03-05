@@ -1,7 +1,7 @@
 const MARKET_ITEMS = {
   indices: [
-    {sym:'XU100.IS',name:'BIST-100',link:'https://www.investing.com/indices/ise-100'},
-    {sym:'XU030.IS',name:'BIST-30',link:'https://www.investing.com/indices/ise-30'},
+    {sym:'^XU100',name:'BIST-100',link:'https://www.investing.com/indices/ise-100'},
+    {sym:'^XU030',name:'BIST-30',link:'https://www.investing.com/indices/ise-30'},
     {sym:'^GSPC',name:'S&P 500',link:'https://www.investing.com/indices/us-spx-500'},
     {sym:'^IXIC',name:'NASDAQ',link:'https://www.investing.com/indices/nasdaq-composite'},
     {sym:'^DJI',name:'Dow Jones',link:'https://www.investing.com/indices/us-30'},
