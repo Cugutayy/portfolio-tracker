@@ -65,7 +65,7 @@ async function fetchOneMkt(sym){
 // FAST PATH: Fetch all prices from our serverless cache in ONE request
 async function fetchMarketCache(){
   try{
-    const resp=await fetch('/.netlify/functions/prices-cache');
+    const resp=await fetch('/api/prices-cache');
     if(!resp.ok) throw new Error('Cache HTTP '+resp.status);
     const data=await resp.json();
     if(data?.prices){
