@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio Tracker — Responsible Investment</title>
+<meta name="description" content="Responsible Investment dersi portföy takip sistemi — 100.000 TL, 7 enstrüman, canlı fiyatlar">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231a472a'/%3E%3Cpath d='M6 22 L11 17 L15 20 L21 11 L26 14' stroke='%23c9a84c' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='26' cy='14' r='2' fill='%23c9a84c'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="loadingOverlay">
+  <div class="ld-logo">Portfolio <em>Tracker</em></div>
+  <div class="ld-bar-wrap"><div class="ld-bar"></div></div>
+  <div class="ld-text" id="ldStatus">Başlatılıyor...</div>
+</div>
+
+<div id="scrollProgress"></div>
+
+<header>
+  <div class="brand">
+    <h1>Portfolio <em>Tracker</em></h1>
+    <span id="brandSub">RESPONSIBLE INVESTMENT &middot; 100.000 TL</span>
+  </div>
+  <div class="header-actions">
+    <div class="market-indicators" role="status" aria-label="Market status" id="marketIndicators">
+      <div class="mkt-ind"><span class="mkt-dot closed" id="mktBist"></span>BIST</div>
+      <div class="mkt-ind"><span class="mkt-dot open" id="mktCrypto"></span><span data-i18n="mktCrypto">Kripto</span></div>
+      <div class="mkt-ind"><span class="mkt-dot closed" id="mktGold"></span><span data-i18n="mktGold">Altin</span></div>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="langTR" onclick="setLang('tr')" title="Türkçe" aria-label="Türkçe">
+        <svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"><rect fill="#E30A17" width="1200" height="800"/><circle fill="#fff" cx="480" cy="400" r="200"/><circle fill="#E30A17" cx="530" cy="400" r="160"/><polygon fill="#fff" points="600,400 667,430 650,360 700,310 630,310 600,260 570,310 500,310 550,360 533,430"/></svg>
+      </button>
+      <button class="lang-btn" id="langEN" onclick="setLang('en')" title="English" aria-label="English">
+        <svg viewBox="0 0 1235 650" xmlns="http://www.w3.org/2000/svg"><rect fill="#002868" width="1235" height="650"/><g fill="#BF0A30"><rect y="50" width="1235" height="50"/><rect y="150" width="1235" height="50"/><rect y="250" width="1235" height="50"/><rect y="350" width="1235" height="50"/><rect y="450" width="1235" height="50"/><rect y="550" width="1235" height="50"/></g><g fill="#fff"><rect y="100" width="1235" height="50"/><rect y="200" width="1235" height="50"/><rect y="300" width="1235" height="50"/><rect y="400" width="1235" height="50"/><rect y="500" width="1235" height="50"/><rect y="600" width="1235" height="50"/></g><rect fill="#002868" width="494" height="350"/></svg>
+      </button>
+    </div>
+    <span style="font-size:0.65rem;color:rgba(255,255,255,0.55)">
+      <span class="status-dot live" id="statusDot"></span><span id="lastUpd">--</span>
+    </span>
+    <button class="btn btn-ghost" id="fetchBtn" onclick="fetchAllPrices()"><span data-i18n="updatePrices">Fiyatları Güncelle</span></button>
+    <button class="btn btn-gold" onclick="exportCSV()" aria-label="Export to Excel">Export Excel</button>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Dark/Light Mode" aria-label="Toggle theme">☀️</button>
+  </div>
+</header>
+
+<nav class="page-nav" id="pageNav">
+  <button class="page-nav-btn active" data-page="dashboard" onclick="switchPage('dashboard')"><span data-i18n="navDashboard">Dashboard</span></button>
+  <button class="page-nav-btn" data-page="ttest" onclick="switchPage('ttest')"><span>t-Test</span></button>
+  <button class="page-nav-btn" data-page="beta" onclick="switchPage('beta')"><span>Beta <span style="font-style:italic;font-family:'Instrument Serif',serif">β</span></span></button>
+  <button class="page-nav-btn" data-page="analytics" onclick="switchPage('analytics')"><span data-i18n="navAnalytics">Analiz</span></button>
+  <button class="page-nav-btn" data-page="markets" onclick="switchPage('markets')"><span data-i18n="navMarkets">Piyasalar</span></button>
+  <button class="page-nav-btn" data-page="sample" onclick="switchPage('sample')"><span data-i18n="navSample">Ornek</span></button>
+</nav>
+
+<div id="pageDashboard">
+<div class="layout">
+  <div class="main-panel" role="main">
+    <div class="summary-row fu">
+      <div class="sum-card" role="status" aria-live="polite"><div class="sum-label" data-i18n="totalValue">Toplam Değer</div><div class="sum-value" id="sumTotal">--</div><div id="sumTrend" style="margin-top:4px"></div><div class="sum-sub"><span data-i18n="startCapital">Başlangıç: 100.000 TL</span></div></div>
+      <div class="sum-card" role="status" aria-live="polite"><div class="sum-label" data-i18n="totalPnl">Toplam Kâr / Zarar</div><div class="sum-value" id="sumPnl">--</div><div id="pnlTrend" style="margin-top:4px"></div><div class="sum-sub" id="sumPct">--</div></div>
+      <div class="sum-card gold-top"><div class="sum-label" data-i18n="bestPerf">En İyi Performans</div><div class="sum-value pos" id="sumBest" style="font-size:1.1rem">--</div><div class="sum-sub" id="sumBestSub">--</div></div>
+      <div class="sum-card" role="status"><div class="sum-label" data-i18n="worstPerf">En Kötü Performans</div><div class="sum-value neg" id="sumWorst" style="font-size:1.1rem">--</div><div class="sum-sub" id="sumWorstSub">--</div></div>
+    </div>
+
+    <div class="fu d1">
+      <div class="sec-title"><span data-i18n="instruments">Enstrümanlar</span><span id="tblDate" style="font-size:0.66rem;color:var(--muted)"></span>
+        <button class="sort-btn" id="sortBtn" aria-label="Sort table" onclick="toggleTableSort()" title="Agirliga gore sirala">↕</button>
+      </div>
+      <table class="instr-table" role="grid" aria-label="Instruments">
+        <thead><tr id="instrHead"></tr></thead>
+        <tbody id="instrBody"></tbody>
+      </table>
+    </div>
+
+    <div class="chart-wrap reveal">
+      <div class="sec-title" style="margin-bottom:0">
+        <span data-i18n="perfChart">Performans Grafiği</span>
+        <div class="chart-tabs">
+          <button class="tab active" onclick="switchChartTab(this,'portfolio')" data-i18n="chartTotal">Toplam</button>
+          <button class="tab" onclick="switchChartTab(this,'individual')" data-i18n="chartInstr">Enstrüman</button>
+          <button class="tab" onclick="switchChartTab(this,'normalized')" data-i18n="chartNorm">Normalize (%)</button>
+        </div>
+      </div>
+      <canvas id="mainChart" role="img" aria-label="Performance chart"></canvas>
+    </div>
+
+    <div class="reveal" id="riskSection">
+      <div class="sec-title"><span data-i18n="riskMetrics">Risk Metrikleri</span><span style="font-size:0.52rem;color:var(--muted);font-weight:400;letter-spacing:0.05em;text-transform:none" data-i18n="riskBasis">günlük getiri bazlı</span></div>
+      <div class="risk-grid" id="riskGrid"></div>
+    </div>
+
+    <div class="reveal" id="corrSection">
+      <div class="sec-title"><span data-i18n="corrMatrix">Korelasyon Matrisi</span><span style="font-size:0.52rem;color:var(--muted);font-weight:400;letter-spacing:0.05em;text-transform:none" data-i18n="corrBasis">günlük fiyat değişimleri</span></div>
+      <div id="corrMatrix" style="margin-bottom:28px"></div>
+    </div>
+
+    <div class="reveal"><div class="sec-title" data-i18n="weeklySummary">Haftalık Özetler</div><div class="week-cards" id="weekCards"></div></div>
+
+    <div class="reveal">
+      <div class="sec-title" data-i18n="dailyHistory">Günlük Fiyat Geçmişi</div>
+      <div style="overflow-x:auto"><table class="log-table"><thead><tr id="logHead"></tr></thead><tbody id="logBody"></tbody></table></div>
+    </div>
+  </div>
+
+  <div class="side-panel" role="complementary">
+    <div>
+      <div class="side-title" data-i18n="allocation">Portföy Dağılımı</div>
+      <div class="donut-wrap"><svg id="donutSvg" class="donut-svg" viewBox="0 0 180 180"></svg><div class="donut-center"><div class="donut-val" id="donutVal">--</div><div class="donut-lbl" id="donutLbl">TL</div></div></div>
+      <div class="donut-detail" id="donutDetail"></div>
+      <div id="allocLegend"></div>
+    </div>
+    <div class="divider"></div>
+    <div>
+      <div class="side-title"><span data-i18n="priceSources">Fiyat Kaynakları</span><span id="srcStatus" style="font-size:0.64rem;color:var(--muted)">--</span></div>
+      <div id="fetchLogDiv" class="fetch-log" data-i18n="autoUpdate">Sayfa açıldığında otomatik güncellenir.</div>
+      <div class="countdown" id="countdown"><span data-i18n="nextUpdate">Sonraki güncelleme</span>: --</div>
+    </div>
+    <div class="divider"></div>
+    <div>
+      <div class="side-title"><span data-i18n="priceExplain">Fiyat Açıklamaları</span></div>
+      <div class="info-box" id="infoBox"></div>
+    </div>
+    <div class="divider"></div>
+    <div>
+      <div class="side-title"><span data-i18n="esgTitle">ESG Özeti</span></div>
+      <div id="esgPanel" style="font-size:0.6rem;color:var(--text2);line-height:1.7"></div>
+      <div id="esgExplain" style="font-size:0.50rem;color:var(--muted);line-height:1.6;margin-top:8px;padding:8px;background:var(--surface2);border-radius:6px"></div>
+    </div>
+    <div class="divider"></div>
+    <div style="font-size:0.62rem;color:var(--text2);line-height:1.7">
+      <div><strong data-i18n="courseLabel">Ders:</strong> Responsible Investment</div>
+      <div><strong data-i18n="termLabel">Dönem:</strong> 17 Şubat → 8 Mayıs 2026</div>
+      <div><strong data-i18n="capitalLabel">Sermaye:</strong> 100.000 TL</div>
+      <div style="margin-top:6px;font-size:0.64rem;color:var(--muted)" data-i18n="disclaimer">Bu uygulama eğitim amaçlıdır. Yatırım tavsiyesi değildir.</div>
+    </div>
+  </div>
+</div>
+</div><!-- end #pageDashboard -->
+
+<!-- ═══ T-TEST PAGE ═══ -->
+<div id="pageTTest" style="display:none">
+  <div style="max-width:900px;margin:0 auto;padding:24px 20px">
+    <div id="tTestSection"></div>
+  </div>
+</div>
+
+<!-- ═══ BETA ANALYSIS PAGE ═══ -->
+<div id="pageBeta" style="display:none">
+  <div style="max-width:960px;margin:0 auto;padding:24px 20px">
+    <div id="betaSection"></div>
+  </div>
+</div>
+
+<!-- ═══ ANALYTICS PAGE ═══ -->
+<div id="pageAnalytics" style="display:none">
+  <div style="max-width:1040px;margin:0 auto;padding:24px 20px">
+    <div id="analyticsSection"></div>
+  </div>
+</div>
+
+<!-- ═══ MARKETS PAGE ═══ -->
+<div id="pageMarkets" style="display:none">
+  <div style="max-width:1100px;margin:0 auto;padding:24px 20px">
+    <div id="marketsSection"></div>
+  </div>
+</div>
+
+<!-- ═══ SAMPLE PORTFOLIO PAGE ═══ -->
+<div id="pageSample" style="display:none">
+  <div style="max-width:1040px;margin:0 auto;padding:24px 20px">
+    <div id="sampleSection"></div>
+  </div>
+</div>
+
+
+<!-- ═══ INSTRUMENT DETAIL PANEL ═══ -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="detail-panel" id="detailPanel">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<div class="side-overlay" id="sideOverlay" onclick="toggleSidePanel()"></div>
+<button class="side-toggle" id="sideToggle" onclick="toggleSidePanel()">☰</button>
+<canvas id="confettiCanvas"></canvas>
+<div id="toast"></div>
+<div class="hero-badge" id="heroBadge" onclick="this.classList.remove('show')" style="cursor:pointer"></div>
+<div class="bell-overlay" id="bellOverlay"><div style="text-align:center"><div class="bell-icon">🔔</div><div class="bell-text" id="bellText"></div></div></div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer class="site-footer">
+  <div class="footer-left">
+    <div><strong>Responsible Investment</strong> — Portfolio Tracker</div>
+    <div data-i18n="footerDisclaimer">Bu uygulama egitim amaclidir. Yatirim tavsiyesi degildir.</div>
+    <div data-i18n="footerData">Fiyat verileri: CoinGecko, Yahoo Finance, TEFAS</div>
+  </div>
+  <div class="footer-right">
+    <div style="font-size:0.66rem;font-weight:600;color:var(--text2)">Salih Cagatay Sonmez</div>
+    <div style="font-size:0.56rem;color:var(--muted)">s.cagatay.sonmez@gmail.com</div>
+    <div style="font-size:0.56rem;color:var(--muted)" id="footerUpdateWrap"><span data-i18n="footerUpdate">Son guncelleme:</span> <span id="footerUpdateTime">--</span></div>
+  </div>
+</footer>
+
+<!-- ═══ JAVASCRIPT MODULES ═══ -->
+<script src="js/i18n.js"></script>
+<script src="js/data.js"></script>
+<script src="js/api.js"></script>
+<script src="js/core.js"></script>
+<script src="js/ttest.js"></script>
+<script src="js/beta.js"></script>
+<script src="js/analytics.js"></script>
+<script src="js/markets.js"></script>
+<script src="js/sample.js"></script>
+<script src="js/init.js"></script>
+</body>
+</html>
