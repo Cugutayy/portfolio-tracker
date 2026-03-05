@@ -76,6 +76,8 @@ async function init(){
   st.textContent=LANG==='tr'?'Canlı fiyatlar çekiliyor...':'Fetching live prices...';
   await sleep(200);
   try{await fetchAllPrices();}catch(e){console.warn('Init fetch error:',e);}
+  // Geçmiş BTC fiyatlarını Binance API'den doğrula/düzelt
+  try{await verifyHistoryFromAPI();}catch(e){console.warn('History verify error:',e);}
   st.textContent=LANG==='tr'?'Hazır!':'Ready!';
   await sleep(250);
   ov.style.opacity='0';

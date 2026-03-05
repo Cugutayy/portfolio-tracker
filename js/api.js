@@ -184,6 +184,55 @@ async function fetchAllPrices() {
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 function todayStr() { return new Date().toISOString().slice(0,10); }
 
+// ── HISTORY VERIFY: Binance klines API'den geçmiş BTC fiyatlarını doğrula/düzelt ──
+async function verifyHistoryFromAPI(){
+  try {
+    // Son 30 günün BTC/USDT günlük kapanış fiyatlarını çek
+    const now = Date.now();
+    const from = now - 35 * 86400000; // 35 gün geriye
+    const [btcData, tryData] = await Promise.all([
+      safeGet(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${from}&endTime=${now}&limit=35`),
+      safeGet('https://api.binance.com/api/v3/ticker/price?symbol=USDTTRY')
+    ]);
+    const usdtTry = parseFloat(tryData.price);
+    if(!Array.isArray(btcData) || btcData.length === 0 || !usdtTry) return;
+
+    // Her kline'dan tarih → kapanış fiyatı (USD) haritala
+    const btcDailyUsd = {};
+    btcData.forEach(k => {
+      const d = new Date(k[0]).toISOString().slice(0,10);
+      btcDailyUsd[d] = parseFloat(k[4]); // close price
+    });
+
+    // HISTORY'deki her tarihi kontrol et
+    let fixes = 0;
+    HISTORY.dates.forEach((date, i) => {
+      const btcUsd = btcDailyUsd[date];
+      if(!btcUsd) return; // API'de bu tarih yok, atla
+
+      const apiBtcTry = Math.round(btcUsd * usdtTry);
+      const histBtcTry = HISTORY.btc[i];
+      const diff = Math.abs(apiBtcTry - histBtcTry) / apiBtcTry;
+
+      // %10'dan fazla fark varsa düzelt
+      if(diff > 0.10){
+        console.warn(`[HISTORY VERIFY] ${date}: BTC düzeltildi ${histBtcTry.toLocaleString()} → ${apiBtcTry.toLocaleString()} (API: ${btcUsd.toFixed(0)} × ${usdtTry.toFixed(2)})`);
+        HISTORY.btc[i] = apiBtcTry;
+        fixes++;
+      }
+    });
+
+    if(fixes > 0){
+      console.log(`[HISTORY VERIFY] ${fixes} BTC fiyatı API'den düzeltildi`);
+      renderAll();
+    } else {
+      console.log('[HISTORY VERIFY] Tüm BTC fiyatları doğru (±10% tolerans)');
+    }
+  } catch(e){
+    console.warn('[HISTORY VERIFY] API doğrulama başarısız (normal olabilir):', e.message);
+  }
+}
+
 // ── AUTO-INJECT: Add/update today's date in HISTORY from live prices ──
 function injectTodayToHistory(){
   const today = todayStr();
