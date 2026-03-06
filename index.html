@@ -30,8 +30,15 @@
   .lang-btn{background:none;border:1px solid var(--rule);border-radius:5px;width:30px;height:22px;cursor:pointer;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center;transition:border-color .2s,opacity .2s;opacity:.5}
   .lang-btn:hover,.lang-btn.active{opacity:1;border-color:var(--accent)}
   .lang-btn svg{width:20px;height:14px;display:block}
-  .theme-btn{background:none;border:1px solid var(--rule);border-radius:5px;width:30px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.7rem;transition:border-color .2s;margin-left:4px}
-  .theme-btn:hover{border-color:var(--ink)}
+  /* Theme Toggle Pill */
+  .theme-toggle{width:52px;height:26px;padding:3px;border-radius:99px;cursor:pointer;border:1px solid var(--rule);background:var(--bg);transition:all .3s;margin-left:4px;position:relative;display:flex;align-items:center}
+  .theme-toggle:hover{border-color:var(--accent)}
+  .toggle-knob{width:18px;height:18px;border-radius:50%;transition:all .3s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;justify-content:center;position:absolute;left:3px;pointer-events:none}
+  .toggle-knob svg{width:11px;height:11px;pointer-events:none}
+  [data-theme="dark"] .toggle-knob{transform:translateX(26px);background:#252420}
+  [data-theme="dark"] .toggle-knob svg{stroke:#fbbf24}
+  :root .toggle-knob{background:#e8e4dc}
+  :root .toggle-knob svg{stroke:#8a8578}
 
   /* Hero — compact */
   .hero{padding:72px 0 32px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px}
@@ -108,7 +115,7 @@
   .footer span{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted)}
   .link-ed{background-image:linear-gradient(var(--accent),var(--accent));background-size:0% 1.5px;background-position:0 100%;background-repeat:no-repeat;transition:background-size .4s cubic-bezier(.16,1,.3,1)}
   .link-ed:hover{background-size:100% 1.5px}
-  body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
   @media(max-width:640px){.project-card{padding:18px}.card-arrow{display:none}.hero{flex-direction:column;align-items:flex-start}.hero-right{text-align:left}}
 </style>
 </head>
@@ -132,7 +139,13 @@
     <button class="lang-btn" onclick="setLang('zh')" title="中文">
       <svg viewBox="0 0 900 600"><rect fill="#EE1C25" width="900" height="600"/><g fill="#FF0" transform="translate(150,120)"><polygon points="0,-60 17,-18 58,-18 25,7 36,49 0,24 -36,49 -25,7 -58,-18 -17,-18"/></g><g fill="#FF0" transform="translate(300,60)"><polygon points="0,-20 6,-6 19,-6 8,2 12,16 0,8 -12,16 -8,2 -19,-6 -6,-6"/></g><g fill="#FF0" transform="translate(360,120)"><polygon points="0,-20 6,-6 19,-6 8,2 12,16 0,8 -12,16 -8,2 -19,-6 -6,-6"/></g><g fill="#FF0" transform="translate(360,210)"><polygon points="0,-20 6,-6 19,-6 8,2 12,16 0,8 -12,16 -8,2 -19,-6 -6,-6"/></g><g fill="#FF0" transform="translate(300,270)"><polygon points="0,-20 6,-6 19,-6 8,2 12,16 0,8 -12,16 -8,2 -19,-6 -6,-6"/></g></svg>
     </button>
-    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+    <div class="theme-toggle" id="themeToggle" title="Dark/Light">
+      <div class="toggle-knob" id="toggleKnob">
+        <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </div>
+    </div>
   </div>
 </div></nav>
 
@@ -247,9 +260,17 @@ const I={
   zh:{heroLabel:'项目中心',navP:'项目',navC:'联系',secP:'项目',pCnt:'3个项目',p1d:'负责任投资课程的投资组合跟踪系统。10万里拉、7种工具、实时价格、ESG分析。',pf:'投资组合',ch:'变化',gd:'黄金',lv:'实时',tF:'金融',tA:'实时API',p2t:'F1比赛预测',p2d:'使用FastF1和机器学习预测F1比赛结果。车手表现、天气状况、进站策略分析。',drivers:'车手',cs:'即将推出',csd:'新项目开发中。',tba:'待公布'},
 };
 function setLang(l){LANG=l;document.documentElement.lang=l;document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.lang-btn')[l==='tr'?0:l==='en'?1:2]?.classList.add('active');document.querySelectorAll('[data-i18n]').forEach(e=>{const k=e.getAttribute('data-i18n');if(I[l]?.[k])e.textContent=I[l][k]});updateClock()}
-function toggleTheme(){dark=!dark;document.documentElement.setAttribute('data-theme',dark?'dark':'');document.getElementById('themeBtn').textContent=dark?'☀️':'🌙'}
+function toggleTheme(){
+  dark=!dark;
+  document.documentElement.setAttribute('data-theme',dark?'dark':'');
+  var icon=document.getElementById('themeIcon');
+  icon.innerHTML=dark
+    ?'<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+    :'<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+}
 function updateClock(){const n=new Date(),lo=LANG==='zh'?'zh-CN':LANG==='en'?'en-US':'tr-TR',t=n.toLocaleTimeString(lo,{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),d=n.toLocaleDateString(lo,{timeZone:'Europe/Istanbul',day:'numeric',month:'long',year:'numeric'});document.getElementById('heroClock').textContent=d+' · '+t}
 updateClock();setInterval(updateClock,1000);
+document.getElementById('themeToggle').addEventListener('click',toggleTheme);
 document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',e=>{e.preventDefault();document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth',block:'start'})})});
 </script>
 </body>
