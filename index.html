@@ -3,159 +3,218 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>sönmez — project hub</title>
+<title>S. Çağatay Sönmez — Hub</title>
 <meta name="description" content="Salih Çağatay Sönmez — kişisel proje hub'ı">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111'/%3E%3Ctext x='6' y='24' font-family='Georgia' font-size='22' fill='%23e8e4dc'%3Es%3C/text%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=DM+Mono:wght@300;400;500&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { background: #faf8f4; color: #1a1a17; font-family: 'Newsreader', Georgia, serif; -webkit-font-smoothing: antialiased; line-height: 1.6; }
-  a { color: inherit; text-decoration: none; }
-  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
-  .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 50; background: rgba(250,248,244,0.8); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(224,220,212,0.5); }
-  .nav-inner { max-width: 960px; margin: 0 auto; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
-  .nav-brand { font-family: 'Newsreader', Georgia, serif; font-size: 1.15rem; font-weight: 500; letter-spacing: -0.01em; }
-  .nav-links { display: flex; align-items: center; gap: 24px; }
-  .nav-links a { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: #8a8578; }
-  .hero { min-height: 70vh; display: flex; flex-direction: column; justify-content: flex-end; padding-top: 128px; padding-bottom: 64px; }
-  .hero-label { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: #8a8578; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 24px; }
-  .hero h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 300; line-height: 1.05; letter-spacing: -0.02em; margin-bottom: 24px; }
-  .hero h1 em { font-weight: 300; font-style: italic; }
-  .hero-clock { font-family: 'DM Mono', monospace; font-size: 0.8rem; color: #8a8578; letter-spacing: 0.05em; margin-top: 8px; }
-  .divider { border: none; border-top: 1px solid #e0dcd4; margin: 0; }
-  .section { padding: 80px 0; }
-  .section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 56px; }
-  .section-title { font-size: 1.85rem; font-weight: 300; }
-  .section-count { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: #8a8578; }
-  .cards { display: grid; gap: 32px; }
-  .project-card { display: block; border: 1px solid #e0dcd4; border-radius: 16px; padding: 32px 40px; background: #fff; cursor: pointer; transition: box-shadow 0.4s ease, transform 0.4s cubic-bezier(0.16,1,0.3,1); }
-  .project-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.06); }
-  .project-card.placeholder { background: #faf8f4; border-style: dashed; border-color: rgba(224,220,212,0.6); cursor: default; }
-  .project-card.placeholder:hover { transform: none; box-shadow: none; }
-  .card-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
-  .project-num { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: #c9543a; letter-spacing: 0.05em; }
-  .card-title { font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 400; margin-top: 8px; transition: color 0.3s; }
-  .project-card:hover .card-title { color: #c9543a; }
-  .card-desc { color: #8a8578; margin-top: 8px; line-height: 1.6; max-width: 520px; }
-  .card-arrow { flex-shrink: 0; margin-left: 24px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid #e0dcd4; display: flex; align-items: center; justify-content: center; transition: all 0.3s; }
-  .project-card:hover .card-arrow { background: #1a1a17; border-color: #1a1a17; }
-  .card-arrow svg { width: 16px; height: 16px; color: #8a8578; transform: rotate(-45deg); transition: color 0.3s; }
-  .project-card:hover .card-arrow svg { color: #faf8f4; }
-  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
-  .tag { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 10px; border-radius: 99px; border: 1px solid #e0dcd4; color: #8a8578; }
-  .tag-faded { border-color: rgba(224,220,212,0.4); color: rgba(138,133,120,0.3); }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse-dot 2s ease-in-out infinite; }
-  @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  .status-text { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: #16a34a; }
-  .mini-dash { margin-top: 16px; border: 1px solid #e8e4dc; border-radius: 12px; padding: 16px 20px; background: #faf8f4; }
-  .mini-dash-top { display: flex; gap: 24px; margin-bottom: 12px; flex-wrap: wrap; }
-  .mini-stat-label { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: #8a8578; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
-  .mini-stat-val { font-family: 'DM Mono', monospace; font-size: 0.95rem; font-weight: 500; color: #1a1a17; }
-  .mini-pos { color: #16a34a; }
-  .mini-chart { width: 100%; height: 60px; display: block; margin-bottom: 8px; }
-  .mini-dash-bottom { display: flex; justify-content: space-between; align-items: center; }
-  .mini-legend { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: #8a8578; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
-  .mini-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
-  .mini-live { display: flex; align-items: center; gap: 6px; }
-  .text-faded { color: rgba(138,133,120,0.4); }
-  .dots { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: rgba(138,133,120,0.3); }
-  .contact { padding: 80px 0; display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; }
-  .contact a { font-family: 'DM Mono', monospace; font-size: 0.875rem; }
-  .footer { padding: 40px 0; border-top: 1px solid #e0dcd4; display: flex; align-items: center; justify-content: space-between; }
-  .footer span { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: #8a8578; }
-  .link-editorial { background-image: linear-gradient(#c9543a, #c9543a); background-size: 0% 1.5px; background-position: 0 100%; background-repeat: no-repeat; transition: background-size 0.4s cubic-bezier(0.16,1,0.3,1); }
-  .link-editorial:hover { background-size: 100% 1.5px; }
-  body::after { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0.025; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
-  @media (max-width: 640px) { .project-card { padding: 24px; } .card-arrow { display: none; } .nav-links { gap: 16px; } }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  :root{--bg:#faf8f4;--bg2:#fff;--ink:#1a1a17;--muted:#8a8578;--rule:#e0dcd4;--accent:#c9543a;--card-bg:#fff;--card-border:#e0dcd4;--nav-bg:rgba(250,248,244,0.85);--dash-bg:#f4f2ee;--dash-border:#e8e4dc;--green:#22c55e;--green-t:#16a34a;--shadow:rgba(0,0,0,0.06)}
+  [data-theme="dark"]{--bg:#0e0e0d;--bg2:#161615;--ink:#e8e4dc;--muted:#7a756c;--rule:#252420;--accent:#e06b52;--card-bg:#161615;--card-border:#252420;--nav-bg:rgba(14,14,13,0.88);--dash-bg:#121211;--dash-border:#252420;--green:#4ade80;--green-t:#4ade80;--shadow:rgba(0,0,0,0.25)}
+  body{background:var(--bg);color:var(--ink);font-family:'Newsreader',Georgia,serif;-webkit-font-smoothing:antialiased;line-height:1.6;transition:background .3s,color .3s}
+  [lang="zh"] body,[lang="zh"] h1,[lang="zh"] h2,[lang="zh"] h3,[lang="zh"] .card-title{font-family:'Noto Sans SC','Newsreader',sans-serif}
+  a{color:inherit;text-decoration:none}
+  .container{max-width:1060px;margin:0 auto;padding:0 28px}
+
+  /* Nav */
+  .nav{position:fixed;top:0;left:0;right:0;z-index:50;background:var(--nav-bg);backdrop-filter:blur(14px);border-bottom:1px solid var(--rule);transition:background .3s,border-color .3s}
+  .nav-inner{max-width:1060px;margin:0 auto;padding:0 28px;height:50px;display:flex;align-items:center;justify-content:space-between}
+  .nav-left{display:flex;align-items:center;gap:20px}
+  .nav-links a{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);transition:color .2s}
+  .nav-links a:hover{color:var(--ink)}
+  .nav-right{display:flex;align-items:center;gap:4px}
+
+  /* Flag buttons */
+  .lang-btn{background:none;border:1px solid var(--rule);border-radius:5px;width:30px;height:22px;cursor:pointer;padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center;transition:border-color .2s,opacity .2s;opacity:.5}
+  .lang-btn:hover,.lang-btn.active{opacity:1;border-color:var(--accent)}
+  .lang-btn svg{width:20px;height:14px;display:block}
+  .theme-btn{background:none;border:1px solid var(--rule);border-radius:5px;width:30px;height:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.7rem;transition:border-color .2s;margin-left:4px}
+  .theme-btn:hover{border-color:var(--ink)}
+
+  /* Hero — compact */
+  .hero{padding:72px 0 32px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px}
+  .hero-left h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:300;line-height:1.1;letter-spacing:-.02em}
+  .hero-left h1 em{font-weight:300;font-style:italic}
+  .hero-right{text-align:right}
+  .hero-clock{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted);letter-spacing:.03em}
+  .hero-label{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+
+  .divider{border:none;border-top:1px solid var(--rule);margin:0;transition:border-color .3s}
+
+  /* Section */
+  .section{padding:48px 0 56px}
+  .section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:32px}
+  .section-title{font-size:1.4rem;font-weight:300}
+  .section-count{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted)}
+
+  /* Cards — 2 col grid */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .card-full{grid-column:1/-1}
+  @media(max-width:700px){.cards{grid-template-columns:1fr}}
+
+  .project-card{display:block;border:1px solid var(--card-border);border-radius:14px;padding:24px 28px;background:var(--card-bg);cursor:pointer;transition:box-shadow .4s ease,transform .35s cubic-bezier(.16,1,.3,1),background .3s,border-color .3s}
+  .project-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px var(--shadow)}
+  .project-card.placeholder{background:var(--bg);border-style:dashed;cursor:default}
+  .project-card.placeholder:hover{transform:none;box-shadow:none}
+
+  .card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+  .project-num{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--accent);letter-spacing:.04em}
+  .card-title{font-size:1.25rem;font-weight:400;margin-top:4px;transition:color .3s}
+  .project-card:hover .card-title{color:var(--accent)}
+  .card-desc{color:var(--muted);margin-top:5px;line-height:1.5;font-size:.88rem}
+  .card-arrow{flex-shrink:0;margin-left:16px;width:32px;height:32px;border-radius:50%;border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;transition:all .3s}
+  .project-card:hover .card-arrow{background:var(--ink);border-color:var(--ink)}
+  .card-arrow svg{width:13px;height:13px;color:var(--muted);transform:rotate(-45deg);transition:color .3s}
+  .project-card:hover .card-arrow svg{color:var(--bg)}
+
+  .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
+  .tag{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule);color:var(--muted);transition:border-color .3s,color .3s}
+  .tag-faded{opacity:.35}
+
+  .status-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pd 2s ease-in-out infinite;display:inline-block}
+  @keyframes pd{0%,100%{opacity:1}50%{opacity:.4}}
+  .status-text{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--green-t)}
+
+  /* Mini Dashboard */
+  .mini-dash{margin-top:12px;border:1px solid var(--dash-border);border-radius:10px;padding:12px 14px;background:var(--dash-bg);transition:background .3s,border-color .3s}
+  .mini-stats{display:flex;gap:16px;margin-bottom:8px;flex-wrap:wrap}
+  .mini-stat-label{font-family:'DM Mono',monospace;font-size:.52rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .mini-stat-val{font-family:'DM Mono',monospace;font-size:.82rem;font-weight:500;color:var(--ink)}
+  .mini-pos{color:var(--green-t)}
+  .mini-chart{width:100%;height:48px;display:block;margin-bottom:5px}
+  .mini-chart polyline{stroke:var(--forest,#1a472a)}
+  .mini-chart circle{fill:var(--forest,#1a472a)}
+  [data-theme="dark"] .mini-chart polyline{stroke:#4ade80}
+  [data-theme="dark"] .mini-chart circle{fill:#4ade80}
+  .mini-bottom{display:flex;justify-content:space-between;align-items:center}
+  .mini-legend{font-family:'DM Mono',monospace;font-size:.52rem;color:var(--muted);display:flex;align-items:center;flex-wrap:wrap;gap:3px}
+  .mini-dot{display:inline-block;width:5px;height:5px;border-radius:50%}
+  .mini-live{display:flex;align-items:center;gap:4px}
+
+  .text-faded{color:var(--muted);opacity:.4}
+  .dots{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);opacity:.3}
+
+  .contact{padding:48px 0;display:flex;flex-wrap:wrap;gap:24px;justify-content:center}
+  .contact a{font-family:'DM Mono',monospace;font-size:.78rem}
+  .footer{padding:28px 0;border-top:1px solid var(--rule);display:flex;align-items:center;justify-content:space-between;transition:border-color .3s}
+  .footer span{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted)}
+  .link-ed{background-image:linear-gradient(var(--accent),var(--accent));background-size:0% 1.5px;background-position:0 100%;background-repeat:no-repeat;transition:background-size .4s cubic-bezier(.16,1,.3,1)}
+  .link-ed:hover{background-size:100% 1.5px}
+  body::after{content:'';position:fixed;inset:0;z-index:9999;pointer-events:none;opacity:.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  @media(max-width:640px){.project-card{padding:18px}.card-arrow{display:none}.hero{flex-direction:column;align-items:flex-start}.hero-right{text-align:left}}
 </style>
 </head>
 <body>
+
 <nav class="nav"><div class="nav-inner">
-  <a href="/" class="nav-brand">sönmez</a>
-  <div class="nav-links">
-    <a href="#projects" class="link-editorial">projeler</a>
-    <a href="mailto:s.cagatay.sonmez@gmail.com" class="link-editorial">iletişim</a>
-    <a href="https://github.com/Cugutayy" target="_blank" class="link-editorial">github</a>
+  <div class="nav-left">
+    <div class="nav-links">
+      <a href="#projects" class="link-ed" data-i18n="navP">projeler</a>
+      <a href="mailto:s.cagatay.sonmez@gmail.com" class="link-ed" data-i18n="navC">iletişim</a>
+      <a href="https://github.com/Cugutayy" target="_blank" class="link-ed">github</a>
+    </div>
+  </div>
+  <div class="nav-right">
+    <button class="lang-btn active" onclick="setLang('tr')" title="Türkçe">
+      <svg viewBox="0 0 1200 800"><rect fill="#E30A17" width="1200" height="800"/><circle fill="#fff" cx="480" cy="400" r="200"/><circle fill="#E30A17" cx="530" cy="400" r="160"/><polygon fill="#fff" points="600,400 667,430 650,360 700,310 630,310 600,260 570,310 500,310 550,360 533,430"/></svg>
+    </button>
+    <button class="lang-btn" onclick="setLang('en')" title="English">
+      <svg viewBox="0 0 60 30"><clipPath id="s"><rect width="60" height="30"/></clipPath><g clip-path="url(#s)"><rect width="60" height="30" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4" clip-path="url(#s)"/><path d="M30,0V30M0,15H60" stroke="#fff" stroke-width="10"/><path d="M30,0V30M0,15H60" stroke="#C8102E" stroke-width="6"/></g></svg>
+    </button>
+    <button class="lang-btn" onclick="setLang('zh')" title="中文">
+      <svg viewBox="0 0 900 600"><rect fill="#EE1C25" width="900" height="600"/><g fill="#FF0" transform="translate(150,120)"><polygon points="0,-60 17,-18 58,-18 25,7 36,49 0,24 -36,49 -25,7 -58,-18 -17,-18"/></g><g fill="#FF0" transform="translate(300,60)"><polygon points="0,-20 6,-6 19,-6 8,2 12,16 0,8 -12,16 -8,2 -19,-6 -6,-6"/></g><g fill="#FF0" transform="translate(360,120)"><polygon points="0,-20 6,-6 19,-6 8,2 12,16 0,8 -12,16 -8,2 -19,-6 -6,-6"/></g><g fill="#FF0" transform="translate(360,210)"><polygon points="0,-20 6,-6 19,-6 8,2 12,16 0,8 -12,16 -8,2 -19,-6 -6,-6"/></g><g fill="#FF0" transform="translate(300,270)"><polygon points="0,-20 6,-6 19,-6 8,2 12,16 0,8 -12,16 -8,2 -19,-6 -6,-6"/></g></svg>
+    </button>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
   </div>
 </div></nav>
 
 <header class="hero container">
-  <div class="hero-label">Proje Hub'ı</div>
-  <h1>S. Çağatay<br><em>Sönmez</em></h1>
-  <div class="hero-clock" id="heroClock"></div>
+  <div class="hero-left">
+    <h1>S. Çağatay<br><em>Sönmez</em></h1>
+  </div>
+  <div class="hero-right">
+    <div class="hero-clock" id="heroClock"></div>
+    <div class="hero-label" data-i18n="heroLabel">Proje Hub'ı</div>
+  </div>
 </header>
 
 <div class="container"><hr class="divider"></div>
 
 <section id="projects" class="section container">
   <div class="section-header">
-    <h2 class="section-title">Projeler</h2>
-    <span class="section-count">3 proje</span>
+    <h2 class="section-title" data-i18n="secP">Projeler</h2>
+    <span class="section-count" data-i18n="pCnt">3 proje</span>
   </div>
   <div class="cards">
-    <a href="/tracker/" class="project-card">
-      <div class="card-top">
+
+    <!-- Portfolio Tracker — full width -->
+    <a href="/tracker/" class="project-card card-full">
+      <div class="card-head">
         <div>
           <span class="project-num">01</span>
           <h3 class="card-title">Portfolio Tracker</h3>
-          <p class="card-desc">Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi, t-test istatistikleri.</p>
+          <p class="card-desc" data-i18n="p1d">Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi.</p>
         </div>
         <div class="card-arrow"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14m-7-7l7 7-7 7"/></svg></div>
       </div>
       <div class="mini-dash">
-        <div class="mini-dash-top">
-          <div class="mini-stat"><div class="mini-stat-label">Portföy</div><div class="mini-stat-val">101.019 ₺</div></div>
-          <div class="mini-stat"><div class="mini-stat-label">K/Z</div><div class="mini-stat-val mini-pos">+1.019 ₺</div></div>
-          <div class="mini-stat"><div class="mini-stat-label">Değişim</div><div class="mini-stat-val mini-pos">+1.02%</div></div>
+        <div class="mini-stats">
+          <div><div class="mini-stat-label" data-i18n="pf">Portföy</div><div class="mini-stat-val">101.019 ₺</div></div>
+          <div><div class="mini-stat-label">K/Z</div><div class="mini-stat-val mini-pos">+1.019 ₺</div></div>
+          <div><div class="mini-stat-label" data-i18n="ch">Değişim</div><div class="mini-stat-val mini-pos">+1.02%</div></div>
         </div>
-        <svg class="mini-chart" viewBox="0 0 400 80" preserveAspectRatio="none">
-          <defs><linearGradient id="cf" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a472a" stop-opacity="0.12"/><stop offset="100%" stop-color="#1a472a" stop-opacity="0.01"/></linearGradient></defs>
-          <path d="M0,40 L31,42 L62,48 L93,52 L124,50 L155,52 L186,53 L217,60 L248,58 L279,56 L310,62 L341,44 L372,38 L400,39 L400,80 L0,80 Z" fill="url(#cf)"/>
-          <polyline points="0,40 31,42 62,48 93,52 124,50 155,52 186,53 217,60 248,58 279,56 310,62 341,44 372,38 400,39" fill="none" stroke="#1a472a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="0" cy="40" r="3" fill="#1a472a" opacity="0.4"/><circle cx="400" cy="39" r="3" fill="#1a472a"/>
-          <line x1="0" y1="40" x2="400" y2="40" stroke="#c9543a" stroke-width="1" stroke-dasharray="4,4" opacity="0.3"/>
+        <svg class="mini-chart" viewBox="0 0 400 70" preserveAspectRatio="none">
+          <defs><linearGradient id="cf" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a472a" stop-opacity=".12"/><stop offset="100%" stop-color="#1a472a" stop-opacity=".01"/></linearGradient></defs>
+          <path d="M0,35 L31,37 L62,42 L93,46 L124,44 L155,46 L186,47 L217,53 L248,51 L279,50 L310,55 L341,38 L372,33 L400,34 L400,70 L0,70Z" fill="url(#cf)"/>
+          <polyline points="0,35 31,37 62,42 93,46 124,44 155,46 186,47 217,53 248,51 279,50 310,55 341,38 372,33 400,34" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="0" cy="35" r="2.5" opacity=".4"/><circle cx="400" cy="34" r="2.5"/>
+          <line x1="0" y1="35" x2="400" y2="35" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4,4" opacity=".25"/>
         </svg>
-        <div class="mini-dash-bottom">
-          <div class="mini-legend">
-            <span class="mini-dot" style="background:#e67e22"></span>BTC %40
-            <span class="mini-dot" style="background:#c0392b;margin-left:12px"></span>THYAO %12
-            <span class="mini-dot" style="background:#c9a84c;margin-left:12px"></span>Altın %12
-            <span class="mini-dot" style="background:#1d4ed8;margin-left:12px"></span>+4
-          </div>
-          <div class="mini-live"><span class="status-dot"></span><span class="status-text">Canlı</span></div>
+        <div class="mini-bottom">
+          <div class="mini-legend"><span class="mini-dot" style="background:#e67e22"></span>BTC 40%<span class="mini-dot" style="background:#c0392b;margin-left:8px"></span>THYAO<span class="mini-dot" style="background:#c9a84c;margin-left:8px"></span><span data-i18n="gd">Altın</span><span class="mini-dot" style="background:#1d4ed8;margin-left:8px"></span>+4</div>
+          <div class="mini-live"><span class="status-dot"></span><span class="status-text" data-i18n="lv">Canlı</span></div>
         </div>
       </div>
-      <div class="tags" style="margin-top:20px">
-        <span class="tag">Finans</span><span class="tag">Canlı API</span><span class="tag">Cloudflare Pages</span><span class="tag">Chart.js</span>
-      </div>
+      <div class="tags"><span class="tag" data-i18n="tF">Finans</span><span class="tag" data-i18n="tA">Canlı API</span><span class="tag">Cloudflare</span><span class="tag">Chart.js</span></div>
     </a>
+
+    <!-- Placeholder 2 -->
     <div class="project-card placeholder">
-      <div class="card-top"><div><span class="project-num">02</span><h3 class="card-title text-faded">Yakında</h3><p class="card-desc text-faded">Yeni proje üzerinde çalışılıyor.</p></div>
-      <div class="card-arrow" style="border-color:rgba(224,220,212,0.4)"><span class="dots">···</span></div></div>
-      <div class="tags"><span class="tag tag-faded">Duyurulacak</span></div>
+      <div class="card-head"><div><span class="project-num">02</span><h3 class="card-title text-faded" data-i18n="cs">Yakında</h3><p class="card-desc text-faded" data-i18n="csd">Yeni proje üzerinde çalışılıyor.</p></div>
+      <div class="card-arrow" style="opacity:.3"><span class="dots">···</span></div></div>
+      <div class="tags"><span class="tag tag-faded" data-i18n="tba">Duyurulacak</span></div>
     </div>
+
+    <!-- Placeholder 3 -->
     <div class="project-card placeholder">
-      <div class="card-top"><div><span class="project-num">03</span><h3 class="card-title text-faded">Yakında</h3><p class="card-desc text-faded">Yeni proje üzerinde çalışılıyor.</p></div>
-      <div class="card-arrow" style="border-color:rgba(224,220,212,0.4)"><span class="dots">···</span></div></div>
-      <div class="tags"><span class="tag tag-faded">Duyurulacak</span></div>
+      <div class="card-head"><div><span class="project-num">03</span><h3 class="card-title text-faded" data-i18n="cs">Yakında</h3><p class="card-desc text-faded" data-i18n="csd">Yeni proje üzerinde çalışılıyor.</p></div>
+      <div class="card-arrow" style="opacity:.3"><span class="dots">···</span></div></div>
+      <div class="tags"><span class="tag tag-faded" data-i18n="tba">Duyurulacak</span></div>
     </div>
+
   </div>
 </section>
 
 <div class="container"><hr class="divider"></div>
 <div class="contact container">
-  <a href="mailto:s.cagatay.sonmez@gmail.com" class="link-editorial">s.cagatay.sonmez@gmail.com</a>
-  <a href="https://github.com/Cugutayy" target="_blank" class="link-editorial">GitHub ↗</a>
+  <a href="mailto:s.cagatay.sonmez@gmail.com" class="link-ed">s.cagatay.sonmez@gmail.com</a>
+  <a href="https://github.com/Cugutayy" target="_blank" class="link-ed">GitHub ↗</a>
 </div>
-<footer class="container"><div class="footer"><span>© 2026 sönmez</span><span>İzmir, Türkiye</span></div></footer>
+<footer class="container"><div class="footer"><span>© 2026</span><span data-i18n="heroLabel">Proje Hub'ı</span></div></footer>
 
 <script>
-const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if(entry.isIntersecting) entry.target.classList.add('visible'); }); }, { threshold: 0.1 });
-document.querySelectorAll('.project-card').forEach(el => observer.observe(el));
-function updateClock() { const now = new Date(); const t = now.toLocaleTimeString('tr-TR', { timeZone:'Europe/Istanbul', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }); const d = now.toLocaleDateString('tr-TR', { timeZone:'Europe/Istanbul', day:'numeric', month:'long', year:'numeric' }); document.getElementById('heroClock').textContent = d + ' · ' + t + ' · İzmir'; }
-updateClock(); setInterval(updateClock, 1000);
-document.querySelectorAll('a[href^="#"]').forEach(a => { a.addEventListener('click', e => { e.preventDefault(); document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior:'smooth', block:'start' }); }); });
+let LANG='tr',dark=false;
+const I={
+  tr:{heroLabel:"Proje Hub'ı",navP:'projeler',navC:'iletişim',secP:'Projeler',pCnt:'3 proje',p1d:'Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi.',pf:'Portföy',ch:'Değişim',gd:'Altın',lv:'Canlı',tF:'Finans',tA:'Canlı API',cs:'Yakında',csd:'Yeni proje üzerinde çalışılıyor.',tba:'Duyurulacak'},
+  en:{heroLabel:'Project Hub',navP:'projects',navC:'contact',secP:'Projects',pCnt:'3 projects',p1d:'Portfolio tracking system for Responsible Investment course. 100K TL, 7 instruments, live prices, ESG analysis.',pf:'Portfolio',ch:'Change',gd:'Gold',lv:'Live',tF:'Finance',tA:'Live API',cs:'Coming Soon',csd:'New project in development.',tba:'TBA'},
+  zh:{heroLabel:'项目中心',navP:'项目',navC:'联系',secP:'项目',pCnt:'3个项目',p1d:'负责任投资课程的投资组合跟踪系统。10万里拉、7种工具、实时价格、ESG分析。',pf:'投资组合',ch:'变化',gd:'黄金',lv:'实时',tF:'金融',tA:'实时API',cs:'即将推出',csd:'新项目开发中。',tba:'待公布'},
+};
+function setLang(l){LANG=l;document.documentElement.lang=l;document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.lang-btn')[l==='tr'?0:l==='en'?1:2]?.classList.add('active');document.querySelectorAll('[data-i18n]').forEach(e=>{const k=e.getAttribute('data-i18n');if(I[l]?.[k])e.textContent=I[l][k]});updateClock()}
+function toggleTheme(){dark=!dark;document.documentElement.setAttribute('data-theme',dark?'dark':'');document.getElementById('themeBtn').textContent=dark?'☀️':'🌙'}
+function updateClock(){const n=new Date(),lo=LANG==='zh'?'zh-CN':LANG==='en'?'en-US':'tr-TR',t=n.toLocaleTimeString(lo,{timeZone:'Europe/Istanbul',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),d=n.toLocaleDateString(lo,{timeZone:'Europe/Istanbul',day:'numeric',month:'long',year:'numeric'});document.getElementById('heroClock').textContent=d+' · '+t}
+updateClock();setInterval(updateClock,1000);
+document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',e=>{e.preventDefault();document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth',block:'start'})})});
 </script>
 </body>
 </html>
