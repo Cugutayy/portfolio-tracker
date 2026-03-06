@@ -21,6 +21,7 @@
   .nav{position:fixed;top:0;left:0;right:0;z-index:50;background:var(--nav-bg);backdrop-filter:blur(14px);border-bottom:1px solid var(--rule);transition:background .3s,border-color .3s}
   .nav-inner{max-width:1060px;margin:0 auto;padding:0 28px;height:50px;display:flex;align-items:center;justify-content:space-between}
   .nav-left{display:flex;align-items:center;gap:20px}
+  .nav-links{gap:32px}
   .nav-links a{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);transition:color .2s}
   .nav-links a:hover{color:var(--ink)}
   .nav-right{display:flex;align-items:center;gap:4px}
@@ -92,6 +93,12 @@
   .mini-dot{display:inline-block;width:5px;height:5px;border-radius:50%}
   .mini-live{display:flex;align-items:center;gap:4px}
 
+  /* Mini F1 Track */
+  .mini-f1{margin-top:12px;border:1px solid var(--dash-border);border-radius:10px;padding:12px 14px;background:var(--dash-bg);transition:background .3s,border-color .3s}
+  .f1-track{width:100%;height:80px;display:block}
+  .f1-stats{display:flex;gap:12px;margin-top:6px;flex-wrap:wrap}
+  .f1-stat{font-family:'DM Mono',monospace;font-size:.55rem;color:var(--muted);background:var(--bg);border:1px solid var(--rule);padding:2px 8px;border-radius:6px}
+
   .text-faded{color:var(--muted);opacity:.4}
   .dots{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);opacity:.3}
 
@@ -135,7 +142,7 @@
   </div>
   <div class="hero-right">
     <div class="hero-clock" id="heroClock"></div>
-    <div class="hero-label" data-i18n="heroLabel">Proje Hub'ı</div>
+
   </div>
 </header>
 
@@ -180,11 +187,40 @@
     </a>
 
     <!-- Placeholder 2 -->
-    <div class="project-card placeholder">
-      <div class="card-head"><div><span class="project-num">02</span><h3 class="card-title text-faded" data-i18n="cs">Yakında</h3><p class="card-desc text-faded" data-i18n="csd">Yeni proje üzerinde çalışılıyor.</p></div>
-      <div class="card-arrow" style="opacity:.3"><span class="dots">···</span></div></div>
-      <div class="tags"><span class="tag tag-faded" data-i18n="tba">Duyurulacak</span></div>
-    </div>
+    <a href="https://github.com/Cugutayy/F1test" target="_blank" class="project-card">
+      <div class="card-head">
+        <div>
+          <span class="project-num">02</span>
+          <h3 class="card-title" data-i18n="p2t">F1 Yarış Tahmini</h3>
+          <p class="card-desc" data-i18n="p2d">FastF1 + ML ile Formula 1 yarış sonuçlarını tahmin eden simülasyon. Sürücü performansı, hava durumu, pit stratejisi analizi.</p>
+        </div>
+        <div class="card-arrow"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14m-7-7l7 7-7 7"/></svg></div>
+      </div>
+      <!-- Mini F1 Track Animation -->
+      <div class="mini-f1">
+        <svg class="f1-track" viewBox="0 0 400 100" preserveAspectRatio="xMidYMid meet">
+          <path class="track-line" d="M40,80 C40,30 80,15 140,15 C200,15 220,45 260,45 C300,45 340,20 360,50 C380,80 350,90 300,85 C250,80 200,90 140,90 C80,90 40,130 40,80 Z" fill="none" stroke="var(--rule)" stroke-width="12" stroke-linecap="round"/>
+          <path class="track-center" d="M40,80 C40,30 80,15 140,15 C200,15 220,45 260,45 C300,45 340,20 360,50 C380,80 350,90 300,85 C250,80 200,90 140,90 C80,90 40,130 40,80 Z" fill="none" stroke="var(--dash-border)" stroke-width="1" stroke-dasharray="4,6"/>
+          <circle class="f1-car car-1" r="4" fill="#c9543a">
+            <animateMotion dur="4s" repeatCount="indefinite" path="M40,80 C40,30 80,15 140,15 C200,15 220,45 260,45 C300,45 340,20 360,50 C380,80 350,90 300,85 C250,80 200,90 140,90 C80,90 40,130 40,80 Z"/>
+          </circle>
+          <circle class="f1-car car-2" r="3.5" fill="#3b82f6">
+            <animateMotion dur="4.3s" repeatCount="indefinite" path="M40,80 C40,30 80,15 140,15 C200,15 220,45 260,45 C300,45 340,20 360,50 C380,80 350,90 300,85 C250,80 200,90 140,90 C80,90 40,130 40,80 Z" begin="0.6s"/>
+          </circle>
+          <circle class="f1-car car-3" r="3" fill="#f59e0b">
+            <animateMotion dur="4.6s" repeatCount="indefinite" path="M40,80 C40,30 80,15 140,15 C200,15 220,45 260,45 C300,45 340,20 360,50 C380,80 350,90 300,85 C250,80 200,90 140,90 C80,90 40,130 40,80 Z" begin="1.2s"/>
+          </circle>
+        </svg>
+        <div class="f1-stats">
+          <span class="f1-stat">RandomForest</span>
+          <span class="f1-stat">FastF1 API</span>
+          <span class="f1-stat">19 <span data-i18n="drivers">sürücü</span></span>
+        </div>
+      </div>
+      <div class="tags" style="margin-top:16px">
+        <span class="tag">Python</span><span class="tag">scikit-learn</span><span class="tag">FastF1</span><span class="tag">ML</span>
+      </div>
+    </a>
 
     <!-- Placeholder 3 -->
     <div class="project-card placeholder">
@@ -206,9 +242,9 @@
 <script>
 let LANG='tr',dark=false;
 const I={
-  tr:{heroLabel:"Proje Hub'ı",navP:'projeler',navC:'iletişim',secP:'Projeler',pCnt:'3 proje',p1d:'Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi.',pf:'Portföy',ch:'Değişim',gd:'Altın',lv:'Canlı',tF:'Finans',tA:'Canlı API',cs:'Yakında',csd:'Yeni proje üzerinde çalışılıyor.',tba:'Duyurulacak'},
-  en:{heroLabel:'Project Hub',navP:'projects',navC:'contact',secP:'Projects',pCnt:'3 projects',p1d:'Portfolio tracking system for Responsible Investment course. 100K TL, 7 instruments, live prices, ESG analysis.',pf:'Portfolio',ch:'Change',gd:'Gold',lv:'Live',tF:'Finance',tA:'Live API',cs:'Coming Soon',csd:'New project in development.',tba:'TBA'},
-  zh:{heroLabel:'项目中心',navP:'项目',navC:'联系',secP:'项目',pCnt:'3个项目',p1d:'负责任投资课程的投资组合跟踪系统。10万里拉、7种工具、实时价格、ESG分析。',pf:'投资组合',ch:'变化',gd:'黄金',lv:'实时',tF:'金融',tA:'实时API',cs:'即将推出',csd:'新项目开发中。',tba:'待公布'},
+  tr:{heroLabel:"Proje Hub'ı",navP:'projeler',navC:'iletişim',secP:'Projeler',pCnt:'3 proje',p1d:'Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi.',pf:'Portföy',ch:'Değişim',gd:'Altın',lv:'Canlı',tF:'Finans',tA:'Canlı API',p2t:'F1 Yarış Tahmini',p2d:'FastF1 + ML ile Formula 1 yarış sonuçlarını tahmin eden simülasyon. Sürücü performansı, hava durumu, pit stratejisi analizi.',drivers:'sürücü',cs:'Yakında',csd:'Yeni proje üzerinde çalışılıyor.',tba:'Duyurulacak'},
+  en:{heroLabel:'Project Hub',navP:'projects',navC:'contact',secP:'Projects',pCnt:'3 projects',p1d:'Portfolio tracking system for Responsible Investment course. 100K TL, 7 instruments, live prices, ESG analysis.',pf:'Portfolio',ch:'Change',gd:'Gold',lv:'Live',tF:'Finance',tA:'Live API',p2t:'F1 Race Predictor',p2d:'Formula 1 race result prediction using FastF1 + ML. Driver performance, weather conditions, pit strategy analysis.',drivers:'drivers',cs:'Coming Soon',csd:'New project in development.',tba:'TBA'},
+  zh:{heroLabel:'项目中心',navP:'项目',navC:'联系',secP:'项目',pCnt:'3个项目',p1d:'负责任投资课程的投资组合跟踪系统。10万里拉、7种工具、实时价格、ESG分析。',pf:'投资组合',ch:'变化',gd:'黄金',lv:'实时',tF:'金融',tA:'实时API',p2t:'F1比赛预测',p2d:'使用FastF1和机器学习预测F1比赛结果。车手表现、天气状况、进站策略分析。',drivers:'车手',cs:'即将推出',csd:'新项目开发中。',tba:'待公布'},
 };
 function setLang(l){LANG=l;document.documentElement.lang=l;document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.lang-btn')[l==='tr'?0:l==='en'?1:2]?.classList.add('active');document.querySelectorAll('[data-i18n]').forEach(e=>{const k=e.getAttribute('data-i18n');if(I[l]?.[k])e.textContent=I[l][k]});updateClock()}
 function toggleTheme(){dark=!dark;document.documentElement.setAttribute('data-theme',dark?'dark':'');document.getElementById('themeBtn').textContent=dark?'☀️':'🌙'}
