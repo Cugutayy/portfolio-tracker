@@ -1,7 +1,9 @@
 node_modules/
+dist/
 .netlify/
 .DS_Store
 *.log
+index_old.html
 
 # Eski Netlify dosyaları (Cloudflare Pages'a geçildi)
 netlify/
