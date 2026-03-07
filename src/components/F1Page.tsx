@@ -238,9 +238,10 @@ export function F1Page() {
           {preds && (
             <DarkCard title="MODEL INFO">
               <div style={{fontSize:'.52rem',color:'#888',lineHeight:1.8}}>
-                <div>Algorithm: <span style={{color:'#eee'}}>Weighted Ridge Regression</span></div>
-                <div>Features: <span style={{color:'#eee'}}>8</span> (grid, delta, form, team, circuit, exp, season, teammate)</div>
+                <div>Algorithm: <span style={{color:'#eee'}}>Ensemble (Ridge 40% + GradientBoosting 60% + ELO)</span></div>
+                <div>Features: <span style={{color:'#eee'}}>14</span> (grid, delta, form, team, circuit, exp, season, teammate, driverELO, teamELO, trend, volatility, gridVsForm, frontRowBonus)</div>
                 <div>Temporal: <span style={{color:'#eee'}}>2024=1× · 2025=3×</span></div>
+                <div>Live: <span style={{color:'#4ade80'}}>Lap-by-lap güncelleme (momentum + pace)</span></div>
                 <div>Training: <span style={{color:'#eee'}}>{predictor.dataCount} samples · {predictor.raceCount} races</span></div>
                 <div>MAE: <span style={{color:predictor.mae<4?'#4ade80':'#fbbf24'}}>{predictor.mae.toFixed(2)} positions</span></div>
                 <div>Source: <span style={{color:'#4ade80'}}>OpenF1 API (real data only)</span></div>
