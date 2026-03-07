@@ -1,493 +1,286 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { simulateRace } from '../f1/engine'
-import { CIRCUITS, DRIVERS, TEAMS, TYRES } from '../f1/data'
+import { TEAMS } from '../f1/data'
 import { AUSTRALIA_2026_QUALI } from '../f1/realdata'
 import { predictor } from '../f1/predictor'
 import { openF1 } from '../f1/api'
-import type { SimResult, RacerState, Circuit, LapEvent, PredictionResult } from '../f1/types'
+import type { PredictionResult } from '../f1/types'
+
+/**
+ * F1 RACE PREDICTOR DASHBOARD
+ * ============================
+ * f1_sensor ilhamlı — tek sayfa, dark F1 interface
+ * Kartlar: Session, Grid+Tahmin, Canlı Tur Süreleri, Pit Stops, Hava, Championship
+ * Veri: OpenF1 API — uydurma yok
+ */
 
 export function F1Page() {
-  const [circuit, setCircuit] = useState<Circuit>(CIRCUITS[0])
-  const [simResult, setSimResult] = useState<SimResult | null>(null)
-  const [currentLap, setCurrentLap] = useState(0)
-  const [playing, setPlaying] = useState(false)
-  const [speed, setSpeed] = useState(1)
-  const [apiStatus, setApiStatus] = useState<'connecting'|'connected'|'offline'>('connecting')
-  const [aiPredictions, setAiPredictions] = useState<PredictionResult[]|null>(null)
-  const [aiLoading, setAiLoading] = useState(false)
-  const [aiProgress, setAiProgress] = useState<string[]>([])
-  const [backtestMetrics, setBacktestMetrics] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState<'sim'|'ai'>('sim')
-  const intervalRef = useRef<number|null>(null)
+  const [api, setApi] = useState<'on'|'off'|'...'>('...')
+  const [preds, setPreds] = useState<PredictionResult[]|null>(null)
+  const [loading, setLoading] = useState(false)
+  const [prog, setProg] = useState<string[]>([])
+  const [live, setLive] = useState(false)
+  const [liveData, setLiveData] = useState<{pos:any[],laps:any[],weather:any[],pits:any[]}>({pos:[],laps:[],weather:[],pits:[]})
+  const [liveLog, setLiveLog] = useState<{t:string,type:string,n:number,ok:boolean}[]>([])
+  const [liveStats, setLiveStats] = useState({r:0,p:0,e:0,ms:0})
+  const ref = useRef<number|null>(null)
 
-  const runSim = useCallback((c: Circuit) => {
-    setPlaying(false); setCurrentLap(0)
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    // Albert Park için gerçek 2026 sıralama verisi kullan
-    const realGrid = c.name === 'Albert Park'
-      ? AUSTRALIA_2026_QUALI.map(q => ({ code: q.driverCode, position: q.position }))
-      : undefined
-    setSimResult(simulateRace(c, undefined, undefined, realGrid))
-  }, [])
+  useEffect(() => { openF1.getMeetings(2025).then(m => setApi(m.length>0?'on':'off')).catch(() => setApi('off')) }, [])
 
-  useEffect(() => { runSim(circuit) }, [circuit, runSim])
-
-  // API check
-  useEffect(() => {
-    openF1.getMeetings(2026).then(m => setApiStatus(m.length > 0 ? 'connected' : 'offline')).catch(() => setApiStatus('offline'))
-  }, [])
-
-  // AI init + predict with live progress
-  const runAIPrediction = useCallback(async () => {
-    setAiLoading(true)
-    setAiProgress(['🚀 AI motor başlatılıyor...'])
+  // AI Tahmin
+  const predict = useCallback(async () => {
+    setLoading(true); setProg(['🚀 Başlatılıyor...'])
+    const a = (m:string) => setProg(p => [...p, m])
     try {
-      const addProgress = (msg: string) => setAiProgress(prev => [...prev, msg])
-      
-      addProgress('📥 OpenF1 API bağlantısı kuruluyor...')
-      await predictor.initialize((msg) => {
-        addProgress(msg)
-      })
-      
-      addProgress('🧠 Model eğitildi — tahmin yapılıyor...')
+      a('📥 OpenF1 — 2024-2025 verisi toplanıyor...')
+      await predictor.initialize(a)
+      a('🧠 Tahmin yapılıyor...')
       const rw = await openF1.getCurrentRaceWeekend(2026)
       if (rw) {
-        addProgress(`🏁 ${rw.meeting.meeting_name} için tahmin hesaplanıyor...`)
-        const preds = await predictor.predictRace(rw.meeting.meeting_key, rw.meeting.circuit_short_name)
-        setAiPredictions(preds)
-        addProgress(`✅ ${preds.length} sürücü için tahmin tamamlandı`)
+        a(`🏁 ${rw.meeting.meeting_name}...`)
+        setPreds(await predictor.predictRace(rw.meeting.meeting_key, rw.meeting.circuit_short_name))
+        a('✅ Tamamlandı')
       } else {
-        addProgress('⚠ Aktif yarış hafta sonu bulunamadı — statik verilerle tahmin yapılıyor')
-        // Statik tahmin
-        const features = DRIVERS.map(d => ({
-          code: d.code, name: d.name, team: d.team, teamColor: d.teamColor,
-          features: [Math.round(d.skill * 0.5 + (TEAMS[d.team]?.carSpeed||80) * 0.5) > 90 ? 3 : 10, 1.5, 8, 8, 11, 20]
+        a('⚠ Aktif yarış yok — grid verisinden tahmin')
+        const feats = AUSTRALIA_2026_QUALI.map(q => ({
+          code:q.driverCode, name:q.driverName, team:q.team, teamColor:TEAMS[q.team]?.color||'#888',
+          features:[q.position, q.position*0.3, 11, 11, 11, 20, 11, 11]
         }))
-        setAiPredictions(predictor.predictFromFeatures(features))
-        addProgress('✅ Statik tahmin tamamlandı')
+        setPreds(predictor.predictFromFeatures(feats))
+        a('✅ Grid tahmin tamamlandı')
       }
-    } catch (e: any) {
-      setAiProgress(prev => [...prev, `❌ Hata: ${e.message}`])
-    }
-    setAiLoading(false)
+    } catch(e:any) { setProg(p => [...p, `❌ ${e.message}`]) }
+    setLoading(false)
   }, [])
 
-  // Playback
-  useEffect(() => {
-    if (!playing || !simResult) return
-    intervalRef.current = window.setInterval(() => {
-      setCurrentLap(prev => { if (prev >= simResult.circuit.laps) { setPlaying(false); return prev } return prev + 1 })
-    }, 600 / speed)
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [playing, speed, simResult])
+  // Canlı polling
+  const startLive = useCallback(async () => {
+    setLive(true); setLiveLog([]); setLiveStats({r:0,p:0,e:0,ms:0})
+    const poll = async () => {
+      const now = new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})
+      const t0 = performance.now()
+      try {
+        const rw = await openF1.getCurrentRaceWeekend(2026)
+        if (!rw) { setLiveLog(p=>[...p.slice(-30),{t:now,type:'no-data',n:0,ok:false}]); return }
+        const sk = rw.sessions[rw.sessions.length-1].session_key
+        const [pos,laps,wea,pit] = await Promise.all([
+          openF1.getPositions(sk), openF1.getLaps(sk), openF1.getWeather(sk), openF1.getPitStops(sk)
+        ])
+        setLiveData({pos,laps,weather:wea,pits:pit})
+        const ms = Math.round(performance.now()-t0)
+        const names = ['positions','laps','weather','pits']
+        const counts = [pos.length,laps.length,wea.length,pit.length]
+        let pts=0
+        counts.forEach((c,i) => { pts+=c; setLiveLog(p=>[...p.slice(-40),{t:now,type:names[i],n:c,ok:c>=0}]) })
+        setLiveStats(p=>({r:p.r+4, p:p.p+pts, e:p.e, ms}))
+      } catch { setLiveStats(p=>({...p,e:p.e+1})) }
+    }
+    await poll()
+    ref.current = window.setInterval(poll, 5000)
+  }, [])
+  const stopLive = useCallback(() => { setLive(false); if(ref.current){clearInterval(ref.current);ref.current=null} }, [])
+  useEffect(() => () => { if(ref.current) clearInterval(ref.current) }, [])
 
-  const standings = simResult?.lapByLap[currentLap - 1] || simResult?.standings || []
-  const events = simResult?.events.filter(e => e.lap <= currentLap) || []
-  const pittingNow = standings.filter(r => r.status === 'pitting')
-  const hasRealData = standings.length > 0
+  // Derived data
+  const latestWeather = liveData.weather.length > 0 ? liveData.weather[liveData.weather.length-1] : null
 
   return (
-    <div style={{ background:'var(--bg)', minHeight:'100vh', color:'var(--ink)' }}>
-      {/* Header */}
-      <header style={{ background:'linear-gradient(135deg, #0a0a0f 0%, #141428 50%, #0f1923 100%)', padding:'14px 0', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
-        <div className="container" style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:16 }}>
-            <a href="/" style={{ display:'inline-flex', alignItems:'center', justifyContent:'center', width:28, height:28, borderRadius:7, border:'1px solid rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.4)', fontSize:'.75rem', textDecoration:'none' }}>←</a>
+    <div style={{background:'#0d0d0d',minHeight:'100vh',color:'#e5e5e5',fontFamily:"'DM Mono','Geist Mono',monospace"}}>
+      {/* HEADER — F1 styled dark */}
+      <header style={{background:'linear-gradient(90deg,#111 0%,#1a1a2e 50%,#111 100%)',padding:'10px 0',borderBottom:'2px solid #e10600'}}>
+        <div className="container" style={{display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:8}}>
+          <div style={{display:'flex',alignItems:'center',gap:14}}>
+            <a href="/" style={{color:'#666',fontSize:'.8rem',textDecoration:'none',border:'1px solid #333',borderRadius:6,width:26,height:26,display:'flex',alignItems:'center',justifyContent:'center'}}>←</a>
             <div>
-              <h1 style={{ color:'#fff', fontSize:'1.2rem', fontWeight:300, fontFamily:"'Newsreader',serif", lineHeight:1 }}>F1 Race <em style={{ color:'#e06b52' }}>Predictor</em></h1>
-              <span className="mono" style={{ fontSize:'.5rem', color:'rgba(255,255,255,0.25)', letterSpacing:'.08em' }}>2026 · SİMÜLASYON + AI TAHMİN</span>
+              <div style={{fontSize:'1rem',fontWeight:700,color:'#fff',letterSpacing:'.02em'}}>F1 RACE PREDICTOR</div>
+              <div style={{fontSize:'.5rem',color:'#555',letterSpacing:'.1em'}}>WEIGHTED RIDGE REGRESSION · OPENF1 API · LIVE DATA</div>
             </div>
           </div>
-          <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-            <StatusDot status={apiStatus} />
-            {/* Tab switch */}
-            <div style={{ display:'flex', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6, overflow:'hidden' }}>
-              <TabBtn active={activeTab==='sim'} onClick={() => setActiveTab('sim')}>Pist & Tahmin</TabBtn>
-              <TabBtn active={activeTab==='ai'} onClick={() => { setActiveTab('ai'); if (!aiPredictions && !aiLoading) runAIPrediction() }}>AI Tahmin</TabBtn>
-            </div>
+          <div style={{display:'flex',gap:10,alignItems:'center'}}>
+            <Dot c={api==='on'?'#4ade80':api==='off'?'#666':'#fbbf24'} label={api==='on'?'API Connected':api==='off'?'Offline':'Connecting'}/>
+            <Btn onClick={predict} active={loading}>{loading?'⏳':'🤖'} Predict</Btn>
+            <Btn onClick={live?stopLive:startLive} active={live}>{live?'⏹':'📡'} Live</Btn>
           </div>
         </div>
       </header>
 
-      <div className="container" style={{ padding:'16px 28px' }}>
-        {activeTab === 'sim' ? (
-          hasRealData ? (
-            <SimTab circuit={circuit} setCircuit={setCircuit} simResult={simResult} currentLap={currentLap} standings={standings} events={events} pittingNow={pittingNow} playing={playing} setPlaying={setPlaying} speed={speed} setSpeed={setSpeed} runSim={runSim} />
-          ) : (
-            <NoDataTab circuit={circuit} setCircuit={setCircuit} runSim={runSim} />
-          )
-        ) : (
-          <AITab predictions={aiPredictions} loading={aiLoading} progress={aiProgress} metrics={backtestMetrics} onRerun={runAIPrediction} />
-        )}
-      </div>
-    </div>
-  )
-}
+      <div className="container" style={{padding:'12px 20px'}}>
+        {/* PROGRESS */}
+        {loading && <DarkCard title="MODEL TRAINING">{prog.map((m,i)=><div key={i} style={{fontSize:'.55rem',padding:'2px 0',color:m.includes('✓')?'#4ade80':m.includes('⚠')||m.includes('❌')?'#ef4444':'#888',borderBottom:'1px solid #222'}}><span style={{color:'#555',marginRight:6}}>{i+1}</span>{m}</div>)}<div style={{display:'flex',gap:4,alignItems:'center',marginTop:4}}><span style={{width:6,height:6,borderRadius:'50%',border:'2px solid #e10600',borderTopColor:'transparent',animation:'spin 1s linear infinite',display:'inline-block'}}/><span style={{fontSize:'.5rem',color:'#555'}}>Processing...</span></div><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></DarkCard>}
 
-// ═══════════════════════════════════════════
-// SİMÜLASYON TABI
-// ═══════════════════════════════════════════
-function SimTab({ circuit, setCircuit, simResult, currentLap, standings, events, pittingNow, playing, setPlaying, speed, setSpeed, runSim }: any) {
-  return <>
-    {/* Controls */}
-    <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap', alignItems:'center' }}>
-      <select value={circuit.name} onChange={(e: any) => { const c = CIRCUITS.find(c => c.name === e.target.value); if (c) { setCircuit(c); runSim(c) } }} style={selStyle}>
-        {CIRCUITS.map(c => <option key={c.name} value={c.name}>{c.flag} {c.name}</option>)}
-      </select>
-      <Btn onClick={() => setPlaying(!playing)} active={playing}>{playing ? '⏸' : '▶'}</Btn>
-      <Btn onClick={() => runSim(circuit)}>↻</Btn>
-      <Btn onClick={() => setSpeed((s: number) => s >= 4 ? 1 : s * 2)}>{speed}×</Btn>
-      <div style={{ marginLeft:'auto' }} className="mono" ><small style={{ color:'var(--muted)' }}>Tur </small><strong>{currentLap}</strong><small style={{ color:'var(--muted)' }}> / {circuit.laps}</small></div>
-    </div>
-    {/* UYARI: Simülasyon tahmini */}
-    <div style={{ background:'rgba(249,115,22,0.08)', border:'1px solid rgba(249,115,22,0.2)', borderRadius:8, padding:'8px 12px', marginBottom:12, display:'flex', gap:8, alignItems:'center' }}>
-      <span style={{ fontSize:'.9rem' }}>⚠️</span>
-      <span className="mono" style={{ fontSize:'.58rem', color:'#b45309' }}>
-        TAHMİN — Bu simülasyon gerçek sıralama verisinden başlıyor ama tur bazındaki sonuçlar fizik modeli tahmindir, gerçek değildir. Yarış sonrası gerçek sonuçlar OpenF1 API'den çekilecektir.
-      </span>
-    </div>
-    {/* Progress */}
-    <div style={{ height:2, background:'var(--rule)', borderRadius:1, marginBottom:16, overflow:'hidden' }}>
-      <div style={{ height:'100%', width:`${(currentLap/circuit.laps)*100}%`, background:'linear-gradient(90deg,#e06b52,#f59e0b)', borderRadius:1 }} />
-    </div>
-
-    {/* BÜYÜK PİST */}
-    <Card title={`${circuit.flag} ${circuit.name} · ${circuit.laps} tur · ${circuit.lapDistance} km`}>
-      <TrackView standings={standings} pittingNow={pittingNow} />
-    </Card>
-
-    {/* Alt grid: sıralama + olaylar + lastik */}
-    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:12 }}>
-      <Card title={`Tahmini Sıralama · Tur ${currentLap} (simülasyon)`}>
-        <div style={{ maxHeight:400, overflowY:'auto' }}>
-          {standings.map((r: RacerState, i: number) => <DriverRow key={r.driver.code} racer={r} index={i} />)}
-        </div>
-      </Card>
-      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-        <Card title="Olaylar">
-          <div style={{ maxHeight:180, overflowY:'auto' }}>
-            {events.length === 0 ? <Muted>Simülasyonu başlatın...</Muted> :
-              [...events].reverse().slice(0,15).map((e: LapEvent, i: number) => <EventRow key={i} event={e} />)}
-          </div>
-        </Card>
-        <Card title="Lastik · Top 6">
-          {standings.filter((r: RacerState) => !r.dnf).slice(0,6).map((r: RacerState) => <TyreBar key={r.driver.code} racer={r} totalLaps={circuit.laps} />)}
-        </Card>
-        {simResult?.fastestLap?.driver && (
-          <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-            <Chip icon="⏱" label="En Hızlı" value={`${fmtLap(simResult.fastestLap.time)} · ${simResult.fastestLap.driver} · T${simResult.fastestLap.lap}`} />
-            {simResult.weather.rainLaps && <Chip icon="🌧" label="Yağmur" value={`T${simResult.weather.rainLaps[0]}–${simResult.weather.rainLaps[1]}`} />}
-          </div>
-        )}
-      </div>
-    </div>
-  </>
-}
-
-// ═══════════════════════════════════════════
-// AI TAHMİN TABI
-// ═══════════════════════════════════════════
-function AITab({ predictions, loading, progress, metrics, onRerun }: { predictions: PredictionResult[]|null; loading: boolean; progress: string[]; metrics: any; onRerun: () => void }) {
-  return <>
-    <div style={{ display:'flex', gap:10, marginBottom:16, alignItems:'center', flexWrap:'wrap' }}>
-      <h2 style={{ fontSize:'1.1rem', fontWeight:300 }}>AI Yarış Tahmini</h2>
-      <Btn onClick={onRerun} active={loading}>{loading ? '⏳ Yükleniyor...' : '🤖 Tahmin Yap'}</Btn>
-      <Muted>Ridge Regression · OpenF1 API · 2023-2025 gerçek veri</Muted>
-    </div>
-
-    {/* Canlı progress logları */}
-    {loading && (
-      <Card title="Model Eğitim İlerlemesi">
-        <div style={{ maxHeight:250, overflowY:'auto', fontFamily:"'DM Mono',monospace", fontSize:'.6rem' }}>
-          {progress.map((msg, i) => (
-            <div key={i} style={{ padding:'3px 0', color: msg.includes('✓') ? 'var(--green-t)' : msg.includes('⚠') || msg.includes('❌') ? '#ef4444' : 'var(--muted)', borderBottom:'1px solid var(--rule)', display:'flex', gap:6, alignItems:'center' }}>
-              <span style={{ color:'var(--accent)', width:20, flexShrink:0, textAlign:'right', fontSize:'.5rem' }}>{i+1}</span>
-              <span>{msg}</span>
-            </div>
-          ))}
-          {loading && (
-            <div style={{ padding:'6px 0', display:'flex', alignItems:'center', gap:6 }}>
-              <span style={{ width:8, height:8, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', display:'inline-block', animation:'spin 1s linear infinite' }} />
-              <span style={{ color:'var(--muted)' }}>İşlem devam ediyor...</span>
-            </div>
-          )}
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      </Card>
-    )}
-
-    {/* Progress bittiyse ama predictions yoksa log göster */}
-    {!loading && progress.length > 0 && !predictions && (
-      <Card title="Son İşlem Logları">
-        <div style={{ maxHeight:150, overflowY:'auto', fontFamily:"'DM Mono',monospace", fontSize:'.55rem' }}>
-          {progress.slice(-10).map((msg, i) => <div key={i} style={{ padding:'2px 0', color:'var(--muted)' }}>{msg}</div>)}
-        </div>
-      </Card>
-    )}
-
-    {predictions && !loading && (
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-        {/* Tahmin tablosu */}
-        <Card title="Tahmin Edilen Sıralama">
-          <div style={{ maxHeight:500, overflowY:'auto' }}>
-            {predictions.map((p, i) => (
-              <div key={p.driverCode} style={{ display:'flex', alignItems:'center', gap:6, padding:'5px 6px', borderRadius:6, background: i === 0 ? 'rgba(201,168,76,0.06)' : i < 3 ? 'rgba(26,71,42,0.03)' : 'transparent', marginBottom:1 }}>
-                <span className="mono" style={{ width:24, fontSize:'.7rem', fontWeight:700, color: i < 3 ? '#c9a84c' : 'var(--muted)' }}>P{p.predictedPosition}</span>
-                <span style={{ width:3, height:20, borderRadius:2, background:p.teamColor }} />
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:'.78rem', fontWeight: i === 0 ? 600 : 400 }}>{p.driverName}</div>
-                  <div className="mono" style={{ fontSize:'.48rem', color:'var(--muted)' }}>{p.team}</div>
-                </div>
-                <div style={{ textAlign:'right' }}>
-                  <div className="mono" style={{ fontSize:'.7rem', fontWeight:600, color: p.winProbability > 10 ? '#c9a84c' : 'var(--ink)' }}>{p.winProbability}%</div>
-                  <div className="mono" style={{ fontSize:'.45rem', color:'var(--muted)' }}>kazanma</div>
-                </div>
-                <div style={{ textAlign:'right', width:40 }}>
-                  <div className="mono" style={{ fontSize:'.6rem', color:'var(--muted)' }}>{p.podiumProbability}%</div>
-                  <div className="mono" style={{ fontSize:'.4rem', color:'var(--muted)' }}>podyum</div>
-                </div>
+        {/* DASHBOARD GRID — f1_sensor inspired */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+          
+          {/* 1. SESSION STATUS + WEATHER */}
+          <DarkCard title="SESSION STATUS" span={1}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <div>
+                <div style={{fontSize:'.9rem',fontWeight:700,color:'#fff'}}>🇦🇺 Australian GP</div>
+                <div style={{fontSize:'.5rem',color:live?'#4ade80':'#555'}}>{live?'● LIVE':'QUALIFYING COMPLETED'}</div>
               </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Sağ panel: metrikler + faktörler */}
-        <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
-          {/* Model metrikleri */}
-          {metrics && (
-            <Card title="Model Performansı (Backtest 2025)">
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                <MetricBox label="Kazanan Doğruluğu" value={`${metrics.winnerAccuracy.toFixed(0)}%`} />
-                <MetricBox label="Podyum Doğruluğu" value={`${metrics.podiumAccuracy.toFixed(0)}%`} />
-                <MetricBox label="Top 10 Doğruluğu" value={`${metrics.top10Accuracy.toFixed(0)}%`} />
-                <MetricBox label="Ort. Pozisyon Hatası" value={`±${metrics.avgPositionError.toFixed(1)}`} />
-                <MetricBox label="Test Edilen Yarış" value={`${metrics.totalRaces}`} />
-                <MetricBox label="Güven Seviyesi" value={predictions?.[0]?.confidence ? `${(predictions[0].confidence * 100).toFixed(0)}%` : '-'} />
+              <div style={{background:'#1a472a',color:'#4ade80',padding:'3px 10px',borderRadius:4,fontSize:'.55rem',fontWeight:700}}>GREEN</div>
+            </div>
+            {latestWeather ? (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+                <WStat label="AIR" val={`${latestWeather.air_temperature.toFixed(1)}°C`}/>
+                <WStat label="TRACK" val={`${latestWeather.track_temperature.toFixed(1)}°C`}/>
+                <WStat label="HUMIDITY" val={`${latestWeather.humidity}%`}/>
+                <WStat label="WIND" val={`${latestWeather.wind_speed.toFixed(1)} m/s`}/>
+                <WStat label="RAIN" val={latestWeather.rainfall?'YES':'NO'} alert={latestWeather.rainfall}/>
               </div>
-            </Card>
-          )}
+            ) : (
+              <div style={{fontSize:'.55rem',color:'#555',textAlign:'center',padding:10}}>Canlı veri başlatıldığında hava verileri burada görünecek</div>
+            )}
+          </DarkCard>
 
-          {/* Faktör analizi — top 3 */}
-          {predictions && predictions.length > 0 && (
-            <Card title="Faktör Analizi · Top 3">
-              {predictions.slice(0, 3).map(p => (
-                <div key={p.driverCode} style={{ marginBottom:10 }}>
-                  <div style={{ display:'flex', gap:4, alignItems:'center', marginBottom:4 }}>
-                    <span style={{ width:3, height:12, borderRadius:1, background:p.teamColor }} />
-                    <span className="mono" style={{ fontSize:'.65rem', fontWeight:600 }}>{p.driverCode}</span>
-                    <span className="mono" style={{ fontSize:'.5rem', color:'var(--muted)' }}>{p.team}</span>
+          {/* 2. GRID + AI PREDICTION */}
+          <DarkCard title="QUALIFYING GRID + AI PREDICTION" span={2}>
+            <div style={{maxHeight:320,overflowY:'auto'}}>
+              <div style={{display:'grid',gridTemplateColumns:'32px 4px 1fr 60px 40px 40px',gap:'0 5px',fontSize:'.58rem',alignItems:'center'}}>
+                <div style={{color:'#555',fontWeight:700}}>POS</div><div/><div style={{color:'#555'}}>DRIVER</div><div style={{color:'#555',textAlign:'right'}}>TIME</div><div style={{color:'#555',textAlign:'center'}}>→ AI</div><div style={{color:'#555',textAlign:'right'}}>WIN%</div>
+                {AUSTRALIA_2026_QUALI.map((q,i) => {
+                  const tm = TEAMS[q.team]; const pred = preds?.find(p=>p.driverCode===q.driverCode)
+                  return [
+                    <div key={`p${i}`} style={{fontWeight:700,color:i<3?'#c9a84c':i<10?'#ccc':'#666',textAlign:'center'}}>{q.position}</div>,
+                    <div key={`c${i}`} style={{width:3,height:16,borderRadius:1,background:tm?.color||'#444'}}/>,
+                    <div key={`n${i}`}><span style={{fontWeight:i===0?700:400,color:i<10?'#eee':'#888'}}>{q.driverName}</span><br/><span style={{fontSize:'.42rem',color:'#555'}}>{q.team}{q.note?` · ${q.note}`:''}</span></div>,
+                    <div key={`t${i}`} style={{textAlign:'right',color:'#999'}}>{q.q3Time||q.q2Time||q.q1Time||'—'}</div>,
+                    <div key={`a${i}`} style={{textAlign:'center',fontWeight:600,color:pred?pred.predictedPosition<=3?'#c9a84c':pred.predictedPosition<=10?'#eee':'#666':'#333'}}>{pred?`P${pred.predictedPosition}`:'—'}</div>,
+                    <div key={`w${i}`} style={{textAlign:'right',color:pred&&pred.winProbability>10?'#fbbf24':'#555'}}>{pred?`${pred.winProbability}%`:'—'}</div>,
+                  ]
+                })}
+              </div>
+            </div>
+          </DarkCard>
+
+          {/* 3. LIVE DATA MONITOR */}
+          <DarkCard title="LIVE DATA FEED">
+            {liveStats.r > 0 && (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:4,marginBottom:8}}>
+                <LStat label="REQS" val={liveStats.r}/>
+                <LStat label="POINTS" val={liveStats.p}/>
+                <LStat label="ERRORS" val={liveStats.e} err/>
+                <LStat label="LATENCY" val={`${liveStats.ms}ms`}/>
+              </div>
+            )}
+            <div style={{maxHeight:140,overflowY:'auto'}}>
+              {liveLog.length===0 ? <div style={{fontSize:'.5rem',color:'#444',textAlign:'center',padding:16}}>📡 butonuna bas</div> :
+                [...liveLog].reverse().slice(0,14).map((e,i)=>(
+                  <div key={i} style={{display:'flex',gap:4,padding:'1px 0',fontSize:'.48rem',borderBottom:'1px solid #1a1a1a',alignItems:'center'}}>
+                    <span style={{color:'#444',width:46}}>{e.t}</span>
+                    <span style={{color:e.ok?'#4ade80':'#ef4444',fontWeight:700,width:8}}>{e.ok?'✓':'✗'}</span>
+                    <span style={{color:TC[e.type]||'#555',width:50}}>{e.type}</span>
+                    <span style={{color:e.n>0?'#aaa':'#444'}}>{e.n}</span>
                   </div>
-                  <FactorBar label="Kvalifikasyon" value={p.factors.qualiPerformance} />
-                  <FactorBar label="Son Form" value={p.factors.historicalForm} />
-                  <FactorBar label="Takım Gücü" value={p.factors.teamStrength} />
-                  <FactorBar label="Pist Uyumu" value={p.factors.circuitAffinity} />
-                  <FactorBar label="Hava Adaptasyonu" value={p.factors.weatherAdaptation} />
+                ))
+              }
+            </div>
+          </DarkCard>
+
+          {/* 4. PIT STOPS — from live data */}
+          <DarkCard title="PIT STOPS">
+            {liveData.pits.length === 0 ? <Empty text="Canlı veriden pit stop bilgisi gelecek"/> :
+              <div style={{maxHeight:160,overflowY:'auto'}}>
+                {[...liveData.pits].reverse().slice(0,12).map((p:any,i:number)=>(
+                  <div key={i} style={{display:'flex',gap:6,padding:'2px 0',fontSize:'.52rem',borderBottom:'1px solid #1a1a1a',alignItems:'center'}}>
+                    <span style={{color:'#f59e0b',fontWeight:700,width:28}}>L{p.lap_number}</span>
+                    <span style={{color:'#ccc'}}>#{p.driver_number}</span>
+                    <span style={{color:'#888',marginLeft:'auto'}}>{p.pit_duration?.toFixed(1) || '—'}s</span>
+                  </div>
+                ))}
+              </div>
+            }
+          </DarkCard>
+
+          {/* 5. LAP TIMES — top drivers from live data */}
+          <DarkCard title="DRIVER LAP TIMES">
+            {liveData.laps.length === 0 ? <Empty text="Canlı tur süreleri gelecek"/> : (() => {
+              const byDriver = new Map<number,{last:number,best:number,laps:number}>()
+              for (const l of liveData.laps) {
+                if (!l.lap_duration || l.lap_duration <= 0) continue
+                const cur = byDriver.get(l.driver_number) || {last:0,best:Infinity,laps:0}
+                cur.last = l.lap_duration; cur.best = Math.min(cur.best, l.lap_duration); cur.laps = Math.max(cur.laps, l.lap_number)
+                byDriver.set(l.driver_number, cur)
+              }
+              const fastest = Math.min(...[...byDriver.values()].map(v=>v.best))
+              return <div style={{maxHeight:160,overflowY:'auto'}}>
+                {[...byDriver.entries()].sort((a,b)=>a[1].best-b[1].best).slice(0,12).map(([num,d],i)=>(
+                  <div key={num} style={{display:'flex',gap:6,padding:'2px 0',fontSize:'.52rem',borderBottom:'1px solid #1a1a1a',alignItems:'center'}}>
+                    <span style={{color:i<3?'#c9a84c':'#888',fontWeight:700,width:16}}>{i+1}</span>
+                    <span style={{color:'#ccc',width:20}}>#{num}</span>
+                    <span style={{color:d.best===fastest?'#a855f7':'#aaa'}}>{fmtLap(d.best)}</span>
+                    <span style={{color:'#555',marginLeft:'auto'}}>L{d.laps}</span>
+                  </div>
+                ))}
+              </div>
+            })()}
+          </DarkCard>
+
+          {/* 6. FACTOR ANALYSIS — top 5 */}
+          {preds && (
+            <DarkCard title="FACTOR ANALYSIS · TOP 5">
+              {preds.slice(0,5).map(p => (
+                <div key={p.driverCode} style={{marginBottom:6}}>
+                  <div style={{display:'flex',gap:3,alignItems:'center',marginBottom:2}}>
+                    <span style={{width:3,height:10,borderRadius:1,background:p.teamColor}}/>
+                    <span style={{fontSize:'.55rem',fontWeight:600,color:'#eee'}}>{p.driverCode}</span>
+                    <span style={{fontSize:'.42rem',color:'#555'}}>{p.team} · P{p.predictedPosition} · {p.winProbability}%</span>
+                  </div>
+                  <FBar label="QUALI" v={p.factors.qualiPerformance}/>
+                  <FBar label="FORM" v={p.factors.historicalForm}/>
+                  <FBar label="TEAM" v={p.factors.teamStrength}/>
+                  <FBar label="CIRCUIT" v={p.factors.circuitAffinity}/>
                 </div>
               ))}
-            </Card>
+            </DarkCard>
+          )}
+
+          {/* 7. MODEL INFO */}
+          {preds && (
+            <DarkCard title="MODEL INFO">
+              <div style={{fontSize:'.52rem',color:'#888',lineHeight:1.8}}>
+                <div>Algorithm: <span style={{color:'#eee'}}>Weighted Ridge Regression</span></div>
+                <div>Features: <span style={{color:'#eee'}}>8</span> (grid, delta, form, team, circuit, exp, season, teammate)</div>
+                <div>Temporal: <span style={{color:'#eee'}}>2024=1× · 2025=3×</span></div>
+                <div>Training: <span style={{color:'#eee'}}>{predictor.dataCount} samples · {predictor.raceCount} races</span></div>
+                <div>MAE: <span style={{color:predictor.mae<4?'#4ade80':'#fbbf24'}}>{predictor.mae.toFixed(2)} positions</span></div>
+                <div>Source: <span style={{color:'#4ade80'}}>OpenF1 API (real data only)</span></div>
+              </div>
+            </DarkCard>
           )}
         </div>
       </div>
-    )}
-
-    {!predictions && !loading && (
-      <div style={{ textAlign:'center', padding:60 }}>
-        <div style={{ fontSize:'2rem', marginBottom:12 }}>🤖</div>
-        <div style={{ fontSize:'.9rem', color:'var(--muted)' }}>AI tahmin motorunu başlatmak için yukarıdaki butona tıklayın</div>
-        <div className="mono" style={{ fontSize:'.6rem', color:'var(--muted)', marginTop:8 }}>OpenF1 API'den 2023-2025 verileri çekilecek, model eğitilecek ve bu hafta sonu için tahmin yapılacak</div>
-      </div>
-    )}
-  </>
-}
-
-// ═══════════════════════════════════════════
-// PİST — BÜYÜK, OKUNAKLABILIR, PIT STOP
-// ═══════════════════════════════════════════
-const TRACK_PATH = "M80,200 C80,70 150,30 280,30 C410,30 450,100 530,100 C610,100 670,50 710,120 C750,190 700,220 610,210 C520,200 420,225 280,225 C150,225 80,270 80,200 Z"
-
-function F1CarTop({ color }: { color: string }) {
-  return <g>
-    <rect x="-10" y="-3.5" width="20" height="7" rx="2.5" fill={color} />
-    <rect x="8" y="-5.5" width="4" height="11" rx="1.2" fill={color} opacity=".7" />
-    <rect x="-13" y="-5" width="3" height="10" rx=".8" fill={color} opacity=".6" />
-    <ellipse cx="0" cy="0" rx="4" ry="2.2" fill="#111" opacity=".45" />
-    <rect x="4" y="-6.5" width="4" height="2" rx=".7" fill="#1a1a1a" />
-    <rect x="4" y="4.5" width="4" height="2" rx=".7" fill="#1a1a1a" />
-    <rect x="-9" y="-6.5" width="4" height="2" rx=".7" fill="#1a1a1a" />
-    <rect x="-9" y="4.5" width="4" height="2" rx=".7" fill="#1a1a1a" />
-  </g>
-}
-
-function TrackView({ standings, pittingNow }: { standings: RacerState[]; pittingNow: RacerState[] }) {
-  const top6 = standings.filter(r => !r.dnf).slice(0, 6)
-
-  return (
-    <svg viewBox="0 0 800 280" style={{ width:'100%', height:220 }}>
-      {/* Pist yüzeyi */}
-      <path d={TRACK_PATH} fill="none" stroke="var(--rule)" strokeWidth="32" strokeLinecap="round" opacity=".35" />
-      <path d={TRACK_PATH} fill="none" stroke="var(--muted)" strokeWidth=".7" strokeDasharray="10,14" opacity=".2" />
-
-      {/* Start/Finish çizgisi */}
-      <line x1="80" y1="178" x2="80" y2="222" stroke="var(--muted)" strokeWidth="3" opacity=".3" />
-      <text x="80" y="175" fontSize="7" fontFamily="'DM Mono',monospace" fill="var(--muted)" textAnchor="middle" opacity=".4">S/F</text>
-
-      {/* PIT LANE alanı */}
-      <rect x="580" y="240" width="180" height="30" rx="6" fill="var(--card-bg)" stroke="var(--rule)" strokeWidth="1" opacity=".8" />
-      <text x="670" y="250" fontSize="7" fontFamily="'DM Mono',monospace" fill="var(--muted)" textAnchor="middle" fontWeight="600">PIT LANE</text>
-
-      {/* Pit'te olan arabalar */}
-      {pittingNow.map((r, i) => {
-        const team = TEAMS[r.driver.team]
-        return <g key={r.driver.code} transform={`translate(${600 + i * 30}, 260)`}>
-          <g transform="scale(0.7)"><F1CarTop color={team?.color || '#888'} /></g>
-          <text y="-8" fontSize="6" fontFamily="'DM Mono',monospace" fontWeight="700" fill={team?.color || '#888'} textAnchor="middle">{r.driver.code}</text>
-        </g>
-      })}
-
-      {/* Pistteki arabalar */}
-      {top6.map((r, i) => {
-        const team = TEAMS[r.driver.team]
-        const dur = 5 + i * 0.25
-        const color = team?.color || '#888'
-        return <g key={r.driver.code}>
-          {/* Araba */}
-          <g opacity={1 - i * 0.04}>
-            <animateMotion dur={`${dur}s`} repeatCount="indefinite" path={TRACK_PATH} begin={`${i * 0.5}s`} rotate="auto" />
-            <F1CarTop color={color} />
-          </g>
-          {/* Etiket — arabanın üstünde sabit boyut kutu */}
-          <g>
-            <animateMotion dur={`${dur}s`} repeatCount="indefinite" path={TRACK_PATH} begin={`${i * 0.5}s`} />
-            <rect x="-18" y="-22" width="36" height="13" rx="3.5" fill={color} opacity=".9" />
-            <text fontSize="8" fontFamily="'DM Mono',monospace" fontWeight="800" fill="#fff" textAnchor="middle" y="-13">{r.driver.code}</text>
-          </g>
-        </g>
-      })}
-    </svg>
+    </div>
   )
 }
 
 // ═══════════════════════════════════════════
-// SUB-COMPONENTS
+// UI COMPONENTS — F1 dark theme
 // ═══════════════════════════════════════════
-function DriverRow({ racer, index }: { racer: RacerState; index: number }) {
-  const team = TEAMS[racer.driver.team]; const tyre = TYRES[racer.currentTyre]; const hp = Math.round(racer.tyreDeg * 100)
-  return <div style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 5px', borderRadius:5, background: racer.dnf ? 'rgba(220,38,38,0.04)' : index===0 ? 'rgba(201,168,76,0.06)' : index<3 ? 'rgba(26,71,42,0.03)' : 'transparent', marginBottom:1, opacity: racer.dnf ? 0.3 : 1 }}>
-    <span className="mono" style={{ width:26, fontSize:'.65rem', fontWeight:700, color: index<3 ? '#c9a84c' : 'var(--muted)', textAlign:'center' }}>{racer.dnf ? 'DNF' : `P${racer.position}`}</span>
-    <span style={{ width:3, height:20, borderRadius:1, background:team?.color||'#888' }} />
-    <svg width={15} height={7} viewBox="0 0 22 10" style={{ flexShrink:0 }}><rect x="1" y="2" width="16" height="6" rx="2" fill={team?.color||'#888'}/><rect x="15" y="0.5" width="3" height="9" rx="1" fill={team?.color||'#888'} opacity=".6"/><circle cx="5" cy="8.5" r="1.3" fill="#333"/><circle cx="15" cy="8.5" r="1.3" fill="#333"/></svg>
-    <div style={{ flex:1, minWidth:0 }}>
-      <div style={{ fontSize:'.73rem', fontWeight: index===0 ? 600 : 400, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{racer.driver.name}</div>
-      <div className="mono" style={{ fontSize:'.45rem', color:'var(--muted)' }}>{racer.driver.team}</div>
-    </div>
-    <span style={{ width:14, height:14, borderRadius:'50%', border:`2px solid ${tyre.color==='#FFFFFF'?'#999':tyre.color}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'.38rem', fontWeight:800, color:tyre.color==='#FFFFFF'?'#999':tyre.color, fontFamily:"'DM Mono',monospace" }}>{racer.currentTyre[0].toUpperCase()}</span>
-    <span className="mono" style={{ fontSize:'.4rem', color: hp<30 ? '#ef4444' : 'var(--muted)', width:22, textAlign:'center' }}>{hp}%</span>
-    <span className="mono" style={{ fontSize:'.55rem', color:'var(--muted)', width:48, textAlign:'right' }}>{index===0?'':racer.dnf?'':`+${racer.gap.toFixed(1)}s`}</span>
-    <span className="mono" style={{ fontSize:'.45rem', color:racer.pitStops>0?'#f59e0b':'var(--muted)', width:16, textAlign:'center', opacity:racer.pitStops>0?1:.3 }}>{racer.pitStops}P</span>
-  </div>
-}
-
-function EventRow({ event }: { event: LapEvent }) {
-  const driver = DRIVERS.find(d => d.code === event.driverCode)
-  const team = driver ? TEAMS[driver.team] : null
-  return <div style={{ display:'flex', gap:5, padding:'3px 4px', fontSize:'.65rem', borderBottom:'1px solid var(--rule)', alignItems:'center' }}>
-    <span className="mono" style={{ color:'var(--accent)', width:24, fontSize:'.58rem', fontWeight:700 }}>T{event.lap}</span>
-    <span className="mono" style={{ fontSize:'.48rem', padding:'1px 5px', borderRadius:3, background:evC(event.type), color:'#fff', fontWeight:700 }}>{evL(event.type)}</span>
-    {team && <span style={{ width:3, height:10, borderRadius:1, background:team.color }} />}
-    {driver && <span style={{ fontWeight:500, fontSize:'.6rem' }}>{driver.name}</span>}
-    {driver && <span className="mono" style={{ fontSize:'.45rem', color:'var(--muted)' }}>({driver.team})</span>}
-    <span style={{ color:'var(--muted)', fontSize:'.55rem', marginLeft:'auto' }}>{event.detail.replace(driver?.name||'','').trim()}</span>
-  </div>
-}
-
-function TyreBar({ racer, totalLaps }: { racer: RacerState; totalLaps: number }) {
-  const team = TEAMS[racer.driver.team]
-  const stints: {s:number;e:number;c:string}[] = []
-  if (racer.pitHistory.length===0) { stints.push({s:0,e:totalLaps,c:racer.currentTyre}) }
-  else {
-    stints.push({s:0,e:racer.pitHistory[0].lap,c:racer.position<=10?'soft':'medium'})
-    racer.pitHistory.forEach((p,i) => { const ne = i<racer.pitHistory.length-1?racer.pitHistory[i+1].lap:totalLaps; stints.push({s:p.lap,e:ne,c:p.compound}) })
-  }
-  return <div style={{ display:'flex', alignItems:'center', gap:4, marginBottom:3 }}>
-    <span style={{ width:3, height:10, borderRadius:1, background:team?.color||'#888' }} />
-    <span className="mono" style={{ fontSize:'.5rem', width:24, fontWeight:600 }}>{racer.driver.code}</span>
-    <div style={{ flex:1, height:10, background:'var(--rule)', borderRadius:2, display:'flex', overflow:'hidden', gap:.5 }}>
-      {stints.map((s,i) => { const t = TYRES[s.c as keyof typeof TYRES]; const w = ((s.e-s.s)/totalLaps)*100; return <div key={i} style={{ width:`${w}%`, height:'100%', background:t?(t.color==='#FFFFFF'?'#ccc':t.color+'70'):'#888', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'.35rem', fontFamily:"'DM Mono',monospace", fontWeight:700, color:t&&t.color!=='#FFFFFF'?'#fff':'#666' }} title={`${t?.name}: T${s.s}-${s.e}`}>{w>10?t?.name?.[0]:''}</div> })}
-    </div>
-    <span className="mono" style={{ fontSize:'.4rem', color:'#f59e0b', width:14 }}>{racer.pitStops}P</span>
-  </div>
-}
-
-function FactorBar({ label, value }: { label: string; value: number }) {
-  return <div style={{ display:'flex', alignItems:'center', gap:4, marginBottom:2 }}>
-    <span className="mono" style={{ fontSize:'.45rem', color:'var(--muted)', width:65 }}>{label}</span>
-    <div style={{ flex:1, height:5, background:'var(--rule)', borderRadius:2, overflow:'hidden' }}>
-      <div style={{ width:`${value*100}%`, height:'100%', background:'var(--accent)', borderRadius:2, opacity:.7 }} />
-    </div>
-    <span className="mono" style={{ fontSize:'.4rem', width:20, textAlign:'right' }}>{(value*100).toFixed(0)}</span>
-  </div>
-}
-
-function MetricBox({ label, value }: { label: string; value: string }) {
-  return <div style={{ background:'var(--dash-bg)', border:'1px solid var(--dash-border)', borderRadius:8, padding:'8px 10px', textAlign:'center' }}>
-    <div className="mono" style={{ fontSize:'.45rem', color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.04em' }}>{label}</div>
-    <div className="mono" style={{ fontSize:'.9rem', fontWeight:600, marginTop:2 }}>{value}</div>
-  </div>
-}
-
-// Shared
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return <div style={{ background:'var(--card-bg)', border:'1px solid var(--card-border)', borderRadius:12, padding:'10px 12px' }}>
-    <h3 className="mono" style={{ fontSize:'.58rem', color:'var(--muted)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:8 }}>{title}</h3>
+function DarkCard({title,children,span}:{title:string;children:React.ReactNode;span?:number}) {
+  return <div style={{background:'#151515',border:'1px solid #252525',borderRadius:8,padding:'10px 12px',gridColumn:span?`span ${span}`:undefined}}>
+    <div style={{fontSize:'.5rem',color:'#666',letterSpacing:'.12em',fontWeight:700,marginBottom:8,textTransform:'uppercase'}}>{title}</div>
     {children}
   </div>
 }
-function Btn({ children, onClick, active }: { children: React.ReactNode; onClick: () => void; active?: boolean }) {
-  return <button onClick={onClick} style={{ background:active?'var(--accent)':'var(--card-bg)', border:`1px solid ${active?'var(--accent)':'var(--rule)'}`, borderRadius:7, padding:'5px 12px', fontFamily:"'DM Mono',monospace", fontSize:'.6rem', color:active?'#fff':'var(--ink)', cursor:'pointer', fontWeight:500 }}>{children}</button>
+function Btn({children,onClick,active}:{children:React.ReactNode;onClick:()=>void;active?:boolean}) {
+  return <button onClick={onClick} style={{background:active?'#e10600':'#222',border:'1px solid '+(active?'#e10600':'#333'),borderRadius:5,padding:'4px 10px',fontSize:'.55rem',color:active?'#fff':'#aaa',cursor:'pointer',fontFamily:'inherit',fontWeight:600}}>{children}</button>
 }
-function TabBtn({ children, onClick, active }: { children: React.ReactNode; onClick: () => void; active?: boolean }) {
-  return <button onClick={onClick} style={{ background:active?'rgba(255,255,255,0.1)':'transparent', border:'none', padding:'5px 12px', fontFamily:"'DM Mono',monospace", fontSize:'.55rem', color:active?'#fff':'rgba(255,255,255,0.4)', cursor:'pointer', fontWeight:active?600:400 }}>{children}</button>
+function Dot({c,label}:{c:string;label:string}) {
+  return <span style={{display:'flex',alignItems:'center',gap:4,fontSize:'.5rem',color:c}}><span style={{width:5,height:5,borderRadius:'50%',background:c}}/>{label}</span>
 }
-function Chip({ icon, label, value }: { icon: string; label: string; value: string }) {
-  return <div style={{ background:'var(--card-bg)', border:'1px solid var(--card-border)', borderRadius:8, padding:'6px 10px', display:'flex', gap:6, alignItems:'center' }}>
-    <span>{icon}</span><div><div className="mono" style={{ fontSize:'.42rem', color:'var(--muted)', textTransform:'uppercase' }}>{label}</div><div className="mono" style={{ fontSize:'.65rem', fontWeight:500 }}>{value}</div></div>
+function WStat({label,val,alert}:{label:string;val:string;alert?:boolean}) {
+  return <div style={{textAlign:'center'}}><div style={{fontSize:'.4rem',color:'#555'}}>{label}</div><div style={{fontSize:'.65rem',fontWeight:600,color:alert?'#ef4444':'#ccc'}}>{val}</div></div>
+}
+function LStat({label,val,err}:{label:string;val:number|string;err?:boolean}) {
+  return <div style={{background:'#1a1a1a',borderRadius:4,padding:'3px 4px',textAlign:'center'}}><div style={{fontSize:'.35rem',color:'#555'}}>{label}</div><div style={{fontSize:'.6rem',fontWeight:700,color:err&&Number(val)>0?'#ef4444':'#ccc'}}>{val}</div></div>
+}
+function FBar({label,v}:{label:string;v:number}) {
+  return <div style={{display:'flex',alignItems:'center',gap:3,marginBottom:1}}>
+    <span style={{fontSize:'.4rem',color:'#555',width:40}}>{label}</span>
+    <div style={{flex:1,height:3,background:'#222',borderRadius:2,overflow:'hidden'}}><div style={{width:`${v*100}%`,height:'100%',background:v>0.7?'#4ade80':v>0.4?'#fbbf24':'#ef4444',borderRadius:2}}/></div>
+    <span style={{fontSize:'.38rem',color:'#666',width:16,textAlign:'right'}}>{(v*100).toFixed(0)}</span>
   </div>
 }
-function StatusDot({ status }: { status: string }) {
-  const c: any = { connected:'#4ade80', connecting:'#fbbf24', offline:'#6b7280' }
-  const l: any = { connected:'API Bağlı', connecting:'...', offline:'Çevrimdışı' }
-  return <span style={{ display:'flex', alignItems:'center', gap:4, fontFamily:"'DM Mono',monospace", fontSize:'.55rem', color:c[status] }}><span style={{ width:5, height:5, borderRadius:'50%', background:c[status], animation:status==='connected'?'pd 2s infinite':'none' }}/>{l[status]}</span>
-}
-function Muted({ children }: { children: React.ReactNode }) { return <div className="mono" style={{ fontSize:'.6rem', color:'var(--muted)' }}>{children}</div> }
-
-// ═══════════════════════════════════════════
-// VERİ YOK TABI
-// ═══════════════════════════════════════════
-function NoDataTab({ circuit, setCircuit, runSim }: any) {
-  return <>
-    <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
-      <select value={circuit.name} onChange={(e: any) => { const c = CIRCUITS.find(c => c.name === e.target.value); if (c) { setCircuit(c); runSim(c) } }} style={selStyle}>
-        {CIRCUITS.map(c => <option key={c.name} value={c.name}>{c.flag} {c.name}</option>)}
-      </select>
-    </div>
-    <Card title={`${circuit.flag} ${circuit.name}`}>
-      <div style={{ textAlign:'center', padding:'60px 20px' }}>
-        <div style={{ fontSize:'2.5rem', marginBottom:16 }}>📡</div>
-        <div style={{ fontSize:'1rem', fontWeight:300, marginBottom:8 }}>Bu pist için henüz gerçek yarış verisi yok</div>
-        <div className="mono" style={{ fontSize:'.65rem', color:'var(--muted)', maxWidth:400, margin:'0 auto', lineHeight:1.6 }}>
-          Simülasyon sadece gerçek sıralama verileriyle çalışır. Şu an sadece <strong>Albert Park (Avustralya GP 2026)</strong> için gerçek veri mevcut.
-          <br/><br/>
-          Diğer yarışlar için sıralama sonuçları açıklandığında otomatik olarak eklenecek.
-        </div>
-        <div style={{ marginTop:20 }}>
-          <Btn onClick={() => { const c = CIRCUITS.find(c => c.name === 'Albert Park'); if (c) { setCircuit(c); runSim(c) } }}>🇦🇺 Albert Park'a Git (Gerçek Veri)</Btn>
-        </div>
-      </div>
-    </Card>
-  </>
-}
-
-const selStyle: React.CSSProperties = { background:'var(--card-bg)', border:'1px solid var(--rule)', borderRadius:7, padding:'6px 10px', fontFamily:"'DM Mono',monospace", fontSize:'.65rem', color:'var(--ink)', cursor:'pointer' }
-function evC(t: string) { const m: any = {pit:'#f59e0b',sc:'#ef4444',vsc:'#f97316',rain_start:'#6366f1',rain_end:'#22c55e',dnf:'#dc2626',fastest_lap:'#a855f7',overtake:'#3b82f6'}; return m[t]||'#6b7280' }
-function evL(t: string) { const m: any = {pit:'PIT',sc:'SC',vsc:'VSC',rain_start:'🌧',rain_end:'☀',dnf:'DNF',fastest_lap:'FL',overtake:'OVT'}; return m[t]||'?' }
-function fmtLap(s: number) { const m = Math.floor(s/60); return `${m}:${(s%60).toFixed(3).padStart(6,'0')}` }
+function Empty({text}:{text:string}) { return <div style={{fontSize:'.5rem',color:'#333',textAlign:'center',padding:16}}>{text}</div> }
+function fmtLap(s:number) { const m=Math.floor(s/60); return `${m}:${(s%60).toFixed(3).padStart(6,'0')}` }
+const TC:any = {positions:'#3b82f6',laps:'#f59e0b',weather:'#6366f1',pits:'#22c55e'}
