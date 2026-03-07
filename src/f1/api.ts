@@ -242,6 +242,56 @@ class OpenF1Client {
     })
   }
   
+  /**
+   * Gerçek x,y koordinatlar — ~3.7 Hz sample rate
+   * Race replay için kritik!
+   */
+  async getLocations(sessionKey: number, driverNumber?: number): Promise<any[]> {
+    const params: any = { session_key: sessionKey }
+    if (driverNumber) params.driver_number = driverNumber
+    return this.fetchWithRetry<any>('location', params, {
+      cacheTtl: this.CACHE_TTL.positions
+    })
+  }
+  
+  /**
+   * Araç telemetrisi — hız, RPM, vites, gaz, fren, DRS
+   */
+  async getCarData(sessionKey: number, driverNumber?: number): Promise<any[]> {
+    const params: any = { session_key: sessionKey }
+    if (driverNumber) params.driver_number = driverNumber
+    return this.fetchWithRetry<any>('car_data', params, {
+      cacheTtl: this.CACHE_TTL.positions
+    })
+  }
+  
+  /**
+   * Race control mesajları — bayraklar, SC, VSC, penaltılar
+   */
+  async getRaceControl(sessionKey: number): Promise<any[]> {
+    return this.fetchWithRetry<any>('race_control', { session_key: sessionKey }, {
+      cacheTtl: this.CACHE_TTL.weather
+    })
+  }
+  
+  /**
+   * Lastik stint bilgisi — compound, yaş
+   */
+  async getStints(sessionKey: number): Promise<any[]> {
+    return this.fetchWithRetry<any>('stints', { session_key: sessionKey }, {
+      cacheTtl: this.CACHE_TTL.pit
+    })
+  }
+  
+  /**
+   * Sürücüler arası gap verileri
+   */
+  async getIntervals(sessionKey: number): Promise<any[]> {
+    return this.fetchWithRetry<any>('intervals', { session_key: sessionKey }, {
+      cacheTtl: this.CACHE_TTL.positions
+    })
+  }
+  
   // ═══════════════════════════════════════════
   // HIGH-LEVEL METHODS
   // ═══════════════════════════════════════════
