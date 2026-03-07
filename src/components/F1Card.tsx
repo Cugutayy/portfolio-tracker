@@ -4,7 +4,7 @@ const TRACK_PATH = "M40,80 C40,30 80,15 140,15 C200,15 220,45 260,45 C300,45 340
 
 export function F1Card({ t }: Props) {
   return (
-    <a href="https://github.com/Cugutayy/F1test" target="_blank" rel="noopener" style={{
+    <a href="#/f1" style={{
       display:'block', border:'1px solid var(--card-border)', borderRadius:14,
       padding:'24px 28px', background:'var(--card-bg)', cursor:'pointer',
       transition:'box-shadow .4s ease, transform .35s cubic-bezier(.16,1,.3,1), background .3s, border-color .3s',

@@ -97,3 +97,5 @@ async function init(){
   setTimeout(checkDailyKonfetti, 2000);
 }
 init();
+// Theme toggle click handler
+document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
