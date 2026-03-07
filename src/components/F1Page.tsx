@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { simulateRace } from '../f1/engine'
 import { CIRCUITS, DRIVERS, TEAMS, TYRES } from '../f1/data'
+import { AUSTRALIA_2026_QUALI } from '../f1/realdata'
 import { predictor } from '../f1/predictor'
 import { openF1 } from '../f1/api'
 import type { SimResult, RacerState, Circuit, LapEvent, PredictionResult } from '../f1/types'
@@ -14,6 +15,7 @@ export function F1Page() {
   const [apiStatus, setApiStatus] = useState<'connecting'|'connected'|'offline'>('connecting')
   const [aiPredictions, setAiPredictions] = useState<PredictionResult[]|null>(null)
   const [aiLoading, setAiLoading] = useState(false)
+  const [aiProgress, setAiProgress] = useState<string[]>([])
   const [backtestMetrics, setBacktestMetrics] = useState<any>(null)
   const [activeTab, setActiveTab] = useState<'sim'|'ai'>('sim')
   const intervalRef = useRef<number|null>(null)
@@ -21,7 +23,11 @@ export function F1Page() {
   const runSim = useCallback((c: Circuit) => {
     setPlaying(false); setCurrentLap(0)
     if (intervalRef.current) clearInterval(intervalRef.current)
-    setSimResult(simulateRace(c))
+    // Albert Park için gerçek 2026 sıralama verisi kullan
+    const realGrid = c.name === 'Albert Park'
+      ? AUSTRALIA_2026_QUALI.map(q => ({ code: q.driverCode, position: q.position }))
+      : undefined
+    setSimResult(simulateRace(c, undefined, undefined, realGrid))
   }, [])
 
   useEffect(() => { runSim(circuit) }, [circuit, runSim])
@@ -31,20 +37,38 @@ export function F1Page() {
     openF1.getMeetings(2026).then(m => setApiStatus(m.length > 0 ? 'connected' : 'offline')).catch(() => setApiStatus('offline'))
   }, [])
 
-  // AI init + predict
+  // AI init + predict with live progress
   const runAIPrediction = useCallback(async () => {
     setAiLoading(true)
+    setAiProgress(['🚀 AI motor başlatılıyor...'])
     try {
-      await predictor.initialize([2023, 2024, 2025])
+      const addProgress = (msg: string) => setAiProgress(prev => [...prev, msg])
+      
+      addProgress('📥 OpenF1 API bağlantısı kuruluyor...')
+      await predictor.initialize((msg) => {
+        addProgress(msg)
+      })
+      
+      addProgress('🧠 Model eğitildi — tahmin yapılıyor...')
       const rw = await openF1.getCurrentRaceWeekend(2026)
       if (rw) {
-        const preds = await predictor.predict(rw.meeting.meeting_key, rw.meeting.circuit_short_name)
+        addProgress(`🏁 ${rw.meeting.meeting_name} için tahmin hesaplanıyor...`)
+        const preds = await predictor.predictRace(rw.meeting.meeting_key, rw.meeting.circuit_short_name)
         setAiPredictions(preds)
+        addProgress(`✅ ${preds.length} sürücü için tahmin tamamlandı`)
+      } else {
+        addProgress('⚠ Aktif yarış hafta sonu bulunamadı — statik verilerle tahmin yapılıyor')
+        // Statik tahmin
+        const features = DRIVERS.map(d => ({
+          code: d.code, name: d.name, team: d.team, teamColor: d.teamColor,
+          features: [Math.round(d.skill * 0.5 + (TEAMS[d.team]?.carSpeed||80) * 0.5) > 90 ? 3 : 10, 1.5, 8, 8, 11, 20]
+        }))
+        setAiPredictions(predictor.predictFromFeatures(features))
+        addProgress('✅ Statik tahmin tamamlandı')
       }
-      // Backtest
-      const metrics = await predictor.backtest(2025)
-      setBacktestMetrics(metrics)
-    } catch (e) { console.warn('[AI]', e) }
+    } catch (e: any) {
+      setAiProgress(prev => [...prev, `❌ Hata: ${e.message}`])
+    }
     setAiLoading(false)
   }, [])
 
@@ -60,6 +84,7 @@ export function F1Page() {
   const standings = simResult?.lapByLap[currentLap - 1] || simResult?.standings || []
   const events = simResult?.events.filter(e => e.lap <= currentLap) || []
   const pittingNow = standings.filter(r => r.status === 'pitting')
+  const hasRealData = standings.length > 0
 
   return (
     <div style={{ background:'var(--bg)', minHeight:'100vh', color:'var(--ink)' }}>
@@ -77,7 +102,7 @@ export function F1Page() {
             <StatusDot status={apiStatus} />
             {/* Tab switch */}
             <div style={{ display:'flex', border:'1px solid rgba(255,255,255,0.15)', borderRadius:6, overflow:'hidden' }}>
-              <TabBtn active={activeTab==='sim'} onClick={() => setActiveTab('sim')}>Simülasyon</TabBtn>
+              <TabBtn active={activeTab==='sim'} onClick={() => setActiveTab('sim')}>Pist & Tahmin</TabBtn>
               <TabBtn active={activeTab==='ai'} onClick={() => { setActiveTab('ai'); if (!aiPredictions && !aiLoading) runAIPrediction() }}>AI Tahmin</TabBtn>
             </div>
           </div>
@@ -86,9 +111,13 @@ export function F1Page() {
 
       <div className="container" style={{ padding:'16px 28px' }}>
         {activeTab === 'sim' ? (
-          <SimTab circuit={circuit} setCircuit={setCircuit} simResult={simResult} currentLap={currentLap} standings={standings} events={events} pittingNow={pittingNow} playing={playing} setPlaying={setPlaying} speed={speed} setSpeed={setSpeed} runSim={runSim} />
+          hasRealData ? (
+            <SimTab circuit={circuit} setCircuit={setCircuit} simResult={simResult} currentLap={currentLap} standings={standings} events={events} pittingNow={pittingNow} playing={playing} setPlaying={setPlaying} speed={speed} setSpeed={setSpeed} runSim={runSim} />
+          ) : (
+            <NoDataTab circuit={circuit} setCircuit={setCircuit} runSim={runSim} />
+          )
         ) : (
-          <AITab predictions={aiPredictions} loading={aiLoading} metrics={backtestMetrics} onRerun={runAIPrediction} />
+          <AITab predictions={aiPredictions} loading={aiLoading} progress={aiProgress} metrics={backtestMetrics} onRerun={runAIPrediction} />
         )}
       </div>
     </div>
@@ -101,7 +130,7 @@ export function F1Page() {
 function SimTab({ circuit, setCircuit, simResult, currentLap, standings, events, pittingNow, playing, setPlaying, speed, setSpeed, runSim }: any) {
   return <>
     {/* Controls */}
-    <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
+    <div style={{ display:'flex', gap:8, marginBottom:8, flexWrap:'wrap', alignItems:'center' }}>
       <select value={circuit.name} onChange={(e: any) => { const c = CIRCUITS.find(c => c.name === e.target.value); if (c) { setCircuit(c); runSim(c) } }} style={selStyle}>
         {CIRCUITS.map(c => <option key={c.name} value={c.name}>{c.flag} {c.name}</option>)}
       </select>
@@ -109,6 +138,13 @@ function SimTab({ circuit, setCircuit, simResult, currentLap, standings, events,
       <Btn onClick={() => runSim(circuit)}>↻</Btn>
       <Btn onClick={() => setSpeed((s: number) => s >= 4 ? 1 : s * 2)}>{speed}×</Btn>
       <div style={{ marginLeft:'auto' }} className="mono" ><small style={{ color:'var(--muted)' }}>Tur </small><strong>{currentLap}</strong><small style={{ color:'var(--muted)' }}> / {circuit.laps}</small></div>
+    </div>
+    {/* UYARI: Simülasyon tahmini */}
+    <div style={{ background:'rgba(249,115,22,0.08)', border:'1px solid rgba(249,115,22,0.2)', borderRadius:8, padding:'8px 12px', marginBottom:12, display:'flex', gap:8, alignItems:'center' }}>
+      <span style={{ fontSize:'.9rem' }}>⚠️</span>
+      <span className="mono" style={{ fontSize:'.58rem', color:'#b45309' }}>
+        TAHMİN — Bu simülasyon gerçek sıralama verisinden başlıyor ama tur bazındaki sonuçlar fizik modeli tahmindir, gerçek değildir. Yarış sonrası gerçek sonuçlar OpenF1 API'den çekilecektir.
+      </span>
     </div>
     {/* Progress */}
     <div style={{ height:2, background:'var(--rule)', borderRadius:1, marginBottom:16, overflow:'hidden' }}>
@@ -122,7 +158,7 @@ function SimTab({ circuit, setCircuit, simResult, currentLap, standings, events,
 
     {/* Alt grid: sıralama + olaylar + lastik */}
     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginTop:12 }}>
-      <Card title={`Sıralama · Tur ${currentLap}`}>
+      <Card title={`Tahmini Sıralama · Tur ${currentLap} (simülasyon)`}>
         <div style={{ maxHeight:400, overflowY:'auto' }}>
           {standings.map((r: RacerState, i: number) => <DriverRow key={r.driver.code} racer={r} index={i} />)}
         </div>
@@ -151,15 +187,43 @@ function SimTab({ circuit, setCircuit, simResult, currentLap, standings, events,
 // ═══════════════════════════════════════════
 // AI TAHMİN TABI
 // ═══════════════════════════════════════════
-function AITab({ predictions, loading, metrics, onRerun }: { predictions: PredictionResult[]|null; loading: boolean; metrics: any; onRerun: () => void }) {
+function AITab({ predictions, loading, progress, metrics, onRerun }: { predictions: PredictionResult[]|null; loading: boolean; progress: string[]; metrics: any; onRerun: () => void }) {
   return <>
-    <div style={{ display:'flex', gap:10, marginBottom:16, alignItems:'center' }}>
+    <div style={{ display:'flex', gap:10, marginBottom:16, alignItems:'center', flexWrap:'wrap' }}>
       <h2 style={{ fontSize:'1.1rem', fontWeight:300 }}>AI Yarış Tahmini</h2>
-      <Btn onClick={onRerun}>{loading ? '⏳ Yükleniyor...' : '🤖 Tahmin Yap'}</Btn>
-      <Muted>OpenF1 API + 2023-2025 geçmiş verisi</Muted>
+      <Btn onClick={onRerun} active={loading}>{loading ? '⏳ Yükleniyor...' : '🤖 Tahmin Yap'}</Btn>
+      <Muted>Ridge Regression · OpenF1 API · 2023-2025 gerçek veri</Muted>
     </div>
 
-    {loading && <div style={{ textAlign:'center', padding:40 }}><Muted>Model eğitiliyor ve tahmin yapılıyor...</Muted></div>}
+    {/* Canlı progress logları */}
+    {loading && (
+      <Card title="Model Eğitim İlerlemesi">
+        <div style={{ maxHeight:250, overflowY:'auto', fontFamily:"'DM Mono',monospace", fontSize:'.6rem' }}>
+          {progress.map((msg, i) => (
+            <div key={i} style={{ padding:'3px 0', color: msg.includes('✓') ? 'var(--green-t)' : msg.includes('⚠') || msg.includes('❌') ? '#ef4444' : 'var(--muted)', borderBottom:'1px solid var(--rule)', display:'flex', gap:6, alignItems:'center' }}>
+              <span style={{ color:'var(--accent)', width:20, flexShrink:0, textAlign:'right', fontSize:'.5rem' }}>{i+1}</span>
+              <span>{msg}</span>
+            </div>
+          ))}
+          {loading && (
+            <div style={{ padding:'6px 0', display:'flex', alignItems:'center', gap:6 }}>
+              <span style={{ width:8, height:8, borderRadius:'50%', border:'2px solid var(--accent)', borderTopColor:'transparent', display:'inline-block', animation:'spin 1s linear infinite' }} />
+              <span style={{ color:'var(--muted)' }}>İşlem devam ediyor...</span>
+            </div>
+          )}
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </Card>
+    )}
+
+    {/* Progress bittiyse ama predictions yoksa log göster */}
+    {!loading && progress.length > 0 && !predictions && (
+      <Card title="Son İşlem Logları">
+        <div style={{ maxHeight:150, overflowY:'auto', fontFamily:"'DM Mono',monospace", fontSize:'.55rem' }}>
+          {progress.slice(-10).map((msg, i) => <div key={i} style={{ padding:'2px 0', color:'var(--muted)' }}>{msg}</div>)}
+        </div>
+      </Card>
+    )}
 
     {predictions && !loading && (
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
@@ -395,6 +459,33 @@ function StatusDot({ status }: { status: string }) {
   return <span style={{ display:'flex', alignItems:'center', gap:4, fontFamily:"'DM Mono',monospace", fontSize:'.55rem', color:c[status] }}><span style={{ width:5, height:5, borderRadius:'50%', background:c[status], animation:status==='connected'?'pd 2s infinite':'none' }}/>{l[status]}</span>
 }
 function Muted({ children }: { children: React.ReactNode }) { return <div className="mono" style={{ fontSize:'.6rem', color:'var(--muted)' }}>{children}</div> }
+
+// ═══════════════════════════════════════════
+// VERİ YOK TABI
+// ═══════════════════════════════════════════
+function NoDataTab({ circuit, setCircuit, runSim }: any) {
+  return <>
+    <div style={{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
+      <select value={circuit.name} onChange={(e: any) => { const c = CIRCUITS.find(c => c.name === e.target.value); if (c) { setCircuit(c); runSim(c) } }} style={selStyle}>
+        {CIRCUITS.map(c => <option key={c.name} value={c.name}>{c.flag} {c.name}</option>)}
+      </select>
+    </div>
+    <Card title={`${circuit.flag} ${circuit.name}`}>
+      <div style={{ textAlign:'center', padding:'60px 20px' }}>
+        <div style={{ fontSize:'2.5rem', marginBottom:16 }}>📡</div>
+        <div style={{ fontSize:'1rem', fontWeight:300, marginBottom:8 }}>Bu pist için henüz gerçek yarış verisi yok</div>
+        <div className="mono" style={{ fontSize:'.65rem', color:'var(--muted)', maxWidth:400, margin:'0 auto', lineHeight:1.6 }}>
+          Simülasyon sadece gerçek sıralama verileriyle çalışır. Şu an sadece <strong>Albert Park (Avustralya GP 2026)</strong> için gerçek veri mevcut.
+          <br/><br/>
+          Diğer yarışlar için sıralama sonuçları açıklandığında otomatik olarak eklenecek.
+        </div>
+        <div style={{ marginTop:20 }}>
+          <Btn onClick={() => { const c = CIRCUITS.find(c => c.name === 'Albert Park'); if (c) { setCircuit(c); runSim(c) } }}>🇦🇺 Albert Park'a Git (Gerçek Veri)</Btn>
+        </div>
+      </div>
+    </Card>
+  </>
+}
 
 const selStyle: React.CSSProperties = { background:'var(--card-bg)', border:'1px solid var(--rule)', borderRadius:7, padding:'6px 10px', fontFamily:"'DM Mono',monospace", fontSize:'.65rem', color:'var(--ink)', cursor:'pointer' }
 function evC(t: string) { const m: any = {pit:'#f59e0b',sc:'#ef4444',vsc:'#f97316',rain_start:'#6366f1',rain_end:'#22c55e',dnf:'#dc2626',fastest_lap:'#a855f7',overtake:'#3b82f6'}; return m[t]||'#6b7280' }

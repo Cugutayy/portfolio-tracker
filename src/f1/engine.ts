@@ -61,6 +61,7 @@ export interface SimResult {
   lapByLap: RacerState[][]
   events: LapEvent[]
   fastestLap: { driver: string; time: number; lap: number }
+  seed: number
 }
 
 // ═══════════════════════════════════════════
@@ -235,7 +236,12 @@ function shouldPit(racer: RacerState, circuit: Circuit, weather: string, rand: (
 // ═══════════════════════════════════════════
 // ANA SİMÜLASYON
 // ═══════════════════════════════════════════
-export function simulateRace(circuit: Circuit, seed?: number, rainProb?: number): SimResult {
+export function simulateRace(
+  circuit: Circuit,
+  seed?: number,
+  rainProb?: number,
+  realGrid?: { code: string; position: number }[]  // Gerçek sıralama verisi
+): SimResult {
   const rand = seededRandom(seed || Date.now())
   const events: LapEvent[] = []
   
@@ -249,27 +255,36 @@ export function simulateRace(circuit: Circuit, seed?: number, rainProb?: number)
     rainLaps = [start, Math.min(start + dur, circuit.laps)]
   }
   
-  // Grid oluştur (kvalifikasyon simülasyonu)
-  const grid: RacerState[] = DRIVERS.map(driver => {
-    const team = TEAMS[driver.team]
-    const qualiPerf = driver.skill * 0.5 + team.carSpeed * 0.5 + gaussianRandom(rand) * 2
-    return {
-      driver, position: 0, lap: 0, totalTime: 0, lastLapTime: 0, bestLapTime: 999,
-      currentTyre: 'medium' as TyreCompound, tyreAge: 0, tyreDeg: 1.0,
-      pitStops: 0, pitHistory: [], gap: 0, interval: 0,
-      drs: false, dnf: false, dnfLap: 0, status: 'racing' as const,
-      _qualiPerf: qualiPerf
-    }
-  }).sort((a, b) => (b as any)._qualiPerf - (a as any)._qualiPerf)
+  // Grid oluştur — GERÇEK VERİ VARSA KULLAN
+  let grid: RacerState[]
   
-  // Grid pozisyonları ata + başlangıç lastikleri
-  grid.forEach((r, i) => {
-    r.position = i + 1
-    delete (r as any)._qualiPerf
-    r.currentTyre = i < 10 ? 'soft' : (rand() < 0.6 ? 'medium' : 'hard')
-    r.tyreDeg = 1.0
-    r.tyreAge = 0
-  })
+  if (realGrid && realGrid.length > 0) {
+    // Gerçek sıralama verisinden grid oluştur
+    grid = realGrid.map(rg => {
+      const driver = DRIVERS.find(d => d.code === rg.code)
+      if (!driver) return null
+      return {
+        driver, position: rg.position, lap: 0, totalTime: 0, lastLapTime: 0, bestLapTime: 999,
+        currentTyre: (rg.position <= 10 ? 'soft' : 'medium') as TyreCompound,
+        tyreAge: 0, tyreDeg: 1.0,
+        pitStops: 0, pitHistory: [], gap: 0, interval: 0,
+        drs: false, dnf: false, dnfLap: 0, status: 'racing' as const,
+      }
+    }).filter(Boolean) as RacerState[]
+    grid.sort((a, b) => a.position - b.position)
+  } else {
+    // Gerçek sıralama verisi yok — boş grid dön
+    // NOT: Rastgele veri ÜRETME. Gerçek veri olmadan simülasyon çalışmamalı.
+    return {
+      circuit,
+      weather: { condition: 'dry', temp: 25, rainLaps: null },
+      standings: [],
+      lapByLap: [],
+      events: [],
+      fastestLap: { driver: '', time: 0, lap: 0 },
+      seed: seed || 0
+    }
+  }
   
   // SC durumu
   let scActive = false, scStartLap = 0, scDuration = 0
@@ -384,7 +399,8 @@ export function simulateRace(circuit: Circuit, seed?: number, rainProb?: number)
     standings: grid,
     lapByLap,
     events,
-    fastestLap
+    fastestLap,
+    seed: seed || 0
   }
 }
 
