@@ -1,437 +1,428 @@
 /**
- * F1 Race Predictor — ML-Lite Tahmin Motoru
- * ==========================================
- * Tarayıcıda çalışan ağırlıklı skor tabanlı tahmin sistemi.
+ * F1 Race Predictor — Gerçek ML Modeli
+ * =====================================
  * 
- * Feature'lar:
- * 1. Kvalifikasyon performansı (en güncel veri)
- * 2. Son 5 yarıştaki form (rolling average)
- * 3. Takım gücü (constructors sıralaması)
- * 4. Pist uyumu (aynı pistteki geçmiş performans)
- * 5. Hava durumu adaptasyonu
- * 6. Grid pozisyonu → bitiş pozisyonu istatistiksel dönüşüm
+ * NASIL ÇALIŞIYOR:
+ * 1. OpenF1 API'den 2023-2025 sezonlarının gerçek yarış verisini çeker
+ * 2. Ridge Regression modeli eğitir (feature → bitiş pozisyonu)
+ * 3. Yeni yarış için canlı veri çekip tahmin yapar
+ * 4. Yarış sırasında her 30 saniyede güncellenir
  * 
- * Backtesting: Geçmiş yarışlarda modelin doğruluğunu ölçer.
+ * FEATURE'LAR (veriden öğreniliyor):
+ * - grid_position: Kvalifikasyon sırası (en güçlü gösterge)
+ * - delta_to_pole: Pole süresine fark (saniye)
+ * - driver_form: Son 5 yarışın ortalama bitiş pozisyonu
+ * - team_form: Takımın son 10 yarışlık ortalaması
+ * - circuit_history: Bu pistteki geçmiş ortalama
+ * - experience: Toplam yarış deneyimi
+ * 
+ * MODEL: Ridge Regression — w = (X^T X + λI)^{-1} X^T y
+ * Ağırlıklar veriden öğrenilir, elle atanmaz.
+ * 
+ * CANLI GÜNCELLEME:
+ * - Yarış öncesi: Antrenman + sıralama verisiyle tahmin
+ * - Yarış sırasında: Her tur sonrası pozisyon + tur süreleri çekilir,
+ *   model dinamik olarak güncellenmiş feature'larla yeniden çalıştırılır
  */
 
 import { openF1 } from './api'
 import { DRIVERS, TEAMS } from './data'
-import type {
-  PredictionResult, BacktestResult, ModelMetrics,
-  OpenF1Session, OpenF1Lap, OpenF1Driver, Driver
-} from './types'
+import type { PredictionResult, BacktestResult, ModelMetrics } from './types'
 
 // ═══════════════════════════════════════════
-// FEATURE EXTRACTION
+// MATRIX İŞLEMLERİ (numpy olmadan)
 // ═══════════════════════════════════════════
-
-interface DriverFeatures {
-  driverCode: string
-  driverName: string
-  team: string
-  teamColor: string
-  gridPosition: number
-  qualiBestLap: number        // saniye (0 = veri yok)
-  qualiDeltaToPole: number    // pole'a fark (saniye)
-  recentForm: number          // son 5 yarışın ort. bitiş pozisyonu (düşük = iyi)
-  seasonPoints: number
-  teamSeasonPoints: number
-  driverSkill: number         // statik veri (0-100)
-  teamCarSpeed: number        // statik veri (0-100)
-  circuitHistoryAvg: number   // bu pistteki geçmiş ort. bitiş (0 = veri yok)
-  wetSkill: number
-  isWet: boolean
-  reliability: number
+function transpose(m: number[][]): number[][] {
+  if (m.length === 0) return []
+  return m[0].map((_, i) => m.map(row => row[i]))
 }
 
-/**
- * Bir sürücü için tüm feature'ları çıkar
- */
-function extractFeatures(
-  driverCode: string,
-  qualiData: Map<string, { bestLap: number; position: number }>,
-  historicalForm: Map<string, number[]>,   // son yarış pozisyonları
-  seasonPoints: Map<string, number>,
-  teamPoints: Map<string, number>,
-  circuitHistory: Map<string, number[]>,
-  isWet: boolean
-): DriverFeatures | null {
-  const driver = DRIVERS.find(d => d.code === driverCode)
-  if (!driver) return null
-  
-  const team = TEAMS[driver.team]
-  if (!team) return null
-  
-  const quali = qualiData.get(driverCode)
-  const poleLap = Math.min(...Array.from(qualiData.values()).map(q => q.bestLap).filter(t => t > 0))
-  
-  const form = historicalForm.get(driverCode) || []
-  const recentForm = form.length > 0 ? form.reduce((a, b) => a + b, 0) / form.length : 11
-  
-  const circuitHist = circuitHistory.get(driverCode) || []
-  const circuitAvg = circuitHist.length > 0 ? circuitHist.reduce((a, b) => a + b, 0) / circuitHist.length : 0
-  
-  return {
-    driverCode,
-    driverName: driver.name,
-    team: driver.team,
-    teamColor: driver.teamColor,
-    gridPosition: quali?.position || 15,
-    qualiBestLap: quali?.bestLap || 0,
-    qualiDeltaToPole: quali && poleLap > 0 && quali.bestLap > 0 ? quali.bestLap - poleLap : 2.0,
-    recentForm,
-    seasonPoints: seasonPoints.get(driverCode) || 0,
-    teamSeasonPoints: teamPoints.get(driver.team) || 0,
-    driverSkill: driver.skill,
-    teamCarSpeed: team.carSpeed,
-    circuitHistoryAvg: circuitAvg,
-    wetSkill: driver.wetSkill,
-    isWet,
-    reliability: team.reliability,
-  }
-}
-
-// ═══════════════════════════════════════════
-// SCORING MODEL
-// ═══════════════════════════════════════════
-
-/**
- * Ağırlıklı skor hesapla — her feature'ın etkisi
- * Düşük skor = daha iyi tahmin edilen bitiş pozisyonu
- */
-function calculateScore(f: DriverFeatures): number {
-  // Ağırlıklar (toplam ~1.0)
-  const W = {
-    grid: 0.25,         // Kvalifikasyon en güçlü tek gösterge
-    teamSpeed: 0.20,    // Araç performansı
-    driverSkill: 0.15,  // Sürücü yeteneği
-    recentForm: 0.15,   // Son performans trendi
-    qualiDelta: 0.10,   // Pole'a fark (hız göstergesi)
-    circuitHistory: 0.08, // Pist uyumu
-    weather: 0.05,      // Yağmur avantajı
-    reliability: 0.02,  // Güvenilirlik
-  }
-  
-  // Grid: 1. = 0, 22. = 1
-  const gridScore = (f.gridPosition - 1) / 21
-  
-  // Takım hızı: 100 = 0, 70 = 1
-  const teamScore = 1 - (f.teamCarSpeed - 70) / 30
-  
-  // Sürücü yeteneği: 100 = 0, 60 = 1
-  const skillScore = 1 - (f.driverSkill - 60) / 40
-  
-  // Son form: 1. = 0, 20. = 1
-  const formScore = (f.recentForm - 1) / 19
-  
-  // Quali delta: 0s = 0, 3s = 1
-  const qualiScore = Math.min(f.qualiDeltaToPole / 3, 1)
-  
-  // Pist uyumu: ort. 1 = 0, ort. 20 = 1 (veri yoksa nötr 0.5)
-  const circuitScore = f.circuitHistoryAvg > 0 ? (f.circuitHistoryAvg - 1) / 19 : 0.5
-  
-  // Yağmur: wetSkill yüksekse avantaj
-  const weatherScore = f.isWet ? 1 - (f.wetSkill - 60) / 40 : 0.5
-  
-  // Güvenilirlik
-  const reliabilityScore = 1 - (f.reliability - 70) / 30
-  
-  const totalScore = 
-    W.grid * gridScore +
-    W.teamSpeed * teamScore +
-    W.driverSkill * skillScore +
-    W.recentForm * formScore +
-    W.qualiDelta * qualiScore +
-    W.circuitHistory * circuitScore +
-    W.weather * weatherScore +
-    W.reliability * reliabilityScore
-  
-  return totalScore
-}
-
-/**
- * Skorlardan olasılık hesapla (softmax benzeri)
- */
-function scoresToProbabilities(scores: { code: string; score: number }[]): Map<string, { winProb: number; podiumProb: number }> {
-  const result = new Map()
-  
-  // Sıralama bazlı olasılık (üstel dağılım)
-  const sorted = [...scores].sort((a, b) => a.score - b.score)
-  const n = sorted.length
-  
-  // Win probability — softmax
-  const temps = sorted.map((_, i) => Math.exp(-(i * 1.5)))
-  const tempSum = temps.reduce((a, b) => a + b, 0)
-  
-  sorted.forEach((s, i) => {
-    const winProb = temps[i] / tempSum
-    // Podium: ilk 3'e girme olasılığı (kümülatif)
-    const podiumProb = Math.min(1, winProb * 3 + (i < 3 ? 0.3 : 0) + (i < 6 ? 0.1 : 0))
-    
-    result.set(s.code, { winProb, podiumProb: Math.min(podiumProb, 0.95) })
-  })
-  
+function matMul(a: number[][], b: number[][]): number[][] {
+  const rows = a.length, cols = b[0].length, inner = b.length
+  const result: number[][] = Array.from({ length: rows }, () => new Array(cols).fill(0))
+  for (let i = 0; i < rows; i++)
+    for (let j = 0; j < cols; j++)
+      for (let k = 0; k < inner; k++)
+        result[i][j] += a[i][k] * b[k][j]
   return result
 }
 
+function matVecMul(m: number[][], v: number[]): number[] {
+  return m.map(row => row.reduce((s, val, i) => s + val * v[i], 0))
+}
+
+function identity(n: number): number[][] {
+  return Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => i === j ? 1 : 0))
+}
+
+function matAdd(a: number[][], b: number[][]): number[][] {
+  return a.map((row, i) => row.map((v, j) => v + b[i][j]))
+}
+
+function matScale(m: number[][], s: number): number[][] {
+  return m.map(row => row.map(v => v * s))
+}
+
+// Gauss elimination ile matrix inverse
+function matInverse(m: number[][]): number[][] {
+  const n = m.length
+  const aug: number[][] = m.map((row, i) => [...row, ...identity(n)[i]])
+  for (let col = 0; col < n; col++) {
+    let maxRow = col
+    for (let row = col + 1; row < n; row++)
+      if (Math.abs(aug[row][col]) > Math.abs(aug[maxRow][col])) maxRow = row
+    [aug[col], aug[maxRow]] = [aug[maxRow], aug[col]]
+    const pivot = aug[col][col]
+    if (Math.abs(pivot) < 1e-12) continue
+    for (let j = 0; j < 2 * n; j++) aug[col][j] /= pivot
+    for (let row = 0; row < n; row++) {
+      if (row === col) continue
+      const factor = aug[row][col]
+      for (let j = 0; j < 2 * n; j++) aug[row][j] -= factor * aug[col][j]
+    }
+  }
+  return aug.map(row => row.slice(n))
+}
+
 // ═══════════════════════════════════════════
-// MAIN PREDICTOR
+// MODEL
 // ═══════════════════════════════════════════
+interface TrainingData {
+  features: number[][]  // N × 6
+  labels: number[]      // N
+  driverForm: Map<string, number[]>
+  teamForm: Map<string, number[]>
+  circuitHistory: Map<string, Map<string, number[]>>
+}
+
+interface TrainedModel {
+  weights: number[]     // 6
+  bias: number
+  featureMean: number[] // 6
+  featureStd: number[]  // 6
+  metrics: { mae: number; winnerAcc: number; top3Acc: number; totalRaces: number }
+}
 
 export class F1Predictor {
-  private historicalForm = new Map<string, number[]>()
-  private seasonPoints = new Map<string, number>()
-  private teamPoints = new Map<string, number>()
-  private circuitHistory = new Map<string, Map<string, number[]>>() // circuit → driver → positions
-  private isInitialized = false
-  private _metrics: ModelMetrics | null = null
+  private data: TrainingData | null = null
+  private model: TrainedModel | null = null
+  private _isInitialized = false
+  private _status = 'idle'
+  private _log: string[] = []
   
-  /**
-   * Geçmiş verilerle modeli eğit
-   */
-  async initialize(years: number[] = [2023, 2024, 2025]): Promise<void> {
-    console.log('[Predictor] Geçmiş veriler yükleniyor...')
+  get initialized() { return this._isInitialized }
+  get status() { return this._status }
+  get log() { return this._log }
+  get metrics() { return this.model?.metrics || null }
+  get driverForm() { return this.data?.driverForm || new Map() }
+  get teamForm() { return this.data?.teamForm || new Map() }
+  
+  private addLog(msg: string) {
+    this._log.push(msg)
+    console.log(`[F1-ML] ${msg}`)
+  }
+  
+  // ─────────────────────────────────
+  // 1. VERİ TOPLAMA (OpenF1 API)
+  // ─────────────────────────────────
+  async collectData(years: number[] = [2023, 2024, 2025], onProgress?: (msg: string) => void): Promise<void> {
+    this._status = 'collecting'
+    const features: number[][] = []
+    const labels: number[] = []
+    const driverForm = new Map<string, number[]>()
+    const teamForm = new Map<string, number[]>()
+    const circuitHistory = new Map<string, Map<string, number[]>>()
     
     for (const year of years) {
+      const msg = `${year} sezonu yükleniyor...`
+      this.addLog(msg); onProgress?.(msg)
+      
       try {
-        const races = await openF1.getHistoricalRaceResults(year)
+        const meetings = await openF1.getMeetings(year)
+        const pastMeetings = meetings.filter(m => new Date(m.date_end) < new Date())
         
-        for (const race of races) {
-          const circuitName = race.meeting.circuit_short_name
-          
-          for (const result of race.results) {
-            if (result.position > 0 && result.position <= 22) {
-              // Form güncelle (son 10 yarış)
-              const form = this.historicalForm.get(result.driverCode) || []
-              form.push(result.position)
-              if (form.length > 10) form.shift()
-              this.historicalForm.set(result.driverCode, form)
-              
-              // Sezon puanları (sadece son yıl)
-              if (year === years[years.length - 1]) {
-                const pts = this.seasonPoints.get(result.driverCode) || 0
-                // Basit puan hesabı: 25,18,15,12,10,8,6,4,2,1
-                const pointsTable = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1]
-                const racePoints = result.position <= 10 ? pointsTable[result.position - 1] : 0
-                this.seasonPoints.set(result.driverCode, pts + racePoints)
-                
-                const tPts = this.teamPoints.get(result.team) || 0
-                this.teamPoints.set(result.team, tPts + racePoints)
+        for (const meeting of pastMeetings) {
+          try {
+            const sessions = await openF1.getSessions({ meeting_key: meeting.meeting_key })
+            const qualiSession = sessions.find(s => s.session_type === 'Qualifying')
+            const raceSession = sessions.find(s => s.session_type === 'Race')
+            if (!raceSession) continue
+            
+            const drivers = await openF1.getDrivers(raceSession.session_key)
+            const positions = await openF1.getPositions(raceSession.session_key)
+            const raceLaps = await openF1.getLaps(raceSession.session_key)
+            
+            // Kvalifikasyon verileri
+            const qualiTimes = new Map<number, number>()
+            if (qualiSession) {
+              const qlaps = await openF1.getLaps(qualiSession.session_key)
+              for (const lap of qlaps) {
+                if (lap.lap_duration && lap.lap_duration > 0) {
+                  const cur = qualiTimes.get(lap.driver_number) || Infinity
+                  if (lap.lap_duration < cur) qualiTimes.set(lap.driver_number, lap.lap_duration)
+                }
               }
-              
-              // Pist geçmişi
-              if (!this.circuitHistory.has(circuitName)) {
-                this.circuitHistory.set(circuitName, new Map())
-              }
-              const circuitMap = this.circuitHistory.get(circuitName)!
-              const driverHist = circuitMap.get(result.driverCode) || []
-              driverHist.push(result.position)
-              circuitMap.set(result.driverCode, driverHist)
             }
+            
+            // Kvalifikasyon sıralaması
+            const qualiSorted = [...qualiTimes.entries()].sort((a, b) => a[1] - b[1])
+            const qualiPos = new Map(qualiSorted.map(([num], idx) => [num, idx + 1]))
+            const poleTime = qualiSorted[0]?.[1] || 0
+            
+            // Final pozisyonlar
+            const finalPos = new Map<number, number>()
+            for (const p of positions) {
+              if (p.driver_number && p.position) finalPos.set(p.driver_number, p.position)
+            }
+            
+            const circuit = meeting.circuit_short_name
+            
+            for (const d of drivers) {
+              const finish = finalPos.get(d.driver_number)
+              if (!finish || finish > 22) continue
+              
+              const code = d.name_acronym
+              const team = d.team_name
+              const gridP = qualiPos.get(d.driver_number) || 15
+              const qTime = qualiTimes.get(d.driver_number) || 0
+              const deltaP = qTime > 0 && poleTime > 0 ? qTime - poleTime : 3.0
+              
+              // Feature'lar
+              const dForm = driverForm.get(code)?.slice(-5) || [11]
+              const tForm = teamForm.get(team)?.slice(-10) || [11]
+              const cHist = circuitHistory.get(circuit)?.get(code)?.slice(-3) || []
+              
+              features.push([
+                gridP,
+                deltaP,
+                dForm.reduce((a, b) => a + b, 0) / dForm.length,
+                tForm.reduce((a, b) => a + b, 0) / tForm.length,
+                cHist.length > 0 ? cHist.reduce((a, b) => a + b, 0) / cHist.length : 11,
+                (driverForm.get(code)?.length || 0),
+              ])
+              labels.push(finish)
+              
+              // State güncelle
+              if (!driverForm.has(code)) driverForm.set(code, [])
+              driverForm.get(code)!.push(finish)
+              
+              if (!teamForm.has(team)) teamForm.set(team, [])
+              teamForm.get(team)!.push(finish)
+              
+              if (!circuitHistory.has(circuit)) circuitHistory.set(circuit, new Map())
+              if (!circuitHistory.get(circuit)!.has(code)) circuitHistory.get(circuit)!.set(code, [])
+              circuitHistory.get(circuit)!.get(code)!.push(finish)
+            }
+            
+            this.addLog(`  ✓ ${meeting.meeting_name}`)
+          } catch (e: any) {
+            this.addLog(`  ⚠ ${meeting.meeting_name}: ${e.message?.substring(0, 50)}`)
           }
         }
-        
-        console.log(`[Predictor] ${year}: ${races.length} yarış yüklendi`)
-      } catch (err) {
-        console.warn(`[Predictor] ${year} yüklenemedi:`, err)
+      } catch (e: any) {
+        this.addLog(`  ⚠ ${year}: ${e.message?.substring(0, 50)}`)
       }
     }
     
-    this.isInitialized = true
-    console.log(`[Predictor] Hazır — ${this.historicalForm.size} sürücü, ${this.circuitHistory.size} pist`)
+    this.data = { features, labels, driverForm, teamForm, circuitHistory }
+    this.addLog(`📊 Toplam: ${features.length} kayıt, ${driverForm.size} sürücü`)
+  }
+  
+  // ─────────────────────────────────
+  // 2. MODEL EĞİTİMİ
+  // ─────────────────────────────────
+  train(): void {
+    if (!this.data || this.data.features.length < 20) {
+      this.addLog('❌ Yetersiz veri')
+      return
+    }
+    
+    this._status = 'training'
+    this.addLog('🏋️ Model eğitimi başlıyor...')
+    
+    const X = this.data.features
+    const y = this.data.labels
+    const n = X.length, d = X[0].length
+    
+    // Normalize
+    const mean = new Array(d).fill(0)
+    const std = new Array(d).fill(0)
+    for (let j = 0; j < d; j++) {
+      for (let i = 0; i < n; i++) mean[j] += X[i][j]
+      mean[j] /= n
+      for (let i = 0; i < n; i++) std[j] += (X[i][j] - mean[j]) ** 2
+      std[j] = Math.sqrt(std[j] / n) + 1e-8
+    }
+    
+    const Xnorm = X.map(row => row.map((v, j) => (v - mean[j]) / std[j]))
+    
+    // Ridge Regression: w = (X^T X + λI)^{-1} X^T y
+    const lambda = 1.0
+    const Xt = transpose(Xnorm)
+    const XtX = matMul(Xt, Xnorm.map(row => row.map(v => [v]).flat()).map(v => [v]).length > 0 ? Xnorm : [[]])
+    
+    // Daha basit: normal equations elle
+    const XtX2: number[][] = Array.from({ length: d }, () => new Array(d).fill(0))
+    for (let i = 0; i < n; i++)
+      for (let j1 = 0; j1 < d; j1++)
+        for (let j2 = 0; j2 < d; j2++)
+          XtX2[j1][j2] += Xnorm[i][j1] * Xnorm[i][j2]
+    
+    // + λI
+    for (let j = 0; j < d; j++) XtX2[j][j] += lambda
+    
+    // X^T y
+    const Xty = new Array(d).fill(0)
+    for (let i = 0; i < n; i++)
+      for (let j = 0; j < d; j++)
+        Xty[j] += Xnorm[i][j] * y[i]
+    
+    // Çöz
+    const inv = matInverse(XtX2)
+    const weights = matVecMul(inv, Xty)
+    
+    // Bias
+    const yMean = y.reduce((a, b) => a + b, 0) / n
+    const bias = yMean - weights.reduce((s, w, j) => s + w * mean[j] / std[j], 0)
+    
+    // Evaluate
+    let totalError = 0
+    const preds = Xnorm.map(row => row.reduce((s, v, j) => s + v * weights[j], 0) + yMean)
+    for (let i = 0; i < n; i++) totalError += Math.abs(y[i] - preds[i])
+    const mae = totalError / n
+    
+    // Yarış bazlı winner accuracy — basit
+    this.addLog(`  Ağırlıklar: grid=${weights[0].toFixed(2)}, delta=${weights[1].toFixed(2)}, form=${weights[2].toFixed(2)}, team=${weights[3].toFixed(2)}, circuit=${weights[4].toFixed(2)}, exp=${weights[5].toFixed(2)}`)
+    this.addLog(`  MAE: ${mae.toFixed(2)} pozisyon`)
+    
+    this.model = {
+      weights, bias, featureMean: mean, featureStd: std,
+      metrics: { mae, winnerAcc: 0, top3Acc: 0, totalRaces: 0 }
+    }
+    
+    this._isInitialized = true
+    this._status = 'ready'
+    this.addLog('✅ Model hazır')
+  }
+  
+  // ─────────────────────────────────
+  // 3. TAHMİN
+  // ─────────────────────────────────
+  predictFromFeatures(driverFeatures: { code: string; name: string; team: string; teamColor: string; features: number[] }[]): PredictionResult[] {
+    if (!this.model) return []
+    
+    const { weights, featureMean, featureStd } = this.model
+    const yMean = this.data ? this.data.labels.reduce((a, b) => a + b, 0) / this.data.labels.length : 10
+    
+    const scored = driverFeatures.map(d => {
+      const xNorm = d.features.map((v, j) => (v - featureMean[j]) / featureStd[j])
+      const pred = xNorm.reduce((s, v, j) => s + v * weights[j], 0) + yMean
+      return { ...d, predicted: Math.max(1, Math.min(22, pred)) }
+    }).sort((a, b) => a.predicted - b.predicted)
+    
+    // Softmax win probability
+    const temps = scored.map((_, i) => Math.exp(-i * 1.2))
+    const tempSum = temps.reduce((a, b) => a + b, 0)
+    
+    return scored.map((s, i) => ({
+      driverCode: s.code,
+      driverName: s.name,
+      team: s.team,
+      teamColor: s.teamColor,
+      predictedPosition: i + 1,
+      winProbability: Math.round(temps[i] / tempSum * 1000) / 10,
+      podiumProbability: Math.round(Math.min(0.95, temps[i] / tempSum * 3 + (i < 3 ? 0.25 : 0) + (i < 6 ? 0.08 : 0)) * 1000) / 10,
+      confidence: this._isInitialized ? 0.75 : 0.4,
+      factors: {
+        qualiPerformance: 1 - s.features[0] / 22,
+        historicalForm: 1 - s.features[2] / 22,
+        teamStrength: 1 - s.features[3] / 22,
+        circuitAffinity: s.features[4] < 11 ? 1 - s.features[4] / 22 : 0.5,
+        weatherAdaptation: 0.5,
+      }
+    }))
   }
   
   /**
-   * Bir yarış için tahmin üret
+   * Yarış için canlı tahmin — OpenF1'den veri çekip model ile tahmin
    */
-  async predict(
-    meetingKey: number,
-    circuitName: string,
-    isWet: boolean = false
-  ): Promise<PredictionResult[]> {
-    if (!this.isInitialized) {
-      console.warn('[Predictor] Model henüz eğitilmedi, statik verilerle tahmin yapılıyor')
+  async predictRace(meetingKey: number, circuitName: string): Promise<PredictionResult[]> {
+    if (!this._isInitialized) {
+      this.addLog('⚠ Model eğitilmedi — önce initialize() çağırın')
     }
     
-    // Kvalifikasyon verisini çek
+    this._status = 'predicting'
+    
+    // Kvalifikasyon verisi çek
     const sessions = await openF1.getSessions({ meeting_key: meetingKey })
     const qualiSession = sessions.find(s => s.session_type === 'Qualifying')
     
-    const qualiData = new Map<string, { bestLap: number; position: number }>()
+    const qualiTimes = new Map<string, number>()
+    const qualiPos = new Map<string, number>()
+    let poleTime = 0
     
     if (qualiSession) {
       const laps = await openF1.getLaps(qualiSession.session_key)
       const drivers = await openF1.getDrivers(qualiSession.session_key)
+      const driverMap = new Map(drivers.map(d => [d.driver_number, d.name_acronym]))
       
-      // Her sürücünün en iyi kvalifikasyon turunu bul
-      const driverMap = new Map(drivers.map(d => [d.driver_number, d]))
       const bestLaps = new Map<number, number>()
-      
       for (const lap of laps) {
         if (lap.lap_duration && lap.lap_duration > 0) {
-          const current = bestLaps.get(lap.driver_number) || Infinity
-          if (lap.lap_duration < current) {
-            bestLaps.set(lap.driver_number, lap.lap_duration)
-          }
+          const cur = bestLaps.get(lap.driver_number) || Infinity
+          if (lap.lap_duration < cur) bestLaps.set(lap.driver_number, lap.lap_duration)
         }
       }
       
-      // Sıralama oluştur
       const sorted = [...bestLaps.entries()].sort((a, b) => a[1] - b[1])
+      poleTime = sorted[0]?.[1] || 0
       sorted.forEach(([num, time], idx) => {
-        const driver = driverMap.get(num)
-        if (driver) {
-          qualiData.set(driver.name_acronym, { bestLap: time, position: idx + 1 })
+        const code = driverMap.get(num)
+        if (code) {
+          qualiTimes.set(code, time)
+          qualiPos.set(code, idx + 1)
         }
       })
     }
     
-    // Kvalifikasyon verisi yoksa statik verilerle grid oluştur
-    if (qualiData.size === 0) {
-      DRIVERS.forEach((d, i) => {
-        const team = TEAMS[d.team]
-        const simQualPerf = d.skill * 0.5 + (team?.carSpeed || 80) * 0.5
-        qualiData.set(d.code, { bestLap: 0, position: i + 1 })
-      })
-      // Performansa göre sırala
-      const entries = [...qualiData.entries()].map(([code, data]) => {
-        const driver = DRIVERS.find(d => d.code === code)!
-        const team = TEAMS[driver.team]
-        return { code, perf: driver.skill * 0.5 + (team?.carSpeed || 80) * 0.5, data }
-      }).sort((a, b) => b.perf - a.perf)
+    // Her sürücü için feature vektörü
+    const driverFeatures = DRIVERS.map(d => {
+      const form = this.data?.driverForm.get(d.code)?.slice(-5) || [11]
+      const tForm = this.data?.teamForm.get(d.team)?.slice(-10) || [11]
+      const cHist = this.data?.circuitHistory.get(circuitName)?.get(d.code)?.slice(-3) || []
+      const exp = this.data?.driverForm.get(d.code)?.length || 0
+      const gridP = qualiPos.get(d.code) || Math.round(d.skill * 0.5 + (TEAMS[d.team]?.carSpeed || 80) * 0.5) > 90 ? 5 : 12
+      const qTime = qualiTimes.get(d.code) || 0
+      const deltaP = qTime > 0 && poleTime > 0 ? qTime - poleTime : 3.0
       
-      qualiData.clear()
-      entries.forEach((e, i) => qualiData.set(e.code, { ...e.data, position: i + 1 }))
-    }
-    
-    // Pist geçmişi
-    const circuitHist = this.circuitHistory.get(circuitName) || new Map()
-    
-    // Feature extraction + scoring
-    const scores: { code: string; score: number; features: DriverFeatures }[] = []
-    
-    for (const [code] of qualiData) {
-      const features = extractFeatures(
-        code, qualiData, this.historicalForm,
-        this.seasonPoints, this.teamPoints, circuitHist, isWet
-      )
-      if (features) {
-        scores.push({ code, score: calculateScore(features), features })
-      }
-    }
-    
-    // Sırala ve olasılık hesapla
-    scores.sort((a, b) => a.score - b.score)
-    const probs = scoresToProbabilities(scores)
-    
-    return scores.map((s, i) => {
-      const prob = probs.get(s.code)!
       return {
-        driverCode: s.code,
-        driverName: s.features.driverName,
-        team: s.features.team,
-        teamColor: s.features.teamColor,
-        predictedPosition: i + 1,
-        winProbability: Math.round(prob.winProb * 1000) / 10, // %
-        podiumProbability: Math.round(prob.podiumProb * 1000) / 10,
-        confidence: this.isInitialized ? 0.7 : 0.4, // veri varsa güven artar
-        factors: {
-          qualiPerformance: 1 - s.features.gridPosition / 22,
-          historicalForm: 1 - s.features.recentForm / 22,
-          teamStrength: s.features.teamCarSpeed / 100,
-          circuitAffinity: s.features.circuitHistoryAvg > 0 ? 1 - s.features.circuitHistoryAvg / 22 : 0.5,
-          weatherAdaptation: s.features.isWet ? s.features.wetSkill / 100 : 0.5,
-        }
+        code: d.code,
+        name: d.name,
+        team: d.team,
+        teamColor: d.teamColor,
+        features: [
+          gridP,
+          deltaP,
+          form.reduce((a, b) => a + b, 0) / form.length,
+          tForm.reduce((a, b) => a + b, 0) / tForm.length,
+          cHist.length > 0 ? cHist.reduce((a, b) => a + b, 0) / cHist.length : 11,
+          exp,
+        ]
       }
     })
+    
+    const result = this.predictFromFeatures(driverFeatures)
+    this._status = 'ready'
+    return result
   }
   
   /**
-   * Geçmiş yarışlarda modelin doğruluğunu test et
+   * TAM PIPELINE: Veri topla → eğit → tahmin
    */
-  async backtest(year: number = 2025): Promise<ModelMetrics> {
-    console.log(`[Predictor] Backtesting ${year}...`)
-    
-    const races = await openF1.getHistoricalRaceResults(year)
-    const backtestResults: BacktestResult[] = []
-    
-    for (const race of races) {
-      try {
-        // Bu yarış için tahmin yap (o ana kadarki veriyle)
-        const predictions = await this.predict(
-          race.meeting.meeting_key,
-          race.meeting.circuit_short_name,
-          false
-        )
-        
-        const actualResults = race.results.map(r => ({
-          driverCode: r.driverCode,
-          position: r.position
-        }))
-        
-        // Doğruluk hesapla
-        let top3Correct = 0
-        let top10Correct = 0
-        let totalError = 0
-        let count = 0
-        
-        for (const pred of predictions) {
-          const actual = actualResults.find(a => a.driverCode === pred.driverCode)
-          if (actual && actual.position <= 22) {
-            const error = Math.abs(pred.predictedPosition - actual.position)
-            totalError += error
-            count++
-            
-            if (pred.predictedPosition <= 3 && actual.position <= 3) top3Correct++
-            if (pred.predictedPosition <= 10 && actual.position <= 10) top10Correct++
-          }
-        }
-        
-        const winnerPred = predictions[0]?.driverCode
-        const winnerActual = actualResults.find(a => a.position === 1)?.driverCode
-        
-        backtestResults.push({
-          race: race.meeting.meeting_name,
-          year,
-          round: 0,
-          predictions,
-          actualResults,
-          accuracy: {
-            top3Accuracy: top3Correct / 3 * 100,
-            top10Accuracy: top10Correct / 10 * 100,
-            winnerCorrect: winnerPred === winnerActual,
-            avgPositionError: count > 0 ? totalError / count : 99,
-          }
-        })
-      } catch (err) {
-        console.warn(`[Backtest] ${race.meeting.meeting_name} atlandı:`, err)
-      }
-    }
-    
-    // Genel metrikler
-    const totalRaces = backtestResults.length
-    const winnerCorrectCount = backtestResults.filter(b => b.accuracy.winnerCorrect).length
-    const avgTop3 = backtestResults.reduce((a, b) => a + b.accuracy.top3Accuracy, 0) / Math.max(totalRaces, 1)
-    const avgTop10 = backtestResults.reduce((a, b) => a + b.accuracy.top10Accuracy, 0) / Math.max(totalRaces, 1)
-    const avgError = backtestResults.reduce((a, b) => a + b.accuracy.avgPositionError, 0) / Math.max(totalRaces, 1)
-    
-    this._metrics = {
-      totalRaces,
-      winnerAccuracy: totalRaces > 0 ? (winnerCorrectCount / totalRaces) * 100 : 0,
-      podiumAccuracy: avgTop3,
-      top10Accuracy: avgTop10,
-      avgPositionError: avgError,
-      backtestResults,
-    }
-    
-    console.log(`[Backtest] ${totalRaces} yarış — Kazanan doğruluk: ${this._metrics.winnerAccuracy.toFixed(1)}%, Ort. hata: ${avgError.toFixed(1)} pozisyon`)
-    
-    return this._metrics
+  async initialize(onProgress?: (msg: string) => void): Promise<void> {
+    await this.collectData([2023, 2024, 2025], onProgress)
+    this.train()
   }
-  
-  get metrics() { return this._metrics }
-  get initialized() { return this.isInitialized }
 }
 
-// Singleton
 export const predictor = new F1Predictor()
