@@ -1,7 +1,8 @@
 /**
  * F1 Race Simulation Engine — 2026 Season
  * ========================================
- * Tur bazlı Monte Carlo yarış simülasyonu + OpenF1 API canlı veri
+ * Tur bazlı Monte Carlo yarış simülasyonu.
+ * Veri data.ts'den, tipler types.ts'den gelir.
  * 
  * Özellikler:
  * - Lastik degradasyonu (S/M/H/I/W)
