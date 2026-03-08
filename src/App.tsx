@@ -5,7 +5,7 @@ import { ProjectCards } from './components/ProjectCards'
 import { Footer } from './components/Footer'
 import { F1Page } from './components/F1Page'
 
-const MeshGradient = lazy(() => import('@paper-design/shaders-react').then(m => ({ default: m.MeshGradient })))
+const Warp = lazy(() => import('@paper-design/shaders-react').then(m => ({ default: m.Warp })))
 
 const I18N: Record<string, Record<string, string>> = {
   tr: { secP:'Projeler', pCnt:'3 proje', p1d:'Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi.', pf:'Portföy', ch:'Değişim', gd:'Altın', lv:'Canlı', tF:'Finans', tA:'Canlı API', p2t:'F1 Yarış Tahmini', p2d:'Ensemble ML (Ridge+GB+ELO) ile F1 yarış tahmini. Canlı telemetri, sektör analizi, lap-by-lap güncelleme.', drivers:'sürücü', cs:'Yakında', csd:'Yeni proje üzerinde çalışılıyor.', tba:'Duyurulacak', navP:'projeler', navC:'iletişim' },
@@ -14,15 +14,24 @@ const I18N: Record<string, Record<string, string>> = {
 }
 
 function ShaderBg({ dark }: { dark: boolean }) {
-  if (!dark) return null
+  const colors = dark
+    ? ['hsl(200,100%,12%)', 'hsl(170,100%,65%)', 'hsl(185,90%,25%)', 'hsl(175,100%,70%)']
+    : ['hsl(195,80%,55%)', 'hsl(165,90%,78%)', 'hsl(185,70%,45%)', 'hsl(175,85%,85%)']
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity:0.35 }}>
+    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity: dark ? 0.4 : 0.25 }}>
       <Suspense fallback={null}>
-        <MeshGradient
-          colors={['#0c4a6e','#0e7490','#06b6d4','#164e63']}
-          speed={0.08}
-          distortion={0.3}
-          swirl={0.15}
+        <Warp
+          colors={colors}
+          speed={0.4}
+          proportion={0.45}
+          softness={1}
+          distortion={0.2}
+          swirl={0.6}
+          swirlIterations={8}
+          shape="checks"
+          shapeScale={0.1}
+          scale={1}
+          rotation={0}
           style={{ width:'100%', height:'100%' }}
         />
       </Suspense>
