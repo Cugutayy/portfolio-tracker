@@ -45,6 +45,29 @@ export function F1Page() {
   const [allLocationData, setAllLocationData] = useState<any[]>([])
   const replayRef = useRef<number|null>(null)
 
+  // Seçilen yarış değişince qualifying'den tahmin üret
+  useEffect(() => {
+    if (selectedRace === SESSION_KEY) return
+    (async () => {
+      try {
+        const race = races.find(r => r.key === selectedRace)
+        if (!race?.hasData) return
+        const allS = await openF1.getSessions({year: 2026})
+        const qSess = allS.find((s:any) => s.session_type==='Qualifying' && Math.abs(new Date(s.date_start||'').getTime()-new Date(race.date).getTime())<3*86400000)
+        if (!qSess) return
+        const [laps, drvs] = await Promise.all([openF1.getLaps(qSess.session_key), openF1.getDrivers(qSess.session_key)])
+        const best = new Map<number,number>()
+        for (const l of laps) { if (l.lap_duration>0) { const c=best.get(l.driver_number)||Infinity; if(l.lap_duration<c) best.set(l.driver_number,l.lap_duration) } }
+        const pole = Math.min(...best.values())
+        const grid = [...best.entries()].sort((a,b)=>a[1]-b[1]).map(([dn,t],i) => {
+          const d=drvs.find((x:any)=>x.driver_number===dn)
+          return {code:d?.name_acronym||'?',name:d?.full_name||'?',team:d?.team_name||'?',teamColor:'#'+(d?.team_colour||'888'),position:i+1,qualiDelta:t-pole}
+        })
+        if (grid.length>0) setPreds(predictor.predictFromGrid(grid))
+      } catch {}
+    })()
+  }, [selectedRace, races])
+
   useEffect(() => {
     (async () => {
       try {
@@ -84,10 +107,17 @@ export function F1Page() {
       addLog(`✓ ${drv.length} sürücü · ${laps.length} tur · ${pos.length} pozisyon`)
       addLog(`✓ ${intv.length} interval · ${st.length} stint · ${rc.length} race ctrl`)
       try {
-        const topDrvNums = drv.slice(0,6).map((d:any) => d.driver_number)
-        const locResults = await Promise.all(topDrvNums.map((dn:number) => openF1.getLocations(sk, dn).catch(() => [])))
-        setAllLocationData(locResults.flat())
-        addLog(`✓ ${locResults.flat().length} konum`)
+        // TÜM sürücülerin konum verisini çek (3'erli batch, rate limit için)
+        const allNums = drv.map((d:any) => d.driver_number)
+        const allLocs: any[] = []
+        for (let i = 0; i < allNums.length; i += 3) {
+          const batch = allNums.slice(i, i+3)
+          const results = await Promise.all(batch.map((dn:number) => openF1.getLocations(sk, dn).catch(() => [])))
+          allLocs.push(...results.flat())
+          addLog(`  ✓ ${i+batch.length}/${allNums.length} sürücü konum`)
+        }
+        setAllLocationData(allLocs)
+        addLog(`✓ ${allLocs.length} toplam konum`)
       } catch { addLog('⚠ Konum kısmi') }
       // Yarış zaman aralığını hesapla
       const firstLap = laps.find((l:any) => l.driver_number===63 && l.lap_number===1)
@@ -274,12 +304,22 @@ export function F1Page() {
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:12}}>
             <div className="f1-card">
-              <div className="f1-title">MODEL</div>
+              <div className="f1-title">MODEL & SONRAKİ YARIŞ</div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,fontSize:10}}>
                 <div><span style={{color:'#555'}}>Ensemble:</span> <span style={{color:'#ccc'}}>Ridge40%+GB60%</span></div>
                 <div><span style={{color:'#555'}}>ELO:</span> <span style={{color:'#ccc'}}>Driver+Team</span></div>
                 <div><span style={{color:'#555'}}>Features:</span> <span style={{color:'#ccc'}}>14 · 2025×3</span></div>
                 <div><span style={{color:'#555'}}>Recovery:</span> <span style={{color:'#ccc'}}>Gap{'>'} 8→bonus</span></div>
+              </div>
+              <div style={{marginTop:10,padding:'8px 10px',background:'#12121e',borderRadius:8,fontSize:9,color:'#666',lineHeight:1.7}}>
+                <div style={{color:'#888',fontWeight:700,marginBottom:4,fontFamily:"'Outfit'"}}>Sonraki yarışta nasıl çalışır?</div>
+                <div>🏁 <span style={{color:'#aaa'}}>Qualifying tamamlanınca:</span> Sralama grid'i OpenF1 API'den otomatik çekilir</div>
+                <div>🧠 <span style={{color:'#aaa'}}>Model çalışır:</span> Grid pozisyonu + ELO + form + takım gücü → 14 feature</div>
+                <div>📊 <span style={{color:'#aaa'}}>Tahmin üretilir:</span> Ridge(40%) + GradientBoost(60%) + ELO recovery</div>
+                <div>📡 <span style={{color:'#aaa'}}>Canlı yarış:</span> Her 5s'de positions, intervals, laps çekilir → tahmin güncellenir</div>
+                <div>🔄 <span style={{color:'#aaa'}}>Yarış sonrası:</span> Sonuç modele feedback olarak eklenir (ELO güncellenir)</div>
+                <div style={{marginTop:4,color:'#555'}}>Antrenman verileri: Pace analizi için kullanılır ama qualifying grid ana input</div>
+                <div style={{color:'#555'}}>API: api.openf1.org · Ücretsiz · Rate limit 3 req/s</div>
               </div>
             </div>
             <div className="f1-card">
