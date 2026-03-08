@@ -6,12 +6,13 @@
   --card-hover: rgba(0,0,0,0.06);
 }
 [data-theme="dark"] {
-  --bg: #0c0c0b; --bg2: #151514; --ink: #e4e0d8; --muted: #6a665e; --rule: #222018;
-  --accent: #d45a3e; --card-bg: #151514; --card-border: #222018;
-  --nav-bg: rgba(12,12,11,0.92); --dash-bg: #111110; --dash-border: #222018;
-  --green: #4ade80; --green-t: #4ade80; --shadow: rgba(0,0,0,0.3);
-  --card-hover: rgba(255,255,255,0.03);
+  --bg: #0a0a09; --bg2: #131312; --ink: #e4e0d8; --muted: #7a756c; --rule: #1e1c16;
+  --accent: #d45a3e; --card-bg: #131312; --card-border: #1e1c16;
+  --nav-bg: rgba(10,10,9,0.92); --dash-bg: #0f0f0e; --dash-border: #1e1c16;
+  --green: #4ade80; --green-t: #4ade80; --shadow: rgba(0,0,0,0.4);
+  --card-hover: rgba(255,255,255,0.04);
 }
+[data-theme="dark"] body::after { opacity: 0.04; mix-blend-mode: screen; }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }

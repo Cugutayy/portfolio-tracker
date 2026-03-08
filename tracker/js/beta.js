@@ -11,6 +11,7 @@ function renderBeta(){
     <button class="ttest-tab beta-tab active" data-tab="overview" onclick="switchBetaTab('overview')">${tr?'Ozet':'Overview'}</button>
     <button class="ttest-tab beta-tab" data-tab="method" onclick="switchBetaTab('method')">${tr?'Metodoloji':'Methodology'}</button>
     <button class="ttest-tab beta-tab" data-tab="detail" onclick="switchBetaTab('detail')">${tr?'Detay':'Detail'}</button>
+    <button class="ttest-tab beta-tab" data-tab="covmatrix" onclick="switchBetaTab('covmatrix')">${tr?'Kovaryans Matrisi':'Covariance Matrix'}</button>
     <button class="ttest-tab beta-tab" data-tab="data" onclick="switchBetaTab('data')">${tr?'Ham Veri':'Raw Data'}</button>
   </div>
   <div class="ttest-body" id="betaBody"></div></div>`;
@@ -228,6 +229,87 @@ function renderBetaBody(){
           :r.beta>1.2?'Aggressive. If BIST-100 drops 1%, this drops ~'+Math.abs(r.beta).toFixed(2)+'%. Higher systematic risk.'
           :'Neutral. Moves roughly in line with market.')}</div></div>`;
     });
+    body.innerHTML=h;
+  }
+
+  // ═══ TAB: COVARIANCE MATRIX ═══
+  else if(betaTab==='covmatrix'){
+    // Compute daily returns for all instruments
+    const allInstrs=[{id:'xu100',name:'BIST-100',color:'var(--muted)'},...INSTRS.filter(i=>HISTORY[i.id]&&HISTORY[i.id].length>=3).map(i=>({id:i.id,name:SN(i),color:i.color}))];
+    const returns={};
+    allInstrs.forEach(ins=>{
+      const prices=ins.id==='xu100'?xu:HISTORY[ins.id];
+      if(!prices||prices.length<3) return;
+      const ret=[];
+      for(let i=1;i<prices.length;i++) ret.push((prices[i]-prices[i-1])/prices[i-1]*100);
+      returns[ins.id]=ret;
+    });
+    const ids=allInstrs.filter(i=>returns[i.id]).map(i=>i);
+
+    // Compute covariance matrix
+    function covPair(a,b){
+      const ra=returns[a],rb=returns[b];
+      const n=Math.min(ra.length,rb.length);
+      if(n<2) return 0;
+      const mA=ra.slice(0,n).reduce((s,v)=>s+v,0)/n;
+      const mB=rb.slice(0,n).reduce((s,v)=>s+v,0)/n;
+      let cov=0;
+      for(let i=0;i<n;i++) cov+=(ra[i]-mA)*(rb[i]-mB);
+      return cov/(n-1);
+    }
+    function corrPair(a,b){
+      const c=covPair(a,b);
+      const va=covPair(a,a),vb=covPair(b,b);
+      return (va>0&&vb>0)?c/Math.sqrt(va*vb):0;
+    }
+
+    // Build covariance matrix table
+    let h=`<div class="beta-card"><div class="beta-card-title">${tr?'Kovaryans Matrisi — Cov(r_i, r_j)':'Covariance Matrix — Cov(r_i, r_j)'}</div>
+    <div style="font-size:0.52rem;color:var(--text2);margin-bottom:10px;line-height:1.6">${tr
+      ?'Kovaryans matrisi, portfoydeki tum varlik ciftlerinin gunluk getirilerinin birlikte ne kadar degistigini gosterir. Diyagonal elemanlar = varyans. Simetrik matris: Cov(i,j) = Cov(j,i).'
+      :'The covariance matrix shows how daily returns of all asset pairs move together. Diagonal elements = variance. Symmetric: Cov(i,j) = Cov(j,i).'}</div>
+    <div style="overflow-x:auto"><table class="ttest-table" style="font-size:0.42rem"><thead><tr><th></th>`;
+    ids.forEach(i=>{h+=`<th style="text-align:right;color:${i.color};min-width:56px;white-space:nowrap">${i.name}</th>`;});
+    h+=`</tr></thead><tbody>`;
+    ids.forEach((ri,ii)=>{
+      h+=`<tr><td style="font-weight:600;color:${ri.color};white-space:nowrap">${ri.name}</td>`;
+      ids.forEach((ci,ji)=>{
+        const v=covPair(ri.id,ci.id);
+        const isDiag=ii===ji;
+        const bg=isDiag?'rgba(201,168,76,0.08)':Math.abs(v)>1?'rgba(229,62,62,0.06)':'';
+        h+=`<td style="text-align:right;${mono};${bg?'background:'+bg+';':''}font-size:0.42rem">${v.toFixed(4)}</td>`;
+      });
+      h+=`</tr>`;
+    });
+    h+=`</tbody></table></div></div>`;
+
+    // Correlation matrix
+    h+=`<div class="beta-card"><div class="beta-card-title">${tr?'Korelasyon Matrisi — ρ(r_i, r_j)':'Correlation Matrix — ρ(r_i, r_j)'}</div>
+    <div style="font-size:0.52rem;color:var(--text2);margin-bottom:10px;line-height:1.6">${tr
+      ?'Korelasyon, kovaryans matrisinin standartlastirilmis halidir. -1 ile +1 arasinda deger alir. Diversifikasyon icin dusuk korelasyonlu varliklar tercih edilir.'
+      :'Correlation is the standardized form of the covariance matrix. Values range from -1 to +1. Low correlation assets are preferred for diversification.'}</div>
+    <div style="font-size:0.52rem;margin-bottom:8px;line-height:1.6"><div class="ttest-formula">ρ(i,j) = Cov(r<sub>i</sub>, r<sub>j</sub>) / [σ(r<sub>i</sub>) × σ(r<sub>j</sub>)]</div></div>
+    <div style="overflow-x:auto"><table class="ttest-table" style="font-size:0.42rem"><thead><tr><th></th>`;
+    ids.forEach(i=>{h+=`<th style="text-align:right;color:${i.color};min-width:56px;white-space:nowrap">${i.name}</th>`;});
+    h+=`</tr></thead><tbody>`;
+    ids.forEach((ri,ii)=>{
+      h+=`<tr><td style="font-weight:600;color:${ri.color};white-space:nowrap">${ri.name}</td>`;
+      ids.forEach((ci,ji)=>{
+        const v=corrPair(ri.id,ci.id);
+        const isDiag=ii===ji;
+        const color=isDiag?'var(--muted)':v>0.5?'var(--success)':v<-0.3?'var(--danger)':'var(--text)';
+        const bg=isDiag?'rgba(201,168,76,0.08)':v>0.7?'rgba(34,197,94,0.08)':v<-0.3?'rgba(229,62,62,0.08)':'';
+        h+=`<td style="text-align:right;${mono};color:${color};${bg?'background:'+bg+';':''}font-size:0.42rem">${isDiag?'1.000':v.toFixed(3)}</td>`;
+      });
+      h+=`</tr>`;
+    });
+    h+=`</tbody></table></div></div>`;
+
+    // Heatmap legend
+    h+=`<div style="font-size:0.48rem;color:var(--muted);line-height:1.5;padding:6px 0">${tr
+      ?'<strong>Renk kodlari:</strong> Diyagonal (sari) = varyans · Yuksek korelasyon (yesil) ρ > 0.5 · Negatif korelasyon (kirmizi) ρ < -0.3 · n = '+(mktRet.length)+' gun'
+      :'<strong>Color codes:</strong> Diagonal (yellow) = variance · High correlation (green) ρ > 0.5 · Negative correlation (red) ρ < -0.3 · n = '+(mktRet.length)+' days'}</div>`;
+
     body.innerHTML=h;
   }
 

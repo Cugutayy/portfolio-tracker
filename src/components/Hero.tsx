@@ -17,15 +17,15 @@ export function Hero({ lang }: { lang: string }) {
   }, [lang])
 
   return (
-    <header className="container" style={{ paddingTop:60, paddingBottom:20, display:'flex', alignItems:'flex-end', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
+    <header className="container" style={{ paddingTop:56, paddingBottom:10, display:'flex', alignItems:'flex-end', justifyContent:'space-between', flexWrap:'wrap', gap:8 }}>
       <div>
-        <h1 style={{ fontSize:'clamp(1.4rem, 3vw, 1.8rem)', fontWeight:300, lineHeight:1.15, letterSpacing:'-.02em' }}>
-          S. Çağatay <em style={{ fontWeight:300, fontStyle:'italic' }}>Sönmez</em>
+        <h1 style={{ fontSize:'clamp(1.2rem, 2.5vw, 1.5rem)', fontWeight:300, lineHeight:1.15, letterSpacing:'-.02em' }}>
+          S. Cagatay <em style={{ fontWeight:300, fontStyle:'italic' }}>Sonmez</em>
         </h1>
-        <p style={{ marginTop:6, color:'var(--muted)', fontSize:'.75rem', lineHeight:1.4 }}>Developer · Data · ML</p>
+        <p style={{ marginTop:4, color:'var(--muted)', fontSize:'.68rem', lineHeight:1.3 }}>Developer · Data · ML</p>
       </div>
       <div style={{ textAlign:'right' }}>
-        <div className="mono" style={{ fontSize:'.62rem', color:'var(--muted)', letterSpacing:'.04em', opacity:.6 }}>{clock}</div>
+        <div className="mono" style={{ fontSize:'.56rem', color:'var(--muted)', letterSpacing:'.04em', opacity:.5 }}>{clock}</div>
       </div>
     </header>
   )

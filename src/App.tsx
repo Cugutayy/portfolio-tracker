@@ -13,7 +13,7 @@ const I18N: Record<string, Record<string, string>> = {
 
 export default function App() {
   const [lang, setLang] = useState('tr')
-  const [dark, setDark] = useState(false)
+  const [dark, setDark] = useState(true)
   const [page, setPage] = useState<'hub' | 'f1'>('hub')
   const t = (key: string) => I18N[lang]?.[key] || key
 
@@ -39,9 +39,7 @@ export default function App() {
     <>
       <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />
       <Hero lang={lang} />
-      <div className="container"><hr className="divider" /></div>
       <ProjectCards t={t} />
-      <div className="container"><hr className="divider" /></div>
       <Footer />
     </>
   )
