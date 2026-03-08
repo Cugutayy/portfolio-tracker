@@ -116,6 +116,10 @@ export class F1Predictor {
   
   /**
    * 14 FEATURE ÇIKARMA
+   * F4: qualiGridDelta (sıralama performansı vs grid) — eskiden sabit 11'di
+   * F5: experience (kariyer yarış sayısı normalize) — eskiden binary 0/30'du
+   * F6: teamBestDriver (takımdaki en iyi sürücünün formu) — eskiden mean(tf) kopyasıydı
+   * F7: teammateGap (takım arkadaşına göre fark) — eskiden mean(df) kopyasıydı
    */
   private extractFeatures(grid: number, qualiDelta: number, code: string, team: string): number[] {
     const df = PRETRAINED.driverForm[code] || [11,11,11,11,11]
@@ -126,16 +130,69 @@ export class F1Predictor {
     const older3 = df.slice(0, 2)
     const trend = older3.length > 0 && recent3.length > 0 ? mean(older3) - mean(recent3) : 0
     const vol = df.length >= 3 ? Math.sqrt(df.reduce((s,v) => s + (v - mean(df))**2, 0) / df.length) : 5
-    
+
+    // F4: Sıralama performansı — grid pozisyonuyla qualiDelta ilişkisi
+    // Düşük qualiDelta + düşük grid = güçlü sıralama performansı
+    const qualiGridDelta = grid - (qualiDelta < 0.5 ? grid * 0.8 : grid * 1.1)
+
+    // F5: Deneyim — ELO tabanlı (yüksek ELO = daha deneyimli)
+    const expNorm = clamp((dElo - 1460) / 360, 0, 1) // 1460-1820 → 0-1
+
+    // F6: Takımdaki en iyi sürücünün formu
+    const teammates = Object.entries(PRETRAINED.driverForm)
+      .filter(([, ]) => {
+        const d = Object.entries(PRETRAINED.driverELO).find(([c]) => c === code)
+        const tName = Object.entries(PRETRAINED.teamELO).find(([t]) => t === team)
+        return d && tName
+      })
+    const sameTeamCodes = Object.entries(PRETRAINED.driverForm)
+      .filter(([c]) => {
+        // Aynı takımda olan sürücüleri bul
+        const driverData = Object.entries(PRETRAINED.driverELO)
+        return driverData.some(([dc]) => dc === c) && c !== code
+      })
+    // Basit: takım arkadaşını data.ts'den bul
+    const tmDrivers = this._getTeammates(code, team)
+    const tmForm = tmDrivers.length > 0 ? Math.min(...tmDrivers.map(tc => mean(PRETRAINED.driverForm[tc] || [15]))) : mean(tf)
+
+    // F7: Takım arkadaşına göre fark (negatif = daha iyi)
+    const tmAvg = tmDrivers.length > 0 ? mean(tmDrivers.map(tc => mean(PRETRAINED.driverForm[tc] || [15]))) : mean(df)
+    const teammateGap = mean(df) - tmAvg
+
     return [
-      grid, qualiDelta, mean(df), mean(tf), 11, // circuitHist → 11 (nötr, pist verisi olmadan)
-      df.length > 0 ? 30 : 0, // experience
-      mean(tf), mean(df), // teamSeason, teammate (basitleştirilmiş)
+      grid, qualiDelta, mean(df), mean(tf), qualiGridDelta,
+      expNorm * 40, // 0-40 aralığı (featureMean/Std ile uyumlu)
+      tmForm, teammateGap + 11, // +11 offset for featureMean compatibility
       (dElo - 1500) / 200, (tElo - 1500) / 200,
       trend, vol,
       Math.abs(grid - mean(df)),
       grid <= 3 ? 1 : grid <= 10 ? 0.5 : 0,
     ]
+  }
+
+  /** Takım arkadaşlarını bul */
+  private _getTeammates(code: string, team: string): string[] {
+    // DRIVERS verisinden takım arkadaşlarını eşle
+    const teamDriverMap: Record<string, string[]> = {}
+    for (const [c] of Object.entries(PRETRAINED.driverELO)) {
+      // Hardcoded team mapping (data.ts ile senkron)
+      const t = this._driverTeam(c)
+      if (!teamDriverMap[t]) teamDriverMap[t] = []
+      teamDriverMap[t].push(c)
+    }
+    return (teamDriverMap[team] || []).filter(c => c !== code)
+  }
+
+  private _driverTeam(code: string): string {
+    const map: Record<string, string> = {
+      VER:'Red Bull', HAD:'Red Bull', NOR:'McLaren', PIA:'McLaren',
+      RUS:'Mercedes', ANT:'Mercedes', LEC:'Ferrari', HAM:'Ferrari',
+      ALO:'Aston Martin', STR:'Aston Martin', ALB:'Williams', SAI:'Williams',
+      GAS:'Alpine', COL:'Alpine', OCO:'Haas', BEA:'Haas',
+      HUL:'Audi', BOR:'Audi', LAW:'Racing Bulls', LIN:'Racing Bulls',
+      PER:'Cadillac', BOT:'Cadillac',
+    }
+    return map[code] || 'Unknown'
   }
   
   /**
@@ -153,20 +210,27 @@ export class F1Predictor {
     }
     
     let raw = clamp(0.4 * ridge + 0.6 * gb, 1, 22)
-    
-    // POST-PROCESSING: ELO-grid recovery
-    // Kaza/ceza ile geriye düşen yüksek ELO sürücüleri için recovery
-    // Örnek: VER P20'de başladı ama pace'i P1-3 seviyesinde
+
+    // POST-PROCESSING: Grid-Form recovery
+    // Kaza/ceza/kötü sıralama ile geriye düşen sürücüler için recovery
     const grid = features[0]
     const driverFormAvg = features[2]
     const eloNorm = features[8] // (elo-1500)/200
     const gridFormGap = grid - driverFormAvg
+
+    // Tier 1: Yüksek ELO + büyük grid farkı (VER P20→P6 gibi)
     if (gridFormGap > 8 && eloNorm > 0.5) {
-      const recoveryStr = Math.min(0.45, (gridFormGap - 8) * 0.04 * (1 + eloNorm))
-      const eloExpected = driverFormAvg + 3
+      const recoveryStr = Math.min(0.50, (gridFormGap - 8) * 0.05 * (1 + eloNorm))
+      const eloExpected = driverFormAvg + 2
       raw = raw * (1 - recoveryStr) + eloExpected * recoveryStr
     }
-    
+    // Tier 2: Orta düzey recovery — form ortalaması gridten çok daha iyi
+    else if (gridFormGap > 4 && eloNorm > 0) {
+      const recoveryStr = Math.min(0.25, (gridFormGap - 4) * 0.03 * (1 + eloNorm * 0.5))
+      const expected = driverFormAvg + (gridFormGap * 0.3)
+      raw = raw * (1 - recoveryStr) + expected * recoveryStr
+    }
+
     return clamp(raw, 1, 22)
   }
   
