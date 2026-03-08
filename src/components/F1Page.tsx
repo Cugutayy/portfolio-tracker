@@ -105,7 +105,7 @@ export function F1Page() {
   const loadReplayData = useCallback(async () => {
     const sk = selectedRace
     setLoading(true); setLog([])
-    addLog('📡 OpenF1 API...')
+    addLog('> OpenF1 API...')
     try {
       const [drv, laps, pos, intv, st, rc, w] = await Promise.all([
         openF1.getDrivers(sk), openF1.getLaps(sk), openF1.getPositions(sk),
@@ -135,7 +135,7 @@ export function F1Page() {
         setRaceStartTime(st); setRaceEndTime(en); setReplayTime(st)
         addLog(`✓ Yarış: ${new Date(st).toISOString().slice(11,19)} → ${new Date(en).toISOString().slice(11,19)}`)
       }
-      addLog('🏁 Veriler yüklendi!')
+      addLog('> Veriler yüklendi')
       setMode('replay'); setReplayLap(1)
     } catch(e: any) { addLog(`❌ ${e.message}`) }
     setLoading(false)
@@ -149,7 +149,7 @@ export function F1Page() {
       return
     }
     setLiveActive(true); setMode('replay'); setLog([])
-    addLog('🔴 CANLI mod — 5s polling')
+    addLog('> CANLI mod — 5s polling')
     const sk = selectedRace
     const fetchLive = async () => {
       try {
@@ -253,7 +253,7 @@ export function F1Page() {
     for (const st of stintData) {
       if (st.tyre_age_at_start === 0 && st.lap_start > 1) {
         const drv = drivers.find((d:any)=>d.driver_number===st.driver_number)
-        events.push({lap:st.lap_start, type:'PIT', msg:`🔧 ${drv?.name_acronym||'?'} pit → ${st.compound||'?'}`, color:'#eab308'})
+        events.push({lap:st.lap_start, type:'PIT', msg:`PIT ${drv?.name_acronym||'?'} → ${st.compound||'?'}`, color:'#eab308'})
       }
     }
     const posHist = new Map<number,{pos:number,date:string}[]>()
@@ -265,15 +265,15 @@ export function F1Page() {
           const t=new Date(hist[i].date).getTime()
           const lapM=lapData.filter((l:any)=>l.driver_number===63).find((l:any)=>Math.abs(new Date(l.date_start||'').getTime()-t)<100000)
           if (lapM?.lap_number && hist[i-1].pos-hist[i].pos>=1) {
-            events.push({lap:lapM.lap_number, type:'OVT', msg:`⚔ ${drv?.name_acronym||'?'} P${hist[i-1].pos}→P${hist[i].pos}`, color:'#22c55e'})
+            events.push({lap:lapM.lap_number, type:'OVT', msg:`OVT ${drv?.name_acronym||'?'} P${hist[i-1].pos}→P${hist[i].pos}`, color:'#22c55e'})
           }
         }
       }
     }
     for (const rc of raceCtrl) {
-      if (rc.flag==='RED') events.push({lap:0,type:'FLAG',msg:`🔴 ${rc.message?.slice(0,50)}`,color:'#ef4444'})
-      else if (rc.message?.includes('SAFETY CAR')) events.push({lap:0,type:'SC',msg:`🚗 ${rc.message?.slice(0,50)}`,color:'#f97316'})
-      else if (rc.message?.includes('RETIRED')||rc.message?.includes('STOPPED')) events.push({lap:0,type:'DNF',msg:`💥 ${rc.message?.slice(0,50)}`,color:'#ef4444'})
+      if (rc.flag==='RED') events.push({lap:0,type:'FLAG',msg:`RED ${rc.message?.slice(0,50)}`,color:'#ef4444'})
+      else if (rc.message?.includes('SAFETY CAR')) events.push({lap:0,type:'SC',msg:`SC ${rc.message?.slice(0,50)}`,color:'#f97316'})
+      else if (rc.message?.includes('RETIRED')||rc.message?.includes('STOPPED')) events.push({lap:0,type:'DNF',msg:`DNF ${rc.message?.slice(0,50)}`,color:'#ef4444'})
     }
     return events.sort((a,b)=>a.lap-b.lap)
   }, [stintData,posData,raceCtrl,drivers,lapData])
@@ -295,13 +295,14 @@ export function F1Page() {
             </select>}
           </div>
           <div style={{display:'flex',gap:4,alignItems:'center',flexWrap:'wrap'}}>
-            {weatherData && <span style={{fontSize:9,color:'#555'}}>☀{weatherData.air_temperature?.toFixed(0)}° T{weatherData.track_temperature?.toFixed(0)}°</span>}
-            <button className="f1-btn" onClick={()=>setMode('predict')} style={{background:mode==='predict'?'#e10600':'#1e1e30',fontSize:10,padding:'5px 12px'}}>🎯 Tahmin</button>
-            <button className="f1-btn" onClick={loadReplayData} style={{background:mode==='replay'?'#e10600':'#1e1e30',fontSize:10,padding:'5px 12px',opacity:loading?.5:1}}>
-              {loading?'⏳...':'🔄 Replay'}
+            {weatherData && <span style={{fontSize:9,color:'#555'}}>{weatherData.air_temperature?.toFixed(0)}° · T{weatherData.track_temperature?.toFixed(0)}°</span>}
+            <button className="f1-btn" onClick={()=>setMode('predict')} style={{background:mode==='predict'?'#e10600':'#1e1e30',fontSize:10,padding:'5px 12px',letterSpacing:'.05em'}}>TAHMİN</button>
+            <button className="f1-btn" onClick={loadReplayData} style={{background:mode==='replay'?'#e10600':'#1e1e30',fontSize:10,padding:'5px 12px',letterSpacing:'.05em',opacity:loading?.5:1}}>
+              {loading?'...':'REPLAY'}
             </button>
-            <button className="f1-btn" onClick={toggleLive} style={{background:liveActive?'#dc2626':'#1e1e30',fontSize:10,padding:'5px 12px',animation:liveActive?'pulse 2s infinite':''}}>
-              {liveActive?'🔴 CANLI':'📡 Canlı'}
+            <button className="f1-btn" onClick={toggleLive} style={{background:liveActive?'#dc2626':'#1e1e30',fontSize:10,padding:'5px 12px',letterSpacing:'.05em',animation:liveActive?'pulse 2s infinite':''}}>
+              {liveActive && <span style={{width:6,height:6,borderRadius:'50%',background:'#fff',display:'inline-block'}}/>}
+              {liveActive?'CANLI':'CANLI'}
             </button>
           </div>
         </div>
@@ -313,7 +314,7 @@ export function F1Page() {
             <div style={{fontSize:10,color:'#555'}}>Albert Park · 58 Laps · 5.278 km</div>
           </div>
           {preds?.[0] && <div style={{padding:'6px 14px',background:'rgba(212,168,67,.06)',border:'1px solid rgba(212,168,67,.15)',borderRadius:8}}>
-            <span style={{fontSize:8,color:'#997a2e',fontFamily:"'Outfit'",fontWeight:600}}>AI: </span>
+          <span style={{fontSize:8,color:'#997a2e',fontFamily:"'Outfit'",fontWeight:600,letterSpacing:'.08em'}}>PRED </span>
             <span style={{fontFamily:"'Outfit'",fontSize:14,fontWeight:800,color:'#d4a843'}}>{preds[0].driverName}</span>
             <span style={{fontSize:10,color:'#997a2e',marginLeft:4}}>P1 {preds[0].winProbability}%</span>
           </div>}
@@ -325,6 +326,14 @@ export function F1Page() {
         </div>
 
         {mode==='predict' && <>
+          {/* TRACK MAP — en üstte geniş */}
+          <div className="f1-card" style={{marginBottom:12}}>
+            <div className="f1-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span>{races.find(r=>r.key===selectedRace)?.circuit || 'Albert Park'}</span>
+              <span style={{color:'#444',fontWeight:400,fontSize:9}}>SESSION {selectedRace}</span>
+            </div>
+            <TrackMap pts={trackPoints} cars={carPositions} drivers={drivers} standings={currentStandings}/>
+          </div>
           <div className="f1-grid2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
             <div className="f1-card">
               <div className="f1-title">QUALIFYING GRID · AI TAHMİN</div>
@@ -345,7 +354,7 @@ export function F1Page() {
               </div>
             </div>
             <div className="f1-card">
-              <div className="f1-title">🏁 SONUÇ vs TAHMİN</div>
+              <div className="f1-title">SONUÇ vs TAHMİN</div>
               <div style={{maxHeight:480,overflowY:'auto'}}>
                 {AUSTRALIA_2026_RACE_RESULT.map((r,i) => {
                   const d=backtest?.details.find(x=>x.code===r.code); const tm=TEAMS[r.team]; const dead=r.status==='dnf'||r.status==='dns'
@@ -371,11 +380,11 @@ export function F1Page() {
               </div>
               <div style={{marginTop:10,padding:'8px 10px',background:'#12121e',borderRadius:8,fontSize:9,color:'#666',lineHeight:1.7}}>
                 <div style={{color:'#888',fontWeight:700,marginBottom:4,fontFamily:"'Outfit'"}}>Sonraki yarışta nasıl çalışır?</div>
-                <div>🏁 <span style={{color:'#aaa'}}>Qualifying tamamlanınca:</span> Sralama grid'i OpenF1 API'den otomatik çekilir</div>
-                <div>🧠 <span style={{color:'#aaa'}}>Model çalışır:</span> Grid pozisyonu + ELO + form + takım gücü → 14 feature</div>
-                <div>📊 <span style={{color:'#aaa'}}>Tahmin üretilir:</span> Ridge(40%) + GradientBoost(60%) + ELO recovery</div>
-                <div>📡 <span style={{color:'#aaa'}}>Canlı yarış:</span> Her 5s'de positions, intervals, laps çekilir → tahmin güncellenir</div>
-                <div>🔄 <span style={{color:'#aaa'}}>Yarış sonrası:</span> Sonuç modele feedback olarak eklenir (ELO güncellenir)</div>
+                <div><span style={{color:'#666'}}>1.</span> <span style={{color:'#aaa'}}>Qualifying tamamlanınca:</span> Grid OpenF1 API'den otomatik çekilir</div>
+                <div><span style={{color:'#666'}}>2.</span> <span style={{color:'#aaa'}}>Model çalışır:</span> Grid + ELO + form + takım → 14 feature</div>
+                <div><span style={{color:'#666'}}>3.</span> <span style={{color:'#aaa'}}>Tahmin:</span> Ridge(40%) + GB(60%) + ELO recovery</div>
+                <div><span style={{color:'#666'}}>4.</span> <span style={{color:'#aaa'}}>Canlı:</span> 5s polling → tahmin güncellenir</div>
+                <div><span style={{color:'#666'}}>5.</span> <span style={{color:'#aaa'}}>Sonrası:</span> ELO güncellenir, sonraki yarışa beslenir</div>
                 <div style={{marginTop:4,color:'#555'}}>Antrenman verileri: Pace analizi için kullanılır ama qualifying grid ana input</div>
                 <div style={{color:'#555'}}>API: api.openf1.org · Ücretsiz · Rate limit 3 req/s</div>
               </div>
@@ -398,9 +407,9 @@ export function F1Page() {
 
         {mode==='replay' && <>
           <div className="f1-card" style={{marginBottom:12,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-            <button className="f1-btn" onClick={()=>setReplayPlaying(!replayPlaying)} style={{background:replayPlaying?'#ef4444':'#22c55e',padding:'7px 18px'}}>{replayPlaying?'⏸':'▶'}</button>
-            <button className="f1-btn" onClick={()=>setReplayTime(Math.max(raceStartTime,replayTime-85000))} style={{background:'#2a2a3a',padding:'6px 10px'}}>⏪</button>
-            <button className="f1-btn" onClick={()=>setReplayTime(Math.min(raceEndTime,replayTime+85000))} style={{background:'#2a2a3a',padding:'6px 10px'}}>⏩</button>
+            <button className="f1-btn" onClick={()=>setReplayPlaying(!replayPlaying)} style={{background:replayPlaying?'#ef4444':'#22c55e',padding:'7px 14px',letterSpacing:'.05em',fontSize:9}}>{replayPlaying?'STOP':'PLAY'}</button>
+            <button className="f1-btn" onClick={()=>setReplayTime(Math.max(raceStartTime,replayTime-85000))} style={{background:'#2a2a3a',padding:'6px 10px',fontSize:9}}>←</button>
+            <button className="f1-btn" onClick={()=>setReplayTime(Math.min(raceEndTime,replayTime+85000))} style={{background:'#2a2a3a',padding:'6px 10px',fontSize:9}}>→</button>
             {[.5,1,2,4].map(s=><button key={s} className="f1-btn" onClick={()=>setReplaySpeed(s)} style={{background:replaySpeed===s?'#e10600':'#2a2a3a',padding:'4px 8px',fontSize:9}}>{s}x</button>)}
             <input type="range" min={raceStartTime||0} max={raceEndTime||1} value={replayTime} onChange={e=>{setReplayTime(Number(e.target.value))}} step={1000} style={{flex:1,minWidth:150,accentColor:'#e10600'}}/>
             <span style={{fontSize:13,fontWeight:700,color:'#fff',fontFamily:"'Outfit'"}}>LAP {replayLap}/{TOTAL_LAPS}</span>
