@@ -184,27 +184,40 @@ export function F1Page() {
 
   const currentStandings = useMemo(() => {
     if (posData.length === 0 || lapData.length === 0) return []
+    // Russell'in bu turdaki tarihini referans al
+    const rusLaps = lapData.filter((l: any) => l.driver_number === 63 && l.lap_number <= replayLap)
+    const refTime = rusLaps.length > 0 ? new Date(rusLaps[rusLaps.length-1].date_start||'').getTime() : 0
+    // Pozisyonları tarihe göre filtrele
     const latestPos = new Map<number, number>()
+    for (const p of posData) {
+      const t = new Date(p.date||'').getTime()
+      if (t <= refTime + 10000) latestPos.set(p.driver_number, p.position)
+    }
+    // Gap verisi — tarihe göre filtrele
     const latestGap = new Map<number, number>()
+    for (const iv of intervalData) {
+      const t = new Date(iv.date||'').getTime()
+      if (t <= refTime + 10000) latestGap.set(iv.driver_number, iv.gap_to_leader ?? 0)
+    }
+    // Tur süreleri
     const latestLapTime = new Map<number, number>()
-    const lapTimes = new Map<number, number[]>()
-    for (const p of posData) latestPos.set(p.driver_number, p.position)
     for (const l of lapData) {
       if (l.lap_number <= replayLap && l.lap_duration && l.lap_duration > 0) {
         latestLapTime.set(l.driver_number, l.lap_duration)
-        const arr = lapTimes.get(l.driver_number) || []
-        arr.push(l.lap_duration)
-        lapTimes.set(l.driver_number, arr)
       }
     }
-    for (const iv of intervalData) latestGap.set(iv.driver_number, iv.gap_to_leader || 0)
+    // Stints — bu turdaki lastik
+    const currentStint = (dn: number) => {
+      const s = stintData.filter((st: any) => st.driver_number === dn && (st.lap_start||0) <= replayLap)
+      return s.length > 0 ? s[s.length-1] : null
+    }
     return drivers.map((d: any) => ({
       number: d.driver_number, code: d.name_acronym, name: d.full_name,
       team: d.team_name, color: '#' + (d.team_colour || '888'),
       position: latestPos.get(d.driver_number) || 99,
       gap: latestGap.get(d.driver_number) || 0,
       lastLap: latestLapTime.get(d.driver_number) || 0,
-      stint: (() => { const s = stintData.filter((s: any) => s.driver_number === d.driver_number); return s.length > 0 ? s[s.length-1] : null })(),
+      stint: currentStint(d.driver_number),
     })).sort((a: any, b: any) => a.position - b.position)
   }, [posData, lapData, intervalData, stintData, drivers, replayLap])
 
@@ -366,12 +379,12 @@ export function F1Page() {
                       <span style={{fontFamily:"'Outfit',sans-serif",fontWeight:i<3?700:500,color:i<10?'#f0f0f0':'#888',fontSize:13}}>{d.code}</span>
                       <span style={{fontSize:9,color:'#555',marginLeft:8}}>{d.team}</span>
                     </div>
-                    <span style={{fontSize:10,color:'#666',width:50,textAlign:'right'}}>{d.gap>0?`+${d.gap.toFixed(1)}s`:'LEADER'}</span>
+                    <span style={{fontSize:10,color:'#666',width:60,textAlign:'right'}}>{d.gap>0?`+${d.gap.toFixed(1)}s`:i===0?'LEADER':'+0.0s'}</span>
                     <span style={{fontSize:10,color:d.lastLap>0&&d.lastLap<82?'#a855f7':'#555',width:55,textAlign:'right'}}>{d.lastLap>0?d.lastLap.toFixed(3):'—'}</span>
-                    {d.stint && <span style={{padding:'2px 6px',borderRadius:3,fontSize:9,fontWeight:700,
-                      background:d.stint.compound==='SOFT'?'#dc2626':d.stint.compound==='MEDIUM'?'#eab308':'#e5e5e5',
-                      color:d.stint.compound==='HARD'||d.stint.compound==='MEDIUM'?'#000':'#fff'
-                    }}>{d.stint.compound?.[0]||'?'}</span>}
+                    <span style={{padding:'2px 6px',borderRadius:3,fontSize:9,fontWeight:700,minWidth:16,textAlign:'center',
+                      background:(d.stint?.compound||'MEDIUM')==='SOFT'?'#dc2626':(d.stint?.compound||'MEDIUM')==='MEDIUM'?'#eab308':(d.stint?.compound||'MEDIUM')==='HARD'?'#e5e5e5':'#22c55e',
+                      color:(d.stint?.compound||'MEDIUM')==='HARD'||(d.stint?.compound||'MEDIUM')==='MEDIUM'?'#000':'#fff'
+                    }}>{(d.stint?.compound||'M')?.[0]}</span>
                   </div>
                 ))}
               </div>
@@ -450,7 +463,7 @@ function TrackMap({trackPoints, carPositions, drivers, standings, stintData}: {
 
   const toSVG = (x: number, y: number) => ({
     sx: PAD + ((x - xMin) / (xMax - xMin)) * (W - 2*PAD),
-    sy: PAD + ((y - yMin) / (yMax - yMin)) * (H - 2*PAD)
+    sy: H - PAD - ((y - yMin) / (yMax - yMin)) * (H - 2*PAD)
   })
 
   // Pist yolu
@@ -468,11 +481,9 @@ function TrackMap({trackPoints, carPositions, drivers, standings, stintData}: {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',height:'auto',background:'#12121e',borderRadius:10}}>
       {/* Pist arka plan */}
-      <path d={trackPath + ' Z'} fill="none" stroke="#2a2a3a" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"/>
-      {/* Pist ön plan */}
-      <path d={trackPath + ' Z'} fill="none" stroke="#3a3a4a" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round"/>
-      {/* Pist orta çizgi */}
-      <path d={trackPath + ' Z'} fill="none" stroke="#4a4a5a" strokeWidth="1" strokeDasharray="4,8" opacity="0.5"/>
+      <path d={trackPath} fill="none" stroke="#2a2a3a" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d={trackPath} fill="none" stroke="#3a3a4a" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d={trackPath} fill="none" stroke="#4a4a5a" strokeWidth="1" strokeDasharray="4,8" opacity="0.4"/>
 
       {/* Start/Finish çizgi */}
       {trackPoints.length > 0 && (() => {
