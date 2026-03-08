@@ -1,7 +1,7 @@
 export function Footer() {
   return (
     <>
-      <div className="container" style={{ padding:'48px 0', display:'flex', flexWrap:'wrap', gap:24, justifyContent:'center' }}>
+      <div className="container" style={{ padding:'24px 0', display:'flex', flexWrap:'wrap', gap:20, justifyContent:'center' }}>
         <a href="mailto:s.cagatay.sonmez@gmail.com" className="link-ed mono" style={{ fontSize:'.78rem' }}>s.cagatay.sonmez@gmail.com</a>
         <a href="https://github.com/Cugutayy" target="_blank" className="link-ed mono" style={{ fontSize:'.78rem' }}>GitHub ↗</a>
       </div>

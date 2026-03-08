@@ -5,9 +5,9 @@ interface Props { t: (k: string) => string }
 
 export function ProjectCards({ t }: Props) {
   return (
-    <section id="projects" className="container" style={{ padding:'60px 0 80px' }}>
+    <section id="projects" className="container" style={{ padding:'24px 0 48px' }}>
       <ScrollReveal delay={0}>
-        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:48 }}>
+        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:24 }}>
           <h2 style={{ fontSize:'1.5rem', fontWeight:300 }}>{t('secP')}</h2>
           <span className="mono" style={{ fontSize:'.7rem', color:'var(--muted)' }}>{t('pCnt')}</span>
         </div>
