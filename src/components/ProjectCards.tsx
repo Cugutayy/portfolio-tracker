@@ -44,9 +44,12 @@ function ScrollReveal({ children, delay = 0, style }: { children: React.ReactNod
   useEffect(() => {
     const el = ref.current
     if (!el) return
+    // Hemen kontrol et — sayfa yüklenirken zaten viewport'taysa
+    const rect = el.getBoundingClientRect()
+    if (rect.top < window.innerHeight + 100) { setVisible(true); return }
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) { setVisible(true); obs.unobserve(el) }
-    }, { threshold: 0, rootMargin: '50px' })
+    }, { threshold: 0, rootMargin: '100px' })
     obs.observe(el)
     return () => obs.disconnect()
   }, [])

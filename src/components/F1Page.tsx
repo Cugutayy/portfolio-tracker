@@ -20,6 +20,11 @@ const CSS = `
 .f1-row{display:flex;align-items:center;gap:6px;padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.03)}
 .f1-row:hover{background:rgba(255,255,255,.02)}
 .f1-btn{border:none;border-radius:8px;padding:7px 16px;font-size:11px;color:#fff;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;display:flex;align-items:center;gap:5px}
+@media(max-width:768px){
+  .f1-grid2{grid-template-columns:1fr!important}
+  .f1-grid3{grid-template-columns:1fr!important}
+  .f1-controls{flex-direction:column}
+}
 `
 
 export function F1Page() {
@@ -289,7 +294,7 @@ export function F1Page() {
               {races.map(r=><option key={r.key} value={r.key} disabled={!r.hasData}>{r.circuit} {r.date.slice(5)} {r.hasData?'':'⊘'}</option>)}
             </select>}
           </div>
-          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+          <div style={{display:'flex',gap:4,alignItems:'center',flexWrap:'wrap'}}>
             {weatherData && <span style={{fontSize:9,color:'#555'}}>☀{weatherData.air_temperature?.toFixed(0)}° T{weatherData.track_temperature?.toFixed(0)}°</span>}
             <button className="f1-btn" onClick={()=>setMode('predict')} style={{background:mode==='predict'?'#e10600':'#1e1e30',fontSize:10,padding:'5px 12px'}}>🎯 Tahmin</button>
             <button className="f1-btn" onClick={loadReplayData} style={{background:mode==='replay'?'#e10600':'#1e1e30',fontSize:10,padding:'5px 12px',opacity:loading?.5:1}}>
@@ -320,7 +325,7 @@ export function F1Page() {
         </div>
 
         {mode==='predict' && <>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+          <div className="f1-grid2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
             <div className="f1-card">
               <div className="f1-title">QUALIFYING GRID · AI TAHMİN</div>
               <div style={{maxHeight:480,overflowY:'auto'}}>
@@ -355,7 +360,7 @@ export function F1Page() {
               </div>
             </div>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:12}}>
+          <div className="f1-grid2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:12}}>
             <div className="f1-card">
               <div className="f1-title">MODEL & SONRAKİ YARIŞ</div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,fontSize:10}}>
@@ -400,7 +405,7 @@ export function F1Page() {
             <input type="range" min={raceStartTime||0} max={raceEndTime||1} value={replayTime} onChange={e=>{setReplayTime(Number(e.target.value))}} step={1000} style={{flex:1,minWidth:150,accentColor:'#e10600'}}/>
             <span style={{fontSize:13,fontWeight:700,color:'#fff',fontFamily:"'Outfit'"}}>LAP {replayLap}/{TOTAL_LAPS}</span>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1.2fr 1fr 0.8fr',gap:12}}>
+          <div className="f1-grid3" style={{display:'grid',gridTemplateColumns:'1.2fr 1fr 0.8fr',gap:12}}>
             <div className="f1-card">
               <div className="f1-title">TRACK MAP · LAP {replayLap}</div>
               <TrackMap pts={trackPoints} cars={carPositions} drivers={drivers} standings={currentStandings}/>
@@ -452,7 +457,7 @@ export function F1Page() {
             </div>
             </div>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:12}}>
+          <div className="f1-grid2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:12}}>
             <div className="f1-card">
               <div className="f1-title">RACE CONTROL</div>
               <div style={{maxHeight:150,overflowY:'auto'}}>
