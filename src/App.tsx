@@ -14,28 +14,27 @@ const I18N: Record<string, Record<string, string>> = {
 }
 
 function ShaderBg({ dark }: { dark: boolean }) {
-  const mouseRef = useRef({ x: 0, y: 0 })
-  const [offset, setOffset] = useState({ x: 0, y: 0 })
-  const rafRef = useRef<number>(0)
+  const [wave, setWave] = useState(0.2)
+  const decayRef = useRef<number>(0)
+  const lastMove = useRef(0)
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    mouseRef.current = {
-      x: (e.clientX / window.innerWidth - 0.5) * 0.3,
-      y: (e.clientY / window.innerHeight - 0.5) * 0.3,
-    }
-    if (!rafRef.current) {
-      rafRef.current = requestAnimationFrame(() => {
-        setOffset({ x: mouseRef.current.x, y: mouseRef.current.y })
-        rafRef.current = 0
-      })
-    }
+  const handleMouseMove = useCallback(() => {
+    const now = Date.now()
+    const dt = now - lastMove.current
+    lastMove.current = now
+    // Mouse hızına göre dalga yoğunluğu (0.2 base → max 0.55)
+    const velocity = dt < 200 ? Math.min(1, 50 / Math.max(dt, 8)) : 0
+    setWave(0.2 + velocity * 0.35)
+    // Dalga yavaşça sönsün
+    clearTimeout(decayRef.current)
+    decayRef.current = window.setTimeout(() => setWave(0.2), 600)
   }, [])
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove, { passive: true })
     return () => {
       window.removeEventListener('mousemove', handleMouseMove)
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      clearTimeout(decayRef.current)
     }
   }, [handleMouseMove])
 
@@ -50,15 +49,13 @@ function ShaderBg({ dark }: { dark: boolean }) {
           speed={0.4}
           proportion={0.45}
           softness={1}
-          distortion={0.2}
+          distortion={wave}
           swirl={0.6}
           swirlIterations={8}
           shape="checks"
           shapeScale={0.1}
           scale={1}
           rotation={0}
-          offsetX={offset.x}
-          offsetY={offset.y}
           style={{ width:'100%', height:'100%' }}
         />
       </Suspense>
