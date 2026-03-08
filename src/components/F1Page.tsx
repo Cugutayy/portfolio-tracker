@@ -40,12 +40,28 @@ export function F1Page() {
   const [drivers, setDrivers] = useState<any[]>([])
   const [log, setLog] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [races, setRaces] = useState<{key:number,name:string,country:string,date:string,hasData:boolean}[]>([])
+  const [selectedRace, setSelectedRace] = useState(SESSION_KEY)
   const [trackPoints, setTrackPoints] = useState<{x:number,y:number}[]>([])
   const [carPositions, setCarPositions] = useState<Map<number,{x:number,y:number}>>(new Map())
   const [allLocationData, setAllLocationData] = useState<any[]>([])
   const replayRef = useRef<number|null>(null)
 
+  // 2026 yarış listesini çek
   useEffect(() => {
+    (async () => {
+      try {
+        const sessions = await openF1.getSessions({year: 2026, session_type: 'Race'})
+        const raceList = sessions.map((s: any) => ({
+          key: s.session_key,
+          name: s.circuit_short_name || s.country_name,
+          country: s.country_name,
+          date: s.date_start?.slice(0,10) || '',
+          hasData: new Date(s.date_start) <= new Date()
+        }))
+        setRaces(raceList)
+      } catch { /* sessiz geç */ }
+    })()
     const grid = AUSTRALIA_2026_QUALI.map(q => ({
       code:q.driverCode, name:q.driverName, team:q.team,
       teamColor:TEAMS[q.team]?.color||'#888', position:q.position,
@@ -59,55 +75,69 @@ export function F1Page() {
   }, [])
 
   const loadReplayData = useCallback(async () => {
+    const sk = selectedRace
     setLoading(true)
+    setLog([])
     addLog('📡 OpenF1 API bağlantısı kuruluyor...')
-    addLog(`Session key: ${SESSION_KEY} (2026 AUS GP Race)`)
+    addLog(`Session key: ${sk} (${races.find(r=>r.key===sk)?.name || 'Race'})`)
     try {
       addLog('→ Sürücü listesi çekiliyor...')
-      const drv = await openF1.getDrivers(SESSION_KEY)
+      const drv = await openF1.getDrivers(sk)
       setDrivers(drv)
       addLog(`✓ ${drv.length} sürücü yüklendi`)
 
       addLog('→ Tur verileri çekiliyor...')
-      const laps = await openF1.getLaps(SESSION_KEY)
+      const laps = await openF1.getLaps(sk)
       setLapData(laps)
       addLog(`✓ ${laps.length} tur kaydı yüklendi`)
 
       addLog('→ Pozisyon verileri çekiliyor...')
-      const pos = await openF1.getPositions(SESSION_KEY)
+      const pos = await openF1.getPositions(sk)
       setPosData(pos)
       addLog(`✓ ${pos.length} pozisyon kaydı yüklendi`)
 
       addLog('→ Gap verileri çekiliyor...')
-      const intv = await openF1.getIntervals(SESSION_KEY)
+      const intv = await openF1.getIntervals(sk)
       setIntervalData(intv)
       addLog(`✓ ${intv.length} interval kaydı yüklendi`)
 
       addLog('→ Lastik verileri çekiliyor...')
-      const st = await openF1.getStints(SESSION_KEY)
+      const st = await openF1.getStints(sk)
       setStintData(st)
       addLog(`✓ ${st.length} stint kaydı yüklendi`)
 
       addLog('→ Race control mesajları çekiliyor...')
-      const rc = await openF1.getRaceControl(SESSION_KEY)
+      const rc = await openF1.getRaceControl(sk)
       setRaceCtrl(rc)
       addLog(`✓ ${rc.length} race control mesajı yüklendi`)
 
       addLog('→ Hava durumu çekiliyor...')
-      const w = await openF1.getWeather(SESSION_KEY)
+      const w = await openF1.getWeather(sk)
       if (w.length > 0) setWeatherData(w[w.length-1])
       addLog(`✓ Hava durumu yüklendi`)
 
-      addLog('→ Pist koordinatları çekiliyor (Russell 1 tur)...')
-      const trackLoc = await openF1.getLocations(SESSION_KEY, 63)
-      const tPts = trackLoc.slice(0, 400).map((l: any) => ({x: l.x, y: l.y}))
-      setTrackPoints(tPts)
-      addLog(`✓ ${tPts.length} pist noktası yüklendi`)
+      // Pist koordinatları — ayrı try-catch (opsiyonel)
+      try {
+        addLog('→ Pist koordinatları çekiliyor (Russell 1 tur)...')
+        const trackLoc = await openF1.getLocations(sk, 63)
+        const tPts = trackLoc.slice(0, 400).map((l: any) => ({x: l.x, y: l.y}))
+        setTrackPoints(tPts)
+        addLog(`✓ ${tPts.length} pist noktası yüklendi`)
+      } catch { addLog('⚠ Pist koordinatları alınamadı (opsiyonel)') }
 
-      addLog('→ Tüm araç konum verileri çekiliyor...')
-      const allLoc = await openF1.getLocations(SESSION_KEY)
-      setAllLocationData(allLoc)
-      addLog(`✓ ${allLoc.length} konum noktası yüklendi`)
+      // Araç konumları — top 6 sürücü için ayrı ayrı çek
+      try {
+        addLog('→ Araç konum verileri çekiliyor (top 6)...')
+        const topDrivers = [63,12,16,44,4,1] // RUS,ANT,LEC,HAM,NOR,VER
+        const allLocs: any[] = []
+        for (const dn of topDrivers) {
+          const loc = await openF1.getLocations(sk, dn)
+          allLocs.push(...loc)
+          addLog(`  ✓ #${dn}: ${loc.length} konum`)
+        }
+        setAllLocationData(allLocs)
+        addLog(`✓ Toplam ${allLocs.length} konum noktası yüklendi`)
+      } catch { addLog('⚠ Konum verileri kısmi yüklendi') }
 
       addLog('🏁 Tüm veriler yüklendi! Replay başlatılabilir.')
       setMode('replay')
@@ -115,7 +145,7 @@ export function F1Page() {
       addLog(`❌ Hata: ${e.message}`)
     }
     setLoading(false)
-  }, [addLog])
+  }, [addLog, selectedRace, races])
 
   useEffect(() => {
     if (!replayPlaying) { if(replayRef.current) clearInterval(replayRef.current); return }
@@ -190,7 +220,9 @@ export function F1Page() {
             <div>
               <span style={{fontFamily:"'Outfit',sans-serif",fontSize:18,fontWeight:800,color:'#fff'}}>F1</span>
               <span style={{fontFamily:"'Outfit',sans-serif",fontSize:18,fontWeight:800,color:'#e10600',marginLeft:4}}>PREDICTOR</span>
-              <span style={{fontSize:10,color:'#555',marginLeft:10}}>R1 Australia 2026</span>
+              {races.length > 0 ? <select value={selectedRace} onChange={e => setSelectedRace(Number(e.target.value))} style={{marginLeft:10,background:'#1e1e30',border:'1px solid #2a2a3a',borderRadius:6,color:'#ccc',padding:'3px 8px',fontSize:10,fontFamily:"'Outfit',sans-serif",cursor:'pointer'}}>
+                {races.map(r => <option key={r.key} value={r.key} disabled={!r.hasData}>{r.name} {r.date} {r.hasData ? '' : '(veri yok)'}</option>)}
+              </select> : <span style={{fontSize:10,color:'#555',marginLeft:10}}>2026 Season</span>}
             </div>
           </div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
