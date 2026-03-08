@@ -13,8 +13,8 @@ export function ProjectCards({ t }: Props) {
         </div>
       </ScrollReveal>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:24 }}>
-        <ScrollReveal delay={100} style={{ gridColumn:'1/-1' }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16 }}>
+        <ScrollReveal delay={100}>
           <Card3D href="/tracker/" accent="var(--green-t)">
             <PortfolioContent t={t} />
           </Card3D>
@@ -75,9 +75,9 @@ function Card3D({ children, href, disabled, accent }: { children: React.ReactNod
     const rect = cardRef.current.getBoundingClientRect()
     const x = (e.clientX - rect.left) / rect.width
     const y = (e.clientY - rect.top) / rect.height
-    const rotateX = (0.5 - y) * 10
-    const rotateY = (x - 0.5) * 10
-    cardRef.current.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.015,1.015,1.015)`
+    const rotateX = (0.5 - y) * 5
+    const rotateY = (x - 0.5) * 5
+    cardRef.current.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.008,1.008,1.008)`
     if (glowRef.current) {
       glowRef.current.style.opacity = '1'
       glowRef.current.style.background = `radial-gradient(circle at ${x*100}% ${y*100}%, ${accent || 'rgba(201,168,76,0.06)'} 0%, transparent 55%)`
