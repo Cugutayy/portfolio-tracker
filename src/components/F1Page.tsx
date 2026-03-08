@@ -651,16 +651,16 @@ function TrackSVG({ pts, cars, drivers, standings, large, selectedDrivers, onCar
   const currentFlag = lapFlags.get(replayLap) || 'green'
   const flagBorder = currentFlag === 'yellow' ? '#eab308' : currentFlag === 'red' ? '#ef4444' : currentFlag === 'sc' ? '#f97316' : currentFlag === 'vsc' ? '#fbbf24' : 'transparent'
 
-  return <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: large ? '100%' : 500, height: 'auto', borderRadius: 10, background: 'linear-gradient(135deg,#080810,#0e1018 50%,#080812)', border: flagBorder !== 'transparent' ? `2px solid ${flagBorder}` : 'none' }}>
+  return <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: large ? '100%' : 500, height: 'auto', borderRadius: 10, background: 'transparent', border: flagBorder !== 'transparent' ? `2px solid ${flagBorder}` : 'none' }}>
     <defs>
-      <pattern id="tg" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M 30 0 L 0 0 0 30" fill="none" stroke="#fff" strokeWidth=".2" opacity=".04" /></pattern>
-      <radialGradient id="tv" cx="50%" cy="50%" r="55%"><stop offset="0%" stopColor="transparent" /><stop offset="100%" stopColor="#000" stopOpacity=".5" /></radialGradient>
+      <pattern id="tg" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M 30 0 L 0 0 0 30" fill="none" stroke="#fff" strokeWidth=".2" opacity=".06" /></pattern>
+      <radialGradient id="tv" cx="50%" cy="50%" r="55%"><stop offset="0%" stopColor="transparent" /><stop offset="100%" stopColor="#000" stopOpacity=".3" /></radialGradient>
     </defs>
     <rect width={W} height={H} fill="url(#tg)" /><rect width={W} height={H} fill="url(#tv)" />
     {/* Track layers */}
-    <path d={path} fill="none" stroke="#1a1a2a" strokeWidth={sw + 6} strokeLinecap="round" strokeLinejoin="round" />
-    <path d={path} fill="none" stroke="#2a2a3a" strokeWidth={sw + 2} strokeLinecap="round" strokeLinejoin="round" />
-    <path d={path} fill="none" stroke="#3a3a4a" strokeWidth={sw - 2} strokeLinecap="round" strokeLinejoin="round" opacity=".5" />
+    <path d={path} fill="none" stroke="rgba(20,20,40,.85)" strokeWidth={sw + 6} strokeLinecap="round" strokeLinejoin="round" />
+    <path d={path} fill="none" stroke="#3a3a50" strokeWidth={sw + 2} strokeLinecap="round" strokeLinejoin="round" />
+    <path d={path} fill="none" stroke="#4a4a5a" strokeWidth={sw - 2} strokeLinecap="round" strokeLinejoin="round" opacity=".5" />
     {/* DRS zones (green overlay) */}
     {drsZones.map((zp, i) => zp && <path key={`drs-${i}`} d={zp} fill="none" stroke="#22c55e" strokeWidth={sw + 3} strokeLinecap="round" strokeLinejoin="round" opacity=".25" />)}
     {/* Start/finish */}
