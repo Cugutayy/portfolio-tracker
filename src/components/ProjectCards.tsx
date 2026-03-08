@@ -46,7 +46,7 @@ function ScrollReveal({ children, delay = 0, style }: { children: React.ReactNod
     if (!el) return
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) { setVisible(true); obs.unobserve(el) }
-    }, { threshold: 0.1 })
+    }, { threshold: 0, rootMargin: '50px' })
     obs.observe(el)
     return () => obs.disconnect()
   }, [])
