@@ -187,6 +187,18 @@ tracker/
 - Cache: Her deploy sonrası Ctrl+Shift+R gerekli
 - Proxy: /api/prices → Cloudflare Pages Function → Yahoo Finance
 
+## KRİTİK PENDING — HEMEN YAPILACAK
+- [ ] F1 sayfası referans görüntü gibi olmalı: https://github.com/IAmTomShaw/f1-race-replay
+  - Sol: Driver telemetri kartları (speed, gear, DRS, throttle/brake bar, ahead/behind gap)
+  - Orta: BÜYÜK pist, araçlar takım renkleriyle, DRS zonları yeşil çizgi
+  - Sağ: Leaderboard + OUT/pit durumu
+  - Mevcut hali çok sıkışık ve sade — daha canlı, renkli, interaktif olmalı
+  - Pist yolları DRS zonlarında yeşil, sarı bayrak bölgelerinde sarı
+- [ ] @paper-design/shaders-react Warp shader arka plan (npm install yapıldı mı kontrol et)
+- [ ] Tracker kategori tab butonları (BIST/Emtia/Döviz/Kripto) — tıkla, içinde arat
+- [ ] Hub arscontexta tarzı interaktif tasarım
+- [ ] Excel beta/kovaryans formülleri
+
 ## PENDING TODO (sonraki seans)
 - [ ] Tracker kategori tab sistemi (BIST/Emtia/Döviz/Kripto/Endeks butonları + içinde arama)
 - [ ] Hub arscontexta tarzı interaktif arka plan (koyu tema, grain, cam efektli kartlar, glassmorphism)
