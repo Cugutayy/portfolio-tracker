@@ -4,6 +4,7 @@ import { Hero } from './components/Hero'
 import { ProjectCards } from './components/ProjectCards'
 import { Footer } from './components/Footer'
 import { F1Page } from './components/F1Page'
+import { Water } from '@paper-design/shaders-react'
 
 const I18N: Record<string, Record<string, string>> = {
   tr: { secP:'Projeler', pCnt:'3 proje', p1d:'Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi.', pf:'Portföy', ch:'Değişim', gd:'Altın', lv:'Canlı', tF:'Finans', tA:'Canlı API', p2t:'F1 Yarış Tahmini', p2d:'Ensemble ML (Ridge+GB+ELO) ile F1 yarış tahmini. Canlı telemetri, sektör analizi, lap-by-lap güncelleme.', drivers:'sürücü', cs:'Yakında', csd:'Yeni proje üzerinde çalışılıyor.', tba:'Duyurulacak', navP:'projeler', navC:'iletişim' },
@@ -37,10 +38,27 @@ export default function App() {
 
   return (
     <>
-      <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />
-      <Hero lang={lang} />
-      <ProjectCards t={t} />
-      <Footer />
+      {/* Ocean background */}
+      <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity: dark ? 0.22 : 0.1 }}>
+        <Water
+          colorBack={dark ? '#010812' : '#e0f2fe'}
+          colorHighlight={dark ? '#22d3ee' : '#0891b2'}
+          highlights={0.7}
+          layering={0.8}
+          edges={0.4}
+          caustic={0.9}
+          waves={0.6}
+          size={1.8}
+          speed={0.3}
+          style={{ width:'100%', height:'100%' }}
+        />
+      </div>
+      <div style={{ position:'relative', zIndex:1 }}>
+        <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />
+        <Hero lang={lang} />
+        <ProjectCards t={t} />
+        <Footer />
+      </div>
     </>
   )
 }
