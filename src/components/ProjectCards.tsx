@@ -75,18 +75,20 @@ function Card3D({ children, href, disabled, accent }: { children: React.ReactNod
     const rect = cardRef.current.getBoundingClientRect()
     const x = (e.clientX - rect.left) / rect.width
     const y = (e.clientY - rect.top) / rect.height
-    const rotateX = (0.5 - y) * 5
-    const rotateY = (x - 0.5) * 5
-    cardRef.current.style.transform = `perspective(900px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.008,1.008,1.008)`
+    const rotateX = (0.5 - y) * 3
+    const rotateY = (x - 0.5) * 3
+    cardRef.current.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`
+    cardRef.current.style.boxShadow = `0 12px 40px var(--shadow), 0 2px 8px var(--shadow)`
     if (glowRef.current) {
       glowRef.current.style.opacity = '1'
-      glowRef.current.style.background = `radial-gradient(circle at ${x*100}% ${y*100}%, ${accent || 'rgba(201,168,76,0.06)'} 0%, transparent 55%)`
+      glowRef.current.style.background = `radial-gradient(circle at ${x*100}% ${y*100}%, var(--card-hover) 0%, transparent 60%)`
     }
-  }, [disabled, accent])
+  }, [disabled])
 
   const handleMouseLeave = useCallback(() => {
     if (!cardRef.current) return
-    cardRef.current.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)'
+    cardRef.current.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg) translateY(0)'
+    cardRef.current.style.boxShadow = `0 4px 24px var(--shadow)`
     if (glowRef.current) glowRef.current.style.opacity = '0'
   }, [])
 
@@ -111,10 +113,8 @@ function Card3D({ children, href, disabled, accent }: { children: React.ReactNod
           opacity: disabled ? 0.5 : 1,
         }}
       >
-        {/* Glow */}
-        <div ref={glowRef} style={{position:'absolute',inset:0,borderRadius:'inherit',opacity:0,transition:'opacity .4s ease',pointerEvents:'none',zIndex:1}}/>
-        {/* Üst accent çizgi */}
-        {!disabled && <div style={{position:'absolute',top:0,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${accent||'var(--accent)'},transparent)`,opacity:0.3}}/>}
+        {/* Hover glow */}
+        <div ref={glowRef} style={{position:'absolute',inset:0,borderRadius:'inherit',opacity:0,transition:'opacity .5s ease',pointerEvents:'none',zIndex:1}}/>
         <div style={{position:'relative',zIndex:2}}>
           {children}
         </div>
