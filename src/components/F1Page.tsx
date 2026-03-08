@@ -27,6 +27,9 @@ export function F1Page() {
   const [replayLap, setReplayLap] = useState(1)
   const [replayPlaying, setReplayPlaying] = useState(false)
   const [replaySpeed, setReplaySpeed] = useState(1)
+  const [raceStartTime, setRaceStartTime] = useState(0) // yarış başlangıç ms
+  const [raceEndTime, setRaceEndTime] = useState(0)
+  const [replayTime, setReplayTime] = useState(0) // mevcut replay zamanı ms
   const [lapData, setLapData] = useState<any[]>([])
   const [posData, setPosData] = useState<any[]>([])
   const [intervalData, setIntervalData] = useState<any[]>([])
@@ -86,36 +89,62 @@ export function F1Page() {
         setAllLocationData(locResults.flat())
         addLog(`✓ ${locResults.flat().length} konum`)
       } catch { addLog('⚠ Konum kısmi') }
+      // Yarış zaman aralığını hesapla
+      const firstLap = laps.find((l:any) => l.driver_number===63 && l.lap_number===1)
+      const lastLap = [...laps].reverse().find((l:any) => l.driver_number===63 && l.lap_duration>0)
+      if (firstLap?.date_start) {
+        const st = new Date(firstLap.date_start).getTime()
+        const en = lastLap?.date_start ? new Date(lastLap.date_start).getTime() + 90000 : st + 5400000
+        setRaceStartTime(st); setRaceEndTime(en); setReplayTime(st)
+        addLog(`✓ Yarış: ${new Date(st).toISOString().slice(11,19)} → ${new Date(en).toISOString().slice(11,19)}`)
+      }
       addLog('🏁 Veriler yüklendi!')
       setMode('replay'); setReplayLap(1)
     } catch(e: any) { addLog(`❌ ${e.message}`) }
     setLoading(false)
   }, [addLog, selectedRace])
 
+  // Zaman bazlı replay timer — her 200ms'de replayTime ilerler
   useEffect(() => {
     if (!replayPlaying) { if(replayRef.current) clearInterval(replayRef.current); return }
+    const TICK = 200 // ms aralık
+    const TIME_STEP = TICK * replaySpeed * 10 // 1x'te 2 saniye/tick, 4x'te 8 saniye/tick
     replayRef.current = window.setInterval(() => {
-      setReplayLap(prev => { if (prev >= TOTAL_LAPS) { setReplayPlaying(false); return prev } return prev + 1 })
-    }, 2000 / replaySpeed)
+      setReplayTime(prev => {
+        const next = prev + TIME_STEP
+        if (next >= raceEndTime) { setReplayPlaying(false); return raceEndTime }
+        return next
+      })
+    }, TICK)
     return () => { if(replayRef.current) clearInterval(replayRef.current) }
-  }, [replayPlaying, replaySpeed])
+  }, [replayPlaying, replaySpeed, raceEndTime])
 
+  // replayTime değiştiğinde lap numarasını güncelle
   useEffect(() => {
-    if (allLocationData.length === 0 || lapData.length === 0) return
-    const rusLaps = lapData.filter((l:any) => l.driver_number===63 && l.lap_number<=replayLap)
-    if (rusLaps.length === 0) return
-    const refTime = new Date(rusLaps[rusLaps.length-1].date_start||'').getTime()
+    if (lapData.length === 0 || replayTime === 0) return
+    const rusLaps = lapData.filter((l:any) => l.driver_number===63 && l.date_start)
+    let currentLap = 1
+    for (const l of rusLaps) {
+      if (new Date(l.date_start).getTime() <= replayTime) currentLap = l.lap_number
+    }
+    setReplayLap(currentLap)
+  }, [replayTime, lapData])
+
+  // Araç pozisyonlarını ZAMAN bazlı güncelle (akıcı hareket)
+  useEffect(() => {
+    if (allLocationData.length === 0 || replayTime === 0) return
     const newPos = new Map<number,{x:number,y:number}>()
     const seen = new Set<number>()
+    // Sondan başa tara — her sürücü için replayTime'a en yakın önceki konumu bul
     for (let i = allLocationData.length-1; i >= 0; i--) {
       const loc = allLocationData[i]
       if (seen.has(loc.driver_number)) continue
-      if (new Date(loc.date).getTime() <= refTime + 5000) {
+      if (new Date(loc.date).getTime() <= replayTime) {
         newPos.set(loc.driver_number, {x:loc.x, y:loc.y}); seen.add(loc.driver_number)
       }
     }
     setCarPositions(newPos)
-  }, [replayLap, allLocationData, lapData])
+  }, [replayTime, allLocationData])
 
   const currentStandings = useMemo(() => {
     if (posData.length===0 || lapData.length===0) return []
@@ -272,10 +301,10 @@ export function F1Page() {
         {mode==='replay' && <>
           <div className="f1-card" style={{marginBottom:12,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
             <button className="f1-btn" onClick={()=>setReplayPlaying(!replayPlaying)} style={{background:replayPlaying?'#ef4444':'#22c55e',padding:'7px 18px'}}>{replayPlaying?'⏸':'▶'}</button>
-            <button className="f1-btn" onClick={()=>setReplayLap(Math.max(1,replayLap-1))} style={{background:'#2a2a3a',padding:'6px 10px'}}>⏪</button>
-            <button className="f1-btn" onClick={()=>setReplayLap(Math.min(TOTAL_LAPS,replayLap+1))} style={{background:'#2a2a3a',padding:'6px 10px'}}>⏩</button>
+            <button className="f1-btn" onClick={()=>setReplayTime(Math.max(raceStartTime,replayTime-85000))} style={{background:'#2a2a3a',padding:'6px 10px'}}>⏪</button>
+            <button className="f1-btn" onClick={()=>setReplayTime(Math.min(raceEndTime,replayTime+85000))} style={{background:'#2a2a3a',padding:'6px 10px'}}>⏩</button>
             {[.5,1,2,4].map(s=><button key={s} className="f1-btn" onClick={()=>setReplaySpeed(s)} style={{background:replaySpeed===s?'#e10600':'#2a2a3a',padding:'4px 8px',fontSize:9}}>{s}x</button>)}
-            <input type="range" min={1} max={TOTAL_LAPS} value={replayLap} onChange={e=>setReplayLap(Number(e.target.value))} style={{flex:1,minWidth:150,accentColor:'#e10600'}}/>
+            <input type="range" min={raceStartTime||0} max={raceEndTime||1} value={replayTime} onChange={e=>{setReplayTime(Number(e.target.value))}} step={1000} style={{flex:1,minWidth:150,accentColor:'#e10600'}}/>
             <span style={{fontSize:13,fontWeight:700,color:'#fff',fontFamily:"'Outfit'"}}>LAP {replayLap}/{TOTAL_LAPS}</span>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr 0.7fr',gap:12}}>
