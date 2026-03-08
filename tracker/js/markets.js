@@ -362,7 +362,11 @@ let mktCategoryFilter='all';
 function filterMktByCategory(cat){
   mktCategoryFilter=cat;
   document.querySelectorAll('.mkt-tab-btn').forEach(btn=>{
-    btn.classList.toggle('active',btn.dataset.cat===cat);
+    const isActive=btn.dataset.cat===cat;
+    btn.classList.toggle('active',isActive);
+    btn.style.background=isActive?'var(--accent)':'var(--surface)';
+    btn.style.color=isActive?'#fff':'var(--text)';
+    btn.style.borderColor=isActive?'var(--accent)':'var(--border)';
   });
   // Re-filter search if input has value
   const input=document.getElementById('mktSearchInput');
