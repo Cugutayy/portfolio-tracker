@@ -253,36 +253,49 @@ export function F1Page() {
           {/* COL 3 */}
           <div style={{display:'flex',flexDirection:'column',gap:12}}>
             {preds && <div className="f1-card" style={{animationDelay:'.2s'}}>
-              <div className="f1-title">FACTORS</div>
-              {preds.slice(0,5).map(p => (
-                <div key={p.driverCode} style={{marginBottom:8}}>
-                  <div style={{display:'flex',gap:4,alignItems:'center',marginBottom:3}}>
-                    <span style={{width:3,height:10,borderRadius:2,background:p.teamColor}}/>
+              <div className="f1-title">WHY THIS ORDER?</div>
+              {preds.slice(0,5).map(p => {
+                const qPct = Math.round(p.factors.qualiPerformance * 100)
+                const fPct = Math.round(p.factors.historicalForm * 100)
+                const tPct = Math.round(p.factors.teamStrength * 100)
+                return <div key={p.driverCode} style={{marginBottom:10}}>
+                  <div style={{display:'flex',gap:4,alignItems:'center',marginBottom:4}}>
+                    <span style={{width:3,height:12,borderRadius:2,background:p.teamColor}}/>
                     <span style={{fontSize:12,fontWeight:700,color:'#eee',fontFamily:"'Outfit',sans-serif"}}>{p.driverCode}</span>
-                    <span style={{fontSize:10,color:'#444',marginLeft:'auto'}}>P{p.predictedPosition}</span>
+                    <span style={{fontSize:10,color:'#d4a843',marginLeft:'auto',fontWeight:700}}>P{p.predictedPosition}</span>
                   </div>
-                  <Bar l="QUALI" v={p.factors.qualiPerformance}/>
-                  <Bar l="FORM" v={p.factors.historicalForm}/>
-                  <Bar l="TEAM" v={p.factors.teamStrength}/>
+                  <BarLabel l="S\u0131ralama" v={p.factors.qualiPerformance} pct={qPct} tip={`Grid P${Math.round(22 - p.factors.qualiPerformance * 22)} \u2014 ${qPct > 70 ? '\u00d6n s\u0131rada, b\u00fcy\u00fck avantaj' : qPct > 40 ? 'Orta s\u0131ra' : 'Arka s\u0131ra'}`}/>
+                  <BarLabel l="Form" v={p.factors.historicalForm} pct={fPct} tip={`Son 5 yar\u0131\u015f ort. \u2014 ${fPct > 70 ? 'Podyum formu' : fPct > 40 ? 'Puan b\u00f6lgesi' : 'Zay\u0131f form'}`}/>
+                  <BarLabel l="Tak\u0131m" v={p.factors.teamStrength} pct={tPct} tip={`${p.team} \u2014 ${tPct > 70 ? 'Top tak\u0131m' : tPct > 40 ? 'Orta grup' : 'Arka grup'}`}/>
                 </div>
-              ))}
+              })}
             </div>}
 
             <div className="f1-card" style={{animationDelay:'.3s'}}>
               <div className="f1-title">PREDICTION LOG</div>
-              <div style={{fontSize:10,color:'#555',lineHeight:1.8,maxHeight:180,overflowY:'auto'}}>
-                <div style={{color:'#4ade80'}}>✓ Model: Ensemble (Ridge 40% + GB 60% + ELO)</div>
-                <div style={{color:'#4ade80'}}>✓ Pre-trained: 2024-2025 sezon verileri ({predictor.dataCount} sample)</div>
-                <div style={{color:'#4ade80'}}>✓ 14 feature extracted from qualifying grid</div>
-                <div style={{color:'#4ade80'}}>✓ ELO ratings applied (driver + team)</div>
-                {preds?.[0] && <div style={{color:'#d4a843'}}>→ Winner prediction: {preds[0].driverName} ({preds[0].winProbability}%)</div>}
-                {live && <div style={{color:'#3b82f6'}}>⟳ Live polling active — 5s interval</div>}
-                {live && lap>0 && <div style={{color:'#3b82f6'}}>⟳ Lap {lap}: momentum + pace trend applied</div>}
-                {live && lap>0 && <div style={{color:'#3b82f6'}}>⟳ Race progress weight: {Math.round((lap/58)*70)}% current pos</div>}
+              <div style={{fontSize:10,color:'#555',lineHeight:1.8,maxHeight:220,overflowY:'auto'}}>
+                <div style={{color:'#4ade80'}}>✓ Ensemble model yüklü (Ridge 40% + GB 60% + ELO recovery)</div>
+                <div style={{color:'#4ade80'}}>✓ 2024-2025 verileriyle eğitildi ({predictor.dataCount} sample)</div>
+                <div style={{color:'#4ade80'}}>✓ Qualifying grid → 14 feature çıkarıldı</div>
+                {preds?.[0] && <div style={{color:'#d4a843',fontWeight:700}}>→ Tahmin: {preds[0].driverName} P1 ({preds[0].winProbability}%)</div>}
+                {!live && <div style={{marginTop:6,paddingTop:6,borderTop:'1px solid #1a1a1e',color:'#666'}}>
+                  <div>▶ START LIVE ne yapar:</div>
+                  <div style={{color:'#555',marginLeft:8}}>1. OpenF1 API'den 2026 AUS GP session bulur (key: 11234)</div>
+                  <div style={{color:'#555',marginLeft:8}}>2. Her 5 saniyede 7 endpoint paralel çeker:</div>
+                  <div style={{color:'#444',marginLeft:16}}>positions · laps · weather · pit stops · stints · intervals · race control</div>
+                  <div style={{color:'#555',marginLeft:8}}>3. Gap trendi analiz eder (saniyede kapama hızı)</div>
+                  <div style={{color:'#555',marginLeft:8}}>4. DNF algılar, tahminleri anlık günceller</div>
+                  <div style={{color:'#555',marginLeft:8}}>5. Yaşçn ilerledikçe mevcut pozisyon ağırlığı artar</div>
+                </div>}
+                {live && <div style={{marginTop:4,color:'#3b82f6'}}>
+                  <div>⟳ CANLI — api.openf1.org/v1 · 5s polling</div>
+                  {lap>0 && <div>⟳ Tur {lap}/58 · Pozisyon ağırlığı: {Math.round((lap/58)*70)}%</div>}
+                  {lap>0 && <div>⟳ Momentum + pace trend hesaplanıyor</div>}
+                </div>}
                 {log.length>0 && <div style={{marginTop:4,paddingTop:4,borderTop:'1px solid #1a1a1e'}}>
-                  {[...log].reverse().slice(0,4).map((e,i)=>(
+                  {[...log].reverse().slice(0,5).map((e,i)=>(
                     <div key={i} style={{color:e.n>0?'#555':'#e10600'}}>
-                      [{e.t}] {e.n>0?`✓ ${e.n} drivers · ${e.ms}ms`:'✗ fetch failed'}
+                      [{e.t}] {e.n>0?`✓ ${e.n} sürücü · 7 endpoint · ${e.ms}ms`:'✗ bağlantı hatası'}
                     </div>
                   ))}
                 </div>}
@@ -368,6 +381,17 @@ function Bar({l,v}:{l:string;v:number}) {
   return <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:2}}>
     <span style={{fontSize:9,color:'#3a3a42',width:32,fontFamily:"'Outfit',sans-serif"}}>{l}</span>
     <div style={{flex:1,height:4,background:'#1a1a1e',borderRadius:2,overflow:'hidden'}}><div style={{width:`${v*100}%`,height:'100%',background:c,borderRadius:2,boxShadow:`0 0 8px ${c}30`}}/></div>
+  </div>
+}
+function BarLabel({l,v,pct,tip}:{l:string;v:number;pct:number;tip:string}) {
+  const c=v>.7?'#22c55e':v>.4?'#fbbf24':'#e10600'
+  return <div style={{marginBottom:3}}>
+    <div style={{display:'flex',alignItems:'center',gap:4}}>
+      <span style={{fontSize:9,color:'#555',width:52,fontFamily:"'Outfit',sans-serif"}}>{l}</span>
+      <div style={{flex:1,height:5,background:'#1a1a1e',borderRadius:3,overflow:'hidden'}}><div style={{width:`${v*100}%`,height:'100%',background:c,borderRadius:3,boxShadow:`0 0 6px ${c}40`}}/></div>
+      <span style={{fontSize:9,color:c,fontWeight:700,width:28,textAlign:'right',fontFamily:"'JetBrains Mono',monospace"}}>{pct}%</span>
+    </div>
+    <div style={{fontSize:8,color:'#333',marginLeft:56,marginTop:1}}>{tip}</div>
   </div>
 }
 function Emp({text}:{text:string}){return<div style={{fontSize:12,color:'#2a2a2e',textAlign:'center',padding:16}}>{text}</div>}
