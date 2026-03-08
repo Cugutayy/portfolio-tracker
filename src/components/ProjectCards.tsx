@@ -1,5 +1,5 @@
 import { useRef, useCallback } from 'react'
-import { TEAMS, TYRES } from '../f1/data'
+import { TEAMS } from '../f1/data'
 
 interface Props { t: (k: string) => string }
 
