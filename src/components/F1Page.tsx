@@ -1,9 +1,12 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react'
 import { TEAMS } from '../f1/data'
 import { AUSTRALIA_2026_QUALI } from '../f1/realdata'
 import { predictor } from '../f1/predictor'
 import { openF1 } from '../f1/api'
 import type { PredictionResult } from '../f1/types'
+
+// Spline 3D — lazy loaded, kasmaz
+const Spline = lazy(() => import('@splinetool/react-spline'))
 
 export function F1Page() {
   const [preds, setPreds] = useState<PredictionResult[]|null>(null)
@@ -97,26 +100,44 @@ export function F1Page() {
       </header>
 
       <div className="container" style={{padding:'10px 16px'}}>
-        {/* Hero — predicted winner */}
-        {preds && preds[0] && (
-          <div style={{background:'linear-gradient(135deg,#0f0f1a,#1a1428,#0f1923)',borderRadius:10,padding:'14px 20px',marginBottom:10,border:'1px solid #222',display:'flex',alignItems:'center',justifyContent:'space-between',position:'relative',overflow:'hidden'}}>
-            <div style={{zIndex:2,position:'relative'}}>
-              <div style={{fontSize:'.4rem',color:'#555',letterSpacing:'.1em'}}>PREDICTED WINNER</div>
-              <div style={{fontSize:'1.3rem',fontWeight:700,color:'#c9a84c'}}>{preds[0].driverName}</div>
-              <div style={{fontSize:'.5rem',color:preds[0].teamColor}}>{preds[0].team} · {preds[0].winProbability}% win</div>
-            </div>
-            <div style={{display:'flex',gap:14,zIndex:2}}>
+        {/* Hero — 3D arka plan + tahmin */}
+        <div style={{borderRadius:12,marginBottom:10,border:'1px solid #222',display:'flex',alignItems:'center',position:'relative',overflow:'hidden',minHeight:180,background:'linear-gradient(135deg,#080810 0%,#0c0c1e 30%,#161222 60%,#0a0f18 100%)'}}>
+          {/* Spline 3D arka plan */}
+          <div style={{position:'absolute',inset:0,zIndex:0,opacity:0.6}}>
+            <Suspense fallback={null}>
+              <Spline scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode" style={{width:'100%',height:'100%'}}/>
+            </Suspense>
+          </div>
+          {/* Gradient overlay — sol taraf okunabilir olsun */}
+          <div style={{position:'absolute',inset:0,zIndex:1,background:'linear-gradient(90deg, rgba(8,8,16,0.95) 0%, rgba(8,8,16,0.7) 40%, rgba(8,8,16,0.2) 70%, transparent 100%)',pointerEvents:'none'}}/>
+          {/* Spotlight efekti */}
+          <div style={{position:'absolute',top:'-30%',left:'10%',width:300,height:300,borderRadius:'50%',background:'radial-gradient(circle,rgba(225,6,0,0.08),transparent 60%)',pointerEvents:'none',zIndex:1}}/>
+          
+          {/* İçerik */}
+          <div style={{position:'relative',zIndex:2,padding:'20px 24px',flex:1}}>
+            <div style={{fontSize:'.38rem',color:'#555',letterSpacing:'.12em'}}>AUSTRALIAN GRAND PRIX 2026</div>
+            <div style={{fontSize:'.5rem',color:'#444',marginTop:2}}>Albert Park · 58 Laps · 5.278 km</div>
+            {preds && preds[0] && (
+              <div style={{marginTop:10}}>
+                <div style={{fontSize:'.35rem',color:'#666',letterSpacing:'.1em'}}>PREDICTED WINNER</div>
+                <div style={{fontSize:'1.4rem',fontWeight:700,color:'#c9a84c',lineHeight:1.1}}>{preds[0].driverName}</div>
+                <div style={{fontSize:'.5rem',color:preds[0].teamColor,marginTop:2}}>{preds[0].team} · {preds[0].winProbability}% win probability</div>
+              </div>
+            )}
+          </div>
+          {/* Podyum */}
+          {preds && (
+            <div style={{position:'relative',zIndex:2,padding:'20px 24px',display:'flex',gap:16}}>
               {preds.slice(0,3).map((p,i) => (
                 <div key={p.driverCode} style={{textAlign:'center'}}>
-                  <div style={{fontSize:'.35rem',color:'#555'}}>P{i+1}</div>
-                  <div style={{fontSize:'.7rem',fontWeight:700,color:i===0?'#c9a84c':'#ccc'}}>{p.driverCode}</div>
-                  <div style={{fontSize:'.4rem',color:'#555'}}>{p.winProbability}%</div>
+                  <div style={{fontSize:'.32rem',color:'#555'}}>P{i+1}</div>
+                  <div style={{fontSize:'.8rem',fontWeight:700,color:i===0?'#c9a84c':i===1?'#c0c0c0':'#cd7f32'}}>{p.driverCode}</div>
+                  <div style={{fontSize:'.38rem',color:'#555'}}>{p.winProbability}%</div>
                 </div>
               ))}
             </div>
-            <div style={{position:'absolute',top:'-50%',right:'-5%',width:200,height:200,borderRadius:'50%',background:'radial-gradient(circle,rgba(225,6,0,0.06),transparent 70%)',pointerEvents:'none'}}/>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* MAIN 3-COLUMN GRID */}
         <div style={{display:'grid',gridTemplateColumns:'1.4fr 0.8fr 0.8fr',gap:8}}>
