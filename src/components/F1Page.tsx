@@ -3,13 +3,12 @@ import { TEAMS, DRIVERS, DRIVER_NUMBER_MAP } from '../f1/data'
 import { AUSTRALIA_2026_QUALI, AUSTRALIA_2026_RACE_RESULT, computeBacktest } from '../f1/realdata'
 import { predictor } from '../f1/predictor'
 import { openF1 } from '../f1/api'
-import { TRACK_COORDS, CIRCUIT_MAP } from '../f1/trackData'
+import { TRACK_COORDS, CIRCUIT_MAP, getCircuitLaps } from '../f1/trackData'
 import { ALBERT_PARK_DRS } from '../f1/tracks'
 import type { PredictionResult } from '../f1/types'
 import { NeuroNoise } from '@paper-design/shaders-react'
 
 const SESSION_KEY = 11234
-const TOTAL_LAPS = 58
 
 // ═══════════════════════════════════════════════════
 // CSS
@@ -91,6 +90,7 @@ export function F1Page() {
   const [allLocationData, setAllLocationData] = useState<any[]>([])
   const [livePreds, setLivePreds] = useState<PredictionResult[] | null>(null)
   const [liveActive, setLiveActive] = useState(false)
+  const [totalLaps, setTotalLaps] = useState(() => getCircuitLaps(SESSION_KEY))
   // Telemetry
   const [selectedDrivers, setSelectedDrivers] = useState<number[]>([63, 1, 44])
   const [allCarData, setAllCarData] = useState<any[]>([])
@@ -117,6 +117,13 @@ export function F1Page() {
       qualiDelta: (q.q3Time ? pT(q.q3Time) : q.q2Time ? pT(q.q2Time) : q.q1Time ? pT(q.q1Time) : 83) - 78.518
     }))))
   }, [])
+
+  // Update totalLaps when race changes
+  useEffect(() => {
+    const laps = getCircuitLaps(selectedRace)
+    setTotalLaps(laps)
+    predictor.totalLaps = laps
+  }, [selectedRace])
 
   // Race change -> auto qualifying fetch
   useEffect(() => {
@@ -146,12 +153,12 @@ export function F1Page() {
       if (w.length > 0) setWeatherData(w[w.length - 1])
       // Compute lap flags from race control
       const flags = new Map<number, string>()
-      for (let i = 1; i <= TOTAL_LAPS; i++) flags.set(i, 'green')
+      for (let i = 1; i <= totalLaps; i++) flags.set(i, 'green')
       for (const m of rc) {
         if (!m.lap_number) continue
-        if (m.flag === 'RED') { for (let i = m.lap_number; i <= Math.min(m.lap_number + 2, TOTAL_LAPS); i++) flags.set(i, 'red') }
-        else if (m.message?.includes('SAFETY CAR') && !m.message?.includes('VIRTUAL')) { for (let i = m.lap_number; i <= Math.min(m.lap_number + 3, TOTAL_LAPS); i++) flags.set(i, 'sc') }
-        else if (m.message?.includes('VIRTUAL SAFETY CAR')) { for (let i = m.lap_number; i <= Math.min(m.lap_number + 2, TOTAL_LAPS); i++) flags.set(i, 'vsc') }
+        if (m.flag === 'RED') { for (let i = m.lap_number; i <= Math.min(m.lap_number + 2, totalLaps); i++) flags.set(i, 'red') }
+        else if (m.message?.includes('SAFETY CAR') && !m.message?.includes('VIRTUAL')) { for (let i = m.lap_number; i <= Math.min(m.lap_number + 3, totalLaps); i++) flags.set(i, 'sc') }
+        else if (m.message?.includes('VIRTUAL SAFETY CAR')) { for (let i = m.lap_number; i <= Math.min(m.lap_number + 2, totalLaps); i++) flags.set(i, 'vsc') }
         else if (m.flag === 'YELLOW') flags.set(m.lap_number, 'yellow')
       }
       setLapFlags(flags)
@@ -187,10 +194,12 @@ export function F1Page() {
         setDrivers(drv); setLapData(laps); setPosData(pos); setIntervalData(intv); setStintData(st); setRaceCtrl(rc); if (w.length > 0) setWeatherData(w[w.length - 1])
         const ml = Math.max(0, ...laps.filter((l: any) => l.driver_number === 63).map((l: any) => l.lap_number)); setReplayLap(ml)
         try { const locs = await Promise.all([63, 12, 16, 44, 4, 1].map(dn => openF1.getLocations(sk, dn).catch(() => []))); setAllLocationData(locs.flat()); setReplayTime(Date.now()) } catch { }
+        // Car telemetry for selected drivers (live)
+        try { const cd = await Promise.all(selectedDrivers.map(dn => openF1.getCarData(sk, dn).catch(() => []))); setAllCarData(cd.flat()) } catch { }
       } catch { }
     }
     poll(); liveRef.current = window.setInterval(poll, 5000)
-  }, [liveActive, selectedRace])
+  }, [liveActive, selectedRace, selectedDrivers])
   useEffect(() => () => { if (liveRef.current) clearInterval(liveRef.current) }, [])
 
   // === REPLAY TIMER ===
@@ -268,12 +277,16 @@ export function F1Page() {
   // AI prediction update
   useEffect(() => {
     if (mode !== 'replay' || !standings.length || replayLap < 2) return
-    setLivePreds(predictor.updateFromLiveData(standings.map((d: any) => ({
-      code: d.code, name: d.name, team: d.team, teamColor: d.color, position: d.position,
-      lastLapTime: d.lastLap || null, gap: d.gap, pitStops: d.stint?.tyre_age_at_start === 0 ? 1 : 0,
-      compound: d.stint?.compound || 'MEDIUM'
-    })), replayLap))
-  }, [replayLap, mode, standings])
+    setLivePreds(predictor.updateFromLiveData(standings.map((d: any) => {
+      // Gerçek pit stop sayısı: stintData'da tyre_age_at_start === 0 olan lap_start > 1 girişleri say
+      const pits = stintData.filter((st: any) => st.driver_number === d.number && st.tyre_age_at_start === 0 && (st.lap_start || 0) > 1 && (st.lap_start || 0) <= replayLap).length
+      return {
+        code: d.code, name: d.name, team: d.team, teamColor: d.color, position: d.position,
+        lastLapTime: d.lastLap || null, gap: d.gap, pitStops: pits,
+        compound: d.stint?.compound || 'MEDIUM'
+      }
+    }), replayLap))
+  }, [replayLap, mode, standings, stintData])
 
   // Events
   const events = useMemo(() => {
@@ -321,7 +334,7 @@ export function F1Page() {
           {races.length > 0 && <select value={selectedRace} onChange={e => setSelectedRace(Number(e.target.value))} style={{ background: '#111', border: '1px solid #222', borderRadius: 5, color: '#888', padding: '2px 6px', fontSize: 9 }}>
             {races.map(r => <option key={r.key} value={r.key} disabled={!r.hasData}>{r.circuit} {r.date.slice(5)}</option>)}
           </select>}
-          {mode === 'replay' && <span style={{ background: '#e10600', padding: '1px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, color: '#fff' }}>LAP {replayLap}/{TOTAL_LAPS}</span>}
+          {mode === 'replay' && <span style={{ background: '#e10600', padding: '1px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, color: '#fff' }}>LAP {replayLap}/{totalLaps}</span>}
         </div>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
           {weatherData && <span style={{ fontSize: 8, color: '#444' }}>{weatherData.air_temperature?.toFixed(0)}deg T{weatherData.track_temperature?.toFixed(0)}deg</span>}
@@ -473,10 +486,10 @@ export function F1Page() {
               <button className="f1b" onClick={() => setReplayTime(Math.min(raceEndTime, replayTime + 85000))} style={{ background: '#1a1a2a', padding: '3px 6px', fontSize: 9 }}>{'>>'}</button>
               {[.5, 1, 2, 4].map(s => <button key={s} className="f1b" onClick={() => setReplaySpeed(s)} style={{ background: replaySpeed === s ? '#e10600' : '#1a1a2a', padding: '3px 8px', fontSize: 8 }}>{s}x</button>)}
               {/* Progress bar */}
-              <ProgressBar lapFlags={lapFlags} currentLap={replayLap} totalLaps={TOTAL_LAPS}
+              <ProgressBar lapFlags={lapFlags} currentLap={replayLap} totalLaps={totalLaps}
                 replayTime={replayTime} raceStartTime={raceStartTime} raceEndTime={raceEndTime}
                 onSeek={t => setReplayTime(t)} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', fontFamily: "'Outfit'" }}>L{replayLap}/{TOTAL_LAPS}</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', fontFamily: "'Outfit'" }}>L{replayLap}/{totalLaps}</span>
             </>
           ) : (
             <>
