@@ -12,80 +12,83 @@ export function F1Page() {
   const [weather, setWeather] = useState<any>(null)
   const [raceCtrl, setRaceCtrl] = useState<any[]>([])
   const [stints, setStints] = useState<any[]>([])
-  const [sectors, setSectors] = useState<Map<number, {s1:number|null,s2:number|null,s3:number|null,best:number}>>(new Map())
+  const [laps, setLaps] = useState<any[]>([])
+  const [telemetry, setTelemetry] = useState<Map<number,{speed:number,rpm:number,gear:number,throttle:number,brake:number}>>(new Map())
   const [log, setLog] = useState<{t:string,n:number,ms:number}[]>([])
   const ref = useRef<number|null>(null)
 
-  // Sayfa açılınca hemen grid'den tahmin
+  // Sayfa açılınca grid'den tahmin
   useEffect(() => {
     const grid = AUSTRALIA_2026_QUALI.map(q => ({
-      code: q.driverCode, name: q.driverName, team: q.team,
-      teamColor: TEAMS[q.team]?.color || '#888', position: q.position,
-      qualiDelta: (q.q3Time ? pT(q.q3Time) : q.q2Time ? pT(q.q2Time) : q.q1Time ? pT(q.q1Time) : 83) - 78.518
+      code:q.driverCode, name:q.driverName, team:q.team,
+      teamColor:TEAMS[q.team]?.color||'#888', position:q.position,
+      qualiDelta:(q.q3Time?pT(q.q3Time):q.q2Time?pT(q.q2Time):q.q1Time?pT(q.q1Time):83)-78.518
     }))
     setPreds(predictor.predictFromGrid(grid))
   }, [])
 
-  // TEK BUTON: canlı polling
+  // TEK BUTON
   const toggle = useCallback(async () => {
-    if (live) { setLive(false); if (ref.current) { clearInterval(ref.current); ref.current = null }; return }
+    if (live) { setLive(false); if(ref.current){clearInterval(ref.current);ref.current=null}; return }
     setLive(true); setLog([])
     try {
       const rw = await openF1.getCurrentRaceWeekend(2026)
       if (!rw) { setLog([{t:nw(),n:0,ms:0}]); return }
-      const sk = rw.sessions[rw.sessions.length - 1].session_key
+      const sk = rw.sessions[rw.sessions.length-1].session_key
       const poll = async () => {
         const t0 = performance.now()
+        // Ana veri
         const r = await predictor.fetchAndPredict(sk)
-        const ms = Math.round(performance.now() - t0)
-        if (r) {
-          setPreds(r.predictions); setLap(r.lap); setWeather(r.weather)
-          setRaceCtrl(r.raceControl); setStints(r.stints)
-          // Sektör süreleri
-          const sm = new Map<number, {s1:number|null,s2:number|null,s3:number|null,best:number}>()
-          for (const l of r.laps) {
-            const cur = sm.get(l.driver_number) || {s1:null,s2:null,s3:null,best:Infinity}
-            cur.s1 = l.duration_sector_1; cur.s2 = l.duration_sector_2; cur.s3 = l.duration_sector_3
-            if (l.lap_duration && l.lap_duration > 0 && l.lap_duration < cur.best) cur.best = l.lap_duration
-            sm.set(l.driver_number, cur)
-          }
-          setSectors(sm)
-        }
-        setLog(p => [...p.slice(-20), {t:nw(), n: r?.predictions.length || 0, ms}])
+        // Telemetri (car_data) — ayrı çek, en son snapshot
+        let telem = new Map<number,{speed:number,rpm:number,gear:number,throttle:number,brake:number}>()
+        try {
+          const cd = await openF1.getCarData(sk)
+          for (const c of cd) telem.set(c.driver_number, {speed:c.speed||0,rpm:c.rpm||0,gear:c.n_gear||0,throttle:c.throttle||0,brake:c.brake||0})
+        } catch {}
+        setTelemetry(telem)
+        const ms = Math.round(performance.now()-t0)
+        if (r) { setPreds(r.predictions); setLap(r.lap); setWeather(r.weather); setRaceCtrl(r.raceControl); setStints(r.stints); setLaps(r.laps) }
+        setLog(p => [...p.slice(-20), {t:nw(), n:r?.predictions.length||0, ms}])
       }
       await poll()
       ref.current = window.setInterval(poll, 5000)
-    } catch { setLog(p => [...p, {t:nw(), n:0, ms:0}]) }
+    } catch { setLog(p => [...p, {t:nw(),n:0,ms:0}]) }
   }, [live])
 
-  useEffect(() => () => { if (ref.current) clearInterval(ref.current) }, [])
+  useEffect(() => () => { if(ref.current) clearInterval(ref.current) }, [])
 
-  // En iyi sektör süreleri hesapla (mor sektör)
-  const bestS1 = Math.min(...[...sectors.values()].map(s => s.s1 || Infinity))
-  const bestS2 = Math.min(...[...sectors.values()].map(s => s.s2 || Infinity))
-  const bestS3 = Math.min(...[...sectors.values()].map(s => s.s3 || Infinity))
-  const bestLap = Math.min(...[...sectors.values()].map(s => s.best || Infinity))
+  // Sektör hesapla
+  const sectorData = new Map<number,{s1:number|null,s2:number|null,s3:number|null,best:number}>()
+  for (const l of laps) {
+    const c = sectorData.get(l.driver_number) || {s1:null,s2:null,s3:null,best:Infinity}
+    c.s1=l.duration_sector_1; c.s2=l.duration_sector_2; c.s3=l.duration_sector_3
+    if (l.lap_duration && l.lap_duration>0 && l.lap_duration<c.best) c.best=l.lap_duration
+    sectorData.set(l.driver_number, c)
+  }
+  const bS1=Math.min(...[...sectorData.values()].map(s=>s.s1||Infinity))
+  const bS2=Math.min(...[...sectorData.values()].map(s=>s.s2||Infinity))
+  const bS3=Math.min(...[...sectorData.values()].map(s=>s.s3||Infinity))
+  const bLap=Math.min(...[...sectorData.values()].map(s=>s.best||Infinity))
+
+  // Driver number mapping
+  const DN: Record<string,number> = {RUS:63,ANT:12,HAD:20,LEC:16,PIA:81,NOR:4,HAM:44,LAW:30,LIN:40,BOR:5,HUL:27,BEA:87,OCO:31,GAS:10,ALB:23,COL:43,ALO:14,PER:11,BOT:77,VER:1,SAI:55,STR:18}
 
   return (
     <div style={{background:'#0d0d0d',minHeight:'100vh',color:'#e5e5e5',fontFamily:"'DM Mono','Geist Mono',monospace"}}>
       {/* HEADER */}
-      <header style={{background:'#111',padding:'10px 0',borderBottom:'2px solid #e10600'}}>
+      <header style={{background:'#111',padding:'8px 0',borderBottom:'2px solid #e10600'}}>
         <div className="container" style={{display:'flex',justifyContent:'space-between',alignItems:'center',gap:8,flexWrap:'wrap'}}>
-          <div style={{display:'flex',alignItems:'center',gap:14}}>
-            <a href="/" style={{color:'#555',fontSize:'.8rem',textDecoration:'none',border:'1px solid #333',borderRadius:6,width:26,height:26,display:'flex',alignItems:'center',justifyContent:'center'}}>←</a>
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            <a href="/" style={{color:'#555',textDecoration:'none',border:'1px solid #333',borderRadius:6,width:24,height:24,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'.7rem'}}>←</a>
             <div>
-              <div style={{fontSize:'1rem',fontWeight:700,color:'#fff'}}>F1 RACE PREDICTOR</div>
-              <div style={{fontSize:'.45rem',color:'#444',letterSpacing:'.1em'}}>ENSEMBLE ML · LIVE LAP-BY-LAP · SECTOR ANALYSIS</div>
+              <span style={{fontSize:'.9rem',fontWeight:700,color:'#fff'}}>F1 PREDICTOR</span>
+              <span style={{fontSize:'.42rem',color:'#444',marginLeft:8}}>ENSEMBLE ML · LIVE LAP-BY-LAP</span>
             </div>
           </div>
           <div style={{display:'flex',gap:8,alignItems:'center'}}>
-            {lap > 0 && <span style={{fontSize:'.7rem',color:'#e10600',fontWeight:700}}>LAP {lap}/58</span>}
-            {weather && <span style={{fontSize:'.5rem',color:weather.rainfall?'#3b82f6':'#555'}}>{weather.rainfall?'🌧':'☀'} {weather.air_temperature?.toFixed(0)}°</span>}
-            <button onClick={toggle} style={{
-              background:live?'#e10600':'#222',border:`1px solid ${live?'#e10600':'#444'}`,
-              borderRadius:5,padding:'6px 16px',fontSize:'.6rem',color:'#fff',cursor:'pointer',
-              fontFamily:'inherit',fontWeight:700,display:'flex',alignItems:'center',gap:6,
-            }}>
+            {lap>0 && <span style={{fontSize:'.65rem',color:'#e10600',fontWeight:700}}>LAP {lap}/58</span>}
+            {weather && <span style={{fontSize:'.48rem',color:'#555'}}>{weather.rainfall?'🌧':'☀'}{weather.air_temperature?.toFixed(0)}° T{weather.track_temperature?.toFixed(0)}°</span>}
+            <button onClick={toggle} style={{background:live?'#e10600':'#222',border:`1px solid ${live?'#e10600':'#444'}`,borderRadius:5,padding:'5px 14px',fontSize:'.55rem',color:'#fff',cursor:'pointer',fontFamily:'inherit',fontWeight:700,display:'flex',alignItems:'center',gap:5}}>
               {live && <span style={{width:6,height:6,borderRadius:'50%',background:'#4ade80',animation:'pd 1s ease-in-out infinite'}}/>}
               {live ? 'STOP' : '▶ START LIVE'}
             </button>
@@ -93,170 +96,177 @@ export function F1Page() {
         </div>
       </header>
 
-      <div className="container" style={{padding:'12px 20px'}}>
-        {/* 3D HERO — Spline entegrasyonu */}
-        <div style={{background:'linear-gradient(135deg,#0a0a0f 0%,#141428 50%,#0f1923 100%)',borderRadius:12,marginBottom:12,padding:'20px 24px',display:'flex',alignItems:'center',justifyContent:'space-between',border:'1px solid #222',overflow:'hidden',position:'relative'}}>
-          <div style={{position:'relative',zIndex:2}}>
-            <div style={{fontSize:'1.8rem',fontWeight:700,color:'#fff',lineHeight:1.1}}>
-              🇦🇺 Australian GP
+      <div className="container" style={{padding:'10px 16px'}}>
+        {/* Hero — predicted winner */}
+        {preds && preds[0] && (
+          <div style={{background:'linear-gradient(135deg,#0f0f1a,#1a1428,#0f1923)',borderRadius:10,padding:'14px 20px',marginBottom:10,border:'1px solid #222',display:'flex',alignItems:'center',justifyContent:'space-between',position:'relative',overflow:'hidden'}}>
+            <div style={{zIndex:2,position:'relative'}}>
+              <div style={{fontSize:'.4rem',color:'#555',letterSpacing:'.1em'}}>PREDICTED WINNER</div>
+              <div style={{fontSize:'1.3rem',fontWeight:700,color:'#c9a84c'}}>{preds[0].driverName}</div>
+              <div style={{fontSize:'.5rem',color:preds[0].teamColor}}>{preds[0].team} · {preds[0].winProbability}% win</div>
             </div>
-            <div style={{fontSize:'.55rem',color:'#666',marginTop:6}}>Albert Park · 58 Laps · 5.278 km</div>
-            {preds && preds[0] && (
-              <div style={{marginTop:12,display:'flex',gap:12,alignItems:'center'}}>
-                <div>
-                  <div style={{fontSize:'.4rem',color:'#555'}}>PREDICTED WINNER</div>
-                  <div style={{fontSize:'1rem',fontWeight:700,color:'#c9a84c'}}>{preds[0].driverName}</div>
-                  <div style={{fontSize:'.5rem',color:preds[0].teamColor}}>{preds[0].team} · {preds[0].winProbability}%</div>
+            <div style={{display:'flex',gap:14,zIndex:2}}>
+              {preds.slice(0,3).map((p,i) => (
+                <div key={p.driverCode} style={{textAlign:'center'}}>
+                  <div style={{fontSize:'.35rem',color:'#555'}}>P{i+1}</div>
+                  <div style={{fontSize:'.7rem',fontWeight:700,color:i===0?'#c9a84c':'#ccc'}}>{p.driverCode}</div>
+                  <div style={{fontSize:'.4rem',color:'#555'}}>{p.winProbability}%</div>
                 </div>
-                <div style={{width:1,height:30,background:'#333'}}/>
-                <div>
-                  <div style={{fontSize:'.4rem',color:'#555'}}>PODIUM</div>
-                  {preds.slice(0,3).map(p => (
-                    <div key={p.driverCode} style={{fontSize:'.5rem',display:'flex',gap:4,alignItems:'center'}}>
-                      <span style={{width:3,height:8,borderRadius:1,background:p.teamColor}}/>
-                      <span style={{color:'#ccc'}}>{p.driverCode}</span>
-                      <span style={{color:'#555'}}>{p.winProbability}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              ))}
+            </div>
+            <div style={{position:'absolute',top:'-50%',right:'-5%',width:200,height:200,borderRadius:'50%',background:'radial-gradient(circle,rgba(225,6,0,0.06),transparent 70%)',pointerEvents:'none'}}/>
           </div>
-          {/* Spotlight efekti */}
-          <div style={{position:'absolute',top:'-40%',right:'-10%',width:300,height:300,borderRadius:'50%',background:'radial-gradient(circle,rgba(225,6,0,0.08) 0%,transparent 70%)',pointerEvents:'none'}}/>
-        </div>
+        )}
 
-        <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:10}}>
-          {/* SOL: GRID + SECTORS */}
-          <DCard title="QUALIFYING GRID · SECTORS · PREDICTION">
-            <div style={{overflowX:'auto'}}>
-              <table style={{width:'100%',borderCollapse:'collapse',fontSize:'.52rem'}}>
-                <thead>
-                  <tr style={{color:'#444',borderBottom:'1px solid #333'}}>
-                    <th style={{textAlign:'center',padding:'3px 2px',width:28}}>POS</th>
-                    <th style={{width:4}}></th>
-                    <th style={{textAlign:'left',padding:'3px 4px'}}>DRIVER</th>
-                    <th style={{textAlign:'right',padding:'3px 4px',width:50}}>Q TIME</th>
-                    <th style={{textAlign:'center',padding:'3px 2px',width:42,color:'#a855f7'}}>S1</th>
-                    <th style={{textAlign:'center',padding:'3px 2px',width:42,color:'#a855f7'}}>S2</th>
-                    <th style={{textAlign:'center',padding:'3px 2px',width:42,color:'#a855f7'}}>S3</th>
-                    <th style={{textAlign:'center',padding:'3px 2px',width:36}}>→ AI</th>
-                    <th style={{textAlign:'right',padding:'3px 2px',width:34}}>WIN%</th>
-                  </tr>
-                </thead>
+        {/* MAIN 3-COLUMN GRID */}
+        <div style={{display:'grid',gridTemplateColumns:'1.4fr 0.8fr 0.8fr',gap:8}}>
+
+          {/* COL 1: Grid + Sectors */}
+          <DC title="🇦🇺 GRID · SECTORS · PREDICTION">
+            <div style={{overflowX:'auto',overflowY:'auto',maxHeight:480}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:'.5rem'}}>
+                <thead><tr style={{color:'#444',borderBottom:'1px solid #333'}}>
+                  <th style={th}>P</th><th style={{width:3}}></th><th style={{...th,textAlign:'left'}}>DRIVER</th>
+                  <th style={{...th,width:48}}>TIME</th>
+                  <th style={{...th,width:40,color:'#a855f7'}}>S1</th><th style={{...th,width:40,color:'#a855f7'}}>S2</th><th style={{...th,width:40,color:'#a855f7'}}>S3</th>
+                  <th style={{...th,width:30}}>AI</th><th style={{...th,width:30}}>W%</th>
+                </tr></thead>
                 <tbody>
-                  {AUSTRALIA_2026_QUALI.map((q, i) => {
-                    const tm = TEAMS[q.team]; const pred = preds?.find(p => p.driverCode === q.driverCode)
-                    // Sektör verisi (sıralama numarasına göre bul)
-                    const driverNum = [63,12,20,16,81,4,44,30,40,5,27,87,31,10,23,43,14,11,77,1,55,18][i] || 0
-                    const sec = sectors.get(driverNum)
-                    const s1 = sec?.s1; const s2 = sec?.s2; const s3 = sec?.s3
-                    const s1Purple = s1 !== null && s1 !== undefined && s1 <= bestS1
-                    const s2Purple = s2 !== null && s2 !== undefined && s2 <= bestS2
-                    const s3Purple = s3 !== null && s3 !== undefined && s3 <= bestS3
-                    const lapPurple = sec?.best !== undefined && sec.best <= bestLap && sec.best < Infinity
-
-                    return (
-                      <tr key={q.driverCode} style={{borderBottom:'1px solid #1a1a1a',background:lapPurple?'rgba(168,85,247,0.06)':i===0?'rgba(201,168,76,0.04)':i<3?'rgba(30,30,30,0.5)':'transparent'}}>
-                        <td style={{textAlign:'center',fontWeight:700,color:i<3?'#c9a84c':i<10?'#ccc':'#555',padding:'4px 2px'}}>{q.position}</td>
-                        <td><div style={{width:3,height:16,borderRadius:1,background:tm?.color||'#444'}}/></td>
-                        <td style={{padding:'4px 4px'}}>
-                          <span style={{fontWeight:i===0?700:400,color:i<10?'#eee':'#777'}}>{q.driverName}</span>
-                          <br/><span style={{fontSize:'.38rem',color:'#444'}}>{q.team}</span>
-                        </td>
-                        <td style={{textAlign:'right',color:lapPurple?'#a855f7':'#888',fontWeight:lapPurple?700:400,padding:'4px 4px'}}>{q.q3Time||q.q2Time||q.q1Time||'—'}</td>
-                        <td style={{textAlign:'center',color:s1Purple?'#a855f7':s1?'#22c55e':'#333',fontWeight:s1Purple?700:400}}>{s1?s1.toFixed(3):'—'}</td>
-                        <td style={{textAlign:'center',color:s2Purple?'#a855f7':s2?'#f59e0b':'#333',fontWeight:s2Purple?700:400}}>{s2?s2.toFixed(3):'—'}</td>
-                        <td style={{textAlign:'center',color:s3Purple?'#a855f7':s3?'#22c55e':'#333',fontWeight:s3Purple?700:400}}>{s3?s3.toFixed(3):'—'}</td>
-                        <td style={{textAlign:'center',fontWeight:700,color:pred?pred.predictedPosition<=3?'#c9a84c':pred.predictedPosition<=10?'#eee':'#555':'#333'}}>{pred?`P${pred.predictedPosition}`:'—'}</td>
-                        <td style={{textAlign:'right',color:pred&&pred.winProbability>10?'#fbbf24':'#555'}}>{pred?`${pred.winProbability}%`:'—'}</td>
-                      </tr>
-                    )
+                  {AUSTRALIA_2026_QUALI.map((q,i) => {
+                    const tm=TEAMS[q.team]; const pr=preds?.find(p=>p.driverCode===q.driverCode)
+                    const dn=DN[q.driverCode]||0; const sec=sectorData.get(dn)
+                    const s1p=sec?.s1!=null&&sec.s1<=bS1, s2p=sec?.s2!=null&&sec.s2<=bS2, s3p=sec?.s3!=null&&sec.s3<=bS3
+                    const lp=sec?.best!=null&&sec.best<=bLap&&sec.best<Infinity
+                    return <tr key={q.driverCode} style={{borderBottom:'1px solid #1a1a1a',background:lp?'rgba(168,85,247,0.05)':i<3?'rgba(201,168,76,0.03)':'transparent'}}>
+                      <td style={{textAlign:'center',fontWeight:700,color:i<3?'#c9a84c':i<10?'#bbb':'#555',padding:'3px 2px'}}>{q.position}</td>
+                      <td><div style={{width:3,height:14,borderRadius:1,background:tm?.color||'#444'}}/></td>
+                      <td style={{padding:'3px 4px'}}><span style={{fontWeight:i<3?700:400,color:i<10?'#eee':'#777',fontSize:'.52rem'}}>{q.driverName}</span><br/><span style={{fontSize:'.35rem',color:'#444'}}>{q.team}</span></td>
+                      <td style={{textAlign:'right',color:lp?'#a855f7':'#777',fontWeight:lp?700:400}}>{q.q3Time||q.q2Time||q.q1Time||'—'}</td>
+                      <td style={{textAlign:'center',color:s1p?'#a855f7':sec?.s1?'#4ade80':'#333',fontWeight:s1p?700:400}}>{sec?.s1?.toFixed(3)||'—'}</td>
+                      <td style={{textAlign:'center',color:s2p?'#a855f7':sec?.s2?'#fbbf24':'#333',fontWeight:s2p?700:400}}>{sec?.s2?.toFixed(3)||'—'}</td>
+                      <td style={{textAlign:'center',color:s3p?'#a855f7':sec?.s3?'#4ade80':'#333',fontWeight:s3p?700:400}}>{sec?.s3?.toFixed(3)||'—'}</td>
+                      <td style={{textAlign:'center',fontWeight:700,color:pr?pr.predictedPosition<=3?'#c9a84c':pr.predictedPosition<=10?'#eee':'#555':'#333'}}>P{pr?.predictedPosition||'—'}</td>
+                      <td style={{textAlign:'right',color:pr&&pr.winProbability>10?'#fbbf24':'#555'}}>{pr?`${pr.winProbability}%`:'—'}</td>
+                    </tr>
                   })}
                 </tbody>
               </table>
             </div>
-            {/* Sektör renk açıklaması */}
-            <div style={{display:'flex',gap:12,marginTop:8,fontSize:'.42rem',color:'#555'}}>
-              <span><span style={{color:'#a855f7'}}>■</span> Purple = fastest sector/lap</span>
-              <span><span style={{color:'#22c55e'}}>■</span> Personal best</span>
-              <span><span style={{color:'#f59e0b'}}>■</span> Sector time</span>
+            <div style={{display:'flex',gap:10,marginTop:6,fontSize:'.38rem',color:'#444'}}>
+              <span><span style={{color:'#a855f7'}}>■</span> Fastest</span>
+              <span><span style={{color:'#4ade80'}}>■</span> Personal best</span>
+              <span><span style={{color:'#fbbf24'}}>■</span> Sector</span>
             </div>
-          </DCard>
+          </DC>
 
-          {/* SAĞ KOLON */}
-          <div style={{display:'flex',flexDirection:'column',gap:10}}>
-            {/* RACE CONTROL */}
-            <DCard title="RACE CONTROL">
-              {raceCtrl.length === 0 ? <Empty text="Race control mesajları burada görünecek"/> :
-                <div style={{maxHeight:120,overflowY:'auto'}}>
-                  {[...raceCtrl].reverse().slice(0,8).map((rc:any,i:number)=>(
-                    <div key={i} style={{display:'flex',gap:5,padding:'2px 0',fontSize:'.48rem',borderBottom:'1px solid #1a1a1a'}}>
-                      <span style={{padding:'1px 5px',borderRadius:3,fontWeight:700,fontSize:'.42rem',background:flagBg(rc.flag),color:'#fff'}}>{rc.flag||'—'}</span>
-                      <span style={{color:'#999'}}>{rc.message?.slice(0,70)}</span>
+          {/* COL 2: Telemetry + Tyres + Race Control */}
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {/* TELEMETRY — top 6 */}
+            <DC title="📡 TELEMETRY · TOP 6">
+              {telemetry.size === 0 ? <Empty text="Canlı telemetri bekleniyor"/> :
+                <div style={{fontSize:'.48rem'}}>
+                  <div style={{display:'grid',gridTemplateColumns:'24px 1fr 30px 28px 16px 30px 26px',gap:'0 3px',color:'#444',marginBottom:3,fontSize:'.38rem'}}>
+                    <div>#</div><div>SPD</div><div>RPM</div><div>GEAR</div><div></div><div>THR</div><div>BRK</div>
+                  </div>
+                  {AUSTRALIA_2026_QUALI.slice(0,6).map(q => {
+                    const dn=DN[q.driverCode]||0; const t=telemetry.get(dn); const tm=TEAMS[q.team]
+                    if (!t) return <div key={q.driverCode} style={{padding:'2px 0',color:'#333',fontSize:'.42rem'}}>{q.driverCode} —</div>
+                    return <div key={q.driverCode} style={{display:'grid',gridTemplateColumns:'24px 1fr 30px 28px 16px 30px 26px',gap:'0 3px',padding:'2px 0',borderBottom:'1px solid #1a1a1a',alignItems:'center'}}>
+                      <span style={{color:tm?.color||'#888',fontWeight:700,fontSize:'.45rem'}}>{q.driverCode}</span>
+                      {/* Speed bar */}
+                      <div style={{height:6,background:'#222',borderRadius:2,overflow:'hidden'}}>
+                        <div style={{width:`${Math.min(t.speed/360*100,100)}%`,height:'100%',borderRadius:2,background:t.speed>300?'#a855f7':t.speed>200?'#4ade80':'#fbbf24'}}/>
+                      </div>
+                      <span style={{color:'#ccc',textAlign:'right'}}>{t.speed}</span>
+                      <span style={{color:'#888',textAlign:'right'}}>{t.rpm>0?`${(t.rpm/1000).toFixed(0)}k`:'-'}</span>
+                      <span style={{color:'#ccc',textAlign:'center',fontWeight:700}}>{t.gear||'-'}</span>
+                      {/* Throttle bar */}
+                      <div style={{height:4,background:'#222',borderRadius:2,overflow:'hidden'}}>
+                        <div style={{width:`${t.throttle}%`,height:'100%',borderRadius:2,background:'#4ade80'}}/>
+                      </div>
+                      {/* Brake */}
+                      <div style={{height:4,background:'#222',borderRadius:2,overflow:'hidden'}}>
+                        <div style={{width:`${t.brake}%`,height:'100%',borderRadius:2,background:'#ef4444'}}/>
+                      </div>
                     </div>
-                  ))}
+                  })}
                 </div>
               }
-            </DCard>
+            </DC>
 
             {/* TYRE STINTS */}
-            <DCard title="TYRE STINTS">
-              {stints.length === 0 ? <Empty text="Lastik verileri gelecek"/> : (() => {
-                const bd = new Map<number,{c:string;l:number}[]>()
-                for (const s of stints) { if (!bd.has(s.driver_number)) bd.set(s.driver_number,[]); bd.get(s.driver_number)!.push({c:s.compound||'?',l:s.tyre_age_at_start||0}) }
-                return <div style={{maxHeight:130,overflowY:'auto'}}>
+            <DC title="TYRE STINTS">
+              {stints.length===0 ? <Empty text="Lastik verileri"/> : (() => {
+                const bd=new Map<number,{c:string;l:number}[]>()
+                for (const s of stints) { if(!bd.has(s.driver_number)) bd.set(s.driver_number,[]); bd.get(s.driver_number)!.push({c:s.compound||'?',l:s.tyre_age_at_start||0}) }
+                return <div style={{maxHeight:120,overflowY:'auto'}}>
                   {[...bd.entries()].slice(0,10).map(([n,st])=>(
-                    <div key={n} style={{display:'flex',gap:3,padding:'2px 0',fontSize:'.48rem',borderBottom:'1px solid #1a1a1a',alignItems:'center'}}>
-                      <span style={{color:'#666',width:20}}>#{n}</span>
-                      {st.map((s,i)=>(<span key={i} style={{padding:'1px 5px',borderRadius:3,fontSize:'.4rem',fontWeight:700,background:tyreBg(s.c),color:s.c==='HARD'||s.c==='MEDIUM'?'#000':'#fff'}}>{s.c?.[0]||'?'}</span>))}
+                    <div key={n} style={{display:'flex',gap:3,padding:'2px 0',fontSize:'.45rem',borderBottom:'1px solid #1a1a1a',alignItems:'center'}}>
+                      <span style={{color:'#666',width:18}}>#{n}</span>
+                      {st.map((s,i)=>(<span key={i} style={{padding:'1px 4px',borderRadius:3,fontSize:'.38rem',fontWeight:700,background:tyreBg(s.c),color:s.c==='HARD'||s.c==='MEDIUM'?'#000':'#fff'}}>{s.c?.[0]||'?'}</span>))}
                     </div>
                   ))}
                 </div>
               })()}
-            </DCard>
+            </DC>
 
-            {/* FACTOR ANALYSIS */}
-            {preds && (
-              <DCard title="TOP 5 · FACTORS">
-                {preds.slice(0,5).map(p => (
-                  <div key={p.driverCode} style={{marginBottom:5}}>
-                    <div style={{display:'flex',gap:3,alignItems:'center',marginBottom:2}}>
-                      <span style={{width:3,height:8,borderRadius:1,background:p.teamColor}}/>
-                      <span style={{fontSize:'.5rem',fontWeight:600,color:'#eee'}}>{p.driverCode}</span>
-                      <span style={{fontSize:'.38rem',color:'#555'}}>P{p.predictedPosition} · {p.winProbability}%</span>
-                    </div>
-                    <FB l="QUALI" v={p.factors.qualiPerformance}/>
-                    <FB l="FORM" v={p.factors.historicalForm}/>
-                    <FB l="TEAM" v={p.factors.teamStrength}/>
-                  </div>
-                ))}
-              </DCard>
-            )}
-
-            {/* LIVE FEED */}
-            <DCard title="DATA FEED">
-              {log.length === 0 ? <Empty text="▶ START LIVE butonuna bas"/> :
+            {/* RACE CONTROL */}
+            <DC title="RACE CONTROL">
+              {raceCtrl.length===0 ? <Empty text="Race control"/> :
                 <div style={{maxHeight:100,overflowY:'auto'}}>
-                  {[...log].reverse().slice(0,8).map((e,i)=>(
-                    <div key={i} style={{display:'flex',gap:4,padding:'1px 0',fontSize:'.45rem',borderBottom:'1px solid #1a1a1a'}}>
-                      <span style={{color:'#444',width:46}}>{e.t}</span>
-                      <span style={{color:e.n>0?'#4ade80':'#ef4444',width:8,fontWeight:700}}>{e.n>0?'✓':'✗'}</span>
-                      <span style={{color:'#666'}}>{e.n} · {e.ms}ms</span>
+                  {[...raceCtrl].reverse().slice(0,6).map((rc:any,i:number)=>(
+                    <div key={i} style={{display:'flex',gap:4,padding:'2px 0',fontSize:'.44rem',borderBottom:'1px solid #1a1a1a'}}>
+                      <span style={{padding:'1px 4px',borderRadius:3,fontWeight:700,fontSize:'.38rem',background:flagBg(rc.flag),color:'#fff'}}>{rc.flag||'—'}</span>
+                      <span style={{color:'#888'}}>{rc.message?.slice(0,60)}</span>
                     </div>
                   ))}
                 </div>
               }
-            </DCard>
+            </DC>
+          </div>
+
+          {/* COL 3: Factors + Feed + Model */}
+          <div style={{display:'flex',flexDirection:'column',gap:8}}>
+            {/* FACTORS */}
+            {preds && <DC title="TOP 5 FACTORS">
+              {preds.slice(0,5).map(p => (
+                <div key={p.driverCode} style={{marginBottom:5}}>
+                  <div style={{display:'flex',gap:3,alignItems:'center',marginBottom:1}}>
+                    <span style={{width:3,height:8,borderRadius:1,background:p.teamColor}}/>
+                    <span style={{fontSize:'.48rem',fontWeight:600,color:'#eee'}}>{p.driverCode}</span>
+                    <span style={{fontSize:'.36rem',color:'#555'}}>P{p.predictedPosition} · {p.winProbability}%</span>
+                  </div>
+                  <FB l="QUALI" v={p.factors.qualiPerformance}/>
+                  <FB l="FORM" v={p.factors.historicalForm}/>
+                  <FB l="TEAM" v={p.factors.teamStrength}/>
+                </div>
+              ))}
+            </DC>}
+
+            {/* LIVE FEED */}
+            <DC title="DATA FEED">
+              {log.length===0 ? <Empty text="▶ START LIVE"/> :
+                <div style={{maxHeight:90,overflowY:'auto'}}>
+                  {[...log].reverse().slice(0,8).map((e,i)=>(
+                    <div key={i} style={{display:'flex',gap:4,padding:'1px 0',fontSize:'.42rem',borderBottom:'1px solid #1a1a1a'}}>
+                      <span style={{color:'#444',width:44}}>{e.t}</span>
+                      <span style={{color:e.n>0?'#4ade80':'#ef4444',width:8,fontWeight:700}}>{e.n>0?'✓':'✗'}</span>
+                      <span style={{color:'#555'}}>{e.n} · {e.ms}ms</span>
+                    </div>
+                  ))}
+                </div>
+              }
+            </DC>
 
             {/* MODEL */}
-            <DCard title="MODEL">
-              <div style={{fontSize:'.45rem',color:'#555',lineHeight:1.7}}>
+            <DC title="MODEL">
+              <div style={{fontSize:'.42rem',color:'#555',lineHeight:1.7}}>
                 <div>Ensemble: <span style={{color:'#ccc'}}>Ridge 40% + GB 60% + ELO</span></div>
-                <div>Features: <span style={{color:'#ccc'}}>14</span> · Pre-trained: <span style={{color:'#4ade80'}}>2024-2025</span></div>
+                <div>Features: <span style={{color:'#ccc'}}>14</span> · Temporal: <span style={{color:'#ccc'}}>2025=3×</span></div>
+                <div>Telemetry: <span style={{color:telemetry.size>0?'#4ade80':'#555'}}>{telemetry.size>0?`${telemetry.size} cars live`:'Waiting'}</span></div>
                 <div>Live: <span style={{color:live?'#4ade80':'#555'}}>{live?`Lap ${lap} · 5s`:'Off'}</span></div>
               </div>
-            </DCard>
+            </DC>
           </div>
         </div>
       </div>
@@ -265,19 +275,20 @@ export function F1Page() {
 }
 
 // ═══════════════════════════════════════════
-function DCard({title,children,span}:{title:string;children:React.ReactNode;span?:number}) {
-  return <div style={{background:'#151515',border:'1px solid #222',borderRadius:8,padding:'10px 12px',gridColumn:span?`span ${span}`:undefined}}>
-    <div style={{fontSize:'.46rem',color:'#555',letterSpacing:'.1em',fontWeight:700,marginBottom:8}}>{title}</div>{children}
+const th: React.CSSProperties = {textAlign:'center',padding:'3px 2px',fontWeight:700}
+function DC({title,children}:{title:string;children:React.ReactNode}) {
+  return <div style={{background:'#151515',border:'1px solid #222',borderRadius:8,padding:'8px 10px'}}>
+    <div style={{fontSize:'.44rem',color:'#555',letterSpacing:'.1em',fontWeight:700,marginBottom:6}}>{title}</div>{children}
   </div>
 }
 function FB({l,v}:{l:string;v:number}) {
   return <div style={{display:'flex',alignItems:'center',gap:3,marginBottom:1}}>
-    <span style={{fontSize:'.38rem',color:'#444',width:30}}>{l}</span>
+    <span style={{fontSize:'.36rem',color:'#444',width:28}}>{l}</span>
     <div style={{flex:1,height:3,background:'#222',borderRadius:2,overflow:'hidden'}}><div style={{width:`${v*100}%`,height:'100%',background:v>0.7?'#4ade80':v>0.4?'#fbbf24':'#ef4444',borderRadius:2}}/></div>
   </div>
 }
-function Empty({text}:{text:string}) { return <div style={{fontSize:'.46rem',color:'#333',textAlign:'center',padding:12}}>{text}</div> }
+function Empty({text}:{text:string}) { return <div style={{fontSize:'.44rem',color:'#333',textAlign:'center',padding:10}}>{text}</div> }
 function nw() { return new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) }
-function pT(t: string): number { const [m, s] = t.split(':'); return Number(m) * 60 + Number(s) }
-function flagBg(f:string) { return f==='GREEN'?'#166534':f==='YELLOW'?'#854d0e':f==='RED'?'#991b1b':f==='DOUBLE YELLOW'?'#78350f':'#333' }
-function tyreBg(c:string) { return c==='SOFT'?'#dc2626':c==='MEDIUM'?'#eab308':c==='HARD'?'#e5e5e5':c==='INTERMEDIATE'?'#22c55e':'#3b82f6' }
+function pT(t:string):number { const [m,s]=t.split(':'); return Number(m)*60+Number(s) }
+function flagBg(f:string) { return f==='GREEN'?'#166534':f==='YELLOW'?'#854d0e':f==='RED'?'#991b1b':'#333' }
+function tyreBg(c:string) { return c==='SOFT'?'#dc2626':c==='MEDIUM'?'#eab308':c==='HARD'?'#ddd':c==='INTERMEDIATE'?'#22c55e':'#3b82f6' }
