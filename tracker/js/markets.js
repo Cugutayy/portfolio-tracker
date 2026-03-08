@@ -128,23 +128,73 @@ const MARKET_ITEMS = {
     {sym:'VESBE.IS',name:'VESBE',link:'https://www.investing.com/equities/vestel-beyaz-esya'},
     {sym:'YEOTK.IS',name:'YEOTK',link:'https://www.investing.com/equities/yeo-teknoloji'},
   ],
+  us_stocks: [
+    {sym:'AAPL',name:'Apple',link:'https://www.investing.com/equities/apple-computer-inc'},
+    {sym:'MSFT',name:'Microsoft',link:'https://www.investing.com/equities/microsoft-corp'},
+    {sym:'NVDA',name:'NVIDIA',link:'https://www.investing.com/equities/nvidia-corp'},
+    {sym:'GOOGL',name:'Alphabet',link:'https://www.investing.com/equities/alphabet-inc'},
+    {sym:'AMZN',name:'Amazon',link:'https://www.investing.com/equities/amazon-com-inc'},
+    {sym:'TSLA',name:'Tesla',link:'https://www.investing.com/equities/tesla-motors'},
+    {sym:'META',name:'Meta',link:'https://www.investing.com/equities/facebook-inc'},
+    {sym:'AVGO',name:'Broadcom',link:'https://www.investing.com/equities/broadcom-ltd'},
+    {sym:'JPM',name:'JPMorgan',link:'https://www.investing.com/equities/jp-morgan-chase'},
+    {sym:'LLY',name:'Eli Lilly',link:'https://www.investing.com/equities/eli-lilly-and-co'},
+    {sym:'V',name:'Visa',link:'https://www.investing.com/equities/visa-inc'},
+    {sym:'NFLX',name:'Netflix',link:'https://www.investing.com/equities/netflix,-inc.'},
+    {sym:'AMD',name:'AMD',link:'https://www.investing.com/equities/adv-micro-devices'},
+    {sym:'PLTR',name:'Palantir',link:'https://www.investing.com/equities/palantir-technologies-inc'},
+    {sym:'BA',name:'Boeing',link:'https://www.investing.com/equities/boeing-co'},
+    {sym:'DIS',name:'Disney',link:'https://www.investing.com/equities/walt-disney'},
+    {sym:'COIN',name:'Coinbase',link:'https://www.investing.com/equities/coinbase-global-inc'},
+    {sym:'NKE',name:'Nike',link:'https://www.investing.com/equities/nike'},
+    {sym:'SBUX',name:'Starbucks',link:'https://www.investing.com/equities/starbucks-corp'},
+    {sym:'INTC',name:'Intel',link:'https://www.investing.com/equities/intel-corp'},
+  ],
+  eu_stocks: [
+    {sym:'ASML',name:'ASML',link:'https://www.investing.com/equities/asml-hld'},
+    {sym:'MC.PA',name:'LVMH',link:'https://www.investing.com/equities/lvmh'},
+    {sym:'SAP',name:'SAP',link:'https://www.investing.com/equities/sap-ag'},
+    {sym:'SIE.DE',name:'Siemens',link:'https://www.investing.com/equities/siemens-ag'},
+    {sym:'BMW.DE',name:'BMW',link:'https://www.investing.com/equities/bayerische-motoren-werke'},
+    {sym:'AIR.PA',name:'Airbus',link:'https://www.investing.com/equities/airbus-group'},
+    {sym:'SHEL',name:'Shell',link:'https://www.investing.com/equities/shell-plc'},
+    {sym:'AZN',name:'AstraZeneca',link:'https://www.investing.com/equities/astrazeneca'},
+    {sym:'VOW3.DE',name:'Volkswagen',link:'https://www.investing.com/equities/volkswagen-ag-vzo'},
+    {sym:'BAS.DE',name:'BASF',link:'https://www.investing.com/equities/basf'},
+  ],
   commodities: [
     {sym:'GC=F',name:{tr:'Altin (Ons)',en:'Gold (Oz)'},link:'https://www.investing.com/commodities/gold'},
     {sym:'SI=F',name:{tr:'Gumus',en:'Silver'},link:'https://www.investing.com/commodities/silver'},
     {sym:'CL=F',name:{tr:'Petrol (WTI)',en:'Oil (WTI)'},link:'https://www.investing.com/commodities/crude-oil'},
     {sym:'NG=F',name:{tr:'Dogalgaz',en:'Nat. Gas'},link:'https://www.investing.com/commodities/natural-gas'},
+    {sym:'PL=F',name:{tr:'Platin',en:'Platinum'},link:'https://www.investing.com/commodities/platinum'},
+    {sym:'HG=F',name:{tr:'Bakir',en:'Copper'},link:'https://www.investing.com/commodities/copper'},
+    {sym:'CT=F',name:{tr:'Pamuk',en:'Cotton'},link:'https://www.investing.com/commodities/us-cotton-no.2'},
+    {sym:'KC=F',name:{tr:'Kahve',en:'Coffee'},link:'https://www.investing.com/commodities/us-coffee-c'},
   ],
   fx: [
     {sym:'USDTRY=X',name:'USD/TRY',link:'https://www.investing.com/currencies/usd-try'},
     {sym:'EURTRY=X',name:'EUR/TRY',link:'https://www.investing.com/currencies/eur-try'},
     {sym:'GBPTRY=X',name:'GBP/TRY',link:'https://www.investing.com/currencies/gbp-try'},
     {sym:'EURUSD=X',name:'EUR/USD',link:'https://www.investing.com/currencies/eur-usd'},
+    {sym:'GBPUSD=X',name:'GBP/USD',link:'https://www.investing.com/currencies/gbp-usd'},
+    {sym:'USDJPY=X',name:'USD/JPY',link:'https://www.investing.com/currencies/usd-jpy'},
+    {sym:'USDCHF=X',name:'USD/CHF',link:'https://www.investing.com/currencies/usd-chf'},
+    {sym:'AUDUSD=X',name:'AUD/USD',link:'https://www.investing.com/currencies/aud-usd'},
   ],
   crypto: [
     {sym:'BTC-USD',name:'Bitcoin',link:'https://www.investing.com/crypto/bitcoin'},
     {sym:'ETH-USD',name:'Ethereum',link:'https://www.investing.com/crypto/ethereum'},
     {sym:'SOL-USD',name:'Solana',link:'https://www.investing.com/crypto/solana'},
     {sym:'XRP-USD',name:'XRP',link:'https://www.investing.com/crypto/xrp'},
+    {sym:'ADA-USD',name:'Cardano',link:'https://www.investing.com/crypto/cardano'},
+    {sym:'AVAX-USD',name:'Avalanche',link:'https://www.investing.com/crypto/avalanche'},
+    {sym:'DOGE-USD',name:'Dogecoin',link:'https://www.investing.com/crypto/dogecoin'},
+    {sym:'BNB-USD',name:'BNB',link:'https://www.investing.com/crypto/bnb'},
+    {sym:'DOT-USD',name:'Polkadot',link:'https://www.investing.com/crypto/polkadot'},
+    {sym:'LINK-USD',name:'Chainlink',link:'https://www.investing.com/crypto/chainlink'},
+    {sym:'NEAR-USD',name:'NEAR',link:'https://www.investing.com/crypto/near-protocol'},
+    {sym:'ARB-USD',name:'Arbitrum',link:'https://www.investing.com/crypto/arbitrum'},
   ],
 };
 
@@ -548,14 +598,23 @@ function renderMarkets(){
     h+=`</div>`;
     h+=`<button id="mktStocksToggle" class="btn btn-ghost" onclick="toggleBistAll()" style="font-size:0.56rem;margin:10px auto;display:block;padding:8px 24px">${tr?'Tumu Goster ('+MARKET_ITEMS.stocks.length+' hisse)':'Show All ('+MARKET_ITEMS.stocks.length+' stocks)'}</button>`;
   }
-  h+=secTitle(tr?'Emtia':'Commodities');
+  // ABD Hisseleri
+  h+=secTitle(tr?'ABD Hisseleri ('+MARKET_ITEMS.us_stocks.length+')':'US Stocks ('+MARKET_ITEMS.us_stocks.length+')');
+  h+=renderGroup(MARKET_ITEMS.us_stocks);
+
+  // Avrupa Hisseleri
+  h+=secTitle(tr?'Avrupa Hisseleri ('+MARKET_ITEMS.eu_stocks.length+')':'EU Stocks ('+MARKET_ITEMS.eu_stocks.length+')');
+  h+=renderGroup(MARKET_ITEMS.eu_stocks);
+
+  h+=secTitle(tr?'Emtia ('+MARKET_ITEMS.commodities.length+')':'Commodities ('+MARKET_ITEMS.commodities.length+')');
   h+=renderGroup(MARKET_ITEMS.commodities);
-  h+=secTitle(tr?'Doviz':'Forex');
+  h+=secTitle(tr?'Doviz ('+MARKET_ITEMS.fx.length+')':'Forex ('+MARKET_ITEMS.fx.length+')');
   h+=renderGroup(MARKET_ITEMS.fx);
-  h+=secTitle(tr?'Kripto Paralar':'Cryptocurrencies');
+  h+=secTitle(tr?'Kripto Paralar ('+MARKET_ITEMS.crypto.length+')':'Cryptocurrencies ('+MARKET_ITEMS.crypto.length+')');
   h+=renderGroup(MARKET_ITEMS.crypto);
 
-  h+=`<div style="font-size:0.52rem;color:var(--muted);margin-top:16px;text-align:center">${tr?'Kaynak: Yahoo Finance · Basar. olanlar her 60sn yeniden denenir · Linkler: Investing.com':'Source: Yahoo Finance · Failed items retry every 60s · Links: Investing.com'}</div>`;
+  const totalAll=Object.values(MARKET_ITEMS).flat().length;
+  h+=`<div style="font-size:0.52rem;color:var(--muted);margin-top:16px;text-align:center">${tr?'Toplam '+totalAll+' enstruman · Kaynak: Yahoo Finance · Linkler: Investing.com':'Total '+totalAll+' instruments · Source: Yahoo Finance · Links: Investing.com'}</div>`;
 
   el.innerHTML=h;
   if(!mktFetching && okCount<allCount) fetchAllMarketPrices();
