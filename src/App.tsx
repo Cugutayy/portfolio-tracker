@@ -14,29 +14,36 @@ const I18N: Record<string, Record<string, string>> = {
 }
 
 function ShaderBg({ dark }: { dark: boolean }) {
-  const [wave, setWave] = useState(0.2)
-  const decayRef = useRef<number>(0)
-  const lastMove = useRef(0)
-
-  const handleMouseMove = useCallback(() => {
-    const now = Date.now()
-    const dt = now - lastMove.current
-    lastMove.current = now
-    // Mouse hızına göre dalga yoğunluğu (0.2 base → max 0.55)
-    const velocity = dt < 200 ? Math.min(1, 50 / Math.max(dt, 8)) : 0
-    setWave(0.2 + velocity * 0.35)
-    // Dalga yavaşça sönsün
-    clearTimeout(decayRef.current)
-    decayRef.current = window.setTimeout(() => setWave(0.2), 600)
-  }, [])
+  const waveRef = useRef(0.15)
+  const targetRef = useRef(0.15)
+  const rafRef = useRef(0)
+  const [wave, setWave] = useState(0.15)
 
   useEffect(() => {
-    window.addEventListener('mousemove', handleMouseMove, { passive: true })
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      clearTimeout(decayRef.current)
+    const onMove = () => { targetRef.current = 0.28 }
+    window.addEventListener('mousemove', onMove, { passive: true })
+
+    // Smooth animation loop — 30fps, wave drifts toward target then decays
+    let last = 0
+    const tick = (t: number) => {
+      rafRef.current = requestAnimationFrame(tick)
+      if (t - last < 33) return // ~30fps cap
+      last = t
+      // Decay target back to base
+      targetRef.current += (0.15 - targetRef.current) * 0.04
+      // Smooth interpolation
+      waveRef.current += (targetRef.current - waveRef.current) * 0.12
+      // Only update state when value actually changes visually
+      const rounded = Math.round(waveRef.current * 200) / 200
+      if (rounded !== Math.round(wave * 200) / 200) setWave(rounded)
     }
-  }, [handleMouseMove])
+    rafRef.current = requestAnimationFrame(tick)
+
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      cancelAnimationFrame(rafRef.current)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const colors = dark
     ? ['hsl(200,100%,12%)', 'hsl(170,100%,65%)', 'hsl(185,90%,25%)', 'hsl(175,100%,70%)']
@@ -46,11 +53,11 @@ function ShaderBg({ dark }: { dark: boolean }) {
       <Suspense fallback={null}>
         <Warp
           colors={colors}
-          speed={0.4}
+          speed={0.3}
           proportion={0.45}
           softness={1}
           distortion={wave}
-          swirl={0.6}
+          swirl={0.5}
           swirlIterations={8}
           shape="checks"
           shapeScale={0.1}
