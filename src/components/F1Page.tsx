@@ -116,14 +116,21 @@ export function F1Page() {
       if (w.length > 0) setWeatherData(w[w.length-1])
       addLog(`✓ Hava durumu yüklendi`)
 
-      // Pist koordinatları — ayrı try-catch (opsiyonel)
+      // Pist koordinatları — Russell'in belirli bir turunu al
       try {
-        addLog('→ Pist koordinatları çekiliyor (Russell 1 tur)...')
-        const trackLoc = await openF1.getLocations(sk, 63)
-        const tPts = trackLoc.slice(0, 400).map((l: any) => ({x: l.x, y: l.y}))
-        setTrackPoints(tPts)
-        addLog(`✓ ${tPts.length} pist noktası yüklendi`)
-      } catch { addLog('⚠ Pist koordinatları alınamadı (opsiyonel)') }
+        addLog('→ Pist koordinatları çekiliyor...')
+        const lap10 = laps.find((l: any) => l.driver_number === 63 && l.lap_number === 10 && l.date_start)
+        if (lap10) {
+          const startT = new Date(lap10.date_start).toISOString()
+          const endT = new Date(new Date(lap10.date_start).getTime() + 90000).toISOString()
+          const resp = await fetch(`https://api.openf1.org/v1/location?session_key=${sk}&driver_number=63&date>=${startT}&date<=${endT}`)
+          const trackLoc = await resp.json()
+          if (Array.isArray(trackLoc)) {
+            setTrackPoints(trackLoc.map((l: any) => ({x: l.x, y: l.y})))
+            addLog(`✓ ${trackLoc.length} pist noktası (lap 10)`)
+          }
+        } else { addLog('⚠ Lap 10 bulunamadı') }
+      } catch(e: any) { addLog('⚠ Pist: ' + e.message) }
 
       // Araç konumları — top 6 sürücü için ayrı ayrı çek
       try {
