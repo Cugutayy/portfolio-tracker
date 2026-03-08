@@ -49,6 +49,49 @@ export const AUSTRALIA_2026_POLE_TIME = 78.518 // 1:18.518
 export function getAustralia2026Grid() {
   return AUSTRALIA_2026_QUALI.map(q => ({
     ...q,
-    gridPosition: q.position, // penaltiler sonrası değişebilir
+    gridPosition: q.position,
   }))
+}
+
+// GERÇEK YARIŞ SONUÇLARI — SADECE backtesting/review için
+// Model eğitiminde KULLANILMAZ — fair backtesting
+export const AUSTRALIA_2026_RACE_RESULT = [
+  {pos:1,code:'RUS',name:'George Russell',team:'Mercedes',status:'finished'},
+  {pos:2,code:'ANT',name:'Kimi Antonelli',team:'Mercedes',status:'finished'},
+  {pos:3,code:'LEC',name:'Charles Leclerc',team:'Ferrari',status:'finished'},
+  {pos:4,code:'HAM',name:'Lewis Hamilton',team:'Ferrari',status:'finished'},
+  {pos:5,code:'NOR',name:'Lando Norris',team:'McLaren',status:'finished'},
+  {pos:6,code:'VER',name:'Max Verstappen',team:'Red Bull',status:'finished',note:'P20\u2192P6'},
+  {pos:7,code:'BEA',name:'Oliver Bearman',team:'Haas',status:'finished'},
+  {pos:8,code:'LIN',name:'Arvid Lindblad',team:'Racing Bulls',status:'finished'},
+  {pos:9,code:'BOR',name:'Gabriel Bortoleto',team:'Audi',status:'finished'},
+  {pos:10,code:'GAS',name:'Pierre Gasly',team:'Alpine',status:'finished'},
+  {pos:11,code:'OCO',name:'Esteban Ocon',team:'Haas',status:'finished'},
+  {pos:12,code:'ALB',name:'Alexander Albon',team:'Williams',status:'finished'},
+  {pos:13,code:'LAW',name:'Liam Lawson',team:'Racing Bulls',status:'finished'},
+  {pos:14,code:'COL',name:'Franco Colapinto',team:'Alpine',status:'finished'},
+  {pos:15,code:'SAI',name:'Carlos Sainz',team:'Williams',status:'finished'},
+  {pos:16,code:'PER',name:'Sergio Perez',team:'Cadillac',status:'finished'},
+  {pos:0,code:'STR',name:'Lance Stroll',team:'Aston Martin',status:'dnf'},
+  {pos:0,code:'ALO',name:'Fernando Alonso',team:'Aston Martin',status:'dnf'},
+  {pos:0,code:'BOT',name:'Valtteri Bottas',team:'Cadillac',status:'dnf'},
+  {pos:0,code:'HAD',name:'Isack Hadjar',team:'Red Bull',status:'dnf'},
+  {pos:0,code:'PIA',name:'Oscar Piastri',team:'McLaren',status:'dns'},
+  {pos:0,code:'HUL',name:'Nico Hulkenberg',team:'Audi',status:'dns'},
+]
+
+export function computeBacktest(preds:{driverCode:string,predictedPosition:number}[]){
+  const actual=AUSTRALIA_2026_RACE_RESULT.filter(r=>r.status==='finished')
+  let totalErr=0,count=0,winOk=false,podHits=0
+  const details:{code:string,pred:number,real:number,err:number}[]=[]
+  for(const p of preds){
+    const r=actual.find(a=>a.code===p.driverCode)
+    if(!r||r.pos===0) continue
+    const e=Math.abs(p.predictedPosition-r.pos)
+    totalErr+=e;count++
+    if(p.predictedPosition===1&&r.pos===1) winOk=true
+    if(p.predictedPosition<=3&&r.pos<=3) podHits++
+    details.push({code:p.driverCode,pred:p.predictedPosition,real:r.pos,err:e})
+  }
+  return {mae:count>0?totalErr/count:0,winnerCorrect:winOk,podiumHits:podHits,details:details.sort((a,b)=>a.real-b.real)}
 }

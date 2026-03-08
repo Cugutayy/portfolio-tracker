@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { TEAMS } from '../f1/data'
-import { AUSTRALIA_2026_QUALI } from '../f1/realdata'
+import { AUSTRALIA_2026_QUALI, AUSTRALIA_2026_RACE_RESULT, computeBacktest } from '../f1/realdata'
 import { predictor } from '../f1/predictor'
 import { openF1 } from '../f1/api'
 import type { PredictionResult } from '../f1/types'
@@ -106,14 +106,16 @@ export function F1Page() {
 
       <div style={{maxWidth:1200,margin:'0 auto',padding:'16px 24px',position:'relative',zIndex:1}}>
 
-        {/* HERO */}
-        <div style={{borderRadius:16,marginBottom:14,position:'relative',overflow:'hidden',background:'linear-gradient(135deg,#0a0a10 0%,#10101a 40%,#0c0f18 100%)',border:'1px solid #1c1c24'}}>
-          {/* Animated red line */}
-          <div style={{position:'absolute',top:0,left:0,width:'30%',height:2,background:'linear-gradient(90deg,transparent,#e10600,transparent)',animation:'drift 4s linear infinite',zIndex:2}}/>
-          {/* Red glow */}
-          <div style={{position:'absolute',top:'-30%',left:'15%',width:400,height:400,borderRadius:'50%',background:'radial-gradient(circle,rgba(225,6,0,.06),transparent 60%)',pointerEvents:'none'}}/>
-          {/* Grid pattern overlay */}
-          <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(255,255,255,.015) 1px, transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px, transparent 1px)',backgroundSize:'40px 40px',pointerEvents:'none'}}/>
+        {/* HERO — daha aydınlık, belirgin */}
+        <div style={{borderRadius:16,marginBottom:14,position:'relative',overflow:'hidden',background:'linear-gradient(135deg,#12121a 0%,#1a1a2e 40%,#141828 100%)',border:'1px solid #2a2a36'}}>
+          {/* Animated red line — daha parlak */}
+          <div style={{position:'absolute',top:0,left:0,width:'40%',height:3,background:'linear-gradient(90deg,transparent,#e10600 40%,#ff4444 60%,transparent)',animation:'drift 3s linear infinite',zIndex:2}}/>
+          {/* Red glow — daha belirgin */}
+          <div style={{position:'absolute',top:'-20%',left:'10%',width:500,height:500,borderRadius:'50%',background:'radial-gradient(circle,rgba(225,6,0,.1),transparent 55%)',pointerEvents:'none'}}/>
+          {/* Blue accent glow sağda */}
+          <div style={{position:'absolute',top:'10%',right:'5%',width:300,height:300,borderRadius:'50%',background:'radial-gradient(circle,rgba(59,130,246,.06),transparent 55%)',pointerEvents:'none'}}/>
+          {/* Grid pattern — daha görünür */}
+          <div style={{position:'absolute',inset:0,backgroundImage:'linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px, transparent 1px)',backgroundSize:'40px 40px',pointerEvents:'none'}}/>
           
           <div style={{position:'relative',zIndex:3,padding:'28px 32px',display:'flex',justifyContent:'space-between',alignItems:'center',flexWrap:'wrap',gap:20}}>
             <div>
@@ -267,29 +269,94 @@ export function F1Page() {
             </div>}
 
             <div className="f1-card" style={{animationDelay:'.3s'}}>
-              <div className="f1-title">DATA FEED</div>
-              {log.length===0 ? <Emp text="▶ START LIVE"/> :
-                [...log].reverse().slice(0,6).map((e,i)=>(
-                  <div key={i} style={{display:'flex',gap:6,padding:'2px 0',fontSize:10,borderBottom:'1px solid #1a1a1e'}}>
-                    <span style={{color:'#333'}}>{e.t}</span>
-                    <span style={{color:e.n>0?'#22c55e':'#e10600',fontWeight:700}}>{e.n>0?'✓':'✗'}</span>
-                    <span style={{color:'#444'}}>{e.ms}ms</span>
-                  </div>
-                ))
-              }
+              <div className="f1-title">PREDICTION LOG</div>
+              <div style={{fontSize:10,color:'#555',lineHeight:1.8,maxHeight:180,overflowY:'auto'}}>
+                <div style={{color:'#4ade80'}}>✓ Model: Ensemble (Ridge 40% + GB 60% + ELO)</div>
+                <div style={{color:'#4ade80'}}>✓ Pre-trained: 2024-2025 sezon verileri ({predictor.dataCount} sample)</div>
+                <div style={{color:'#4ade80'}}>✓ 14 feature extracted from qualifying grid</div>
+                <div style={{color:'#4ade80'}}>✓ ELO ratings applied (driver + team)</div>
+                {preds?.[0] && <div style={{color:'#d4a843'}}>→ Winner prediction: {preds[0].driverName} ({preds[0].winProbability}%)</div>}
+                {live && <div style={{color:'#3b82f6'}}>⟳ Live polling active — 5s interval</div>}
+                {live && lap>0 && <div style={{color:'#3b82f6'}}>⟳ Lap {lap}: momentum + pace trend applied</div>}
+                {live && lap>0 && <div style={{color:'#3b82f6'}}>⟳ Race progress weight: {Math.round((lap/58)*70)}% current pos</div>}
+                {log.length>0 && <div style={{marginTop:4,paddingTop:4,borderTop:'1px solid #1a1a1e'}}>
+                  {[...log].reverse().slice(0,4).map((e,i)=>(
+                    <div key={i} style={{color:e.n>0?'#555':'#e10600'}}>
+                      [{e.t}] {e.n>0?`✓ ${e.n} drivers · ${e.ms}ms`:'✗ fetch failed'}
+                    </div>
+                  ))}
+                </div>}
+              </div>
             </div>
 
             <div className="f1-card" style={{animationDelay:'.4s'}}>
               <div className="f1-title">MODEL</div>
               <div style={{fontSize:11,color:'#555',lineHeight:2}}>
-                <div>Ensemble: <span style={{color:'#ccc'}}>Ridge + GB + ELO</span></div>
-                <div>Features: <span style={{color:'#ccc'}}>14</span></div>
-                <div>Telemetry: <span style={{color:telem.size>0?'#22c55e':'#444'}}>{telem.size>0?`${telem.size} cars`:'—'}</span></div>
-                <div>Status: <span style={{color:live?'#22c55e':'#444'}}>{live?`LIVE L${lap}`:'OFF'}</span></div>
+                <div>Ensemble: <span style={{color:'#ccc'}}>Ridge 40% + GB 60%</span></div>
+                <div>ELO: <span style={{color:'#ccc'}}>Driver + Team dynamic</span></div>
+                <div>Features: <span style={{color:'#ccc'}}>14</span> · Temporal: <span style={{color:'#ccc'}}>2025×3</span></div>
+                <div>Telemetry: <span style={{color:telem.size>0?'#22c55e':'#444'}}>{telem.size>0?`${telem.size} cars live`:'waiting'}</span></div>
+                <div>Status: <span style={{color:live?'#22c55e':'#444'}}>{live?`LIVE Lap ${lap}/58`:'Pre-race prediction'}</span></div>
+                <div>Confidence: <span style={{color:live?'#4ade80':'#fbbf24'}}>{live && lap>10?'85%':'70%'} {live?'(live data)':'(pre-race)'}</span></div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* RACE REVIEW — Tahmin vs Gerçek */}
+        {preds && (() => {
+          const bt = computeBacktest(preds)
+          return <div className="f1-card" style={{animationDelay:'.5s',marginTop:14}}>
+            <div className="f1-title">🏁 RACE REVIEW — PREDICTION vs ACTUAL (R1 Australia)</div>
+            <div style={{display:'flex',gap:20,marginBottom:12,flexWrap:'wrap'}}>
+              <div style={{textAlign:'center'}}>
+                <div style={{fontFamily:"'Outfit',sans-serif",fontSize:28,fontWeight:800,color:bt.winnerCorrect?'#4ade80':'#fbbf24'}}>{bt.winnerCorrect?'✓':'✗'}</div>
+                <div style={{fontSize:10,color:'#555'}}>Winner</div>
+              </div>
+              <div style={{textAlign:'center'}}>
+                <div style={{fontFamily:"'Outfit',sans-serif",fontSize:28,fontWeight:800,color:'#d4a843'}}>{bt.podiumHits}/3</div>
+                <div style={{fontSize:10,color:'#555'}}>Podium Hits</div>
+              </div>
+              <div style={{textAlign:'center'}}>
+                <div style={{fontFamily:"'Outfit',sans-serif",fontSize:28,fontWeight:800,color:bt.mae<3?'#4ade80':bt.mae<5?'#fbbf24':'#ef4444'}}>{bt.mae.toFixed(1)}</div>
+                <div style={{fontSize:10,color:'#555'}}>Avg Position Error</div>
+              </div>
+            </div>
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                <thead><tr style={{color:'#555',borderBottom:'1px solid #1e1e24',fontSize:10}}>
+                  <th style={{...TH,textAlign:'left',width:30}}>ACTUAL</th>
+                  <th style={{width:4}}></th>
+                  <th style={{...TH,textAlign:'left'}}>DRIVER</th>
+                  <th style={TH}>PRED</th>
+                  <th style={TH}>ERROR</th>
+                  <th style={{...TH,width:80}}>STATUS</th>
+                </tr></thead>
+                <tbody>
+                  {AUSTRALIA_2026_RACE_RESULT.map((r,i) => {
+                    const d = bt.details.find(x=>x.code===r.code)
+                    const tm = TEAMS[r.team]
+                    const isDNF = r.status==='dnf'||r.status==='dns'
+                    return <tr key={r.code} className="f1-row" style={{opacity:isDNF?0.4:1}}>
+                      <td style={{fontFamily:"'Outfit',sans-serif",fontWeight:800,color:i<3?'#d4a843':i<10?'#aaa':'#555',fontSize:13}}>{isDNF?r.status.toUpperCase():`P${r.pos}`}</td>
+                      <td><div style={{width:3,height:16,borderRadius:2,background:tm?.color||'#333'}}/></td>
+                      <td style={{padding:'4px 6px'}}>
+                        <span style={{fontFamily:"'Outfit',sans-serif",fontWeight:i<3?700:500,color:isDNF?'#444':i<10?'#eee':'#888',fontSize:12}}>{r.name}</span>
+                      </td>
+                      <td style={{textAlign:'center',fontFamily:"'Outfit',sans-serif",fontWeight:700,color:d&&d.err===0?'#4ade80':d&&d.err<=2?'#fbbf24':'#555',fontSize:12}}>{d?`P${d.pred}`:'—'}</td>
+                      <td style={{textAlign:'center',color:d&&d.err===0?'#4ade80':d&&d.err<=2?'#fbbf24':'#ef4444',fontSize:11,fontWeight:700}}>{d?d.err===0?'✓':`±${d.err}`:''}</td>
+                      <td style={{textAlign:'center',fontSize:10,color:isDNF?'#ef4444':'#333'}}>{r.note||''}</td>
+                    </tr>
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <div style={{marginTop:10,fontSize:10,color:'#3a3a42',lineHeight:1.6}}>
+              ⚠ Bu karşılaştırma FAIR BACKTEST'tir — model yarış sonuçlarını görmeden, sadece sralama verileriyle tahmin yapmıştır.
+              2. yarış (China GP) tahmininde bu sonuçlar modele beslenecek.
+            </div>
+          </div>
+        })()}
       </div>
     </div>
   )

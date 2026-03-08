@@ -13,8 +13,8 @@ export function ProjectCards({ t }: Props) {
         </div>
       </ScrollReveal>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
-        <ScrollReveal delay={100} style={{gridColumn:'1/-1'}}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:18 }}>
+        <ScrollReveal delay={100}>
           <Card3D href="/tracker/" accent="var(--green-t)">
             <PortfolioContent t={t} />
           </Card3D>
