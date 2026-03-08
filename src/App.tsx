@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { Navbar } from './components/Navbar'
 import { Hero } from './components/Hero'
 import { ProjectCards } from './components/ProjectCards'
@@ -14,11 +14,36 @@ const I18N: Record<string, Record<string, string>> = {
 }
 
 function ShaderBg({ dark }: { dark: boolean }) {
+  const mouseRef = useRef({ x: 0, y: 0 })
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const rafRef = useRef<number>(0)
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    mouseRef.current = {
+      x: (e.clientX / window.innerWidth - 0.5) * 0.3,
+      y: (e.clientY / window.innerHeight - 0.5) * 0.3,
+    }
+    if (!rafRef.current) {
+      rafRef.current = requestAnimationFrame(() => {
+        setOffset({ x: mouseRef.current.x, y: mouseRef.current.y })
+        rafRef.current = 0
+      })
+    }
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener('mousemove', handleMouseMove, { passive: true })
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+    }
+  }, [handleMouseMove])
+
   const colors = dark
     ? ['hsl(200,100%,12%)', 'hsl(170,100%,65%)', 'hsl(185,90%,25%)', 'hsl(175,100%,70%)']
     : ['hsl(195,80%,55%)', 'hsl(165,90%,78%)', 'hsl(185,70%,45%)', 'hsl(175,85%,85%)']
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity: dark ? 0.4 : 0.25 }}>
+    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity: dark ? 0.4 : 0.45 }}>
       <Suspense fallback={null}>
         <Warp
           colors={colors}
@@ -32,6 +57,8 @@ function ShaderBg({ dark }: { dark: boolean }) {
           shapeScale={0.1}
           scale={1}
           rotation={0}
+          offsetX={offset.x}
+          offsetY={offset.y}
           style={{ width:'100%', height:'100%' }}
         />
       </Suspense>
