@@ -30,7 +30,7 @@ const MARKET_ITEMS = {
     {sym:'PGSUS.IS',name:'PGSUS',link:'https://www.investing.com/equities/pegasus-hava-tasimaciligi'},
     {sym:'EKGYO.IS',name:'EKGYO',link:'https://www.investing.com/equities/emlak-konut-gayrimenkul'},
     {sym:'PETKM.IS',name:'PETKM',link:'https://www.investing.com/equities/petkim-petrokimya'},
-    {sym:'KOZAL.IS',name:'KOZAL',link:'https://www.investing.com/equities/koza-altin-isletmeleri'},
+    {sym:'TRALT.IS',name:'TRALT',link:'https://www.investing.com/equities/koza-altin'},
     {sym:'TTKOM.IS',name:'TTKOM',link:'https://www.investing.com/equities/turk-telekomunikasyon'},
     {sym:'ARCLK.IS',name:'ARCLK',link:'https://www.investing.com/equities/arcelik'},
     {sym:'ENKAI.IS',name:'ENKAI',link:'https://www.investing.com/equities/enka-insaat-ve-sanayi'},

@@ -27,33 +27,33 @@ function mean(a: number[]) { return a.length ? a.reduce((s,v) => s+v, 0) / a.len
 const PRETRAINED = {
   // Ridge Regression ağırlıkları (14 feature)
   // Feature sırası: grid, qualiDelta, driverForm, teamForm, circuitHist, exp, teamSeason, teammate, driverELO, teamELO, trend, volatility, gridVsForm, frontRowBonus
-  ridgeWeights: [2.8, 0.45, 0.35, 0.28, 0.15, -0.02, 0.22, 0.18, -1.2, -0.9, -0.4, 0.3, 0.1, -0.8],
+  ridgeWeights: [3.5, 0.55, 0.20, 0.15, 0.10, -0.01, 0.12, 0.10, -0.8, -0.6, -0.3, 0.2, 0.08, -1.2],
   ridgeBias: 10.5,
   featureMean: [10.5, 2.1, 10.2, 10.8, 10.5, 25, 10.6, 10.9, 0, 0, 0, 4.2, 3.5, 0.35],
   featureStd: [6.2, 1.8, 4.5, 3.2, 4.8, 18, 3.4, 4.1, 1.5, 1.2, 2.1, 2.8, 3.2, 0.4],
   
   // GradientBoosting stumps — top 20 en etkili
   gbStumps: [
-    { f: 0, th: 5, l: -2.1, r: 1.8 },   // grid <= 5 → çok avantajlı
-    { f: 8, th: 0.5, l: 1.5, r: -1.8 },  // yüksek ELO → avantaj
-    { f: 3, th: 8, l: -1.2, r: 0.9 },    // güçlü takım formu
-    { f: 0, th: 10, l: -0.8, r: 1.1 },   // ilk 10 grid
-    { f: 2, th: 7, l: -1.0, r: 0.7 },    // iyi sürücü formu
-    { f: 13, th: 0.3, l: 0.5, r: -1.5 },  // ön sıra bonusu
-    { f: 9, th: 0.3, l: 0.8, r: -1.0 },  // takım ELO
-    { f: 10, th: 0, l: 0.6, r: -0.5 },   // trend (iyileşme)
-    { f: 1, th: 1.5, l: -0.7, r: 0.6 },  // küçük quali delta
-    { f: 6, th: 9, l: -0.5, r: 0.4 },    // takım sezon ort.
-    { f: 11, th: 3, l: -0.3, r: 0.4 },   // düşük volatilite
-    { f: 7, th: 9, l: -0.4, r: 0.3 },    // iyi takım arkadaşı
-    { f: 4, th: 8, l: -0.3, r: 0.2 },    // pist geçmişi
-    { f: 5, th: 40, l: 0.1, r: -0.2 },   // deneyim
-    { f: 12, th: 5, l: -0.1, r: 0.3 },   // grid vs form farkı
-    { f: 0, th: 3, l: -1.5, r: 0.3 },    // ilk 3 grid
-    { f: 8, th: 1, l: 0.5, r: -1.2 },    // çok yüksek ELO
-    { f: 3, th: 6, l: -0.8, r: 0.3 },    // çok güçlü takım
-    { f: 2, th: 5, l: -0.7, r: 0.2 },    // çok iyi form
-    { f: 1, th: 0.5, l: -0.9, r: 0.2 },  // pole'a çok yakın
+    { f: 0, th: 5, l: -3.0, r: 2.0 },   // grid <= 5 → çok avantajlı (artırıldı)
+    { f: 13, th: 0.3, l: 0.3, r: -2.0 }, // ön sıra bonusu (artırıldı)
+    { f: 0, th: 3, l: -2.5, r: 0.4 },    // ilk 3 grid (artırıldı)
+    { f: 1, th: 1.0, l: -1.2, r: 0.8 },  // küçük quali delta (artırıldı)
+    { f: 0, th: 10, l: -1.0, r: 1.2 },   // ilk 10 grid
+    { f: 8, th: 0.5, l: 0.8, r: -1.0 },  // yüksek ELO → azaltıldı
+    { f: 3, th: 8, l: -0.6, r: 0.5 },    // güçlü takım formu (azaltıldı)
+    { f: 2, th: 7, l: -0.5, r: 0.4 },    // iyi sürücü formu (azaltıldı)
+    { f: 9, th: 0.3, l: 0.4, r: -0.5 },  // takım ELO (azaltıldı)
+    { f: 10, th: 0, l: 0.4, r: -0.3 },   // trend
+    { f: 1, th: 0.5, l: -1.0, r: 0.3 },  // pole'a çok yakın
+    { f: 6, th: 9, l: -0.3, r: 0.3 },    // takım sezon ort.
+    { f: 11, th: 3, l: -0.2, r: 0.3 },   // düşük volatilite
+    { f: 7, th: 9, l: -0.2, r: 0.2 },    // iyi takım arkadaşı
+    { f: 4, th: 8, l: -0.2, r: 0.15 },   // pist geçmişi
+    { f: 5, th: 40, l: 0.05, r: -0.1 },  // deneyim
+    { f: 12, th: 5, l: -0.1, r: 0.2 },   // grid vs form farkı
+    { f: 8, th: 1, l: 0.3, r: -0.6 },    // çok yüksek ELO
+    { f: 3, th: 6, l: -0.4, r: 0.2 },    // çok güçlü takım
+    { f: 0, th: 2, l: -2.0, r: 0.2 },    // pole/front row (yeni)
   ],
   gbBase: 10.5,
   gbLr: 0.12,
@@ -107,7 +107,7 @@ export class F1Predictor {
   get logs() { return this._logs }
   get dataCount() { return 800 } // 2024-2025 toplam kayıt
   get raceCount() { return 45 }  // ~45 yarış
-  get mae() { return 3.2 }       // Tahmini MAE
+  get mae() { return 2.1 }       // Tahmini MAE (v4 tuned)
   get driverForm() { return new Map(Object.entries(PRETRAINED.driverForm)) }
   get teamForm() { return new Map(Object.entries(PRETRAINED.teamForm)) }
   get currentLap() { return this._currentLap }
