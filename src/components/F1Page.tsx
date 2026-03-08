@@ -43,6 +43,7 @@ export function F1Page() {
   const [selectedRace, setSelectedRace] = useState(SESSION_KEY)
   const [carPositions, setCarPositions] = useState<Map<number,{x:number,y:number}>>(new Map())
   const [allLocationData, setAllLocationData] = useState<any[]>([])
+  const [livePreds, setLivePreds] = useState<PredictionResult[]|null>(null)
   const replayRef = useRef<number|null>(null)
 
   // Seçilen yarış değişince qualifying'den tahmin üret
@@ -192,6 +193,19 @@ export function F1Page() {
       lastLap:lLap.get(d.driver_number)||0, stint:getStint(d.driver_number),
     })).sort((a:any,b:any) => a.position-b.position)
   }, [posData,lapData,intervalData,stintData,drivers,replayLap])
+
+  // Her lap değişiminde AI tahminini güncelle
+  useEffect(() => {
+    if (mode !== 'replay' || currentStandings.length === 0 || replayLap < 2) return
+    const liveDrivers = currentStandings.map((d: any) => ({
+      code: d.code, name: d.name, team: d.team, teamColor: d.color,
+      position: d.position, lastLapTime: d.lastLap || null,
+      gap: d.gap, pitStops: d.stint?.tyre_age_at_start === 0 ? 1 : 0,
+      compound: d.stint?.compound || 'MEDIUM'
+    }))
+    const updated = predictor.updateFromLiveData(liveDrivers, replayLap)
+    setLivePreds(updated)
+  }, [replayLap, mode, currentStandings])
 
   const eventFeed = useMemo(() => {
     const events: {lap:number,type:string,msg:string,color:string}[] = []
@@ -347,7 +361,7 @@ export function F1Page() {
             <input type="range" min={raceStartTime||0} max={raceEndTime||1} value={replayTime} onChange={e=>{setReplayTime(Number(e.target.value))}} step={1000} style={{flex:1,minWidth:150,accentColor:'#e10600'}}/>
             <span style={{fontSize:13,fontWeight:700,color:'#fff',fontFamily:"'Outfit'"}}>LAP {replayLap}/{TOTAL_LAPS}</span>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr 0.7fr',gap:12}}>
+          <div style={{display:'grid',gridTemplateColumns:'1.2fr 1fr 0.8fr',gap:12}}>
             <div className="f1-card">
               <div className="f1-title">TRACK MAP · LAP {replayLap}</div>
               <TrackMap pts={trackPoints} cars={carPositions} drivers={drivers} standings={currentStandings}/>
@@ -360,14 +374,32 @@ export function F1Page() {
                     <span style={{width:20,fontFamily:"'Outfit'",fontWeight:800,color:i<3?'#d4a843':i<10?'#bbb':'#555',fontSize:13}}>{i+1}</span>
                     <div style={{width:3,height:18,borderRadius:2,background:d.color}}/>
                     <div style={{flex:1}}><span style={{fontFamily:"'Outfit'",fontWeight:i<3?700:400,color:i<10?'#eee':'#777',fontSize:12}}>{d.code}</span><span style={{fontSize:8,color:'#444',marginLeft:6}}>{d.team}</span></div>
-                    <span style={{fontSize:9,color:'#555',width:50,textAlign:'right'}}>{d.gap>0?`+${d.gap.toFixed(1)}s`:i===0?'LDR':''}</span>
-                    <span style={{fontSize:9,color:d.lastLap>0&&d.lastLap<82?'#a855f7':'#444',width:50,textAlign:'right'}}>{d.lastLap>0?d.lastLap.toFixed(3):'—'}</span>
+                    <span style={{fontSize:9,color:'#555',width:46,textAlign:'right'}}>{d.gap>0?`+${d.gap.toFixed(1)}s`:i===0?'LDR':''}</span>
+                    <span style={{fontSize:9,color:d.lastLap>0&&d.lastLap<82?'#a855f7':'#444',width:46,textAlign:'right'}}>{d.lastLap>0?d.lastLap.toFixed(3):'—'}</span>
                     <TyreBadge compound={d.stint?.compound}/>
+                    {(() => { const lp=livePreds?.find(p=>p.driverCode===d.code); return lp ? <span style={{fontSize:8,color:lp.predictedPosition<=3?'#d4a843':'#555',width:24,textAlign:'right',fontWeight:600}}>→P{lp.predictedPosition}</span> : null })()}
                   </div>
                 ))}
               </div>
             </div>
-            <div className="f1-card">
+            <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            {/* AI TAHMİN PANELİ */}
+            <div className="f1-card" style={{flex:0}}>
+              <div className="f1-title">AI TAHMİN · LAP {replayLap}</div>
+              {livePreds ? <div style={{maxHeight:160,overflowY:'auto'}}>
+                {livePreds.slice(0,10).map((p,i) => (
+                  <div key={p.driverCode} style={{display:'flex',alignItems:'center',gap:4,padding:'2px 0',fontSize:10}}>
+                    <span style={{width:16,fontWeight:800,color:i<3?'#d4a843':'#666',fontFamily:"'Outfit'"}}>{p.predictedPosition}</span>
+                    <div style={{width:2,height:10,borderRadius:1,background:p.teamColor}}/>
+                    <span style={{color:i<3?'#eee':'#888',fontWeight:i<3?700:400,flex:1}}>{p.driverCode}</span>
+                    <span style={{color:'#d4a843',fontSize:8}}>{p.winProbability}%</span>
+                  </div>
+                ))}
+              </div> : <div style={{color:'#444',fontSize:9}}>Yarış başlayınca güncellenir</div>}
+              {livePreds && <div style={{marginTop:6,fontSize:8,color:'#444'}}>Confidence: {Math.round(70 + (replayLap/TOTAL_LAPS)*25)}% · Momentum+Pace+Position</div>}
+            </div>
+            {/* OLAY AKIŞI */}
+            <div className="f1-card" style={{flex:1}}>
               <div className="f1-title">OLAY AKIŞI</div>
               <div style={{maxHeight:440,overflowY:'auto'}}>
                 {filteredEvents.length===0 ? <div style={{color:'#444',fontSize:10}}>Oynat ile başlat</div> :
@@ -378,6 +410,7 @@ export function F1Page() {
                   ))
                 }
               </div>
+            </div>
             </div>
           </div>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:12}}>
