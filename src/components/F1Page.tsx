@@ -11,21 +11,16 @@ const TOTAL_LAPS = 58
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.f1{background:linear-gradient(160deg,#0c0c18 0%,#141420 30%,#0f1218 60%,#0a0e16 100%);min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace;position:relative}
+.f1{background:linear-gradient(160deg,#0c0c18,#141420 30%,#0f1218 60%,#0a0e16);min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace;position:relative;overflow:hidden}
 .f1::before{content:'';position:fixed;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.03;z-index:0}
 .f1 *{box-sizing:border-box}
-.f1-card{background:rgba(26,26,40,.85);backdrop-filter:blur(8px);border:1px solid #2a2a3a;border-radius:12px;padding:14px 16px;animation:slideUp .4s ease both;position:relative;z-index:1}
-.f1-title{font-family:'Outfit',sans-serif;font-size:10px;color:#777;letter-spacing:.12em;font-weight:600;margin-bottom:10px;text-transform:uppercase}
-.f1-row{display:flex;align-items:center;gap:6px;padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.03)}
-.f1-row:hover{background:rgba(255,255,255,.02)}
-.f1-btn{border:none;border-radius:8px;padding:7px 16px;font-size:11px;color:#fff;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;display:flex;align-items:center;gap:5px}
-@media(max-width:768px){
-  .f1-grid2{grid-template-columns:1fr!important}
-  .f1-grid3{grid-template-columns:1fr!important}
-  .f1-controls{flex-direction:column}
-}
+.f1p{background:rgba(20,20,36,.8);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px 12px;position:relative;z-index:1}
+.f1t{font-family:'Outfit',sans-serif;font-size:9px;color:#555;letter-spacing:.1em;font-weight:600;margin-bottom:6px;text-transform:uppercase}
+.f1r{display:flex;align-items:center;gap:5px;padding:3px 2px;border-bottom:1px solid rgba(255,255,255,.03)}
+.f1b{border:none;border-radius:6px;padding:5px 12px;font-size:10px;color:#fff;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600}
+@media(max-width:900px){.f1-main{flex-direction:column!important}.f1-side{min-width:0!important;max-width:100%!important}}
 `
 
 export function F1Page() {
@@ -34,9 +29,9 @@ export function F1Page() {
   const [replayLap, setReplayLap] = useState(1)
   const [replayPlaying, setReplayPlaying] = useState(false)
   const [replaySpeed, setReplaySpeed] = useState(1)
-  const [raceStartTime, setRaceStartTime] = useState(0) // yarış başlangıç ms
+  const [raceStartTime, setRaceStartTime] = useState(0)
   const [raceEndTime, setRaceEndTime] = useState(0)
-  const [replayTime, setReplayTime] = useState(0) // mevcut replay zamanı ms
+  const [replayTime, setReplayTime] = useState(0)
   const [lapData, setLapData] = useState<any[]>([])
   const [posData, setPosData] = useState<any[]>([])
   const [intervalData, setIntervalData] = useState<any[]>([])
@@ -52,491 +47,268 @@ export function F1Page() {
   const [allLocationData, setAllLocationData] = useState<any[]>([])
   const [livePreds, setLivePreds] = useState<PredictionResult[]|null>(null)
   const [liveActive, setLiveActive] = useState(false)
-  const [liveLap, setLiveLap] = useState(0)
   const replayRef = useRef<number|null>(null)
   const liveRef = useRef<number|null>(null)
 
-  // Seçilen yarış değişince qualifying'den tahmin üret
+  // Init: races + pre-race prediction
+  useEffect(() => {
+    (async () => { try {
+      const sessions = await openF1.getSessions({year: 2026, session_type: 'Race'})
+      setRaces(sessions.map((s:any) => ({key:s.session_key,name:s.country_name,circuit:s.circuit_short_name||s.country_name,date:s.date_start?.slice(0,10)||'',hasData:new Date(s.date_start)<=new Date()})))
+    } catch {} })()
+    setPreds(predictor.predictFromGrid(AUSTRALIA_2026_QUALI.map(q => ({
+      code:q.driverCode,name:q.driverName,team:q.team,teamColor:TEAMS[q.team]?.color||'#888',position:q.position,
+      qualiDelta:(q.q3Time?pT(q.q3Time):q.q2Time?pT(q.q2Time):q.q1Time?pT(q.q1Time):83)-78.518
+    }))))
+  }, [])
+
+  // Race change → auto qualifying fetch
   useEffect(() => {
     if (selectedRace === SESSION_KEY) return
-    (async () => {
-      try {
-        const race = races.find(r => r.key === selectedRace)
-        if (!race?.hasData) return
-        const allS = await openF1.getSessions({year: 2026})
-        const qSess = allS.find((s:any) => s.session_type==='Qualifying' && Math.abs(new Date(s.date_start||'').getTime()-new Date(race.date).getTime())<3*86400000)
-        if (!qSess) return
-        const [laps, drvs] = await Promise.all([openF1.getLaps(qSess.session_key), openF1.getDrivers(qSess.session_key)])
-        const best = new Map<number,number>()
-        for (const l of laps) { if (l.lap_duration>0) { const c=best.get(l.driver_number)||Infinity; if(l.lap_duration<c) best.set(l.driver_number,l.lap_duration) } }
-        const pole = Math.min(...best.values())
-        const grid = [...best.entries()].sort((a,b)=>a[1]-b[1]).map(([dn,t],i) => {
-          const d=drvs.find((x:any)=>x.driver_number===dn)
-          return {code:d?.name_acronym||'?',name:d?.full_name||'?',team:d?.team_name||'?',teamColor:'#'+(d?.team_colour||'888'),position:i+1,qualiDelta:t-pole}
-        })
-        if (grid.length>0) setPreds(predictor.predictFromGrid(grid))
-      } catch {}
-    })()
+    ;(async () => { try {
+      const race = races.find(r=>r.key===selectedRace); if(!race?.hasData) return
+      const allS = await openF1.getSessions({year:2026})
+      const qS = allS.find((s:any)=>s.session_type==='Qualifying'&&Math.abs(new Date(s.date_start||'').getTime()-new Date(race.date).getTime())<3*86400000)
+      if(!qS) return
+      const [laps,drvs] = await Promise.all([openF1.getLaps(qS.session_key),openF1.getDrivers(qS.session_key)])
+      const best = new Map<number,number>()
+      for(const l of laps) if(l.lap_duration>0){const c=best.get(l.driver_number)||Infinity;if(l.lap_duration<c) best.set(l.driver_number,l.lap_duration)}
+      const pole=Math.min(...best.values())
+      const grid=[...best.entries()].sort((a,b)=>a[1]-b[1]).map(([dn,t],i)=>{const d=drvs.find((x:any)=>x.driver_number===dn);return{code:d?.name_acronym||'?',name:d?.full_name||'?',team:d?.team_name||'?',teamColor:'#'+(d?.team_colour||'888'),position:i+1,qualiDelta:t-pole}})
+      if(grid.length>0) setPreds(predictor.predictFromGrid(grid))
+    } catch {} })()
   }, [selectedRace, races])
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const sessions = await openF1.getSessions({year: 2026, session_type: 'Race'})
-        setRaces(sessions.map((s: any) => ({
-          key: s.session_key, name: s.country_name,
-          circuit: s.circuit_short_name || s.country_name,
-          date: s.date_start?.slice(0,10) || '',
-          hasData: new Date(s.date_start) <= new Date()
-        })))
-      } catch {}
-    })()
-    const grid = AUSTRALIA_2026_QUALI.map(q => ({
-      code:q.driverCode, name:q.driverName, team:q.team,
-      teamColor:TEAMS[q.team]?.color||'#888', position:q.position,
-      qualiDelta:(q.q3Time?pT(q.q3Time):q.q2Time?pT(q.q2Time):q.q1Time?pT(q.q1Time):83)-78.518
-    }))
-    setPreds(predictor.predictFromGrid(grid))
-  }, [])
+  const addLog = useCallback((m:string) => setLog(p=>[...p.slice(-40),`[${nw()}] ${m}`]), [])
 
-  const addLog = useCallback((msg: string) => {
-    setLog(prev => [...prev.slice(-40), `[${nw()}] ${msg}`])
-  }, [])
-
-  const loadReplayData = useCallback(async () => {
-    const sk = selectedRace
-    setLoading(true); setLog([])
-    addLog('> OpenF1 API...')
+  // Load replay data
+  const loadReplay = useCallback(async () => {
+    const sk=selectedRace; setLoading(true); setLog([])
+    addLog('> Loading...')
     try {
-      const [drv, laps, pos, intv, st, rc, w] = await Promise.all([
-        openF1.getDrivers(sk), openF1.getLaps(sk), openF1.getPositions(sk),
-        openF1.getIntervals(sk), openF1.getStints(sk), openF1.getRaceControl(sk), openF1.getWeather(sk)
-      ])
-      setDrivers(drv); setLapData(laps); setPosData(pos)
-      setIntervalData(intv); setStintData(st); setRaceCtrl(rc)
-      if (w.length > 0) setWeatherData(w[w.length-1])
-      addLog(`✓ ${drv.length} sürücü · ${laps.length} tur · ${pos.length} pozisyon`)
-      addLog(`✓ ${intv.length} interval · ${st.length} stint · ${rc.length} race ctrl`)
+      const [drv,laps,pos,intv,st,rc,w] = await Promise.all([openF1.getDrivers(sk),openF1.getLaps(sk),openF1.getPositions(sk),openF1.getIntervals(sk),openF1.getStints(sk),openF1.getRaceControl(sk),openF1.getWeather(sk)])
+      setDrivers(drv);setLapData(laps);setPosData(pos);setIntervalData(intv);setStintData(st);setRaceCtrl(rc)
+      if(w.length>0) setWeatherData(w[w.length-1])
+      addLog(`OK ${drv.length}drv ${laps.length}laps ${pos.length}pos`)
       try {
-        // Top 10 sürücü konum verisi (hızlı yükleme)
-        const top10 = [63,12,16,44,4,1,87,30,5,10] // RUS ANT LEC HAM NOR VER BEA LAW BOR GAS
-        const r1 = await Promise.all(top10.slice(0,3).map(dn => openF1.getLocations(sk,dn).catch(()=>[])))
-        const r2 = await Promise.all(top10.slice(3,6).map(dn => openF1.getLocations(sk,dn).catch(()=>[])))
-        const r3 = await Promise.all(top10.slice(6,10).map(dn => openF1.getLocations(sk,dn).catch(()=>[])))
-        const allLocs = [...r1,...r2,...r3].flat()
-        setAllLocationData(allLocs)
-        addLog(`✓ ${allLocs.length} konum (10 sürücü)`)
-      } catch { addLog('⚠ Konum kısmi') }
-      // Yarış zaman aralığını hesapla
-      const firstLap = laps.find((l:any) => l.driver_number===63 && l.lap_number===1)
-      const lastLap = [...laps].reverse().find((l:any) => l.driver_number===63 && l.lap_duration>0)
-      if (firstLap?.date_start) {
-        const st = new Date(firstLap.date_start).getTime()
-        const en = lastLap?.date_start ? new Date(lastLap.date_start).getTime() + 90000 : st + 5400000
-        setRaceStartTime(st); setRaceEndTime(en); setReplayTime(st)
-        addLog(`✓ Yarış: ${new Date(st).toISOString().slice(11,19)} → ${new Date(en).toISOString().slice(11,19)}`)
-      }
-      addLog('> Veriler yüklendi')
-      setMode('replay'); setReplayLap(1)
-    } catch(e: any) { addLog(`❌ ${e.message}`) }
+        const top=[63,12,16,44,4,1,87,30,5,10]
+        const r1=await Promise.all(top.slice(0,3).map(dn=>openF1.getLocations(sk,dn).catch(()=>[])))
+        const r2=await Promise.all(top.slice(3,6).map(dn=>openF1.getLocations(sk,dn).catch(()=>[])))
+        const r3=await Promise.all(top.slice(6,10).map(dn=>openF1.getLocations(sk,dn).catch(()=>[])))
+        setAllLocationData([...r1,...r2,...r3].flat())
+        addLog(`OK ${[...r1,...r2,...r3].flat().length} loc`)
+      } catch{}
+      const fl=laps.find((l:any)=>l.driver_number===63&&l.lap_number===1)
+      const ll=[...laps].reverse().find((l:any)=>l.driver_number===63&&l.lap_duration>0)
+      if(fl?.date_start){const s=new Date(fl.date_start).getTime(),e=ll?.date_start?new Date(ll.date_start).getTime()+90000:s+5400000;setRaceStartTime(s);setRaceEndTime(e);setReplayTime(s)}
+      addLog('> Ready'); setMode('replay'); setReplayLap(1)
+    } catch(e:any){addLog(`ERR ${e.message}`)}
     setLoading(false)
   }, [addLog, selectedRace])
 
-  // ═══ CANLI MOD ═══
+  // Live mode
   const toggleLive = useCallback(() => {
-    if (liveActive) {
-      if (liveRef.current) clearInterval(liveRef.current)
-      setLiveActive(false); addLog('■ Canlı durduruldu')
-      return
-    }
-    setLiveActive(true); setMode('replay'); setLog([])
-    addLog('> CANLI mod — 5s polling')
-    const sk = selectedRace
-    const fetchLive = async () => {
-      try {
-        const [drv,laps,pos,intv,st,rc,w] = await Promise.all([
-          openF1.getDrivers(sk),openF1.getLaps(sk),openF1.getPositions(sk),
-          openF1.getIntervals(sk),openF1.getStints(sk),openF1.getRaceControl(sk),openF1.getWeather(sk)
-        ])
-        setDrivers(drv);setLapData(laps);setPosData(pos)
-        setIntervalData(intv);setStintData(st);setRaceCtrl(rc)
-        if(w.length>0) setWeatherData(w[w.length-1])
-        const maxLap = Math.max(0,...laps.filter((l:any)=>l.driver_number===63).map((l:any)=>l.lap_number))
-        setReplayLap(maxLap); setLiveLap(maxLap)
-        // Konum
-        try {
-          const locs = await Promise.all([63,12,16,44,4,1].map(dn=>openF1.getLocations(sk,dn).catch(()=>[])))
-          setAllLocationData(locs.flat())
-          setReplayTime(Date.now()); setRaceStartTime(Date.now()-maxLap*85000); setRaceEndTime(Date.now()+3600000)
-        } catch{}
-        addLog(`✓ L${maxLap} · ${pos.length} pos · ${intv.length} gap`)
-      } catch(e:any){addLog(`❌ ${e.message}`)}
-    }
-    fetchLive()
-    liveRef.current = window.setInterval(fetchLive, 5000)
-  }, [liveActive,selectedRace,addLog])
-  useEffect(()=>{return()=>{if(liveRef.current)clearInterval(liveRef.current)}},[]) 
+    if(liveActive){if(liveRef.current)clearInterval(liveRef.current);setLiveActive(false);return}
+    setLiveActive(true);setMode('replay');setLog([]);addLog('> LIVE 5s')
+    const sk=selectedRace
+    const poll=async()=>{try{
+      const[drv,laps,pos,intv,st,rc,w]=await Promise.all([openF1.getDrivers(sk),openF1.getLaps(sk),openF1.getPositions(sk),openF1.getIntervals(sk),openF1.getStints(sk),openF1.getRaceControl(sk),openF1.getWeather(sk)])
+      setDrivers(drv);setLapData(laps);setPosData(pos);setIntervalData(intv);setStintData(st);setRaceCtrl(rc);if(w.length>0)setWeatherData(w[w.length-1])
+      const ml=Math.max(0,...laps.filter((l:any)=>l.driver_number===63).map((l:any)=>l.lap_number));setReplayLap(ml)
+      try{const locs=await Promise.all([63,12,16,44,4,1].map(dn=>openF1.getLocations(sk,dn).catch(()=>[])));setAllLocationData(locs.flat());setReplayTime(Date.now())}catch{}
+      addLog(`L${ml} ${pos.length}pos`)
+    }catch(e:any){addLog(`ERR ${e.message}`)}}
+    poll(); liveRef.current=window.setInterval(poll,5000)
+  },[liveActive,selectedRace,addLog])
+  useEffect(()=>()=>{if(liveRef.current)clearInterval(liveRef.current)},[])
 
-  // Zaman bazlı replay timer
-  useEffect(() => {
-    if (!replayPlaying) { if(replayRef.current) clearInterval(replayRef.current); return }
-    const TICK = 200 // ms aralık
-    const TIME_STEP = TICK * replaySpeed * 10 // 1x'te 2 saniye/tick, 4x'te 8 saniye/tick
-    replayRef.current = window.setInterval(() => {
-      setReplayTime(prev => {
-        const next = prev + TIME_STEP
-        if (next >= raceEndTime) { setReplayPlaying(false); return raceEndTime }
-        return next
-      })
-    }, TICK)
-    return () => { if(replayRef.current) clearInterval(replayRef.current) }
-  }, [replayPlaying, replaySpeed, raceEndTime])
+  // Replay timer
+  useEffect(()=>{
+    if(!replayPlaying){if(replayRef.current)clearInterval(replayRef.current);return}
+    const T=200,S=T*replaySpeed*10
+    replayRef.current=window.setInterval(()=>setReplayTime(p=>{const n=p+S;if(n>=raceEndTime){setReplayPlaying(false);return raceEndTime}return n}),T)
+    return()=>{if(replayRef.current)clearInterval(replayRef.current)}
+  },[replayPlaying,replaySpeed,raceEndTime])
 
-  // replayTime değiştiğinde lap numarasını güncelle
-  useEffect(() => {
-    if (lapData.length === 0 || replayTime === 0) return
-    const rusLaps = lapData.filter((l:any) => l.driver_number===63 && l.date_start)
-    let currentLap = 1
-    for (const l of rusLaps) {
-      if (new Date(l.date_start).getTime() <= replayTime) currentLap = l.lap_number
-    }
-    setReplayLap(currentLap)
-  }, [replayTime, lapData])
+  // Lap from time
+  useEffect(()=>{if(!lapData.length||!replayTime)return;const rl=lapData.filter((l:any)=>l.driver_number===63&&l.date_start);let c=1;for(const l of rl)if(new Date(l.date_start).getTime()<=replayTime)c=l.lap_number;setReplayLap(c)},[replayTime,lapData])
 
-  // Araç pozisyonlarını ZAMAN bazlı güncelle (akıcı hareket)
-  useEffect(() => {
-    if (allLocationData.length === 0 || replayTime === 0) return
-    const newPos = new Map<number,{x:number,y:number}>()
-    const seen = new Set<number>()
-    // Sondan başa tara — her sürücü için replayTime'a en yakın önceki konumu bul
-    for (let i = allLocationData.length-1; i >= 0; i--) {
-      const loc = allLocationData[i]
-      if (seen.has(loc.driver_number)) continue
-      if (new Date(loc.date).getTime() <= replayTime) {
-        newPos.set(loc.driver_number, {x:loc.x, y:loc.y}); seen.add(loc.driver_number)
-      }
-    }
-    setCarPositions(newPos)
-  }, [replayTime, allLocationData])
+  // Car positions from time
+  useEffect(()=>{if(!allLocationData.length||!replayTime)return;const m=new Map<number,{x:number,y:number}>();const s=new Set<number>();for(let i=allLocationData.length-1;i>=0;i--){const l=allLocationData[i];if(s.has(l.driver_number))continue;if(new Date(l.date).getTime()<=replayTime){m.set(l.driver_number,{x:l.x,y:l.y});s.add(l.driver_number)}}setCarPositions(m)},[replayTime,allLocationData])
 
-  const currentStandings = useMemo(() => {
-    if (posData.length===0 || lapData.length===0) return []
-    const rusLaps = lapData.filter((l:any)=>l.driver_number===63&&l.lap_number<=replayLap)
-    const refTime = rusLaps.length>0 ? new Date(rusLaps[rusLaps.length-1].date_start||'').getTime() : 0
-    const lPos = new Map<number,number>(), lGap = new Map<number,number>(), lLap = new Map<number,number>()
-    for (const p of posData) { if (new Date(p.date||'').getTime()<=refTime+10000) lPos.set(p.driver_number,p.position) }
-    for (const iv of intervalData) { if (new Date(iv.date||'').getTime()<=refTime+10000) lGap.set(iv.driver_number,iv.gap_to_leader??0) }
-    for (const l of lapData) { if (l.lap_number<=replayLap && l.lap_duration>0) lLap.set(l.driver_number,l.lap_duration) }
-    const getStint = (dn:number) => { const s = stintData.filter((st:any)=>st.driver_number===dn&&(st.lap_start||0)<=replayLap); return s.length>0?s[s.length-1]:null }
-    return drivers.map((d:any) => ({
-      number:d.driver_number, code:d.name_acronym, name:d.full_name,
-      team:d.team_name, color:'#'+(d.team_colour||'888'),
-      position:lPos.get(d.driver_number)||99, gap:lGap.get(d.driver_number)||0,
-      lastLap:lLap.get(d.driver_number)||0, stint:getStint(d.driver_number),
-    })).sort((a:any,b:any) => a.position-b.position)
-  }, [posData,lapData,intervalData,stintData,drivers,replayLap])
+  // Standings
+  const standings = useMemo(()=>{
+    if(!posData.length||!lapData.length)return[]
+    const rl=lapData.filter((l:any)=>l.driver_number===63&&l.lap_number<=replayLap)
+    const ref=rl.length>0?new Date(rl[rl.length-1].date_start||'').getTime():0
+    const lP=new Map<number,number>(),lG=new Map<number,number>(),lL=new Map<number,number>()
+    for(const p of posData)if(new Date(p.date||'').getTime()<=ref+10000)lP.set(p.driver_number,p.position)
+    for(const iv of intervalData)if(new Date(iv.date||'').getTime()<=ref+10000)lG.set(iv.driver_number,iv.gap_to_leader??0)
+    for(const l of lapData)if(l.lap_number<=replayLap&&l.lap_duration>0)lL.set(l.driver_number,l.lap_duration)
+    const gS=(dn:number)=>{const s=stintData.filter((st:any)=>st.driver_number===dn&&(st.lap_start||0)<=replayLap);return s.length>0?s[s.length-1]:null}
+    return drivers.map((d:any)=>({number:d.driver_number,code:d.name_acronym,name:d.full_name,team:d.team_name,color:'#'+(d.team_colour||'888'),position:lP.get(d.driver_number)||99,gap:lG.get(d.driver_number)||0,lastLap:lL.get(d.driver_number)||0,stint:gS(d.driver_number)})).sort((a:any,b:any)=>a.position-b.position)
+  },[posData,lapData,intervalData,stintData,drivers,replayLap])
 
-  // Her lap değişiminde AI tahminini güncelle
-  useEffect(() => {
-    if (mode !== 'replay' || currentStandings.length === 0 || replayLap < 2) return
-    const liveDrivers = currentStandings.map((d: any) => ({
-      code: d.code, name: d.name, team: d.team, teamColor: d.color,
-      position: d.position, lastLapTime: d.lastLap || null,
-      gap: d.gap, pitStops: d.stint?.tyre_age_at_start === 0 ? 1 : 0,
-      compound: d.stint?.compound || 'MEDIUM'
-    }))
-    const updated = predictor.updateFromLiveData(liveDrivers, replayLap)
-    setLivePreds(updated)
-  }, [replayLap, mode, currentStandings])
+  // AI prediction update
+  useEffect(()=>{if(mode!=='replay'||!standings.length||replayLap<2)return;setLivePreds(predictor.updateFromLiveData(standings.map((d:any)=>({code:d.code,name:d.name,team:d.team,teamColor:d.color,position:d.position,lastLapTime:d.lastLap||null,gap:d.gap,pitStops:d.stint?.tyre_age_at_start===0?1:0,compound:d.stint?.compound||'MEDIUM'})),replayLap))},[replayLap,mode,standings])
 
-  const eventFeed = useMemo(() => {
-    const events: {lap:number,type:string,msg:string,color:string}[] = []
-    for (const st of stintData) {
-      if (st.tyre_age_at_start === 0 && st.lap_start > 1) {
-        const drv = drivers.find((d:any)=>d.driver_number===st.driver_number)
-        events.push({lap:st.lap_start, type:'PIT', msg:`PIT ${drv?.name_acronym||'?'} → ${st.compound||'?'}`, color:'#eab308'})
-      }
-    }
-    const posHist = new Map<number,{pos:number,date:string}[]>()
-    for (const p of posData) { const a=posHist.get(p.driver_number)||[]; a.push({pos:p.position,date:p.date}); posHist.set(p.driver_number,a) }
-    for (const [dn, hist] of posHist) {
-      for (let i=1;i<hist.length;i++) {
-        if (hist[i].pos<hist[i-1].pos) {
-          const drv=drivers.find((d:any)=>d.driver_number===dn)
-          const t=new Date(hist[i].date).getTime()
-          const lapM=lapData.filter((l:any)=>l.driver_number===63).find((l:any)=>Math.abs(new Date(l.date_start||'').getTime()-t)<100000)
-          if (lapM?.lap_number && hist[i-1].pos-hist[i].pos>=1) {
-            events.push({lap:lapM.lap_number, type:'OVT', msg:`OVT ${drv?.name_acronym||'?'} P${hist[i-1].pos}→P${hist[i].pos}`, color:'#22c55e'})
-          }
-        }
-      }
-    }
-    for (const rc of raceCtrl) {
-      if (rc.flag==='RED') events.push({lap:0,type:'FLAG',msg:`RED ${rc.message?.slice(0,50)}`,color:'#ef4444'})
-      else if (rc.message?.includes('SAFETY CAR')) events.push({lap:0,type:'SC',msg:`SC ${rc.message?.slice(0,50)}`,color:'#f97316'})
-      else if (rc.message?.includes('RETIRED')||rc.message?.includes('STOPPED')) events.push({lap:0,type:'DNF',msg:`DNF ${rc.message?.slice(0,50)}`,color:'#ef4444'})
-    }
-    return events.sort((a,b)=>a.lap-b.lap)
-  }, [stintData,posData,raceCtrl,drivers,lapData])
+  // Events
+  const events = useMemo(()=>{
+    const ev:{lap:number,msg:string,color:string}[]=[]
+    for(const st of stintData)if(st.tyre_age_at_start===0&&st.lap_start>1){const d=drivers.find((x:any)=>x.driver_number===st.driver_number);ev.push({lap:st.lap_start,msg:`PIT ${d?.name_acronym||'?'} > ${st.compound||'?'}`,color:'#eab308'})}
+    for(const rc of raceCtrl){if(rc.flag==='RED')ev.push({lap:0,msg:`RED ${rc.message?.slice(0,40)}`,color:'#ef4444'});else if(rc.message?.includes('RETIRED'))ev.push({lap:0,msg:`DNF ${rc.message?.slice(0,40)}`,color:'#ef4444'})}
+    return ev.sort((a,b)=>a.lap-b.lap)
+  },[stintData,raceCtrl,drivers])
 
-  const filteredEvents = useMemo(() => eventFeed.filter(e=>e.lap<=replayLap), [eventFeed,replayLap])
-  const backtest = useMemo(() => preds ? computeBacktest(preds) : null, [preds])
-  const trackPoints = useMemo(() => { const n=CIRCUIT_MAP[selectedRace]; return n?TRACK_COORDS[n]||[]:[] }, [selectedRace])
+  const backtest = useMemo(()=>preds?computeBacktest(preds):null,[preds])
+  const trackPts = useMemo(()=>{const n=CIRCUIT_MAP[selectedRace];return n?TRACK_COORDS[n]||[]:[]},[selectedRace])
+  const fEvents = useMemo(()=>events.filter(e=>e.lap<=replayLap),[events,replayLap])
 
+  // ═══ RENDER ═══
   return (
     <div className="f1"><style>{CSS}</style>
-      <header style={{background:'rgba(20,20,32,.97)',backdropFilter:'blur(12px)',padding:'8px 0',borderBottom:'2px solid #e10600',position:'sticky',top:0,zIndex:50}}>
-        <div style={{maxWidth:1400,margin:'0 auto',padding:'0 16px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-          <div style={{display:'flex',alignItems:'center',gap:12}}>
-            <a href="/" style={{color:'#555',textDecoration:'none',fontSize:12,width:28,height:28,display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid #2a2a3a',borderRadius:7}}>←</a>
-            <span style={{fontFamily:"'Outfit'",fontSize:16,fontWeight:800,color:'#fff'}}>F1</span>
-            <span style={{fontFamily:"'Outfit'",fontSize:16,fontWeight:800,color:'#e10600'}}>PREDICTOR</span>
-            {races.length>0 && <select value={selectedRace} onChange={e=>setSelectedRace(Number(e.target.value))} style={{background:'#1e1e30',border:'1px solid #2a2a3a',borderRadius:6,color:'#aaa',padding:'3px 8px',fontSize:10,fontFamily:"'Outfit'",cursor:'pointer'}}>
-              {races.map(r=><option key={r.key} value={r.key} disabled={!r.hasData}>{r.circuit} {r.date.slice(5)} {r.hasData?'':'⊘'}</option>)}
-            </select>}
-          </div>
-          <div style={{display:'flex',gap:4,alignItems:'center',flexWrap:'wrap'}}>
-            {weatherData && <span style={{fontSize:9,color:'#555'}}>{weatherData.air_temperature?.toFixed(0)}° · T{weatherData.track_temperature?.toFixed(0)}°</span>}
-            <button className="f1-btn" onClick={()=>setMode('predict')} style={{background:mode==='predict'?'#e10600':'#1e1e30',fontSize:10,padding:'5px 12px',letterSpacing:'.05em'}}>TAHMİN</button>
-            <button className="f1-btn" onClick={loadReplayData} style={{background:mode==='replay'?'#e10600':'#1e1e30',fontSize:10,padding:'5px 12px',letterSpacing:'.05em',opacity:loading?.5:1}}>
-              {loading?'...':'REPLAY'}
-            </button>
-            <button className="f1-btn" onClick={toggleLive} style={{background:liveActive?'#dc2626':'#1e1e30',fontSize:10,padding:'5px 12px',letterSpacing:'.05em',animation:liveActive?'pulse 2s infinite':''}}>
-              {liveActive && <span style={{width:6,height:6,borderRadius:'50%',background:'#fff',display:'inline-block'}}/>}
-              {liveActive?'CANLI':'CANLI'}
-            </button>
-          </div>
+      {/* HEADER BAR */}
+      <div style={{background:'rgba(12,12,24,.95)',borderBottom:'2px solid #e10600',padding:'6px 16px',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,zIndex:50,backdropFilter:'blur(10px)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          <a href="/" style={{color:'#444',textDecoration:'none',fontSize:11,border:'1px solid #222',borderRadius:5,padding:'2px 8px'}}>←</a>
+          <span style={{fontFamily:"'Outfit'",fontWeight:800,color:'#fff',fontSize:14}}>F1</span>
+          <span style={{fontFamily:"'Outfit'",fontWeight:800,color:'#e10600',fontSize:14}}>PREDICTOR</span>
+          {races.length>0&&<select value={selectedRace} onChange={e=>setSelectedRace(Number(e.target.value))} style={{background:'#111',border:'1px solid #222',borderRadius:5,color:'#888',padding:'2px 6px',fontSize:9}}>
+            {races.map(r=><option key={r.key} value={r.key} disabled={!r.hasData}>{r.circuit} {r.date.slice(5)}</option>)}
+          </select>}
+          {mode==='replay'&&<span style={{background:'#e10600',padding:'1px 8px',borderRadius:4,fontSize:10,fontWeight:700,color:'#fff'}}>LAP {replayLap}/{TOTAL_LAPS}</span>}
         </div>
-      </header>
-      <div style={{maxWidth:1400,margin:'0 auto',padding:'12px 16px'}}>
-        <div style={{display:'flex',gap:10,marginBottom:12,alignItems:'center',flexWrap:'wrap'}}>
-          <div style={{flex:1,minWidth:180}}>
-            <div style={{fontFamily:"'Outfit'",fontSize:20,fontWeight:800,color:'#fff'}}>Australian Grand Prix</div>
-            <div style={{fontSize:10,color:'#555'}}>Albert Park · 58 Laps · 5.278 km</div>
-          </div>
-          {preds?.[0] && <div style={{padding:'6px 14px',background:'rgba(212,168,67,.06)',border:'1px solid rgba(212,168,67,.15)',borderRadius:8}}>
-          <span style={{fontSize:8,color:'#997a2e',fontFamily:"'Outfit'",fontWeight:600,letterSpacing:'.08em'}}>PRED </span>
-            <span style={{fontFamily:"'Outfit'",fontSize:14,fontWeight:800,color:'#d4a843'}}>{preds[0].driverName}</span>
-            <span style={{fontSize:10,color:'#997a2e',marginLeft:4}}>P1 {preds[0].winProbability}%</span>
-          </div>}
-          {backtest && <div style={{display:'flex',gap:10}}>
-            <Stat l="Winner" v={backtest.winnerCorrect?'✓':'✗'} c={backtest.winnerCorrect?'#4ade80':'#ef4444'}/>
-            <Stat l="Podium" v={`${backtest.podiumHits}/3`} c="#d4a843"/>
-            <Stat l="MAE" v={backtest.mae.toFixed(1)} c={backtest.mae<3?'#4ade80':'#fbbf24'}/>
-          </div>}
+        <div style={{display:'flex',gap:4,alignItems:'center',flexWrap:'wrap'}}>
+          {weatherData&&<span style={{fontSize:8,color:'#444'}}>{weatherData.air_temperature?.toFixed(0)}° T{weatherData.track_temperature?.toFixed(0)}°</span>}
+          <button className="f1b" onClick={()=>setMode('predict')} style={{background:mode==='predict'?'#e10600':'#1a1a2a'}}>TAHMİN</button>
+          <button className="f1b" onClick={loadReplay} style={{background:mode==='replay'&&!liveActive?'#e10600':'#1a1a2a',opacity:loading?.5:1}}>{loading?'...':'REPLAY'}</button>
+          <button className="f1b" onClick={toggleLive} style={{background:liveActive?'#dc2626':'#1a1a2a',animation:liveActive?'pulse 2s infinite':''}}>
+            {liveActive&&<span style={{width:5,height:5,borderRadius:'50%',background:'#fff',display:'inline-block',marginRight:4}}/>}CANLI
+          </button>
         </div>
-
-        {mode==='predict' && <>
-          {/* TRACK MAP — compact */}
-          <div className="f1-card" style={{marginBottom:12,maxWidth:700}}>
-            <div className="f1-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-              <span>{races.find(r=>r.key===selectedRace)?.circuit || 'Albert Park'}</span>
-              <span style={{color:'#444',fontWeight:400,fontSize:9}}>SESSION {selectedRace}</span>
-            </div>
-            <TrackMap pts={trackPoints} cars={carPositions} drivers={drivers} standings={currentStandings}/>
-          </div>
-          <div className="f1-grid2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
-            <div className="f1-card">
-              <div className="f1-title">QUALIFYING GRID · AI TAHMİN</div>
-              <div style={{maxHeight:480,overflowY:'auto'}}>
-                {AUSTRALIA_2026_QUALI.map((q,i) => {
-                  const tm=TEAMS[q.team]; const pr=preds?.find(p=>p.driverCode===q.driverCode)
-                  const dead=AUSTRALIA_2026_RACE_RESULT.find(r=>r.code===q.driverCode)
-                  const isDead=dead?.status==='dnf'||dead?.status==='dns'
-                  return <div key={q.driverCode} className="f1-row" style={{opacity:isDead?.3:1}}>
-                    <span style={{width:22,fontFamily:"'Outfit'",fontWeight:800,color:i<3?'#d4a843':i<10?'#bbb':'#555',fontSize:13}}>{q.position}</span>
-                    <div style={{width:3,height:18,borderRadius:2,background:tm?.color||'#444'}}/>
-                    <div style={{flex:1}}><div style={{fontFamily:"'Outfit'",fontWeight:i<3?700:400,color:i<10?'#eee':'#777',fontSize:12}}>{q.driverName}</div><div style={{fontSize:8,color:'#444'}}>{q.team}</div></div>
-                    <span style={{fontSize:10,color:'#555',width:62,textAlign:'right'}}>{q.q3Time||q.q2Time||q.q1Time||'—'}</span>
-                    <span style={{width:32,textAlign:'center',fontWeight:700,color:pr&&pr.predictedPosition<=3?'#d4a843':'#666',fontSize:11}}>P{pr?.predictedPosition||'—'}</span>
-                    <span style={{width:30,textAlign:'right',fontSize:9,color:pr&&pr.winProbability>10?'#fbbf24':'#333'}}>{pr?`${pr.winProbability}%`:''}</span>
-                  </div>
-                })}
-              </div>
-            </div>
-            <div className="f1-card">
-              <div className="f1-title">SONUÇ vs TAHMİN</div>
-              <div style={{maxHeight:480,overflowY:'auto'}}>
-                {AUSTRALIA_2026_RACE_RESULT.map((r,i) => {
-                  const d=backtest?.details.find(x=>x.code===r.code); const tm=TEAMS[r.team]; const dead=r.status==='dnf'||r.status==='dns'
-                  return <div key={r.code} className="f1-row" style={{opacity:dead?.25:1}}>
-                    <span style={{width:32,fontFamily:"'Outfit'",fontWeight:800,color:dead?'#ef4444':i<3?'#d4a843':'#bbb',fontSize:12}}>{dead?r.status.toUpperCase():`P${r.pos}`}</span>
-                    <div style={{width:3,height:16,borderRadius:2,background:tm?.color||'#333'}}/>
-                    <span style={{flex:1,fontFamily:"'Outfit'",fontWeight:i<3?700:400,color:dead?'#444':i<10?'#eee':'#888',fontSize:11}}>{r.name}</span>
-                    <span style={{width:30,textAlign:'center',fontWeight:700,color:d&&d.err===0?'#4ade80':d&&d.err<=2?'#fbbf24':'#666',fontSize:11}}>{d?`P${d.pred}`:'—'}</span>
-                    <span style={{width:24,textAlign:'center',fontSize:10,fontWeight:700,color:d&&d.err===0?'#4ade80':d&&d.err<=2?'#fbbf24':'#ef4444'}}>{d?(d.err===0?'✓':`±${d.err}`):''}</span>
-                  </div>
-                })}
-              </div>
-            </div>
-          </div>
-          <div className="f1-grid2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:12}}>
-            <div className="f1-card">
-              <div className="f1-title">MODEL & SONRAKİ YARIŞ</div>
-              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,fontSize:10}}>
-                <div><span style={{color:'#555'}}>Ensemble:</span> <span style={{color:'#ccc'}}>Ridge40%+GB60%</span></div>
-                <div><span style={{color:'#555'}}>ELO:</span> <span style={{color:'#ccc'}}>Driver+Team</span></div>
-                <div><span style={{color:'#555'}}>Features:</span> <span style={{color:'#ccc'}}>14 · 2025×3</span></div>
-                <div><span style={{color:'#555'}}>Recovery:</span> <span style={{color:'#ccc'}}>Gap{'>'} 8→bonus</span></div>
-              </div>
-              <div style={{marginTop:10,padding:'8px 10px',background:'#12121e',borderRadius:8,fontSize:9,color:'#666',lineHeight:1.7}}>
-                <div style={{color:'#888',fontWeight:700,marginBottom:4,fontFamily:"'Outfit'"}}>Sonraki yarışta nasıl çalışır?</div>
-                <div><span style={{color:'#666'}}>1.</span> <span style={{color:'#aaa'}}>Qualifying tamamlanınca:</span> Grid OpenF1 API'den otomatik çekilir</div>
-                <div><span style={{color:'#666'}}>2.</span> <span style={{color:'#aaa'}}>Model çalışır:</span> Grid + ELO + form + takım → 14 feature</div>
-                <div><span style={{color:'#666'}}>3.</span> <span style={{color:'#aaa'}}>Tahmin:</span> Ridge(40%) + GB(60%) + ELO recovery</div>
-                <div><span style={{color:'#666'}}>4.</span> <span style={{color:'#aaa'}}>Canlı:</span> 5s polling → tahmin güncellenir</div>
-                <div><span style={{color:'#666'}}>5.</span> <span style={{color:'#aaa'}}>Sonrası:</span> ELO güncellenir, sonraki yarışa beslenir</div>
-                <div style={{marginTop:4,color:'#555'}}>Antrenman verileri: Pace analizi için kullanılır ama qualifying grid ana input</div>
-                <div style={{color:'#555'}}>API: api.openf1.org · Ücretsiz · Rate limit 3 req/s</div>
-              </div>
-            </div>
-            <div className="f1-card">
-              <div className="f1-title">NEDEN BU SIRA?</div>
-              {preds?.slice(0,5).map(p => {
-                const q=Math.round(p.factors.qualiPerformance*100),f=Math.round(p.factors.historicalForm*100),t=Math.round(p.factors.teamStrength*100)
-                return <div key={p.driverCode} style={{marginBottom:6}}>
-                  <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:2}}>
-                    <div style={{width:3,height:10,borderRadius:2,background:p.teamColor}}/><span style={{fontSize:11,fontWeight:700,color:'#ddd',fontFamily:"'Outfit'"}}>{p.driverCode}</span>
-                    <span style={{fontSize:9,color:'#d4a843',marginLeft:'auto',fontWeight:700}}>P{p.predictedPosition}</span>
-                  </div>
-                  <MBar l="Grid" v={q}/><MBar l="Form" v={f}/><MBar l="Team" v={t}/>
-                </div>
-              })}
-            </div>
-          </div>
-        </>}
-
-        {mode==='replay' && <>
-          <div className="f1-card" style={{marginBottom:12,display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
-            <button className="f1-btn" onClick={()=>setReplayPlaying(!replayPlaying)} style={{background:replayPlaying?'#ef4444':'#22c55e',padding:'7px 14px',letterSpacing:'.05em',fontSize:9}}>{replayPlaying?'STOP':'PLAY'}</button>
-            <button className="f1-btn" onClick={()=>setReplayTime(Math.max(raceStartTime,replayTime-85000))} style={{background:'#2a2a3a',padding:'6px 10px',fontSize:9}}>←</button>
-            <button className="f1-btn" onClick={()=>setReplayTime(Math.min(raceEndTime,replayTime+85000))} style={{background:'#2a2a3a',padding:'6px 10px',fontSize:9}}>→</button>
-            {[.5,1,2,4].map(s=><button key={s} className="f1-btn" onClick={()=>setReplaySpeed(s)} style={{background:replaySpeed===s?'#e10600':'#2a2a3a',padding:'4px 8px',fontSize:9}}>{s}x</button>)}
-            <input type="range" min={raceStartTime||0} max={raceEndTime||1} value={replayTime} onChange={e=>{setReplayTime(Number(e.target.value))}} step={1000} style={{flex:1,minWidth:150,accentColor:'#e10600'}}/>
-            <span style={{fontSize:13,fontWeight:700,color:'#fff',fontFamily:"'Outfit'"}}>LAP {replayLap}/{TOTAL_LAPS}</span>
-          </div>
-          <div className="f1-grid3" style={{display:'grid',gridTemplateColumns:'1.2fr 1fr 0.8fr',gap:12}}>
-            <div className="f1-card">
-              <div className="f1-title">TRACK MAP · LAP {replayLap}</div>
-              <TrackMap pts={trackPoints} cars={carPositions} drivers={drivers} standings={currentStandings}/>
-            </div>
-            <div className="f1-card">
-              <div className="f1-title">LEADERBOARD · LAP {replayLap}</div>
-              <div style={{maxHeight:440,overflowY:'auto'}}>
-                {currentStandings.slice(0,20).map((d:any,i:number)=>(
-                  <div key={d.number} className="f1-row">
-                    <span style={{width:20,fontFamily:"'Outfit'",fontWeight:800,color:i<3?'#d4a843':i<10?'#bbb':'#555',fontSize:13}}>{i+1}</span>
-                    <div style={{width:3,height:18,borderRadius:2,background:d.color}}/>
-                    <div style={{flex:1}}><span style={{fontFamily:"'Outfit'",fontWeight:i<3?700:400,color:i<10?'#eee':'#777',fontSize:12}}>{d.code}</span><span style={{fontSize:8,color:'#444',marginLeft:6}}>{d.team}</span></div>
-                    <span style={{fontSize:9,color:'#555',width:46,textAlign:'right'}}>{d.gap>0?`+${d.gap.toFixed(1)}s`:i===0?'LDR':''}</span>
-                    <span style={{fontSize:9,color:d.lastLap>0&&d.lastLap<82?'#a855f7':'#444',width:46,textAlign:'right'}}>{d.lastLap>0?d.lastLap.toFixed(3):'—'}</span>
-                    <TyreBadge compound={d.stint?.compound}/>
-                    {(() => { const lp=livePreds?.find(p=>p.driverCode===d.code); return lp ? <span style={{fontSize:8,color:lp.predictedPosition<=3?'#d4a843':'#555',width:24,textAlign:'right',fontWeight:600}}>→P{lp.predictedPosition}</span> : null })()}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={{display:'flex',flexDirection:'column',gap:12}}>
-            {/* AI TAHMİN PANELİ */}
-            <div className="f1-card" style={{flex:0}}>
-              <div className="f1-title">AI TAHMİN · LAP {replayLap}</div>
-              {livePreds ? <div style={{maxHeight:160,overflowY:'auto'}}>
-                {livePreds.slice(0,10).map((p,i) => (
-                  <div key={p.driverCode} style={{display:'flex',alignItems:'center',gap:4,padding:'2px 0',fontSize:10}}>
-                    <span style={{width:16,fontWeight:800,color:i<3?'#d4a843':'#666',fontFamily:"'Outfit'"}}>{p.predictedPosition}</span>
-                    <div style={{width:2,height:10,borderRadius:1,background:p.teamColor}}/>
-                    <span style={{color:i<3?'#eee':'#888',fontWeight:i<3?700:400,flex:1}}>{p.driverCode}</span>
-                    <span style={{color:'#d4a843',fontSize:8}}>{p.winProbability}%</span>
-                  </div>
-                ))}
-              </div> : <div style={{color:'#444',fontSize:9}}>Yarış başlayınca güncellenir</div>}
-              {livePreds && <div style={{marginTop:6,fontSize:8,color:'#444'}}>Confidence: {Math.round(70 + (replayLap/TOTAL_LAPS)*25)}% · Momentum+Pace+Position</div>}
-            </div>
-            {/* OLAY AKIŞI */}
-            <div className="f1-card" style={{flex:1}}>
-              <div className="f1-title">OLAY AKIŞI</div>
-              <div style={{maxHeight:440,overflowY:'auto'}}>
-                {filteredEvents.length===0 ? <div style={{color:'#444',fontSize:10}}>Oynat ile başlat</div> :
-                  [...filteredEvents].reverse().slice(0,30).map((e,i)=>(
-                    <div key={i} style={{fontSize:10,padding:'3px 0',borderBottom:'1px solid #1e1e30',color:e.color}}>
-                      <span style={{color:'#444',marginRight:4}}>L{e.lap}</span>{e.msg}
-                    </div>
-                  ))
-                }
-              </div>
-            </div>
-            </div>
-          </div>
-          <div className="f1-grid2" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginTop:12}}>
-            <div className="f1-card">
-              <div className="f1-title">RACE CONTROL</div>
-              <div style={{maxHeight:150,overflowY:'auto'}}>
-                {raceCtrl.length===0?<div style={{color:'#444',fontSize:10}}>—</div>:
-                  [...raceCtrl].reverse().slice(0,6).map((rc:any,i:number)=>(
-                    <div key={i} style={{display:'flex',gap:4,padding:'3px 0',borderBottom:'1px solid #1e1e30',fontSize:9}}>
-                      <span style={{padding:'1px 5px',borderRadius:3,fontWeight:700,fontSize:7,background:rc.flag==='GREEN'?'#166534':rc.flag==='YELLOW'?'#854d0e':rc.flag==='RED'?'#991b1b':'#2a2a3a',color:'#fff'}}>{rc.flag||'INFO'}</span>
-                      <span style={{color:'#888'}}>{rc.message?.slice(0,70)}</span>
-                    </div>
-                  ))
-                }
-              </div>
-            </div>
-            <div className="f1-card">
-              <div className="f1-title">API LOG</div>
-              <div style={{maxHeight:150,overflowY:'auto',fontSize:9}}>
-                {log.length===0?<div style={{color:'#444'}}>REPLAY tıkla</div>:
-                  [...log].reverse().map((l,i)=>(<div key={i} style={{color:l.includes('✓')?'#4ade80':l.includes('❌')?'#ef4444':'#555',padding:'1px 0'}}>{l}</div>))
-                }
-              </div>
-            </div>
-          </div>
-        </>}
       </div>
+
+      {mode==='predict'&&<div style={{padding:'12px 16px',maxWidth:1400,margin:'0 auto'}}>
+        <div style={{display:'flex',gap:8,marginBottom:10,alignItems:'center',flexWrap:'wrap'}}>
+          <span style={{fontFamily:"'Outfit'",fontSize:18,fontWeight:800,color:'#fff'}}>Australian Grand Prix</span>
+          {preds?.[0]&&<span style={{fontSize:10,color:'#997a2e',background:'rgba(212,168,67,.08)',padding:'3px 10px',borderRadius:6,border:'1px solid rgba(212,168,67,.15)'}}>PRED {preds[0].driverName} P1 {preds[0].winProbability}%</span>}
+          {backtest&&<><span style={{color:backtest.winnerCorrect?'#4ade80':'#ef4444',fontSize:16,fontWeight:800}}>{backtest.winnerCorrect?'✓':'✗'}</span><span style={{color:'#d4a843',fontSize:12,fontWeight:700}}>{backtest.podiumHits}/3</span><span style={{color:'#fbbf24',fontSize:12}}>MAE {backtest.mae.toFixed(1)}</span></>}
+        </div>
+        {/* Track + Grid side by side */}
+        <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+          <div className="f1p" style={{flex:'1 1 400px',minWidth:300}}>
+            <div className="f1t">{races.find(r=>r.key===selectedRace)?.circuit||'Albert Park'}</div>
+            <TrackSVG pts={trackPts} cars={carPositions} drivers={drivers} standings={standings}/>
+          </div>
+          <div style={{flex:'1 1 300px',display:'flex',flexDirection:'column',gap:10}}>
+            <div className="f1p" style={{flex:1}}>
+              <div className="f1t">GRID · PRED</div>
+              <div style={{maxHeight:300,overflowY:'auto'}}>
+                {AUSTRALIA_2026_QUALI.slice(0,15).map((q,i)=>{const pr=preds?.find(p=>p.driverCode===q.driverCode);return<div key={q.driverCode} className="f1r"><span style={{width:16,fontFamily:"'Outfit'",fontWeight:800,color:i<3?'#d4a843':'#666',fontSize:11}}>{q.position}</span><div style={{width:2,height:14,borderRadius:1,background:TEAMS[q.team]?.color||'#444'}}/><span style={{flex:1,fontSize:10,color:i<10?'#ddd':'#666'}}>{q.driverCode}</span><span style={{fontSize:9,color:'#555'}}>{q.q3Time||q.q2Time||'—'}</span><span style={{fontSize:9,fontWeight:700,color:pr&&pr.predictedPosition<=3?'#d4a843':'#555'}}>P{pr?.predictedPosition||'—'}</span></div>})}
+              </div>
+            </div>
+            <div className="f1p">
+              <div className="f1t">MODEL</div>
+              <div style={{fontSize:9,color:'#555',lineHeight:1.6}}>
+                <div>Ensemble Ridge40%+GB60% · ELO recovery</div>
+                <div>14 features · 2024-2025 data · OpenF1 API</div>
+                <div style={{marginTop:4,color:'#444'}}>1. Qualifying → grid | 2. Model → 14 features | 3. Tahmin | 4. Canlı güncelleme | 5. ELO feedback</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>}
+
+      {mode==='replay'&&<div style={{padding:0,height:'calc(100vh - 42px)',display:'flex',flexDirection:'column'}}>
+        {/* MAIN: Left panel + Track + Right panel */}
+        <div className="f1-main" style={{flex:1,display:'flex',overflow:'hidden'}}>
+          {/* LEFT PANEL */}
+          <div className="f1-side" style={{width:200,minWidth:180,padding:'8px 6px',overflowY:'auto',display:'flex',flexDirection:'column',gap:6}}>
+            {weatherData&&<div className="f1p"><div className="f1t">WEATHER</div>
+              <div style={{fontSize:9,color:'#888',lineHeight:1.8}}>
+                <div>Track: {weatherData.track_temperature?.toFixed(1)}°C</div>
+                <div>Air: {weatherData.air_temperature?.toFixed(1)}°C</div>
+                <div>Humidity: {weatherData.humidity?.toFixed(0)}%</div>
+                <div>Wind: {weatherData.wind_speed?.toFixed(1)} km/h {weatherData.wind_direction}</div>
+                <div>Rain: {weatherData.rainfall>0?'WET':'DRY'}</div>
+              </div>
+            </div>}
+            <div className="f1p"><div className="f1t">AI TAHMIN · L{replayLap}</div>
+              {livePreds?<div style={{maxHeight:200,overflowY:'auto'}}>{livePreds.slice(0,10).map((p,i)=><div key={p.driverCode} style={{display:'flex',gap:3,padding:'2px 0',fontSize:9}}><span style={{width:12,fontWeight:800,color:i<3?'#d4a843':'#555'}}>{p.predictedPosition}</span><div style={{width:2,height:10,borderRadius:1,background:p.teamColor}}/><span style={{flex:1,color:i<3?'#ddd':'#777'}}>{p.driverCode}</span><span style={{color:'#997a2e',fontSize:8}}>{p.winProbability}%</span></div>)}</div>:<div style={{color:'#333',fontSize:8}}>Oynat ile başlat</div>}
+            </div>
+            <div className="f1p" style={{flex:1}}><div className="f1t">OLAYLAR</div>
+              <div style={{maxHeight:200,overflowY:'auto'}}>{fEvents.length===0?<div style={{color:'#333',fontSize:8}}>—</div>:[...fEvents].reverse().slice(0,15).map((e,i)=><div key={i} style={{fontSize:8,padding:'1px 0',color:e.color}}><span style={{color:'#333'}}>L{e.lap}</span> {e.msg}</div>)}</div>
+            </div>
+          </div>
+
+          {/* CENTER: TRACK MAP */}
+          <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:8,position:'relative',zIndex:1}}>
+            <TrackSVG pts={trackPts} cars={carPositions} drivers={drivers} standings={standings} large/>
+          </div>
+
+          {/* RIGHT PANEL: LEADERBOARD */}
+          <div className="f1-side" style={{width:240,minWidth:200,padding:'8px 6px',overflowY:'auto'}}>
+            <div className="f1p"><div className="f1t">LEADERBOARD · L{replayLap}</div>
+              <div style={{maxHeight:'calc(100vh - 140px)',overflowY:'auto'}}>
+                {standings.slice(0,20).map((d:any,i:number)=><div key={d.number} className="f1r">
+                  <span style={{width:16,fontFamily:"'Outfit'",fontWeight:800,color:i<3?'#d4a843':i<10?'#aaa':'#444',fontSize:11}}>{i+1}</span>
+                  <div style={{width:2,height:14,borderRadius:1,background:d.color}}/>
+                  <span style={{flex:1,fontFamily:"'Outfit'",fontWeight:i<3?700:400,color:i<10?'#ddd':'#666',fontSize:10}}>{d.code}</span>
+                  <span style={{fontSize:8,color:'#444',width:40,textAlign:'right'}}>{d.gap>0?`+${d.gap.toFixed(1)}s`:i===0?'LDR':''}</span>
+                  <span style={{fontSize:8,color:d.lastLap>0&&d.lastLap<82?'#a855f7':'#333',width:42,textAlign:'right'}}>{d.lastLap>0?d.lastLap.toFixed(3):'—'}</span>
+                  <TB c={d.stint?.compound}/>
+                  {(()=>{const lp=livePreds?.find(p=>p.driverCode===d.code);return lp?<span style={{fontSize:7,color:lp.predictedPosition<=3?'#d4a843':'#444',width:16,textAlign:'right'}}>P{lp.predictedPosition}</span>:null})()}
+                </div>)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* BOTTOM: Controls */}
+        <div style={{padding:'4px 12px',background:'rgba(12,12,24,.95)',borderTop:'1px solid #1a1a2a',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap',zIndex:10}}>
+          <button className="f1b" onClick={()=>setReplayPlaying(!replayPlaying)} style={{background:replayPlaying?'#ef4444':'#22c55e',padding:'4px 12px'}}>{replayPlaying?'STOP':'PLAY'}</button>
+          <button className="f1b" onClick={()=>setReplayTime(Math.max(raceStartTime,replayTime-85000))} style={{background:'#1a1a2a'}}>←</button>
+          <button className="f1b" onClick={()=>setReplayTime(Math.min(raceEndTime,replayTime+85000))} style={{background:'#1a1a2a'}}>→</button>
+          {[.5,1,2,4].map(s=><button key={s} className="f1b" onClick={()=>setReplaySpeed(s)} style={{background:replaySpeed===s?'#e10600':'#1a1a2a',padding:'3px 6px',fontSize:8}}>{s}x</button>)}
+          <input type="range" min={raceStartTime||0} max={raceEndTime||1} value={replayTime} onChange={e=>setReplayTime(Number(e.target.value))} step={1000} style={{flex:1,minWidth:100,accentColor:'#e10600',height:4}}/>
+          <span style={{fontSize:11,fontWeight:700,color:'#fff',fontFamily:"'Outfit'"}}>L{replayLap}/{TOTAL_LAPS}</span>
+        </div>
+      </div>}
     </div>
   )
 }
 
-function TrackMap({pts,cars,drivers,standings}:{pts:number[][],cars:Map<number,{x:number,y:number}>,drivers:any[],standings:any[]}) {
-  if (pts.length===0) return <div style={{color:'#444',textAlign:'center',padding:30,fontSize:11}}>Bu pist için koordinat yok</div>
+// ═══ TRACK SVG ═══
+function TrackSVG({pts,cars,drivers,standings,large}:{pts:number[][],cars:Map<number,{x:number,y:number}>,drivers:any[],standings:any[],large?:boolean}) {
+  if(!pts.length) return <div style={{color:'#333',textAlign:'center',padding:20,fontSize:10}}>No track data</div>
   const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1])
   const xMin=Math.min(...xs),xMax=Math.max(...xs),yMin=Math.min(...ys),yMax=Math.max(...ys)
-  const W=580,H=260,P=20
+  const W=large?700:500,H=large?420:280,P=large?30:20
   const tx=(x:number)=>P+((x-xMin)/(xMax-xMin))*(W-2*P)
   const ty=(y:number)=>H-P-((y-yMin)/(yMax-yMin))*(H-2*P)
   const path=pts.map((p,i)=>(i===0?'M':'L')+tx(p[0]).toFixed(1)+','+ty(p[1]).toFixed(1)).join(' ')
-  return <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',height:'auto',borderRadius:8,background:'linear-gradient(135deg,#0a0a14 0%,#12121e 40%,#0d1117 70%,#0a0f18 100%)'}}>
-    {/* Subtle grid pattern */}
-    <defs>
-      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" strokeWidth=".3" opacity=".06"/></pattern>
-      <radialGradient id="vignette" cx="50%" cy="50%" r="60%"><stop offset="0%" stopColor="transparent"/><stop offset="100%" stopColor="#000" stopOpacity=".4"/></radialGradient>
-    </defs>
-    <rect width={W} height={H} fill="url(#grid)"/>
-    <rect width={W} height={H} fill="url(#vignette)"/>
-    <path d={path} fill="none" stroke="#2a2a3a" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d={path} fill="none" stroke="#3a3a4a" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d={path} fill="none" stroke="#4a4a5a" strokeWidth=".5" strokeDasharray="3,6" opacity=".25"/>
-    <circle cx={tx(pts[0][0])} cy={ty(pts[0][1])} r="4" fill="none" stroke="#fff" strokeWidth="1.5" opacity=".5"/>
-    <text x={tx(pts[0][0])+7} y={ty(pts[0][1])-3} fill="#666" fontSize="7" fontFamily="Outfit">S/F</text>
+  const sw=large?8:6
+  return <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',maxWidth:large?'100%':500,height:'auto',borderRadius:8,background:'linear-gradient(135deg,#080810,#0e1018 50%,#080812)'}}>
+    <defs><pattern id="tg" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M 30 0 L 0 0 0 30" fill="none" stroke="#fff" strokeWidth=".2" opacity=".04"/></pattern>
+    <radialGradient id="tv" cx="50%" cy="50%" r="55%"><stop offset="0%" stopColor="transparent"/><stop offset="100%" stopColor="#000" stopOpacity=".5"/></radialGradient></defs>
+    <rect width={W} height={H} fill="url(#tg)"/><rect width={W} height={H} fill="url(#tv)"/>
+    <path d={path} fill="none" stroke="#1a1a2a" strokeWidth={sw+4} strokeLinecap="round" strokeLinejoin="round"/>
+    <path d={path} fill="none" stroke="#2a2a3a" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round"/>
+    <path d={path} fill="none" stroke="#3a3a4a" strokeWidth={sw-2} strokeLinecap="round" strokeLinejoin="round" opacity=".5"/>
+    <circle cx={tx(pts[0][0])} cy={ty(pts[0][1])} r={large?4:3} fill="none" stroke="#fff" strokeWidth="1" opacity=".4"/>
     {[...cars.entries()].map(([dn,pos])=>{
-      const drv=drivers.find((d:any)=>d.driver_number===dn); if(!drv||(!pos.x&&!pos.y)) return null
+      const drv=drivers.find((d:any)=>d.driver_number===dn);if(!drv||(!pos.x&&!pos.y))return null
       const col='#'+(drv.team_colour||'888'),code=drv.name_acronym||'?'
       const st=standings.find((s:any)=>s.number===dn),p=st?.position||99
-      const cx=tx(pos.x),cy=ty(pos.y)
-      return <g key={dn}><circle cx={cx} cy={cy} r={p<=3?4:3} fill={col} stroke="#000" strokeWidth=".6"/>
-        <text x={cx+6} y={cy+2.5} fill="#ccc" fontSize="5.5" fontFamily="Outfit" fontWeight={p<=3?'700':'400'}>{code}</text>
-        {p<=3&&<text x={cx} y={cy+2} fill="#000" fontSize="3.5" fontFamily="Outfit" fontWeight="800" textAnchor="middle">{p}</text>}</g>
+      const cx=tx(pos.x),cy=ty(pos.y),r=large?(p<=3?6:4):(p<=3?4:3)
+      return <g key={dn}><circle cx={cx} cy={cy} r={r} fill={col} stroke="#000" strokeWidth=".6"/>
+        <text x={cx+(large?8:6)} y={cy+2} fill="#ccc" fontSize={large?7:5} fontFamily="Outfit" fontWeight={p<=3?'700':'400'}>{code}</text>
+        {p<=3&&<text x={cx} y={cy+(large?2.5:2)} fill="#000" fontSize={large?5:3.5} fontFamily="Outfit" fontWeight="800" textAnchor="middle">{p}</text>}
+      </g>
     })}
-    <text x={W-60} y={H-8} fill="#444" fontSize="6" fontFamily="Outfit">{cars.size} araç</text>
   </svg>
 }
 
-function TyreBadge({compound}:{compound?:string}) {
-  const c=compound||'MEDIUM'
-  const bg=c==='SOFT'?'#dc2626':c==='HARD'?'#e5e5e5':c==='INTERMEDIATE'?'#22c55e':c==='WET'?'#3b82f6':'#eab308'
-  const fg=c==='HARD'||c==='MEDIUM'?'#000':'#fff'
-  return <span style={{padding:'2px 5px',borderRadius:3,fontSize:8,fontWeight:700,background:bg,color:fg,minWidth:14,textAlign:'center'}}>{c[0]}</span>
-}
-function Stat({l,v,c}:{l:string;v:string;c:string}) { return <div style={{textAlign:'center',padding:'2px 8px'}}><div style={{fontFamily:"'Outfit'",fontSize:18,fontWeight:800,color:c}}>{v}</div><div style={{fontSize:8,color:'#555'}}>{l}</div></div> }
-function MBar({l,v}:{l:string;v:number}) { const c=v>70?'#22c55e':v>40?'#fbbf24':'#ef4444'; return <div style={{display:'flex',alignItems:'center',gap:3,marginBottom:1}}><span style={{fontSize:8,color:'#555',width:30}}>{l}</span><div style={{flex:1,height:3,background:'#1e1e30',borderRadius:2,overflow:'hidden'}}><div style={{width:`${v}%`,height:'100%',background:c,borderRadius:2}}/></div><span style={{fontSize:8,color:c,fontWeight:600,width:24,textAlign:'right'}}>{v}%</span></div> }
+function TB({c}:{c?:string}){const v=c||'MEDIUM';const bg=v==='SOFT'?'#dc2626':v==='HARD'?'#e5e5e5':'#eab308';const fg=v==='HARD'||v==='MEDIUM'?'#000':'#fff';return<span style={{padding:'1px 4px',borderRadius:3,fontSize:7,fontWeight:700,background:bg,color:fg}}>{v[0]}</span>}
 function nw(){return new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
 function pT(t:string):number{const[m,s]=t.split(':');return Number(m)*60+Number(s)}
