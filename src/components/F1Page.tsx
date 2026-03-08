@@ -13,9 +13,10 @@ const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.f1{background:#141420;min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace}
+.f1{background:linear-gradient(160deg,#0c0c18 0%,#141420 30%,#0f1218 60%,#0a0e16 100%);min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace;position:relative}
+.f1::before{content:'';position:fixed;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.03;z-index:0}
 .f1 *{box-sizing:border-box}
-.f1-card{background:#1a1a28;border:1px solid #2a2a3a;border-radius:12px;padding:14px 16px;animation:slideUp .4s ease both}
+.f1-card{background:rgba(26,26,40,.85);backdrop-filter:blur(8px);border:1px solid #2a2a3a;border-radius:12px;padding:14px 16px;animation:slideUp .4s ease both;position:relative;z-index:1}
 .f1-title{font-family:'Outfit',sans-serif;font-size:10px;color:#777;letter-spacing:.12em;font-weight:600;margin-bottom:10px;text-transform:uppercase}
 .f1-row{display:flex;align-items:center;gap:6px;padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.03)}
 .f1-row:hover{background:rgba(255,255,255,.02)}
@@ -326,8 +327,8 @@ export function F1Page() {
         </div>
 
         {mode==='predict' && <>
-          {/* TRACK MAP — en üstte geniş */}
-          <div className="f1-card" style={{marginBottom:12}}>
+          {/* TRACK MAP — compact */}
+          <div className="f1-card" style={{marginBottom:12,maxWidth:700}}>
             <div className="f1-title" style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
               <span>{races.find(r=>r.key===selectedRace)?.circuit || 'Albert Park'}</span>
               <span style={{color:'#444',fontWeight:400,fontSize:9}}>SESSION {selectedRace}</span>
@@ -499,14 +500,21 @@ function TrackMap({pts,cars,drivers,standings}:{pts:number[][],cars:Map<number,{
   if (pts.length===0) return <div style={{color:'#444',textAlign:'center',padding:30,fontSize:11}}>Bu pist için koordinat yok</div>
   const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1])
   const xMin=Math.min(...xs),xMax=Math.max(...xs),yMin=Math.min(...ys),yMax=Math.max(...ys)
-  const W=580,H=380,P=25
+  const W=580,H=260,P=20
   const tx=(x:number)=>P+((x-xMin)/(xMax-xMin))*(W-2*P)
   const ty=(y:number)=>H-P-((y-yMin)/(yMax-yMin))*(H-2*P)
   const path=pts.map((p,i)=>(i===0?'M':'L')+tx(p[0]).toFixed(1)+','+ty(p[1]).toFixed(1)).join(' ')
-  return <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',height:'auto',background:'#10101a',borderRadius:8}}>
-    <path d={path} fill="none" stroke="#2a2a3a" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d={path} fill="none" stroke="#3a3a4a" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d={path} fill="none" stroke="#4a4a5a" strokeWidth="1" strokeDasharray="3,6" opacity=".3"/>
+  return <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',height:'auto',borderRadius:8,background:'linear-gradient(135deg,#0a0a14 0%,#12121e 40%,#0d1117 70%,#0a0f18 100%)'}}>
+    {/* Subtle grid pattern */}
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#ffffff" strokeWidth=".3" opacity=".06"/></pattern>
+      <radialGradient id="vignette" cx="50%" cy="50%" r="60%"><stop offset="0%" stopColor="transparent"/><stop offset="100%" stopColor="#000" stopOpacity=".4"/></radialGradient>
+    </defs>
+    <rect width={W} height={H} fill="url(#grid)"/>
+    <rect width={W} height={H} fill="url(#vignette)"/>
+    <path d={path} fill="none" stroke="#2a2a3a" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d={path} fill="none" stroke="#3a3a4a" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d={path} fill="none" stroke="#4a4a5a" strokeWidth=".5" strokeDasharray="3,6" opacity=".25"/>
     <circle cx={tx(pts[0][0])} cy={ty(pts[0][1])} r="4" fill="none" stroke="#fff" strokeWidth="1.5" opacity=".5"/>
     <text x={tx(pts[0][0])+7} y={ty(pts[0][1])-3} fill="#666" fontSize="7" fontFamily="Outfit">S/F</text>
     {[...cars.entries()].map(([dn,pos])=>{
@@ -514,9 +522,9 @@ function TrackMap({pts,cars,drivers,standings}:{pts:number[][],cars:Map<number,{
       const col='#'+(drv.team_colour||'888'),code=drv.name_acronym||'?'
       const st=standings.find((s:any)=>s.number===dn),p=st?.position||99
       const cx=tx(pos.x),cy=ty(pos.y)
-      return <g key={dn}><circle cx={cx} cy={cy} r={p<=3?5:3.5} fill={col} stroke="#000" strokeWidth=".8"/>
-        <text x={cx+7} y={cy+3} fill="#ccc" fontSize="6.5" fontFamily="Outfit" fontWeight={p<=3?'700':'400'}>{code}</text>
-        {p<=3&&<text x={cx} y={cy+2.5} fill="#000" fontSize="4.5" fontFamily="Outfit" fontWeight="800" textAnchor="middle">{p}</text>}</g>
+      return <g key={dn}><circle cx={cx} cy={cy} r={p<=3?4:3} fill={col} stroke="#000" strokeWidth=".6"/>
+        <text x={cx+6} y={cy+2.5} fill="#ccc" fontSize="5.5" fontFamily="Outfit" fontWeight={p<=3?'700':'400'}>{code}</text>
+        {p<=3&&<text x={cx} y={cy+2} fill="#000" fontSize="3.5" fontFamily="Outfit" fontWeight="800" textAnchor="middle">{p}</text>}</g>
     })}
     <text x={W-60} y={H-8} fill="#444" fontSize="6" fontFamily="Outfit">{cars.size} araç</text>
   </svg>
