@@ -152,7 +152,22 @@ export class F1Predictor {
       gb += PRETRAINED.gbLr * (features[s.f] <= s.th ? s.l : s.r)
     }
     
-    return clamp(0.4 * ridge + 0.6 * gb, 1, 22)
+    let raw = clamp(0.4 * ridge + 0.6 * gb, 1, 22)
+    
+    // POST-PROCESSING: ELO-grid recovery
+    // Kaza/ceza ile geriye düşen yüksek ELO sürücüleri için recovery
+    // Örnek: VER P20'de başladı ama pace'i P1-3 seviyesinde
+    const grid = features[0]
+    const driverFormAvg = features[2]
+    const eloNorm = features[8] // (elo-1500)/200
+    const gridFormGap = grid - driverFormAvg
+    if (gridFormGap > 8 && eloNorm > 0.5) {
+      const recoveryStr = Math.min(0.45, (gridFormGap - 8) * 0.04 * (1 + eloNorm))
+      const eloExpected = driverFormAvg + 3
+      raw = raw * (1 - recoveryStr) + eloExpected * recoveryStr
+    }
+    
+    return clamp(raw, 1, 22)
   }
   
   /**
