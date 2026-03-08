@@ -102,6 +102,7 @@ export class F1Predictor {
   // Canlı yarış state
   private _liveLapData = new Map<string, { laps: number[]; pos: number; pits: number; gap: number; stint: string }>()
   private _currentLap = 0
+  private _totalLaps = 58 // default, setTotalLaps ile güncellenir
   
   get initialized() { return this._ok }
   get logs() { return this._logs }
@@ -111,15 +112,17 @@ export class F1Predictor {
   get driverForm() { return new Map(Object.entries(PRETRAINED.driverForm)) }
   get teamForm() { return new Map(Object.entries(PRETRAINED.teamForm)) }
   get currentLap() { return this._currentLap }
+  set totalLaps(n: number) { this._totalLaps = n }
+  get totalLaps() { return this._totalLaps }
   
   private log(m: string) { this._logs.push(m); console.log(`[ML] ${m}`) }
   
   /**
    * 14 FEATURE ÇIKARMA
-   * F4: qualiGridDelta (sıralama performansı vs grid) — eskiden sabit 11'di
-   * F5: experience (kariyer yarış sayısı normalize) — eskiden binary 0/30'du
-   * F6: teamBestDriver (takımdaki en iyi sürücünün formu) — eskiden mean(tf) kopyasıydı
-   * F7: teammateGap (takım arkadaşına göre fark) — eskiden mean(df) kopyasıydı
+   * F4: qualiGridDelta — pole'dan fark normalize (0=pole, 1=çok yavaş)
+   * F5: experience — ELO normalize (0=çaylak, 1=en deneyimli)
+   * F6: tmForm — takım arkadaşının en iyi formu
+   * F7: teammateGap — takım arkadaşına göre fark
    */
   private extractFeatures(grid: number, qualiDelta: number, code: string, team: string): number[] {
     const df = PRETRAINED.driverForm[code] || [11,11,11,11,11]
@@ -131,27 +134,15 @@ export class F1Predictor {
     const trend = older3.length > 0 && recent3.length > 0 ? mean(older3) - mean(recent3) : 0
     const vol = df.length >= 3 ? Math.sqrt(df.reduce((s,v) => s + (v - mean(df))**2, 0) / df.length) : 5
 
-    // F4: Sıralama performansı — grid pozisyonuyla qualiDelta ilişkisi
-    // Düşük qualiDelta + düşük grid = güçlü sıralama performansı
-    const qualiGridDelta = grid - (qualiDelta < 0.5 ? grid * 0.8 : grid * 1.1)
+    // F4: Qualifying performansı — qualiDelta'yı normalize et
+    // qualiDelta = pole'a saniye farkı, küçük = iyi
+    // Grid pozisyonundan bağımsız, saf hız ölçümü
+    const qualiGridDelta = clamp(qualiDelta * 3, -5, 15)
 
     // F5: Deneyim — ELO tabanlı (yüksek ELO = daha deneyimli)
     const expNorm = clamp((dElo - 1460) / 360, 0, 1) // 1460-1820 → 0-1
 
-    // F6: Takımdaki en iyi sürücünün formu
-    const teammates = Object.entries(PRETRAINED.driverForm)
-      .filter(([, ]) => {
-        const d = Object.entries(PRETRAINED.driverELO).find(([c]) => c === code)
-        const tName = Object.entries(PRETRAINED.teamELO).find(([t]) => t === team)
-        return d && tName
-      })
-    const sameTeamCodes = Object.entries(PRETRAINED.driverForm)
-      .filter(([c]) => {
-        // Aynı takımda olan sürücüleri bul
-        const driverData = Object.entries(PRETRAINED.driverELO)
-        return driverData.some(([dc]) => dc === c) && c !== code
-      })
-    // Basit: takım arkadaşını data.ts'den bul
+    // F6: Takım arkadaşının en iyi formu
     const tmDrivers = this._getTeammates(code, team)
     const tmForm = tmDrivers.length > 0 ? Math.min(...tmDrivers.map(tc => mean(PRETRAINED.driverForm[tc] || [15]))) : mean(tf)
 
@@ -285,12 +276,20 @@ export class F1Predictor {
       }
       
       // 2. Mevcut pozisyon ağırlığı — yarış ilerledikçe mevcut pozisyon daha önemli
-      const raceProgress = currentLap / 58 // Albert Park 58 tur
+      const raceProgress = clamp(currentLap / this._totalLaps, 0, 1)
       pred = pred * (1 - raceProgress * 0.7) + d.position * raceProgress * 0.7
-      
+
       // 3. Pit stop etkisi — henüz pit yapmamış sürücü düşecek
-      // (basit: herkes 1 pit yapmalı, yapmayan → tahmin kötüleşir)
-      
+      // Yarışın %40'ından sonra en az 1 pit yapılmalı
+      if (raceProgress > 0.4 && d.pitStops === 0) {
+        const penaltyStr = clamp((raceProgress - 0.4) * 5, 0, 3) // max 3 pozisyon ceza
+        pred += penaltyStr
+      }
+      // Fazla pit = dezavantaj (her ekstra pit ~2 poz kayıp)
+      if (d.pitStops > 1) {
+        pred += (d.pitStops - 1) * 1.5
+      }
+
       return { ...d, pred: clamp(pred, 1, 22), features }
     }).sort((a, b) => a.pred - b.pred)
     

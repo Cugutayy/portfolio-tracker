@@ -29,3 +29,38 @@ export const TRACK_COORDS: Record<string, number[][]> = {
 export const CIRCUIT_MAP: Record<number, string> = {
   11234: 'Albert Park',  // 2026 Australian GP
 }
+
+// Circuit → total laps mapping
+export const CIRCUIT_LAPS: Record<string, number> = {
+  'Albert Park': 58,
+  'Shanghai': 56,
+  'Suzuka': 53,
+  'Bahrain': 57,
+  'Jeddah': 50,
+  'Miami': 57,
+  'Imola': 63,
+  'Monaco': 78,
+  'Barcelona': 66,
+  'Montreal': 70,
+  'Silverstone': 52,
+  'Spielberg': 71,
+  'Hungaroring': 70,
+  'Spa': 44,
+  'Zandvoort': 72,
+  'Monza': 53,
+  'Baku': 51,
+  'Singapore': 62,
+  'Austin': 56,
+  'Mexico City': 71,
+  'Interlagos': 71,
+  'Las Vegas': 50,
+  'Lusail': 57,
+  'Yas Marina': 58,
+}
+
+/** Session key'den tur sayısını bul (default 58) */
+export function getCircuitLaps(sessionKey: number): number {
+  const name = CIRCUIT_MAP[sessionKey]
+  if (name && CIRCUIT_LAPS[name]) return CIRCUIT_LAPS[name]
+  return 58
+}
