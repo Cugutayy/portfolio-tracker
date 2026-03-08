@@ -12,6 +12,7 @@ const TOTAL_LAPS = 58
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .f1{background:#141420;min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace}
 .f1 *{box-sizing:border-box}
 .f1-card{background:#1a1a28;border:1px solid #2a2a3a;border-radius:12px;padding:14px 16px;animation:slideUp .4s ease both}
@@ -44,7 +45,10 @@ export function F1Page() {
   const [carPositions, setCarPositions] = useState<Map<number,{x:number,y:number}>>(new Map())
   const [allLocationData, setAllLocationData] = useState<any[]>([])
   const [livePreds, setLivePreds] = useState<PredictionResult[]|null>(null)
+  const [liveActive, setLiveActive] = useState(false)
+  const [liveLap, setLiveLap] = useState(0)
   const replayRef = useRef<number|null>(null)
+  const liveRef = useRef<number|null>(null)
 
   // Seçilen yarış değişince qualifying'den tahmin üret
   useEffect(() => {
@@ -108,17 +112,14 @@ export function F1Page() {
       addLog(`✓ ${drv.length} sürücü · ${laps.length} tur · ${pos.length} pozisyon`)
       addLog(`✓ ${intv.length} interval · ${st.length} stint · ${rc.length} race ctrl`)
       try {
-        // TÜM sürücülerin konum verisini çek (3'erli batch, rate limit için)
-        const allNums = drv.map((d:any) => d.driver_number)
-        const allLocs: any[] = []
-        for (let i = 0; i < allNums.length; i += 3) {
-          const batch = allNums.slice(i, i+3)
-          const results = await Promise.all(batch.map((dn:number) => openF1.getLocations(sk, dn).catch(() => [])))
-          allLocs.push(...results.flat())
-          addLog(`  ✓ ${i+batch.length}/${allNums.length} sürücü konum`)
-        }
+        // Top 10 sürücü konum verisi (hızlı yükleme)
+        const top10 = [63,12,16,44,4,1,87,30,5,10] // RUS ANT LEC HAM NOR VER BEA LAW BOR GAS
+        const r1 = await Promise.all(top10.slice(0,3).map(dn => openF1.getLocations(sk,dn).catch(()=>[])))
+        const r2 = await Promise.all(top10.slice(3,6).map(dn => openF1.getLocations(sk,dn).catch(()=>[])))
+        const r3 = await Promise.all(top10.slice(6,10).map(dn => openF1.getLocations(sk,dn).catch(()=>[])))
+        const allLocs = [...r1,...r2,...r3].flat()
         setAllLocationData(allLocs)
-        addLog(`✓ ${allLocs.length} toplam konum`)
+        addLog(`✓ ${allLocs.length} konum (10 sürücü)`)
       } catch { addLog('⚠ Konum kısmi') }
       // Yarış zaman aralığını hesapla
       const firstLap = laps.find((l:any) => l.driver_number===63 && l.lap_number===1)
@@ -135,7 +136,42 @@ export function F1Page() {
     setLoading(false)
   }, [addLog, selectedRace])
 
-  // Zaman bazlı replay timer — her 200ms'de replayTime ilerler
+  // ═══ CANLI MOD ═══
+  const toggleLive = useCallback(() => {
+    if (liveActive) {
+      if (liveRef.current) clearInterval(liveRef.current)
+      setLiveActive(false); addLog('■ Canlı durduruldu')
+      return
+    }
+    setLiveActive(true); setMode('replay'); setLog([])
+    addLog('🔴 CANLI mod — 5s polling')
+    const sk = selectedRace
+    const fetchLive = async () => {
+      try {
+        const [drv,laps,pos,intv,st,rc,w] = await Promise.all([
+          openF1.getDrivers(sk),openF1.getLaps(sk),openF1.getPositions(sk),
+          openF1.getIntervals(sk),openF1.getStints(sk),openF1.getRaceControl(sk),openF1.getWeather(sk)
+        ])
+        setDrivers(drv);setLapData(laps);setPosData(pos)
+        setIntervalData(intv);setStintData(st);setRaceCtrl(rc)
+        if(w.length>0) setWeatherData(w[w.length-1])
+        const maxLap = Math.max(0,...laps.filter((l:any)=>l.driver_number===63).map((l:any)=>l.lap_number))
+        setReplayLap(maxLap); setLiveLap(maxLap)
+        // Konum
+        try {
+          const locs = await Promise.all([63,12,16,44,4,1].map(dn=>openF1.getLocations(sk,dn).catch(()=>[])))
+          setAllLocationData(locs.flat())
+          setReplayTime(Date.now()); setRaceStartTime(Date.now()-maxLap*85000); setRaceEndTime(Date.now()+3600000)
+        } catch{}
+        addLog(`✓ L${maxLap} · ${pos.length} pos · ${intv.length} gap`)
+      } catch(e:any){addLog(`❌ ${e.message}`)}
+    }
+    fetchLive()
+    liveRef.current = window.setInterval(fetchLive, 5000)
+  }, [liveActive,selectedRace,addLog])
+  useEffect(()=>{return()=>{if(liveRef.current)clearInterval(liveRef.current)}},[]) 
+
+  // Zaman bazlı replay timer
   useEffect(() => {
     if (!replayPlaying) { if(replayRef.current) clearInterval(replayRef.current); return }
     const TICK = 200 // ms aralık
@@ -258,6 +294,9 @@ export function F1Page() {
             <button className="f1-btn" onClick={()=>setMode('predict')} style={{background:mode==='predict'?'#e10600':'#1e1e30',fontSize:10,padding:'5px 12px'}}>🎯 Tahmin</button>
             <button className="f1-btn" onClick={loadReplayData} style={{background:mode==='replay'?'#e10600':'#1e1e30',fontSize:10,padding:'5px 12px',opacity:loading?.5:1}}>
               {loading?'⏳...':'🔄 Replay'}
+            </button>
+            <button className="f1-btn" onClick={toggleLive} style={{background:liveActive?'#dc2626':'#1e1e30',fontSize:10,padding:'5px 12px',animation:liveActive?'pulse 2s infinite':''}}>
+              {liveActive?'🔴 CANLI':'📡 Canlı'}
             </button>
           </div>
         </div>

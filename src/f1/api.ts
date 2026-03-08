@@ -56,8 +56,8 @@ class ApiCache {
 // ═══════════════════════════════════════════
 class RateLimiter {
   private timestamps: number[] = []
-  private readonly maxPerSecond = 3
-  private readonly maxPerMinute = 28 // biraz marj bırak
+  private readonly maxPerSecond = 4 // biraz agresif ama tolere ediliyor
+  private readonly maxPerMinute = 50
 
   async waitForSlot(): Promise<void> {
     const now = Date.now()
@@ -110,7 +110,7 @@ class OpenF1Client {
     sessions: 6 * 60 * 60 * 1000,     // 6 saat
     drivers: 6 * 60 * 60 * 1000,      // 6 saat
     laps: 5 * 60 * 1000,              // 5 dakika (canlı veri için kısa)
-    positions: 30 * 1000,             // 30 saniye (çok canlı)
+    positions: 60 * 1000,             // 1 dakika
     weather: 60 * 1000,               // 1 dakika
     pit: 2 * 60 * 1000,              // 2 dakika
     historical_laps: 7 * 24 * 60 * 60 * 1000, // 7 gün (değişmez)
