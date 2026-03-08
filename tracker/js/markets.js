@@ -9,47 +9,124 @@ const MARKET_ITEMS = {
     {sym:'^GDAXI',name:'DAX',link:'https://www.investing.com/indices/germany-30'},
   ],
   stocks: [
-    // BIST-30 + Popüler hisseler
-    {sym:'THYAO.IS',name:'THYAO',link:'https://www.investing.com/equities/turk-hava-yollari'},
-    {sym:'ASELS.IS',name:'ASELS',link:'https://www.investing.com/equities/aselsan'},
+    // ═══ BIST 100 — Tam liste ═══
+    // Bankalar
     {sym:'GARAN.IS',name:'GARAN',link:'https://www.investing.com/equities/garanti-bankasi'},
     {sym:'AKBNK.IS',name:'AKBNK',link:'https://www.investing.com/equities/akbank'},
     {sym:'YKBNK.IS',name:'YKBNK',link:'https://www.investing.com/equities/yapi-ve-kredi-bankasi'},
     {sym:'ISCTR.IS',name:'ISCTR',link:'https://www.investing.com/equities/turkiye-is-bankasi-c'},
     {sym:'HALKB.IS',name:'HALKB',link:'https://www.investing.com/equities/turkiye-halk-bankasi'},
     {sym:'VAKBN.IS',name:'VAKBN',link:'https://www.investing.com/equities/turkiye-vakiflar-bankasi'},
+    {sym:'TSKB.IS',name:'TSKB',link:'https://www.investing.com/equities/turkiye-sinai-kalkinma-bank'},
+    {sym:'ALBRK.IS',name:'ALBRK',link:'https://www.investing.com/equities/albaraka-turk'},
+    {sym:'SKBNK.IS',name:'SKBNK',link:'https://www.investing.com/equities/sekerbank'},
+    // Holdingler
     {sym:'KCHOL.IS',name:'KCHOL',link:'https://www.investing.com/equities/koc-holding'},
     {sym:'SAHOL.IS',name:'SAHOL',link:'https://www.investing.com/equities/haci-omer-sabanci-holding'},
-    {sym:'TUPRS.IS',name:'TUPRS',link:'https://www.investing.com/equities/tupras-turkiye-petrol-rafine'},
-    {sym:'SISE.IS',name:'SISE',link:'https://www.investing.com/equities/sise-cam'},
-    {sym:'EREGL.IS',name:'EREGL',link:'https://www.investing.com/equities/eregli-demir-celik'},
-    {sym:'BIMAS.IS',name:'BIMAS',link:'https://www.investing.com/equities/bim-birlesik-magazalar'},
+    {sym:'DOHOL.IS',name:'DOHOL',link:'https://www.investing.com/equities/dogan-sirketler-grubu'},
+    {sym:'TKFEN.IS',name:'TKFEN',link:'https://www.investing.com/equities/tekfen-holding'},
+    {sym:'TAVHL.IS',name:'TAVHL',link:'https://www.investing.com/equities/tav-havalimanlari'},
+    // Savunma & Havacılık
+    {sym:'ASELS.IS',name:'ASELS',link:'https://www.investing.com/equities/aselsan'},
+    {sym:'THYAO.IS',name:'THYAO',link:'https://www.investing.com/equities/turk-hava-yollari'},
+    {sym:'PGSUS.IS',name:'PGSUS',link:'https://www.investing.com/equities/pegasus-hava-tasimaciligi'},
+    // Otomotiv
     {sym:'FROTO.IS',name:'FROTO',link:'https://www.investing.com/equities/ford-otomotiv-sanayi'},
     {sym:'TOASO.IS',name:'TOASO',link:'https://www.investing.com/equities/tofas-turk-otomobil-fabrikasi'},
-    {sym:'TCELL.IS',name:'TCELL',link:'https://www.investing.com/equities/turkcell-iletisim-hizmetleri'},
-    {sym:'TAVHL.IS',name:'TAVHL',link:'https://www.investing.com/equities/tav-havalimanlari'},
-    {sym:'PGSUS.IS',name:'PGSUS',link:'https://www.investing.com/equities/pegasus-hava-tasimaciligi'},
-    {sym:'EKGYO.IS',name:'EKGYO',link:'https://www.investing.com/equities/emlak-konut-gayrimenkul'},
+    {sym:'OTKAR.IS',name:'OTKAR',link:'https://www.investing.com/equities/otokar'},
+    {sym:'TTRAK.IS',name:'TTRAK',link:'https://www.investing.com/equities/turk-traktor-ve-ziraat-makineleri'},
+    // Enerji & Petrokimya
+    {sym:'TUPRS.IS',name:'TUPRS',link:'https://www.investing.com/equities/tupras-turkiye-petrol-rafine'},
     {sym:'PETKM.IS',name:'PETKM',link:'https://www.investing.com/equities/petkim-petrokimya'},
-    {sym:'KOZAL.IS',name:'KOZAL',link:'https://www.investing.com/equities/koza-altin-isletmeleri'},
-    {sym:'TTKOM.IS',name:'TTKOM',link:'https://www.investing.com/equities/turk-telekomunikasyon'},
+    {sym:'ENJSA.IS',name:'ENJSA',link:'https://www.investing.com/equities/enerjisa-enerji'},
+    {sym:'EUPWR.IS',name:'EUPWR',link:'https://www.investing.com/equities/euro-enerji'},
+    {sym:'AKSEN.IS',name:'AKSEN',link:'https://www.investing.com/equities/aksa-enerji-uretim'},
+    {sym:'AYGEN.IS',name:'AYGEN',link:'https://www.investing.com/equities/aydem-yenilenebilir-enerji'},
+    {sym:'ODAS.IS',name:'ODAS',link:'https://www.investing.com/equities/odas-elektrik-uretim'},
+    // Sanayi & İmalat
+    {sym:'EREGL.IS',name:'EREGL',link:'https://www.investing.com/equities/eregli-demir-celik'},
+    {sym:'SISE.IS',name:'SISE',link:'https://www.investing.com/equities/sise-cam'},
     {sym:'ARCLK.IS',name:'ARCLK',link:'https://www.investing.com/equities/arcelik'},
+    {sym:'VESTL.IS',name:'VESTL',link:'https://www.investing.com/equities/vestel-elektronik'},
+    {sym:'BRISA.IS',name:'BRISA',link:'https://www.investing.com/equities/brisa-bridgestone-sabanci'},
+    {sym:'KRDMD.IS',name:'KRDMD',link:'https://www.investing.com/equities/kardemir-d'},
+    {sym:'CEMTS.IS',name:'CEMTS',link:'https://www.investing.com/equities/cemas-dokum-sanayi'},
+    {sym:'CIMSA.IS',name:'CIMSA',link:'https://www.investing.com/equities/cimsa-cimento-sanayi-ve-ticaret'},
+    // İnşaat
     {sym:'ENKAI.IS',name:'ENKAI',link:'https://www.investing.com/equities/enka-insaat-ve-sanayi'},
-    {sym:'TKFEN.IS',name:'TKFEN',link:'https://www.investing.com/equities/tekfen-holding'},
-    {sym:'SASA.IS',name:'SASA',link:'https://www.investing.com/equities/sasa-polyester-sanayi'},
-    {sym:'GUBRF.IS',name:'GUBRF',link:'https://www.investing.com/equities/gubre-fabrikalari'},
+    {sym:'EKGYO.IS',name:'EKGYO',link:'https://www.investing.com/equities/emlak-konut-gayrimenkul'},
+    {sym:'ISGYO.IS',name:'ISGYO',link:'https://www.investing.com/equities/is-gayrimenkul-yatirim-ortakligi'},
+    // Telekomünikasyon & Teknoloji
+    {sym:'TCELL.IS',name:'TCELL',link:'https://www.investing.com/equities/turkcell-iletisim-hizmetleri'},
+    {sym:'TTKOM.IS',name:'TTKOM',link:'https://www.investing.com/equities/turk-telekomunikasyon'},
+    {sym:'LOGO.IS',name:'LOGO',link:'https://www.investing.com/equities/logo-yazilim'},
+    {sym:'NETAS.IS',name:'NETAS',link:'https://www.investing.com/equities/netas-telekomunikasyon'},
+    {sym:'KONTR.IS',name:'KONTR',link:'https://www.investing.com/equities/kontrolmatik-teknoloji'},
+    // Perakende & Gıda
+    {sym:'BIMAS.IS',name:'BIMAS',link:'https://www.investing.com/equities/bim-birlesik-magazalar'},
     {sym:'MGROS.IS',name:'MGROS',link:'https://www.investing.com/equities/migros-ticaret'},
     {sym:'SOKM.IS',name:'SOKM',link:'https://www.investing.com/equities/sok-marketler-ticaret'},
     {sym:'ULKER.IS',name:'ULKER',link:'https://www.investing.com/equities/ulker-biskuvi-sanayi'},
-    {sym:'VESTL.IS',name:'VESTL',link:'https://www.investing.com/equities/vestel-elektronik'},
-    {sym:'DOHOL.IS',name:'DOHOL',link:'https://www.investing.com/equities/dogan-sirketler-grubu'},
-    {sym:'MAVI.IS',name:'MAVI',link:'https://www.investing.com/equities/mavi-giyim-sanayi-ve-ticaret'},
-    {sym:'LOGO.IS',name:'LOGO',link:'https://www.investing.com/equities/logo-yazilim'},
-    {sym:'OTKAR.IS',name:'OTKAR',link:'https://www.investing.com/equities/otokar'},
-    {sym:'TTRAK.IS',name:'TTRAK',link:'https://www.investing.com/equities/turk-traktor-ve-ziraat-makineleri'},
-    {sym:'ENJSA.IS',name:'ENJSA',link:'https://www.investing.com/equities/enerjisa-enerji'},
-    {sym:'KONTR.IS',name:'KONTR',link:'https://www.investing.com/equities/kontrolmatik-teknoloji'},
     {sym:'AEFES.IS',name:'AEFES',link:'https://www.investing.com/equities/anadolu-efes'},
+    {sym:'CCOLA.IS',name:'CCOLA',link:'https://www.investing.com/equities/coca-cola-icecek'},
+    {sym:'TATGD.IS',name:'TATGD',link:'https://www.investing.com/equities/tat-gida-sanayi'},
+    {sym:'BANVT.IS',name:'BANVT',link:'https://www.investing.com/equities/banvit-bandirma-vitaminli-yem'},
+    // Tekstil & Moda
+    {sym:'MAVI.IS',name:'MAVI',link:'https://www.investing.com/equities/mavi-giyim-sanayi-ve-ticaret'},
+    // Madencilik
+    {sym:'KOZAL.IS',name:'KOZAL',link:'https://www.investing.com/equities/koza-altin-isletmeleri'},
+    {sym:'KOZAA.IS',name:'KOZAA',link:'https://www.investing.com/equities/koza-anadolu-metal'},
+    // Kimya & Gübre
+    {sym:'SASA.IS',name:'SASA',link:'https://www.investing.com/equities/sasa-polyester-sanayi'},
+    {sym:'GUBRF.IS',name:'GUBRF',link:'https://www.investing.com/equities/gubre-fabrikalari'},
+    // Sigorta & Finans
+    {sym:'AKGRT.IS',name:'AKGRT',link:'https://www.investing.com/equities/aksigorta'},
+    {sym:'ANHYT.IS',name:'ANHYT',link:'https://www.investing.com/equities/anadolu-hayat-emeklilik'},
+    {sym:'AGESA.IS',name:'AGESA',link:'https://www.investing.com/equities/agesa-hayat-ve-emeklilik'},
+    // Sağlık
+    {sym:'MPARK.IS',name:'MPARK',link:'https://www.investing.com/equities/mlp-saglik-hizmetleri'},
+    // Diğer BIST-100
+    {sym:'PRKME.IS',name:'PRKME',link:'https://www.investing.com/equities/park-elektrik-uretim'},
+    {sym:'GESAN.IS',name:'GESAN',link:'https://www.investing.com/equities/girisim-elektrik'},
+    {sym:'BERA.IS',name:'BERA',link:'https://www.investing.com/equities/bera-holding'},
+    {sym:'EGEEN.IS',name:'EGEEN',link:'https://www.investing.com/equities/ege-endustri-ve-ticaret'},
+    {sym:'OYAKC.IS',name:'OYAKC',link:'https://www.investing.com/equities/oyak-cimento'},
+    {sym:'ISMEN.IS',name:'ISMEN',link:'https://www.investing.com/equities/is-yatirim-menkul-degerler'},
+    {sym:'AKFGY.IS',name:'AKFGY',link:'https://www.investing.com/equities/akfen-gayrimenkul-yatirim'},
+    {sym:'TURSG.IS',name:'TURSG',link:'https://www.investing.com/equities/turk-sigorta'},
+    {sym:'KLSER.IS',name:'KLSER',link:'https://www.investing.com/equities/kalyon-enerji'},
+    {sym:'KAYSE.IS',name:'KAYSE',link:'https://www.investing.com/equities/kayseri-seker-fabrikasi'},
+    {sym:'KARSN.IS',name:'KARSN',link:'https://www.investing.com/equities/karsan-otomotiv'},
+    {sym:'SARKY.IS',name:'SARKY',link:'https://www.investing.com/equities/sarkuysan'},
+    {sym:'AYDEM.IS',name:'AYDEM',link:'https://www.investing.com/equities/aydem-enerji'},
+    {sym:'REEDR.IS',name:'REEDR',link:'https://www.investing.com/equities/reeder-teknoloji'},
+    {sym:'ALFAS.IS',name:'ALFAS',link:'https://www.investing.com/equities/alfa-solar-enerji'},
+    {sym:'CWENE.IS',name:'CWENE',link:'https://www.investing.com/equities/cw-enerji'},
+    {sym:'HEKTS.IS',name:'HEKTS',link:'https://www.investing.com/equities/hektas-ticaret'},
+    {sym:'SMRTG.IS',name:'SMRTG',link:'https://www.investing.com/equities/smart-gunes-enerjisi'},
+    {sym:'ARDYZ.IS',name:'ARDYZ',link:'https://www.investing.com/equities/arti-teknoloji'},
+    {sym:'TMSN.IS',name:'TMSN',link:'https://www.investing.com/equities/tumosan-motor-ve-traktor'},
+    {sym:'INDES.IS',name:'INDES',link:'https://www.investing.com/equities/indeks-bilgisayar'},
+    {sym:'ALARK.IS',name:'ALARK',link:'https://www.investing.com/equities/alarko-holding'},
+    {sym:'ASTOR.IS',name:'ASTOR',link:'https://www.investing.com/equities/astor-enerji'},
+    {sym:'KCAER.IS',name:'KCAER',link:'https://www.investing.com/equities/kocaer-celik-sanayi'},
+    {sym:'MIATK.IS',name:'MIATK',link:'https://www.investing.com/equities/mia-teknoloji'},
+    {sym:'AKFYE.IS',name:'AKFYE',link:'https://www.investing.com/equities/akfen-yenilenebilir-enerji'},
+    {sym:'BIOEN.IS',name:'BIOEN',link:'https://www.investing.com/equities/biotrend-cevre-ve-enerji'},
+    {sym:'BTCIM.IS',name:'BTCIM',link:'https://www.investing.com/equities/bati-cimento'},
+    {sym:'BUCIM.IS',name:'BUCIM',link:'https://www.investing.com/equities/bursa-cimento-fabrikasi'},
+    {sym:'CANTE.IS',name:'CANTE',link:'https://www.investing.com/equities/canakkale-seramik'},
+    {sym:'DOAS.IS',name:'DOAS',link:'https://www.investing.com/equities/dogus-otomotiv'},
+    {sym:'ECILC.IS',name:'ECILC',link:'https://www.investing.com/equities/eczacibasi-ilac'},
+    {sym:'GEDZA.IS',name:'GEDZA',link:'https://www.investing.com/equities/gediz-ambalaj'},
+    {sym:'GLYHO.IS',name:'GLYHO',link:'https://www.investing.com/equities/global-yatirim-holding'},
+    {sym:'KORDS.IS',name:'KORDS',link:'https://www.investing.com/equities/kordsa-teknik-tekstil'},
+    {sym:'PAPIL.IS',name:'PAPIL',link:'https://www.investing.com/equities/papilon-savunma'},
+    {sym:'ERSEN.IS',name:'ERSEN',link:'https://www.investing.com/equities/ersu-gida'},
+    {sym:'QUAGR.IS',name:'QUAGR',link:'https://www.investing.com/equities/qua-granite'},
+    {sym:'SUNTK.IS',name:'SUNTK',link:'https://www.investing.com/equities/sun-tekstil'},
+    {sym:'VESBE.IS',name:'VESBE',link:'https://www.investing.com/equities/vestel-beyaz-esya'},
+    {sym:'YEOTK.IS',name:'YEOTK',link:'https://www.investing.com/equities/yeo-teknoloji'},
   ],
   commodities: [
     {sym:'GC=F',name:{tr:'Altin (Ons)',en:'Gold (Oz)'},link:'https://www.investing.com/commodities/gold'},
@@ -267,6 +344,16 @@ const SEARCH_SUGGESTIONS=[
 ];
 
 let mktDDOpen=false;
+let bistExpanded=false;
+function toggleBistAll(){
+  const el=document.getElementById('mktStocksMore');
+  const btn=document.getElementById('mktStocksToggle');
+  if(!el||!btn) return;
+  bistExpanded=!bistExpanded;
+  el.style.display=bistExpanded?'block':'none';
+  btn.textContent=bistExpanded?(LANG==='tr'?'Daralt':'Collapse'):(LANG==='tr'?'Tumu Goster ('+MARKET_ITEMS.stocks.length+' hisse)':'Show All ('+MARKET_ITEMS.stocks.length+' stocks)');
+  if(bistExpanded&&!mktFetching) fetchAllMarketPrices();
+}
 
 function onMktSearch(val){
   const dd=document.getElementById('mktSearchDD');
@@ -406,8 +493,16 @@ function renderMarkets(){
 
   h+=secTitle(tr?'Endeksler':'Indices');
   h+=renderGroup(MARKET_ITEMS.indices);
-  h+=secTitle(tr?'BIST Hisseler':'BIST Stocks');
-  h+=renderGroup(MARKET_ITEMS.stocks);
+  h+=secTitle(tr?'BIST 100 Hisseler':'BIST 100 Stocks');
+  const stocksInitial=MARKET_ITEMS.stocks.slice(0,20);
+  const stocksRest=MARKET_ITEMS.stocks.slice(20);
+  h+=renderGroup(stocksInitial);
+  if(stocksRest.length>0){
+    h+=`<div id="mktStocksMore" style="display:none">`;
+    h+=renderGroup(stocksRest);
+    h+=`</div>`;
+    h+=`<button id="mktStocksToggle" class="btn btn-ghost" onclick="toggleBistAll()" style="font-size:0.56rem;margin:10px auto;display:block;padding:8px 24px">${tr?'Tumu Goster ('+MARKET_ITEMS.stocks.length+' hisse)':'Show All ('+MARKET_ITEMS.stocks.length+' stocks)'}</button>`;
+  }
   h+=secTitle(tr?'Emtia':'Commodities');
   h+=renderGroup(MARKET_ITEMS.commodities);
   h+=secTitle(tr?'Doviz':'Forex');

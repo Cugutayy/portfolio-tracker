@@ -17,7 +17,7 @@ export function Navbar({ lang, setLang, dark, setDark, t }: Props) {
 
   return (
     <nav style={{ position:'fixed', top:0, left:0, right:0, zIndex:50, background:'var(--nav-bg)', backdropFilter:'blur(14px)', borderBottom:'1px solid var(--rule)', transition:'background .3s, border-color .3s' }}>
-      <div style={{ maxWidth:1060, margin:'0 auto', padding:'0 28px', height:50, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+      <div style={{ maxWidth:1200, margin:'0 auto', padding:'0 28px', height:50, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
         <div style={{ display:'flex', alignItems:'center', gap:32 }}>
           <a href="#projects" className="link-ed mono" style={{ fontSize:'.7rem', color:'var(--muted)' }}>{t('navP')}</a>
           <a href="mailto:s.cagatay.sonmez@gmail.com" className="link-ed mono" style={{ fontSize:'.7rem', color:'var(--muted)' }}>{t('navC')}</a>
