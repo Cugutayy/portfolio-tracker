@@ -333,15 +333,34 @@ const SEARCH_SUGGESTIONS=[
 ];
 
 let mktDDOpen=false;
+let mktCategoryFilter='all';
+
+function filterMktByCategory(cat){
+  mktCategoryFilter=cat;
+  document.querySelectorAll('.mkt-tab-btn').forEach(btn=>{
+    btn.classList.toggle('active',btn.dataset.cat===cat);
+  });
+  // Re-filter search if input has value
+  const input=document.getElementById('mktSearchInput');
+  if(input&&input.value) onMktSearch(input.value);
+  // Show/hide market sections based on category
+  const sectionMap={all:null,BIST:'stocks',Emtia:'commodities',Doviz:'fx',Kripto:'crypto',Endeks:'indices',US:'stocks',ETF:'stocks'};
+  document.querySelectorAll('.mkt-section').forEach(sec=>{
+    if(cat==='all'){sec.style.display='';return;}
+    sec.style.display=sec.dataset.cat===cat?'':'none';
+  });
+}
 
 function onMktSearch(val){
   const dd=document.getElementById('mktSearchDD');
   if(!dd) return;
   if(!val||val.length<1){dd.innerHTML='';dd.style.display='none';mktDDOpen=false;return;}
   const q=val.toUpperCase();
-  const matches=SEARCH_SUGGESTIONS.filter(s=>
-    s.sym.toUpperCase().includes(q)||s.name.toUpperCase().includes(q)
-  ).slice(0,8);
+  const matches=SEARCH_SUGGESTIONS.filter(s=>{
+    const matchesText=s.sym.toUpperCase().includes(q)||s.name.toUpperCase().includes(q);
+    const matchesCat=mktCategoryFilter==='all'||s.cat===mktCategoryFilter;
+    return matchesText&&matchesCat;
+  }).slice(0,12);
   if(matches.length===0){
     dd.innerHTML=`<div style="padding:10px 14px;font-size:0.56rem;color:var(--muted)">${LANG==='tr'?'Listede yok — Enter ile dogrudan \"'+val+'\" sembolunu ara':'Not in list — press Enter to search \"'+val+'\" directly'}</div>`;
     dd.style.display='block';mktDDOpen=true;
@@ -454,13 +473,33 @@ function renderMarkets(){
     <button id="mktRefreshBtn" class="btn btn-ghost" onclick="fetchAllMarketPrices()" style="font-size:0.56rem">${mktFetching?(tr?'Yukleniyor...':'Loading...'):(tr?'Guncelle':'Refresh')}</button>
   </div>`;
 
+  // Category tabs
+  const cats=[
+    {key:'all',label:tr?'Tumu':'All'},
+    {key:'BIST',label:'BIST'},
+    {key:'Emtia',label:tr?'Emtia':'Commodities'},
+    {key:'Doviz',label:tr?'Doviz':'Forex'},
+    {key:'Kripto',label:tr?'Kripto':'Crypto'},
+    {key:'Endeks',label:tr?'Endeks':'Indices'},
+    {key:'US',label:'US'},
+    {key:'ETF',label:'ETF'},
+  ];
+  h+=`<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">`;
+  cats.forEach(c=>{
+    const isActive=mktCategoryFilter===c.key;
+    h+=`<button class="mkt-tab-btn${isActive?' active':''}" data-cat="${c.key}" onclick="filterMktByCategory('${c.key}')"
+      style="padding:6px 14px;border-radius:8px;font-size:0.56rem;font-weight:600;border:1px solid ${isActive?'var(--accent)':'var(--border)'};
+      background:${isActive?'var(--accent)':'var(--surface)'};color:${isActive?'#fff':'var(--text)'};cursor:pointer;transition:all 0.15s;font-family:inherit">${c.label}</button>`;
+  });
+  h+=`</div>`;
+
   // Search bar
   h+=`<div style="position:relative;margin-bottom:16px">
     <div style="display:flex;gap:8px;align-items:center">
       <div style="position:relative;flex:1">
-        <input id="mktSearchInput" type="text" placeholder="${tr?'Sembol veya isim ara... (AAPL, Ulker, Bitcoin, THYAO)':'Search symbol or name... (AAPL, Ulker, Bitcoin, THYAO)'}" 
+        <input id="mktSearchInput" type="text" placeholder="${tr?'Sembol veya isim ara... (AAPL, Ulker, Bitcoin, THYAO)':'Search symbol or name... (AAPL, Ulker, Bitcoin, THYAO)'}"
           style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font-size:0.58rem;font-family:'Geist Mono',monospace;outline:none;box-sizing:border-box"
-          oninput="onMktSearch(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchMarketTicker()}" 
+          oninput="onMktSearch(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchMarketTicker()}"
           onblur="setTimeout(closeMktDD,200)" autocomplete="off">
         <div id="mktSearchDD" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 10px 10px;box-shadow:0 8px 24px rgba(0,0,0,0.1);z-index:100;max-height:320px;overflow-y:auto"></div>
       </div>
@@ -470,16 +509,11 @@ function renderMarkets(){
   <div id="mktSearchStatus" style="font-size:0.54rem;color:var(--muted);margin-bottom:4px"></div>
   <div id="mktSearchResult" style="margin-bottom:12px"></div>`;
 
-  h+=secTitle(tr?'Endeksler':'Indices');
-  h+=renderGroup(MARKET_ITEMS.indices);
-  h+=secTitle(tr?'BIST Hisseler':'BIST Stocks');
-  h+=renderGroup(MARKET_ITEMS.stocks);
-  h+=secTitle(tr?'Emtia':'Commodities');
-  h+=renderGroup(MARKET_ITEMS.commodities);
-  h+=secTitle(tr?'Doviz':'Forex');
-  h+=renderGroup(MARKET_ITEMS.fx);
-  h+=secTitle(tr?'Kripto Paralar':'Cryptocurrencies');
-  h+=renderGroup(MARKET_ITEMS.crypto);
+  h+=`<div class="mkt-section" data-cat="Endeks">`+secTitle(tr?'Endeksler':'Indices')+renderGroup(MARKET_ITEMS.indices)+`</div>`;
+  h+=`<div class="mkt-section" data-cat="BIST">`+secTitle(tr?'BIST Hisseler':'BIST Stocks')+renderGroup(MARKET_ITEMS.stocks)+`</div>`;
+  h+=`<div class="mkt-section" data-cat="Emtia">`+secTitle(tr?'Emtia':'Commodities')+renderGroup(MARKET_ITEMS.commodities)+`</div>`;
+  h+=`<div class="mkt-section" data-cat="Doviz">`+secTitle(tr?'Doviz':'Forex')+renderGroup(MARKET_ITEMS.fx)+`</div>`;
+  h+=`<div class="mkt-section" data-cat="Kripto">`+secTitle(tr?'Kripto Paralar':'Cryptocurrencies')+renderGroup(MARKET_ITEMS.crypto)+`</div>`;
 
   h+=`<div style="font-size:0.52rem;color:var(--muted);margin-top:16px;text-align:center">${tr?'Kaynak: Yahoo Finance · Basar. olanlar her 60sn yeniden denenir · Linkler: Investing.com':'Source: Yahoo Finance · Failed items retry every 60s · Links: Investing.com'}</div>`;
 

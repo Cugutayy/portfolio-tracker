@@ -1,33 +1,54 @@
 import { useRef, useCallback, useEffect, useState } from 'react'
-import { TEAMS } from '../f1/data'
 
 interface Props { t: (k: string) => string }
 
 export function ProjectCards({ t }: Props) {
   return (
-    <section id="projects" className="container" style={{ padding:'24px 0 48px' }}>
+    <section id="projects" className="container" style={{ padding:'16px 0 32px' }}>
       <ScrollReveal delay={0}>
-        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:24 }}>
-          <h2 style={{ fontSize:'1.5rem', fontWeight:300 }}>{t('secP')}</h2>
-          <span className="mono" style={{ fontSize:'.7rem', color:'var(--muted)' }}>{t('pCnt')}</span>
+        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:16 }}>
+          <h2 style={{ fontSize:'1.1rem', fontWeight:300, letterSpacing:'-.01em' }}>{t('secP')}</h2>
+          <span className="mono" style={{ fontSize:'.6rem', color:'var(--muted)' }}>{t('pCnt')}</span>
         </div>
       </ScrollReveal>
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(320px, 1fr))', gap:20 }}>
-        <ScrollReveal delay={100}>
-          <Card3D href="/tracker/" accent="var(--green-t)">
-            <PortfolioContent t={t} />
-          </Card3D>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(240px, 1fr))', gap:12 }}>
+        <ScrollReveal delay={80}>
+          <GlassCard href="/tracker/" label="01" accent="var(--green-t)">
+            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>Portfolio Tracker</h3>
+            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>{t('p1d')}</p>
+            <MiniChart />
+            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
+              <Stat label={t('pf')} value="101K ₺" />
+              <Stat label="K/Z" value="+1.02%" pos />
+              <LiveDot label={t('lv')} />
+            </div>
+            <Tags items={[t('tF'), t('tA'), 'Chart.js']} />
+          </GlassCard>
         </ScrollReveal>
-        <ScrollReveal delay={200}>
-          <Card3D href="#/f1" accent="#e10600">
-            <F1Content t={t} />
-          </Card3D>
+
+        <ScrollReveal delay={160}>
+          <GlassCard href="#/f1" label="02" accent="#e10600">
+            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>{t('p2t')}</h3>
+            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>{t('p2d')}</p>
+            <TrackMini />
+            <div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>
+              {['Ensemble ML','OpenF1',`22 ${t('drivers')}`].map(s => (
+                <span key={s} className="mono" style={{fontSize:'.44rem',color:'var(--muted)',background:'rgba(255,255,255,0.04)',border:'1px solid var(--rule)',padding:'2px 6px',borderRadius:4}}>{s}</span>
+              ))}
+            </div>
+            <Tags items={['Ridge+GB','ELO','React']} />
+          </GlassCard>
         </ScrollReveal>
-        <ScrollReveal delay={300}>
-          <Card3D disabled>
-            <PlaceholderContent t={t} />
-          </Card3D>
+
+        <ScrollReveal delay={240}>
+          <GlassCard label="03" disabled>
+            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6, opacity:.35 }}>{t('cs')}</h3>
+            <p style={{ color:'var(--muted)', opacity:.3, fontSize:'.72rem', lineHeight:1.45 }}>{t('csd')}</p>
+            <div style={{ marginTop:12 }}>
+              <span className="mono" style={{ fontSize:'.5rem', padding:'2px 8px', borderRadius:99, border:'1px solid var(--rule)', color:'var(--muted)', opacity:.25 }}>{t('tba')}</span>
+            </div>
+          </GlassCard>
         </ScrollReveal>
       </div>
     </section>
@@ -35,7 +56,7 @@ export function ProjectCards({ t }: Props) {
 }
 
 // ═══════════════════════════════════════════
-// SCROLL REVEAL — IntersectionObserver ile
+// SCROLL REVEAL
 // ═══════════════════════════════════════════
 function ScrollReveal({ children, delay = 0, style }: { children: React.ReactNode; delay?: number; style?: React.CSSProperties }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -44,7 +65,6 @@ function ScrollReveal({ children, delay = 0, style }: { children: React.ReactNod
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    // Hemen kontrol et — sayfa yüklenirken zaten viewport'taysa
     const rect = el.getBoundingClientRect()
     if (rect.top < window.innerHeight + 100) { setVisible(true); return }
     const obs = new IntersectionObserver(([entry]) => {
@@ -58,8 +78,8 @@ function ScrollReveal({ children, delay = 0, style }: { children: React.ReactNod
     <div ref={ref} style={{
       ...style,
       opacity: visible ? 1 : 0,
-      transform: visible ? 'translateY(0)' : 'translateY(32px)',
-      transition: `opacity .7s cubic-bezier(.16,1,.3,1) ${delay}ms, transform .7s cubic-bezier(.16,1,.3,1) ${delay}ms`,
+      transform: visible ? 'translateY(0)' : 'translateY(24px)',
+      transition: `opacity .6s cubic-bezier(.16,1,.3,1) ${delay}ms, transform .6s cubic-bezier(.16,1,.3,1) ${delay}ms`,
     }}>
       {children}
     </div>
@@ -67,9 +87,9 @@ function ScrollReveal({ children, delay = 0, style }: { children: React.ReactNod
 }
 
 // ═══════════════════════════════════════════
-// 3D PERSPEKTİF KART — mouse takipli tilt + glow
+// GLASSMORPHISM CARD
 // ═══════════════════════════════════════════
-function Card3D({ children, href, disabled, accent }: { children: React.ReactNode; href?: string; disabled?: boolean; accent?: string }) {
+function GlassCard({ children, href, disabled, label, accent }: { children: React.ReactNode; href?: string; disabled?: boolean; label: string; accent?: string }) {
   const cardRef = useRef<HTMLDivElement>(null)
   const glowRef = useRef<HTMLDivElement>(null)
 
@@ -78,20 +98,18 @@ function Card3D({ children, href, disabled, accent }: { children: React.ReactNod
     const rect = cardRef.current.getBoundingClientRect()
     const x = (e.clientX - rect.left) / rect.width
     const y = (e.clientY - rect.top) / rect.height
-    const rotateX = (0.5 - y) * 3
-    const rotateY = (x - 0.5) * 3
-    cardRef.current.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`
-    cardRef.current.style.boxShadow = `0 12px 40px var(--shadow), 0 2px 8px var(--shadow)`
+    const rotateX = (0.5 - y) * 4
+    const rotateY = (x - 0.5) * 4
+    cardRef.current.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-2px)`
     if (glowRef.current) {
       glowRef.current.style.opacity = '1'
-      glowRef.current.style.background = `radial-gradient(circle at ${x*100}% ${y*100}%, var(--card-hover) 0%, transparent 60%)`
+      glowRef.current.style.background = `radial-gradient(circle at ${x*100}% ${y*100}%, ${accent || 'rgba(255,255,255,0.08)'} 0%, transparent 50%)`
     }
-  }, [disabled])
+  }, [disabled, accent])
 
   const handleMouseLeave = useCallback(() => {
     if (!cardRef.current) return
-    cardRef.current.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg) translateY(0)'
-    cardRef.current.style.boxShadow = `0 4px 24px var(--shadow)`
+    cardRef.current.style.transform = 'perspective(800px) rotateX(0) rotateY(0) translateY(0)'
     if (glowRef.current) glowRef.current.style.opacity = '0'
   }, [])
 
@@ -106,18 +124,25 @@ function Card3D({ children, href, disabled, accent }: { children: React.ReactNod
         onMouseLeave={handleMouseLeave}
         style={{
           position:'relative', overflow:'hidden',
-          border: disabled ? '1px dashed var(--card-border)' : '1px solid var(--card-border)',
-          borderRadius:18, padding:'28px 32px',
-          background: disabled ? 'var(--bg)' : 'var(--card-bg)',
+          border: disabled ? '1px dashed rgba(255,255,255,0.06)' : '1px solid rgba(255,255,255,0.08)',
+          borderRadius:14, padding:'20px 22px',
+          background: disabled ? 'transparent' : 'rgba(255,255,255,0.03)',
+          backdropFilter: disabled ? 'none' : 'blur(12px)',
+          WebkitBackdropFilter: disabled ? 'none' : 'blur(12px)',
           cursor: disabled ? 'default' : 'pointer',
-          transition:'transform .5s cubic-bezier(.16,1,.3,1), box-shadow .5s ease',
+          transition:'transform .4s cubic-bezier(.16,1,.3,1), box-shadow .4s ease, border-color .3s',
           transformStyle:'preserve-3d', willChange:'transform',
-          boxShadow: disabled ? 'none' : '0 4px 24px var(--shadow)',
+          boxShadow: disabled ? 'none' : '0 2px 16px rgba(0,0,0,0.15)',
           opacity: disabled ? 0.5 : 1,
+          height:'100%',
         }}
       >
-        {/* Hover glow */}
-        <div ref={glowRef} style={{position:'absolute',inset:0,borderRadius:'inherit',opacity:0,transition:'opacity .5s ease',pointerEvents:'none',zIndex:1}}/>
+        {/* Glow overlay */}
+        <div ref={glowRef} style={{position:'absolute',inset:0,borderRadius:'inherit',opacity:0,transition:'opacity .4s ease',pointerEvents:'none',zIndex:1}}/>
+        {/* Label */}
+        <div className="mono" style={{fontSize:'.55rem', color: accent || 'var(--muted)', letterSpacing:'.06em', marginBottom:8, opacity:.7, position:'relative', zIndex:2}}>
+          {label}
+        </div>
         <div style={{position:'relative',zIndex:2}}>
           {children}
         </div>
@@ -127,114 +152,65 @@ function Card3D({ children, href, disabled, accent }: { children: React.ReactNod
 }
 
 // ═══════════════════════════════════════════
-// PORTFOLIO CONTENT
+// MINI CHART (Portfolio)
 // ═══════════════════════════════════════════
-function PortfolioContent({ t }: { t: (k: string) => string }) {
-  return <>
-    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14}}>
-      <div>
-        <span className="mono" style={{fontSize:'.65rem',color:'var(--accent)',letterSpacing:'.04em'}}>01</span>
-        <h3 style={{fontSize:'1.3rem',fontWeight:400,marginTop:4}}>Portfolio Tracker</h3>
-        <p style={{color:'var(--muted)',marginTop:6,lineHeight:1.5,fontSize:'.88rem',maxWidth:520}}>{t('p1d')}</p>
-      </div>
-      <Arrow />
-    </div>
-    <div style={{marginTop:14,border:'1px solid var(--dash-border)',borderRadius:12,padding:'14px 16px',background:'var(--dash-bg)'}}>
-      <div style={{display:'flex',gap:20,marginBottom:10,flexWrap:'wrap'}}>
-        <MS label={t('pf')} value="101.019 ₺" />
-        <MS label="K/Z" value="+1.019 ₺" pos />
-        <MS label={t('ch')} value="+1.02%" pos />
-      </div>
-      <svg style={{width:'100%',height:50,display:'block',marginBottom:6}} viewBox="0 0 400 70" preserveAspectRatio="none">
-        <defs><linearGradient id="cf" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#1a472a" stopOpacity=".12"/><stop offset="100%" stopColor="#1a472a" stopOpacity=".01"/></linearGradient></defs>
-        <path d="M0,35 L31,37 L62,42 L93,46 L124,44 L155,46 L186,47 L217,53 L248,51 L279,50 L310,55 L341,38 L372,33 L400,34 L400,70 L0,70Z" fill="url(#cf)"/>
-        <polyline points="0,35 31,37 62,42 93,46 124,44 155,46 186,47 217,53 248,51 279,50 310,55 341,38 372,33 400,34" fill="none" stroke="#1a472a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        <circle cx="400" cy="34" r="2.5" fill="#1a472a"/>
-      </svg>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-        <div className="mono" style={{fontSize:'.52rem',color:'var(--muted)',display:'flex',alignItems:'center',gap:3}}>
-          <Dot c="#e67e22"/>BTC 40%<Dot c="#c0392b" ml/>THYAO<Dot c="#c9a84c" ml/>{t('gd')}<Dot c="#1d4ed8" ml/>+4
-        </div>
-        <div style={{display:'flex',alignItems:'center',gap:4}}>
-          <span style={{width:6,height:6,borderRadius:'50%',background:'var(--green)',animation:'pd 2s ease-in-out infinite',display:'inline-block'}}/>
-          <span className="mono" style={{fontSize:'.65rem',color:'var(--green-t)'}}>{t('lv')}</span>
-        </div>
-      </div>
-    </div>
-    <Tags items={[t('tF'), t('tA'), 'Cloudflare', 'Chart.js']} />
-  </>
+function MiniChart() {
+  return (
+    <svg style={{width:'100%',height:36,display:'block'}} viewBox="0 0 400 50" preserveAspectRatio="none">
+      <defs><linearGradient id="cf" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#22c55e" stopOpacity=".15"/><stop offset="100%" stopColor="#22c55e" stopOpacity=".01"/></linearGradient></defs>
+      <path d="M0,25 L31,27 L62,30 L93,33 L124,31 L155,33 L186,34 L217,38 L248,36 L279,35 L310,39 L341,27 L372,23 L400,24 L400,50 L0,50Z" fill="url(#cf)"/>
+      <polyline points="0,25 31,27 62,30 93,33 124,31 155,33 186,34 217,38 248,36 279,35 310,39 341,27 372,23 400,24" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity=".7"/>
+    </svg>
+  )
 }
 
 // ═══════════════════════════════════════════
-// F1 CONTENT
+// TRACK MINI (F1)
 // ═══════════════════════════════════════════
-const TRK = "M40,80 C40,30 80,15 140,15 C200,15 220,45 260,45 C300,45 340,20 360,50 C380,80 350,90 300,85 C250,80 200,90 140,90 C80,90 40,130 40,80 Z"
+const TRK = "M40,55 C40,20 80,10 130,10 C180,10 200,35 235,35 C270,35 300,15 320,40 C340,65 315,72 275,68 C235,64 190,72 130,72 C70,72 40,90 40,55 Z"
 
-function F1Content({ t }: { t: (k: string) => string }) {
-  return <>
-    <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:14}}>
-      <div>
-        <span className="mono" style={{fontSize:'.65rem',color:'var(--accent)',letterSpacing:'.04em'}}>02</span>
-        <h3 style={{fontSize:'1.3rem',fontWeight:400,marginTop:4}}>{t('p2t')}</h3>
-        <p style={{color:'var(--muted)',marginTop:6,lineHeight:1.5,fontSize:'.88rem'}}>{t('p2d')}</p>
-      </div>
-      <Arrow />
-    </div>
-    <div style={{marginTop:14,border:'1px solid var(--dash-border)',borderRadius:12,padding:'14px 16px',background:'var(--dash-bg)'}}>
-      <svg style={{width:'100%',height:80}} viewBox="0 0 400 100" preserveAspectRatio="xMidYMid meet">
-        <path d={TRK} fill="none" stroke="var(--rule)" strokeWidth="14" strokeLinecap="round" opacity=".4"/>
-        <path d={TRK} fill="none" stroke="var(--muted)" strokeWidth=".5" strokeDasharray="4,6" opacity=".2"/>
-        {[{c:'#3671C6',d:3.8,b:0},{c:'#FF8000',d:4,b:.5},{c:'#E8002D',d:4.2,b:1},{c:'#27F4D2',d:4.4,b:1.5}].map((car,i) => (
-          <g key={i} opacity={1-i*.08}>
-            <animateMotion dur={`${car.d}s`} repeatCount="indefinite" path={TRK} begin={`${car.b}s`} rotate="auto"/>
-            <rect x="-6" y="-2.5" width="12" height="5" rx="1.5" fill={car.c}/>
-            <rect x="4" y="-3.5" width="2.5" height="7" rx=".8" fill={car.c} opacity=".6"/>
-            <rect x="-8" y="-3" width="1.5" height="6" rx=".5" fill={car.c} opacity=".5"/>
-            <circle cx="3" cy="-3.5" r="1" fill="#222"/><circle cx="3" cy="3.5" r="1" fill="#222"/>
-            <circle cx="-5" cy="-3.5" r="1" fill="#222"/><circle cx="-5" cy="3.5" r="1" fill="#222"/>
-          </g>
-        ))}
-      </svg>
-      <div style={{display:'flex',gap:8,marginTop:4,flexWrap:'wrap'}}>
-        {['Ensemble ML','OpenF1 API',`22 ${t('drivers')}`,'Live Telemetry'].map(s => (
-          <span key={s} className="mono" style={{fontSize:'.48rem',color:'var(--muted)',background:'var(--bg)',border:'1px solid var(--rule)',padding:'2px 7px',borderRadius:5}}>{s}</span>
-        ))}
-      </div>
-    </div>
-    <Tags items={['Ridge+GB','ELO','OpenF1','React']} />
-  </>
-}
-
-// ═══════════════════════════════════════════
-// PLACEHOLDER
-// ═══════════════════════════════════════════
-function PlaceholderContent({ t }: { t: (k: string) => string }) {
-  return <>
-    <span className="mono" style={{fontSize:'.65rem',color:'var(--accent)',opacity:.4}}>03</span>
-    <h3 style={{fontSize:'1.2rem',fontWeight:400,marginTop:4,color:'var(--muted)',opacity:.35}}>{t('cs')}</h3>
-    <p style={{color:'var(--muted)',opacity:.25,marginTop:6,fontSize:'.88rem'}}>{t('csd')}</p>
-    <div style={{marginTop:12}}>
-      <span className="mono" style={{fontSize:'.55rem',padding:'2px 8px',borderRadius:99,border:'1px solid var(--rule)',color:'var(--muted)',opacity:.25}}>{t('tba')}</span>
-    </div>
-  </>
+function TrackMini() {
+  return (
+    <svg style={{width:'100%',height:56}} viewBox="0 0 360 80" preserveAspectRatio="xMidYMid meet">
+      <path d={TRK} fill="none" stroke="var(--rule)" strokeWidth="10" strokeLinecap="round" opacity=".3"/>
+      <path d={TRK} fill="none" stroke="var(--muted)" strokeWidth=".4" strokeDasharray="3,5" opacity=".15"/>
+      {[{c:'#3671C6',d:3.2,b:0},{c:'#FF8000',d:3.4,b:.4},{c:'#E8002D',d:3.6,b:.8},{c:'#27F4D2',d:3.8,b:1.2}].map((car,i) => (
+        <g key={i} opacity={1-i*.06}>
+          <animateMotion dur={`${car.d}s`} repeatCount="indefinite" path={TRK} begin={`${car.b}s`} rotate="auto"/>
+          <rect x="-5" y="-2" width="10" height="4" rx="1.2" fill={car.c}/>
+          <circle cx="2.5" cy="-2.5" r=".8" fill="#222"/><circle cx="2.5" cy="2.5" r=".8" fill="#222"/>
+          <circle cx="-3.5" cy="-2.5" r=".8" fill="#222"/><circle cx="-3.5" cy="2.5" r=".8" fill="#222"/>
+        </g>
+      ))}
+    </svg>
+  )
 }
 
 // ═══════════════════════════════════════════
 // SHARED
 // ═══════════════════════════════════════════
-function Arrow() {
-  return <div style={{flexShrink:0,marginLeft:16,width:34,height:34,borderRadius:'50%',border:'1px solid var(--rule)',display:'flex',alignItems:'center',justifyContent:'center',transition:'all .3s'}}>
-    <svg width="14" height="14" fill="none" stroke="var(--muted)" viewBox="0 0 24 24" style={{transform:'rotate(-45deg)'}}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M5 12h14m-7-7l7 7-7 7"/></svg>
-  </div>
+function Stat({ label, value, pos }: { label:string; value:string; pos?:boolean }) {
+  return (
+    <div>
+      <div className="mono" style={{fontSize:'.44rem',color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.06em'}}>{label}</div>
+      <div className="mono" style={{fontSize:'.72rem',fontWeight:500,color:pos?'var(--green-t)':'var(--ink)'}}>{value}</div>
+    </div>
+  )
 }
-function MS({ label, value, pos }: { label:string; value:string; pos?:boolean }) {
-  return <div><div className="mono" style={{fontSize:'.52rem',color:'var(--muted)',textTransform:'uppercase',letterSpacing:'.06em'}}>{label}</div><div className="mono" style={{fontSize:'.85rem',fontWeight:500,color:pos?'var(--green-t)':'var(--ink)'}}>{value}</div></div>
+
+function LiveDot({ label }: { label:string }) {
+  return (
+    <div style={{display:'flex',alignItems:'center',gap:4,marginLeft:'auto'}}>
+      <span style={{width:5,height:5,borderRadius:'50%',background:'var(--green)',animation:'pd 2s ease-in-out infinite',display:'inline-block'}}/>
+      <span className="mono" style={{fontSize:'.55rem',color:'var(--green-t)'}}>{label}</span>
+    </div>
+  )
 }
-function Dot({ c, ml }: { c:string; ml?:boolean }) {
-  return <span style={{display:'inline-block',width:5,height:5,borderRadius:'50%',background:c,marginLeft:ml?8:0}}/>
-}
+
 function Tags({ items }: { items:string[] }) {
-  return <div style={{display:'flex',flexWrap:'wrap',gap:5,marginTop:14}}>
-    {items.map(t => <span key={t} className="mono" style={{fontSize:'.58rem',letterSpacing:'.06em',textTransform:'uppercase',padding:'2px 8px',borderRadius:99,border:'1px solid var(--rule)',color:'var(--muted)'}}>{t}</span>)}
-  </div>
+  return (
+    <div style={{display:'flex',flexWrap:'wrap',gap:4,marginTop:10}}>
+      {items.map(t => <span key={t} className="mono" style={{fontSize:'.48rem',letterSpacing:'.05em',textTransform:'uppercase',padding:'1px 6px',borderRadius:4,border:'1px solid var(--rule)',color:'var(--muted)',opacity:.6}}>{t}</span>)}
+    </div>
+  )
 }
