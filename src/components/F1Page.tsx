@@ -188,34 +188,32 @@ export function F1Page() {
         </div>
       </div>
 
-      {mode==='predict'&&<div style={{padding:'12px 16px',maxWidth:1400,margin:'0 auto'}}>
-        <div style={{display:'flex',gap:8,marginBottom:10,alignItems:'center',flexWrap:'wrap'}}>
-          <span style={{fontFamily:"'Outfit'",fontSize:18,fontWeight:800,color:'#fff'}}>Australian Grand Prix</span>
-          {preds?.[0]&&<span style={{fontSize:10,color:'#997a2e',background:'rgba(212,168,67,.08)',padding:'3px 10px',borderRadius:6,border:'1px solid rgba(212,168,67,.15)'}}>PRED {preds[0].driverName} P1 {preds[0].winProbability}%</span>}
-          {backtest&&<><span style={{color:backtest.winnerCorrect?'#4ade80':'#ef4444',fontSize:16,fontWeight:800}}>{backtest.winnerCorrect?'✓':'✗'}</span><span style={{color:'#d4a843',fontSize:12,fontWeight:700}}>{backtest.podiumHits}/3</span><span style={{color:'#fbbf24',fontSize:12}}>MAE {backtest.mae.toFixed(1)}</span></>}
-        </div>
-        {/* Track + Grid side by side */}
-        <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
-          <div className="f1p" style={{flex:'1 1 400px',minWidth:300}}>
-            <div className="f1t">{races.find(r=>r.key===selectedRace)?.circuit||'Albert Park'}</div>
-            <TrackSVG pts={trackPts} cars={carPositions} drivers={drivers} standings={standings}/>
-          </div>
-          <div style={{flex:'1 1 300px',display:'flex',flexDirection:'column',gap:10}}>
-            <div className="f1p" style={{flex:1}}>
-              <div className="f1t">GRID · PRED</div>
-              <div style={{maxHeight:300,overflowY:'auto'}}>
-                {AUSTRALIA_2026_QUALI.slice(0,15).map((q,i)=>{const pr=preds?.find(p=>p.driverCode===q.driverCode);return<div key={q.driverCode} className="f1r"><span style={{width:16,fontFamily:"'Outfit'",fontWeight:800,color:i<3?'#d4a843':'#666',fontSize:11}}>{q.position}</span><div style={{width:2,height:14,borderRadius:1,background:TEAMS[q.team]?.color||'#444'}}/><span style={{flex:1,fontSize:10,color:i<10?'#ddd':'#666'}}>{q.driverCode}</span><span style={{fontSize:9,color:'#555'}}>{q.q3Time||q.q2Time||'—'}</span><span style={{fontSize:9,fontWeight:700,color:pr&&pr.predictedPosition<=3?'#d4a843':'#555'}}>P{pr?.predictedPosition||'—'}</span></div>})}
-              </div>
-            </div>
+      {mode==='predict'&&<div style={{padding:0,height:'calc(100vh - 42px)',display:'flex',flexDirection:'column'}}>
+        <div className="f1-main" style={{flex:1,display:'flex',overflow:'hidden'}}>
+          <div className="f1-side" style={{width:220,minWidth:180,padding:'8px 6px',overflowY:'auto',display:'flex',flexDirection:'column',gap:6}}>
             <div className="f1p">
-              <div className="f1t">MODEL</div>
-              <div style={{fontSize:9,color:'#555',lineHeight:1.6}}>
-                <div>Ensemble Ridge40%+GB60% · ELO recovery</div>
-                <div>14 features · 2024-2025 data · OpenF1 API</div>
-                <div style={{marginTop:4,color:'#444'}}>1. Qualifying → grid | 2. Model → 14 features | 3. Tahmin | 4. Canlı güncelleme | 5. ELO feedback</div>
+              <div className="f1t">QUALIFYING GRID</div>
+              <div style={{maxHeight:400,overflowY:'auto'}}>
+                {AUSTRALIA_2026_QUALI.map((q,i)=>{const pr=preds?.find(p=>p.driverCode===q.driverCode);return<div key={q.driverCode} className="f1r"><span style={{width:14,fontFamily:"'Outfit'",fontWeight:800,color:i<3?'#d4a843':'#555',fontSize:10}}>{q.position}</span><div style={{width:2,height:12,borderRadius:1,background:TEAMS[q.team]?.color||'#444'}}/><span style={{flex:1,fontSize:9,color:i<10?'#ddd':'#555'}}>{q.driverCode}</span><span style={{fontSize:8,color:'#444'}}>{q.q3Time||q.q2Time||'—'}</span><span style={{fontSize:8,fontWeight:700,color:pr&&pr.predictedPosition<=3?'#d4a843':'#444'}}>P{pr?.predictedPosition||'—'}</span></div>})}
+              </div>
+            </div>
+            <div className="f1p"><div className="f1t">MODEL</div><div style={{fontSize:8,color:'#555',lineHeight:1.6}}>Ridge40%+GB60% ELO · 14f · OpenF1</div></div>
+          </div>
+          <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',padding:8,position:'relative',zIndex:1}}>
+            <TrackSVG pts={trackPts} cars={carPositions} drivers={drivers} standings={standings} large/>
+          </div>
+          <div className="f1-side" style={{width:260,minWidth:200,padding:'8px 6px',overflowY:'auto'}}>
+            <div className="f1p">
+              <div className="f1t" style={{display:'flex',justifyContent:'space-between'}}>SONUC vs TAHMIN {backtest&&<span style={{color:backtest.winnerCorrect?'#4ade80':'#ef4444'}}>{backtest.winnerCorrect?'V':'X'} {backtest.podiumHits}/3 MAE{backtest.mae.toFixed(1)}</span>}</div>
+              <div style={{maxHeight:'calc(100vh - 120px)',overflowY:'auto'}}>
+                {AUSTRALIA_2026_RACE_RESULT.map((r,i)=>{const d=backtest?.details.find(x=>x.code===r.code);const dead=r.status==='dnf'||r.status==='dns';return<div key={r.code} className="f1r" style={{opacity:dead?.25:1}}><span style={{width:28,fontFamily:"'Outfit'",fontWeight:800,color:dead?'#ef4444':i<3?'#d4a843':'#888',fontSize:10}}>{dead?r.status.toUpperCase():'P'+r.pos}</span><div style={{width:2,height:12,borderRadius:1,background:TEAMS[r.team]?.color||'#333'}}/><span style={{flex:1,fontSize:9,color:dead?'#333':i<10?'#ddd':'#666'}}>{r.code}</span><span style={{fontSize:8,fontWeight:700,color:d&&d.err===0?'#4ade80':d&&d.err<=2?'#fbbf24':'#555'}}>{'P'+(d?.pred||'-')}</span><span style={{fontSize:8,fontWeight:700,color:d&&d.err===0?'#4ade80':d&&d.err<=2?'#fbbf24':'#ef4444'}}>{d?(d.err===0?'V':'+'+d.err):''}</span></div>})}
               </div>
             </div>
           </div>
+        </div>
+        <div style={{padding:'4px 12px',background:'rgba(12,12,24,.95)',borderTop:'1px solid #1a1a2a',display:'flex',alignItems:'center',gap:10,zIndex:10}}>
+          {preds?.[0]&&<span style={{fontSize:9,color:'#997a2e'}}>PRED {preds[0].driverName} P1 {preds[0].winProbability}%</span>}
+          <span style={{flex:1}}/><span style={{fontSize:9,color:'#444'}}>REPLAY ile izle</span>
         </div>
       </div>}
 
