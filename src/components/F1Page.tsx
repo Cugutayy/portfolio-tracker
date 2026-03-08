@@ -6,7 +6,7 @@ import { openF1 } from '../f1/api'
 import { TRACK_COORDS, CIRCUIT_MAP, getCircuitLaps } from '../f1/trackData'
 import { ALBERT_PARK_DRS } from '../f1/tracks'
 import type { PredictionResult } from '../f1/types'
-import { NeuroNoise } from '@paper-design/shaders-react'
+import { SmokeRing } from '@paper-design/shaders-react'
 
 const SESSION_KEY = 11234
 
@@ -19,7 +19,7 @@ const CSS = `
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 @keyframes drsFlash{0%,100%{box-shadow:0 0 4px rgba(34,197,94,.4)}50%{box-shadow:0 0 12px rgba(34,197,94,.7)}}
 .f1{background:#0a0a14;min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace;position:relative;overflow:hidden}
-.f1-shader{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.12}
+.f1-shader{position:fixed;inset:0;z-index:0;pointer-events:none}
 .f1::after{content:'';position:fixed;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.025;z-index:0}
 .f1 *{box-sizing:border-box}
 .f1p{background:rgba(18,18,32,.75);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px 16px;position:relative;z-index:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
@@ -100,6 +100,29 @@ export function F1Page() {
   }>>(new Map())
   // Progress
   const [lapFlags, setLapFlags] = useState<Map<number, string>>(new Map())
+
+  // Shader interaction
+  const [shaderScale, setShaderScale] = useState(1.5)
+  const shaderTarget = useRef(1.5)
+  const shaderRaf = useRef(0)
+
+  useEffect(() => {
+    const onMove = () => { shaderTarget.current = 2.2 }
+    window.addEventListener('mousemove', onMove, { passive: true })
+    let last = 0
+    const tick = (t: number) => {
+      shaderRaf.current = requestAnimationFrame(tick)
+      if (t - last < 50) return
+      last = t
+      shaderTarget.current += (1.5 - shaderTarget.current) * 0.03
+      const cur = shaderScale
+      const next = cur + (shaderTarget.current - cur) * 0.08
+      const r = Math.round(next * 100) / 100
+      if (r !== Math.round(cur * 100) / 100) setShaderScale(r)
+    }
+    shaderRaf.current = requestAnimationFrame(tick)
+    return () => { window.removeEventListener('mousemove', onMove); cancelAnimationFrame(shaderRaf.current) }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const replayRef = useRef<number | null>(null)
   const liveRef = useRef<number | null>(null)
@@ -313,15 +336,17 @@ export function F1Page() {
   return (
     <div className="f1"><style>{CSS}</style>
       {/* ═══ SHADER BACKGROUND ═══ */}
-      <div className="f1-shader">
-        <NeuroNoise
-          colorFront="#e10600"
-          colorMid="#1a0020"
-          colorBack="#0a0a14"
-          brightness={0.4}
-          contrast={0.6}
-          scale={1.5}
-          speed={0.2}
+      <div className="f1-shader" style={{ opacity: 0.35 }}>
+        <SmokeRing
+          colorBack="#080810"
+          colors={['#e10600', '#ff2020', '#8b0000', '#e10600', '#1a0020']}
+          speed={0.12}
+          noiseScale={1.6}
+          thickness={0.7}
+          radius={0.45}
+          innerShape={2.5}
+          noiseIterations={6}
+          scale={shaderScale}
           style={{ width: '100%', height: '100%' }}
         />
       </div>
