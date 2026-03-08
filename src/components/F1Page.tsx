@@ -13,12 +13,15 @@ const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @keyframes slideUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.f1{background:linear-gradient(160deg,#0c0c18,#141420 30%,#0f1218 60%,#0a0e16);min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace;position:relative;overflow:hidden}
-.f1::before{content:'';position:fixed;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.03;z-index:0}
+.f1{background:#0a0a14;min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace;position:relative;overflow:hidden}
+.f1::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(225,6,0,.04),transparent),radial-gradient(ellipse 60% 40% at 80% 100%,rgba(30,60,120,.06),transparent),radial-gradient(ellipse 50% 50% at 20% 60%,rgba(60,20,80,.04),transparent)}
+.f1::after{content:'';position:fixed;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.025;z-index:0}
 .f1 *{box-sizing:border-box}
-.f1p{background:rgba(20,20,36,.8);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:10px 12px;position:relative;z-index:1}
+.f1p{background:rgba(18,18,32,.75);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:12px 14px;position:relative;z-index:1}
 .f1t{font-family:'Outfit',sans-serif;font-size:9px;color:#555;letter-spacing:.1em;font-weight:600;margin-bottom:6px;text-transform:uppercase}
-.f1r{display:flex;align-items:center;gap:5px;padding:3px 2px;border-bottom:1px solid rgba(255,255,255,.03)}
+.f1r{display:flex;align-items:center;gap:6px;padding:4px 3px;border-bottom:1px solid rgba(255,255,255,.04)}
+.f1r:hover{background:rgba(255,255,255,.02);border-radius:4px}
 .f1b{border:none;border-radius:6px;padding:5px 12px;font-size:10px;color:#fff;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600}
 @media(max-width:900px){.f1-main{flex-direction:column!important}.f1-side{min-width:0!important;max-width:100%!important}}
 `
@@ -221,7 +224,7 @@ export function F1Page() {
         {/* MAIN: Left panel + Track + Right panel */}
         <div className="f1-main" style={{flex:1,display:'flex',overflow:'hidden'}}>
           {/* LEFT PANEL */}
-          <div className="f1-side" style={{width:200,minWidth:180,padding:'8px 6px',overflowY:'auto',display:'flex',flexDirection:'column',gap:6}}>
+          <div className="f1-side" style={{width:220,minWidth:190,padding:'10px 8px',overflowY:'auto',display:'flex',flexDirection:'column',gap:8}}>
             {weatherData&&<div className="f1p"><div className="f1t">WEATHER</div>
               <div style={{fontSize:9,color:'#888',lineHeight:1.8}}>
                 <div>Track: {weatherData.track_temperature?.toFixed(1)}°C</div>
@@ -245,7 +248,7 @@ export function F1Page() {
           </div>
 
           {/* RIGHT PANEL: LEADERBOARD */}
-          <div className="f1-side" style={{width:240,minWidth:200,padding:'8px 6px',overflowY:'auto'}}>
+          <div className="f1-side" style={{width:260,minWidth:220,padding:'10px 8px',overflowY:'auto'}}>
             <div className="f1p"><div className="f1t">LEADERBOARD · L{replayLap}</div>
               <div style={{maxHeight:'calc(100vh - 140px)',overflowY:'auto'}}>
                 {standings.slice(0,20).map((d:any,i:number)=><div key={d.number} className="f1r">
