@@ -68,6 +68,30 @@ const MARKET_ITEMS = {
     {sym:'SOL-USD',name:'Solana',link:'https://www.investing.com/crypto/solana'},
     {sym:'XRP-USD',name:'XRP',link:'https://www.investing.com/crypto/xrp'},
   ],
+  us: [
+    {sym:'AAPL',name:'Apple',link:'https://www.investing.com/equities/apple-computer-inc'},
+    {sym:'TSLA',name:'Tesla',link:'https://www.investing.com/equities/tesla-motors'},
+    {sym:'MSFT',name:'Microsoft',link:'https://www.investing.com/equities/microsoft-corp'},
+    {sym:'GOOGL',name:'Alphabet',link:'https://www.investing.com/equities/alphabet-inc'},
+    {sym:'AMZN',name:'Amazon',link:'https://www.investing.com/equities/amazon-com-inc'},
+    {sym:'NVDA',name:'NVIDIA',link:'https://www.investing.com/equities/nvidia-corp'},
+    {sym:'META',name:'Meta',link:'https://www.investing.com/equities/facebook-inc'},
+    {sym:'NFLX',name:'Netflix',link:'https://www.investing.com/equities/netflix,-inc.'},
+    {sym:'AMD',name:'AMD',link:'https://www.investing.com/equities/adv-micro-device'},
+    {sym:'JPM',name:'JPMorgan',link:'https://www.investing.com/equities/jp-morgan-chase'},
+    {sym:'V',name:'Visa',link:'https://www.investing.com/equities/visa-inc'},
+    {sym:'BA',name:'Boeing',link:'https://www.investing.com/equities/boeing-co'},
+  ],
+  etf: [
+    {sym:'SPY',name:'S&P 500 ETF',link:'https://www.investing.com/etfs/spdr-s-p-500'},
+    {sym:'QQQ',name:'NASDAQ ETF',link:'https://www.investing.com/etfs/powershares-qqqq'},
+    {sym:'GLD',name:'Gold ETF',link:'https://www.investing.com/etfs/spdr-gold-trust'},
+    {sym:'TLT',name:'Treasury 20+',link:'https://www.investing.com/etfs/ishares-20-y-treasury'},
+    {sym:'IWM',name:'Russell 2000',link:'https://www.investing.com/etfs/ishares-russell-2000'},
+    {sym:'VTI',name:'Total Market',link:'https://www.investing.com/etfs/vanguard-total-stock-market'},
+    {sym:'EEM',name:'Emerging Mkts',link:'https://www.investing.com/etfs/ishares-msci-emg-markets'},
+    {sym:'DJIST.IS',name:'BIST-100 ETF',link:'https://www.investing.com/etfs/djist'},
+  ],
 };
 
 let mktCache={};
@@ -511,6 +535,8 @@ function renderMarkets(){
 
   h+=`<div class="mkt-section" data-cat="Endeks">`+secTitle(tr?'Endeksler':'Indices')+renderGroup(MARKET_ITEMS.indices)+`</div>`;
   h+=`<div class="mkt-section" data-cat="BIST">`+secTitle(tr?'BIST Hisseler':'BIST Stocks')+renderGroup(MARKET_ITEMS.stocks)+`</div>`;
+  h+=`<div class="mkt-section" data-cat="US">`+secTitle(tr?'ABD Hisseleri':'US Stocks')+renderGroup(MARKET_ITEMS.us)+`</div>`;
+  h+=`<div class="mkt-section" data-cat="ETF">`+secTitle('ETF')+renderGroup(MARKET_ITEMS.etf)+`</div>`;
   h+=`<div class="mkt-section" data-cat="Emtia">`+secTitle(tr?'Emtia':'Commodities')+renderGroup(MARKET_ITEMS.commodities)+`</div>`;
   h+=`<div class="mkt-section" data-cat="Doviz">`+secTitle(tr?'Doviz':'Forex')+renderGroup(MARKET_ITEMS.fx)+`</div>`;
   h+=`<div class="mkt-section" data-cat="Kripto">`+secTitle(tr?'Kripto Paralar':'Cryptocurrencies')+renderGroup(MARKET_ITEMS.crypto)+`</div>`;
