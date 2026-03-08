@@ -40,6 +40,9 @@ export function F1Page() {
   const [drivers, setDrivers] = useState<any[]>([])
   const [log, setLog] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [trackPoints, setTrackPoints] = useState<{x:number,y:number}[]>([])
+  const [carPositions, setCarPositions] = useState<Map<number,{x:number,y:number}>>(new Map())
+  const [allLocationData, setAllLocationData] = useState<any[]>([])
   const replayRef = useRef<number|null>(null)
 
   useEffect(() => {
@@ -95,6 +98,17 @@ export function F1Page() {
       if (w.length > 0) setWeatherData(w[w.length-1])
       addLog(`✓ Hava durumu yüklendi`)
 
+      addLog('→ Pist koordinatları çekiliyor (Russell 1 tur)...')
+      const trackLoc = await openF1.getLocations(SESSION_KEY, 63)
+      const tPts = trackLoc.slice(0, 400).map((l: any) => ({x: l.x, y: l.y}))
+      setTrackPoints(tPts)
+      addLog(`✓ ${tPts.length} pist noktası yüklendi`)
+
+      addLog('→ Tüm araç konum verileri çekiliyor...')
+      const allLoc = await openF1.getLocations(SESSION_KEY)
+      setAllLocationData(allLoc)
+      addLog(`✓ ${allLoc.length} konum noktası yüklendi`)
+
       addLog('🏁 Tüm veriler yüklendi! Replay başlatılabilir.')
       setMode('replay')
     } catch(e: any) {
@@ -113,6 +127,30 @@ export function F1Page() {
     }, 2000 / replaySpeed)
     return () => { if(replayRef.current) clearInterval(replayRef.current) }
   }, [replayPlaying, replaySpeed])
+
+  // Replay lap değiştiğinde araç pozisyonlarını güncelle
+  useEffect(() => {
+    if (allLocationData.length === 0 || lapData.length === 0) return
+    // Bu tur için yaklaşık zaman aralığını hesapla
+    const lapTimes = lapData.filter((l: any) => l.driver_number === 63 && l.lap_number <= replayLap)
+    if (lapTimes.length === 0) return
+    const lastLapEntry = lapTimes[lapTimes.length - 1]
+    if (!lastLapEntry?.date_start) return
+    const targetTime = new Date(lastLapEntry.date_start).getTime()
+    // Her sürücü için bu zamana en yakın konumu bul
+    const newPos = new Map<number, {x:number,y:number}>()
+    const seen = new Set<number>()
+    for (let i = allLocationData.length - 1; i >= 0; i--) {
+      const loc = allLocationData[i]
+      if (seen.has(loc.driver_number)) continue
+      const locTime = new Date(loc.date).getTime()
+      if (locTime <= targetTime + 5000) {
+        newPos.set(loc.driver_number, {x: loc.x, y: loc.y})
+        seen.add(loc.driver_number)
+      }
+    }
+    setCarPositions(newPos)
+  }, [replayLap, allLocationData, lapData])
 
   const currentStandings = useMemo(() => {
     if (posData.length === 0 || lapData.length === 0) return []
@@ -278,7 +316,13 @@ export function F1Page() {
             <input type="range" min={1} max={TOTAL_LAPS} value={replayLap} onChange={e => setReplayLap(Number(e.target.value))} style={{flex:1,minWidth:200,accentColor:'#e10600'}}/>
             <span style={{fontSize:14,fontWeight:700,color:'#fff',fontFamily:"'Outfit',sans-serif"}}>LAP {replayLap}/{TOTAL_LAPS}</span>
           </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+          <div style={{display:'grid',gridTemplateColumns:'1.2fr 0.8fr',gap:14}}>
+            {/* TRACK MAP */}
+            <div className="f1-card">
+              <div className="f1-title">TRACK MAP · LAP {replayLap}</div>
+              <TrackMap trackPoints={trackPoints} carPositions={carPositions} drivers={drivers} standings={currentStandings} stintData={stintData}/>
+            </div>
+
             <div className="f1-card">
               <div className="f1-title">LEADERBOARD · LAP {replayLap}</div>
               <div style={{maxHeight:500,overflowY:'auto'}}>
@@ -355,3 +399,89 @@ function MiniBar({label,value,tip}:{label:string;value:number;tip:string}) {
 
 function nw(){return new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})}
 function pT(t:string):number{const[m,s]=t.split(':');return Number(m)*60+Number(s)}
+
+// ═══ TRACK MAP COMPONENT ═══
+function TrackMap({trackPoints, carPositions, drivers, standings, stintData}: {
+  trackPoints: {x:number,y:number}[],
+  carPositions: Map<number,{x:number,y:number}>,
+  drivers: any[],
+  standings: any[],
+  stintData: any[]
+}) {
+  if (trackPoints.length === 0) return <div style={{color:'#444',textAlign:'center',padding:40,fontSize:12}}>Pist verileri yükleniyor...</div>
+
+  // Pist sınırlarını hesapla
+  const xs = trackPoints.map(p=>p.x), ys = trackPoints.map(p=>p.y)
+  const xMin = Math.min(...xs), xMax = Math.max(...xs)
+  const yMin = Math.min(...ys), yMax = Math.max(...ys)
+  const W = 600, H = 400, PAD = 30
+
+  const toSVG = (x: number, y: number) => ({
+    sx: PAD + ((x - xMin) / (xMax - xMin)) * (W - 2*PAD),
+    sy: PAD + ((y - yMin) / (yMax - yMin)) * (H - 2*PAD)
+  })
+
+  // Pist yolu
+  const trackPath = trackPoints.map((p, i) => {
+    const {sx, sy} = toSVG(p.x, p.y)
+    return (i === 0 ? 'M' : 'L') + sx.toFixed(1) + ',' + sy.toFixed(1)
+  }).join(' ')
+
+  // Pit lane (yaklaşık — start/finish hattını iştle)
+  const pitDrivers = new Set<number>()
+  stintData.forEach((s: any) => {
+    if (s.tyre_age_at_start === 0) pitDrivers.add(s.driver_number)
+  })
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',height:'auto',background:'#12121e',borderRadius:10}}>
+      {/* Pist arka plan */}
+      <path d={trackPath + ' Z'} fill="none" stroke="#2a2a3a" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* Pist ön plan */}
+      <path d={trackPath + ' Z'} fill="none" stroke="#3a3a4a" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round"/>
+      {/* Pist orta çizgi */}
+      <path d={trackPath + ' Z'} fill="none" stroke="#4a4a5a" strokeWidth="1" strokeDasharray="4,8" opacity="0.5"/>
+
+      {/* Start/Finish çizgi */}
+      {trackPoints.length > 0 && (() => {
+        const {sx, sy} = toSVG(trackPoints[0].x, trackPoints[0].y)
+        return <>
+          <line x1={sx-8} y1={sy-8} x2={sx+8} y2={sy+8} stroke="#fff" strokeWidth="2" opacity="0.6"/>
+          <text x={sx+10} y={sy-4} fill="#666" fontSize="8" fontFamily="Outfit,sans-serif">S/F</text>
+        </>
+      })()}
+
+      {/* Araçlar pist üzerinde */}
+      {[...carPositions.entries()].map(([driverNum, pos]) => {
+        const {sx, sy} = toSVG(pos.x, pos.y)
+        const driver = drivers.find((d: any) => d.driver_number === driverNum)
+        if (!driver) return null
+        const color = '#' + (driver.team_colour || '888')
+        const code = driver.name_acronym || '?'
+        const standing = standings.find((s: any) => s.number === driverNum)
+        const position = standing?.position || 99
+        const inPit = pos.x === 0 && pos.y === 0
+
+        if (inPit) return null // Pit'te olanı gösterme
+
+        return <g key={driverNum}>
+          {/* Araba noktası */}
+          <circle cx={sx} cy={sy} r={position <= 3 ? 6 : 4} fill={color} stroke="#000" strokeWidth="1"/>
+          {/* İsim etiketi */}
+          <text x={sx + 8} y={sy + 3} fill="#ddd" fontSize="7" fontFamily="Outfit,sans-serif" fontWeight={position<=3?'700':'400'}>
+            {code}
+          </text>
+          {/* Pozisyon numarası */}
+          {position <= 5 && <text x={sx} y={sy + 2.5} fill="#000" fontSize="5" fontFamily="Outfit,sans-serif" fontWeight="800" textAnchor="middle">
+            {position}
+          </text>}
+        </g>
+      })}
+
+      {/* Legend */}
+      <text x={W-80} y={H-10} fill="#555" fontSize="7" fontFamily="Outfit,sans-serif">
+        {carPositions.size} araç pistte
+      </text>
+    </svg>
+  )
+}
