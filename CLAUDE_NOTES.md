@@ -23,3 +23,14 @@
 ## KURAL 6: DÜRÜSTLÜK — tahmin = tahmin
 ## KURAL 7: ASLA YENİ CHAT ÖNERİ
 ## KURAL 8: * selector transition KULLANMA
+
+## PENDING TODO (sonraki seans)
+- Tracker kategori tab sistemi (BIST/Emtia/Döviz/Kripto/Endeks butonları + içinde arama)
+- Kırık emtia sembolleri fix (ZC=F, ZW=F vs Yahoo Finance format kontrol)
+- Hub arscontexta tarzı interaktif arka plan (koyu tema, grain, cam efektli kartlar)
+- F1 header ikonları ve buton tasarımı profesyonel (emoji yerine SVG ikon)
+- Excel'e beta, kovaryans, hocanın istediği formüller ekleme
+- Tracker'da tüm BIST-400+ hisse arama, investing.com seviyesi kapsam
+- Mobil responsive son kontrol (tracker + hub + f1)
+- arscontexta tarzı 4-kolon kart layout hub için
+- Canlı yarış modu test (Shanghai GP qualifying sonrası)
