@@ -52,28 +52,23 @@ const WEEK_NOTES = {
 
 // ════════════════════════════════════════════════════════════════
 // FURKAN PORTFOLIO — 7 alternative instruments (only for export)
+// buyPrice: null → set dynamically from first API price (2026-02-17)
 // ════════════════════════════════════════════════════════════════
 const FURKAN_CAPITAL = 100000;
+const FURKAN_START_DATE = '2026-02-17'; // Course start date
 const FURKAN_INSTRS = [
-  { id:'f_btc', name:'Bitcoin (BTC)', ticker:'BTC/TRY', tag:'Kripto Para', w:30, alloc:30000, buyPrice:2990000, unit:'TL/BTC', color:'#f7931a' },
-  { id:'f_eregl', name:'Eregli D.C. (EREGL.IS)', ticker:'EREGL.IS', tag:'Hisse', w:12, alloc:12000, buyPrice:54.80, unit:'TL/hisse', color:'#2563eb' },
-  { id:'f_arclk', name:'Arcelik (ARCLK.IS)', ticker:'ARCLK.IS', tag:'Hisse', w:12, alloc:12000, buyPrice:192.50, unit:'TL/hisse', color:'#dc2626' },
-  { id:'f_altin', name:'Altin (gram)', ticker:'XAU/TRY', tag:'Kiymetli Maden', w:16, alloc:16000, buyPrice:6904, unit:'TL/gram', color:'#c9a84c' },
-  { id:'f_tzt', name:'Ziraat Fon (TZT)', ticker:'TZT (TEFAS)', tag:'Yatirim Fonu', w:10, alloc:10000, buyPrice:1.487, unit:'TL/pay', color:'#16a34a' },
-  { id:'f_phe', name:'Pusula Fon (PHE)', ticker:'PHE (TEFAS)', tag:'Yatirim Fonu', w:10, alloc:10000, buyPrice:0.635, unit:'TL/pay', color:'#7c3aed' },
-  { id:'f_dep', name:'Mevduat (Odeabank)', ticker:'%38.00/yil', tag:'Mevduat', w:10, alloc:10000, buyPrice:null, unit:'TL', color:'#059669' },
+  { id:'f_btc',   name:'Bitcoin (BTC)',           ticker:'BTC/TRY',      tag:'Kripto Para',    w:30, alloc:30000, buyPrice:null, unit:'TL/BTC',   color:'#f7931a', yahooSym:null,        apiSrc:'binance' },
+  { id:'f_eregl', name:'Eregli D.C. (EREGL.IS)',  ticker:'EREGL.IS',     tag:'Hisse',          w:12, alloc:12000, buyPrice:null, unit:'TL/hisse', color:'#2563eb', yahooSym:'EREGL.IS',  apiSrc:'yahoo' },
+  { id:'f_arclk', name:'Arcelik (ARCLK.IS)',      ticker:'ARCLK.IS',     tag:'Hisse',          w:12, alloc:12000, buyPrice:null, unit:'TL/hisse', color:'#dc2626', yahooSym:'ARCLK.IS',  apiSrc:'yahoo' },
+  { id:'f_altin', name:'Altin (gram)',             ticker:'XAU/TRY',      tag:'Kiymetli Maden', w:16, alloc:16000, buyPrice:null, unit:'TL/gram',  color:'#c9a84c', yahooSym:'GC=F',      apiSrc:'yahoo_gold' },
+  { id:'f_tzt',   name:'Ziraat Fon (TZT)',        ticker:'TZT (TEFAS)',  tag:'Yatirim Fonu',   w:10, alloc:10000, buyPrice:null, unit:'TL/pay',   color:'#16a34a', yahooSym:null,        apiSrc:'tefas' },
+  { id:'f_phe',   name:'Pusula Fon (PHE)',         ticker:'PHE (TEFAS)',  tag:'Yatirim Fonu',   w:10, alloc:10000, buyPrice:null, unit:'TL/pay',   color:'#7c3aed', yahooSym:null,        apiSrc:'tefas' },
+  { id:'f_dep',   name:'Mevduat (Odeabank)',       ticker:'%38.00/yil',   tag:'Mevduat',        w:10, alloc:10000, buyPrice:null, unit:'TL',       color:'#059669', yahooSym:null,        apiSrc:'calc' },
 ];
 
-const FURKAN_HISTORY = {
-  dates: ['2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-21','2026-02-24','2026-02-25','2026-02-26','2026-02-27','2026-02-28','2026-03-03','2026-03-04','2026-03-05'],
-  f_btc:   [2990000, 2960000, 2870000, 2830000, 2850000, 2830000, 2810000, 2795000, 2760000, 2745000, 3026000, 3154000, 3200000],
-  f_eregl: [54.80, 55.10, 54.50, 53.80, 53.20, 52.90, 53.40, 52.60, 53.10, 53.50, 54.00, 53.20, 53.80],
-  f_arclk: [192.50, 194.00, 190.50, 188.00, 186.50, 185.00, 187.00, 183.50, 185.00, 186.50, 189.00, 187.00, 188.50],
-  f_altin: [6904, 6980, 7100, 7050, 7180, 7250, 7297, 7284, 7310, 7350, 7270, 7270, 7305],
-  f_tzt:   [1.487, 1.490, 1.478, 1.465, 1.470, 1.458, 1.463, 1.450, 1.455, 1.468, 1.445, 1.438, 1.442],
-  f_phe:   [0.635, 0.638, 0.630, 0.625, 0.628, 0.620, 0.624, 0.618, 0.622, 0.630, 0.615, 0.610, 0.612],
-  f_dep:   [10000.00, 10010.41, 10020.82, 10031.23, 10041.64, 10052.05, 10062.47, 10072.88, 10083.29, 10093.70, 10124.93, 10135.34, 10145.75],
-};
+// Dynamic — populated by fetchFurkanHistoricalPrices() from real APIs
+// NO hardcoded data — tum veriler API'lerden cekilir
+const FURKAN_HISTORY = { dates: [] };
 
 // ════════════════════════════════════════════════════════════════
 // STATE
