@@ -290,6 +290,255 @@ function exportCSV(){
 }
 
 // ════════════════════════════════════════════════════════════════
+// EXPORT DROPDOWN MENU
+// ════════════════════════════════════════════════════════════════
+function toggleExportMenu(e){
+  e&&e.stopPropagation();
+  const menu=document.getElementById('exportMenu');
+  menu.classList.toggle('open');
+  if(menu.classList.contains('open')){
+    setTimeout(()=>document.addEventListener('click',closeExportMenu,{once:true}),0);
+  }
+}
+function closeExportMenu(){
+  document.getElementById('exportMenu')?.classList.remove('open');
+}
+
+// ════════════════════════════════════════════════════════════════
+// FURKAN EXPORT — 7 alternative instruments, full P/L tracking
+// Uses FURKAN_INSTRS, FURKAN_HISTORY, FURKAN_CAPITAL from data.js
+// ════════════════════════════════════════════════════════════════
+function furkanCurrVal(ins){
+  const h=FURKAN_HISTORY[ins.id];
+  const p=h&&h.length?h[h.length-1]:(ins.buyPrice||0);
+  if(ins.id==='f_dep') return p;
+  if(!p||!ins.buyPrice) return ins.alloc;
+  return (ins.alloc/ins.buyPrice)*p;
+}
+function furkanGetQty(ins){
+  if(ins.id==='f_dep') return null;
+  if(!ins.buyPrice) return null;
+  return ins.alloc/ins.buyPrice;
+}
+function furkanGetPrice(ins){
+  const h=FURKAN_HISTORY[ins.id];
+  return h&&h.length?h[h.length-1]:(ins.buyPrice||0);
+}
+
+function exportFurkanCSV(){
+  const tr = LANG==='tr';
+  const dateStr=new Date().toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
+  const timeStr=new Date().toLocaleTimeString('tr-TR');
+  const FI=FURKAN_INSTRS, FH=FURKAN_HISTORY, FC=FURKAN_CAPITAL;
+
+  let total=0; FI.forEach(i=>{total+=furkanCurrVal(i);});
+  const tp=total-FC, tpct=tp/FC*100;
+
+  const hStyle='background:#1a472a;color:#fff;font-weight:bold;padding:8px 12px;font-size:11px;border:1px solid #fff;';
+  const cStyle='padding:6px 10px;border:1px solid #ddd;font-size:10px;';
+  const numStyle=cStyle+'text-align:right;font-family:Consolas,monospace;';
+  const posStyle=numStyle+'color:#1a472a;font-weight:bold;';
+  const negStyle=numStyle+'color:#c0392b;font-weight:bold;';
+
+  let h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Furkan Portfolio</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>';
+
+  // ── Title section ──
+  h+='<table><tr><td colspan="10" style="font-size:18px;font-weight:bold;padding:12px;color:#1a472a;font-family:Georgia,serif">Furkan Portfolio Tracker</td></tr>';
+  h+='<tr><td colspan="10" style="font-size:10px;color:#888;padding:4px 12px">'+dateStr+' &middot; '+timeStr+'</td></tr>';
+  h+='<tr><td colspan="10" style="font-size:9px;color:#aaa;padding:4px 12px">'+(tr?'Responsible Investment Dersi — 100.000 TL Sermaye':'Responsible Investment Course — 100,000 TL Capital')+'</td></tr>';
+  h+='<tr><td colspan="10" style="padding:2px"></td></tr>';
+
+  // ── Summary box ──
+  h+='<tr><td colspan="3" style="'+cStyle+'background:#f8f7f2;font-weight:bold">'+(tr?'Toplam Deger':'Total Value')+'</td>';
+  h+='<td colspan="2" style="'+numStyle+'background:#f8f7f2;font-weight:bold;font-size:13px">'+fmt(total,2)+' TL</td>';
+  h+='<td colspan="2" style="'+cStyle+'background:#f8f7f2;font-weight:bold">'+(tr?'Kar/Zarar':'P/L')+'</td>';
+  h+='<td colspan="3" style="'+(tp>=0?posStyle:negStyle)+'background:#f8f7f2;font-size:13px">'+(tp>=0?'+':'')+fmt(tp,2)+' TL ('+tpct.toFixed(2)+'%)</td></tr>';
+  h+='<tr><td colspan="10" style="padding:4px"></td></tr>';
+
+  // ── Main table header ──
+  h+='<tr><td style="'+hStyle+'">'+(tr?'Enstruman':'Instrument')+'</td>';
+  h+='<td style="'+hStyle+'">Ticker</td>';
+  h+='<td style="'+hStyle+'">'+(tr?'Agirlik':'Weight')+'</td>';
+  h+='<td style="'+hStyle+'">'+(tr?'Yatirilan':'Invested')+'</td>';
+  h+='<td style="'+hStyle+'">'+(tr?'Adet':'Qty')+'</td>';
+  h+='<td style="'+hStyle+'">'+(tr?'Alis':'Buy')+'</td>';
+  h+='<td style="'+hStyle+'">'+(tr?'Guncel':'Current')+'</td>';
+  h+='<td style="'+hStyle+'">'+(tr?'Deger':'Value')+'</td>';
+  h+='<td style="'+hStyle+'">K/Z</td>';
+  h+='<td style="'+hStyle+'">%</td></tr>';
+
+  // ── Data rows ──
+  FI.forEach((ins,idx)=>{
+    const cv=furkanCurrVal(ins), pl=cv-ins.alloc, pp=ins.alloc?(pl/ins.alloc*100):0;
+    const price=furkanGetPrice(ins), qty=furkanGetQty(ins);
+    const bg=idx%2===0?'#fff':'#fafaf8';
+    const rs=cStyle+'background:'+bg+';';
+    const rn=numStyle+'background:'+bg+';';
+    const plS=(pl>=0?posStyle:negStyle)+'background:'+bg+';';
+    h+='<tr>';
+    h+='<td style="'+rs+'font-weight:600;color:'+ins.color+'">'+ins.name+'</td>';
+    h+='<td style="'+rs+'">'+ins.ticker+'</td>';
+    h+='<td style="'+rn+'">%'+ins.w+'</td>';
+    h+='<td style="'+rn+'">'+fmt(ins.alloc,0)+'</td>';
+    h+='<td style="'+rn+'">'+(qty?qty.toFixed(ins.id==='f_btc'?6:2):'--')+'</td>';
+    h+='<td style="'+rn+'">'+(ins.buyPrice?fmt(ins.buyPrice,2):'--')+'</td>';
+    h+='<td style="'+rn+'">'+fmt(ins.id==='f_dep'?cv:price,2)+'</td>';
+    h+='<td style="'+rn+'font-weight:600">'+fmt(cv,2)+'</td>';
+    h+='<td style="'+plS+'">'+(pl>=0?'+':'')+fmt(pl,2)+'</td>';
+    h+='<td style="'+plS+'">'+(pp>=0?'+':'')+pp.toFixed(2)+'%</td>';
+    h+='</tr>';
+  });
+
+  // ── Total row ──
+  h+='<tr><td colspan="7" style="'+hStyle+'background:#2d5a3a">'+(tr?'TOPLAM':'TOTAL')+'</td>';
+  h+='<td style="'+hStyle+'background:#2d5a3a;text-align:right;font-size:12px">'+fmt(total,2)+'</td>';
+  h+='<td style="'+hStyle+'background:#2d5a3a;text-align:right">'+(tp>=0?'+':'')+fmt(tp,2)+'</td>';
+  h+='<td style="'+hStyle+'background:#2d5a3a;text-align:right">'+tpct.toFixed(2)+'%</td></tr>';
+
+  // ── Weekly summary ──
+  const dates=FH.dates;
+  if(dates&&dates.length>=5){
+    h+='<tr><td colspan="10" style="padding:8px"></td></tr>';
+    h+='<tr><td colspan="10" style="font-size:13px;font-weight:bold;padding:8px 12px;color:#1a472a;border-bottom:2px solid #1a472a">'+(tr?'Haftalik Ozet':'Weekly Summary')+'</td></tr>';
+    h+='<tr><td colspan="2" style="'+hStyle+'">'+(tr?'Hafta':'Week')+'</td>';
+    h+='<td colspan="2" style="'+hStyle+'">'+(tr?'Baslangic':'Start')+'</td>';
+    h+='<td colspan="2" style="'+hStyle+'">'+(tr?'Bitis':'End')+'</td>';
+    h+='<td colspan="2" style="'+hStyle+'">'+(tr?'Degisim':'Change')+'</td>';
+    h+='<td colspan="2" style="'+hStyle+'">%</td></tr>';
+
+    const weeks=[];
+    let wi=0;
+    while(wi<dates.length){
+      const weekEnd=Math.min(wi+4,dates.length-1);
+      let startVal=0,endVal=0;
+      FI.forEach(ins=>{
+        const p0=FH[ins.id]?.[wi],p1=FH[ins.id]?.[weekEnd];
+        if(p0===undefined||p1===undefined)return;
+        startVal+=ins.id==='f_dep'?p0:(ins.alloc/ins.buyPrice)*p0;
+        endVal+=ins.id==='f_dep'?p1:(ins.alloc/ins.buyPrice)*p1;
+      });
+      weeks.push({label:dates[wi]?.slice(5)+' - '+dates[weekEnd]?.slice(5),start:startVal,end:endVal});
+      wi+=5;
+    }
+
+    weeks.forEach((w,idx)=>{
+      const chg=w.end-w.start,pct=w.start?(chg/w.start)*100:0;
+      const bg=idx%2===0?'#fff':'#fafaf8';
+      const rs=cStyle+'background:'+bg+';';
+      const ps=(chg>=0?posStyle:negStyle)+'background:'+bg+';';
+      h+='<tr><td colspan="2" style="'+rs+'">'+w.label+'</td>';
+      h+='<td colspan="2" style="'+rs+'text-align:right">'+fmt(w.start,0)+' TL</td>';
+      h+='<td colspan="2" style="'+rs+'text-align:right">'+fmt(w.end,0)+' TL</td>';
+      h+='<td colspan="2" style="'+ps+'">'+(chg>=0?'+':'')+fmt(chg,0)+' TL</td>';
+      h+='<td colspan="2" style="'+ps+'">'+(pct>=0?'+':'')+pct.toFixed(2)+'%</td></tr>';
+    });
+
+    // Per-instrument weekly values
+    h+='<tr><td colspan="10" style="padding:8px"></td></tr>';
+    h+='<tr><td colspan="10" style="font-size:13px;font-weight:bold;padding:8px 12px;color:#1a472a;border-bottom:2px solid #1a472a">'+(tr?'Haftalik Enstruman Degerleri':'Weekly Instrument Values')+'</td></tr>';
+    h+='<tr><td style="'+hStyle+'">'+(tr?'Hafta':'Week')+'</td>';
+    FI.forEach(ins=>{h+='<td style="'+hStyle+'">'+ins.name.split(/[—(]/)[0].trim()+'</td>';});
+    h+='<td style="'+hStyle+'">'+(tr?'Toplam':'Total')+'</td></tr>';
+    let wi2=0;
+    while(wi2<dates.length){
+      const weekEnd=Math.min(wi2+4,dates.length-1);
+      const bg=Math.floor(wi2/5)%2===0?'#fff':'#fafaf8';
+      h+='<tr><td style="'+cStyle+'background:'+bg+'">'+dates[wi2]?.slice(5)+' - '+dates[weekEnd]?.slice(5)+'</td>';
+      let rowTotal=0;
+      FI.forEach(ins=>{
+        const p=FH[ins.id]?.[weekEnd];
+        const val=p!==undefined?(ins.id==='f_dep'?p:(ins.alloc/ins.buyPrice)*p):ins.alloc;
+        rowTotal+=val;
+        h+='<td style="'+numStyle+'background:'+bg+'">'+fmt(val,0)+'</td>';
+      });
+      h+='<td style="'+numStyle+'background:'+bg+';font-weight:bold">'+fmt(rowTotal,0)+'</td></tr>';
+      wi2+=5;
+    }
+  }
+
+  // ── Daily P/L tracking ──
+  if(dates&&dates.length>=2){
+    h+='<tr><td colspan="10" style="padding:8px"></td></tr>';
+    h+='<tr><td colspan="10" style="font-size:13px;font-weight:bold;padding:8px 12px;color:#1a472a;border-bottom:2px solid #1a472a">'+(tr?'Gunluk Kar/Zarar Takibi':'Daily P/L Tracking')+'</td></tr>';
+    h+='<tr><td style="'+hStyle+'">'+(tr?'Tarih':'Date')+'</td>';
+    h+='<td style="'+hStyle+'">'+(tr?'Deger':'Value')+'</td>';
+    h+='<td style="'+hStyle+'">'+(tr?'Gunluk K/Z':'Daily P/L')+'</td>';
+    h+='<td style="'+hStyle+'">%</td>';
+    h+='<td style="'+hStyle+'">'+(tr?'Toplam K/Z':'Total P/L')+'</td>';
+    h+='<td style="'+hStyle+'">'+(tr?'Toplam %':'Total %')+'</td></tr>';
+
+    for(let di=0;di<dates.length;di++){
+      let dayVal=0;
+      FI.forEach(ins=>{
+        const p=FH[ins.id]?.[di];
+        if(p===undefined){dayVal+=ins.alloc;return;}
+        dayVal+=ins.id==='f_dep'?p:(ins.alloc/ins.buyPrice)*p;
+      });
+      let prevVal=FC;
+      if(di>0){
+        prevVal=0;
+        FI.forEach(ins=>{
+          const p=FH[ins.id]?.[di-1];
+          if(p===undefined){prevVal+=ins.alloc;return;}
+          prevVal+=ins.id==='f_dep'?p:(ins.alloc/ins.buyPrice)*p;
+        });
+      }
+      const dayPL=di>0?dayVal-prevVal:0;
+      const dayPct=di>0&&prevVal?((dayPL/prevVal)*100):0;
+      const totPL=dayVal-FC;
+      const totPct=(totPL/FC)*100;
+      const bg=di%2===0?'#fff':'#fafaf8';
+      const dpS=(dayPL>=0?posStyle:negStyle)+'background:'+bg+';';
+      const tpS=(totPL>=0?posStyle:negStyle)+'background:'+bg+';';
+      h+='<tr><td style="'+cStyle+'background:'+bg+'">'+dates[di]+'</td>';
+      h+='<td style="'+numStyle+'background:'+bg+'">'+fmt(dayVal,0)+'</td>';
+      h+='<td style="'+dpS+'">'+(dayPL>=0?'+':'')+fmt(dayPL,0)+'</td>';
+      h+='<td style="'+dpS+'">'+(dayPct>=0?'+':'')+dayPct.toFixed(2)+'%</td>';
+      h+='<td style="'+tpS+'">'+(totPL>=0?'+':'')+fmt(totPL,0)+'</td>';
+      h+='<td style="'+tpS+'">'+(totPct>=0?'+':'')+totPct.toFixed(2)+'%</td></tr>';
+    }
+  }
+
+  // ── Daily instrument prices ──
+  if(dates&&dates.length>=2){
+    h+='<tr><td colspan="10" style="padding:8px"></td></tr>';
+    const nCols=FI.length+1;
+    h+='<tr><td colspan="'+nCols+'" style="font-size:13px;font-weight:bold;padding:8px 12px;color:#1a472a;border-bottom:2px solid #1a472a">'+(tr?'Gunluk Enstruman Fiyatlari':'Daily Instrument Prices')+'</td></tr>';
+    h+='<tr><td style="'+hStyle+'">'+(tr?'Tarih':'Date')+'</td>';
+    FI.forEach(ins=>{h+='<td style="'+hStyle+'">'+ins.name.split(/[—(]/)[0].trim()+'</td>';});
+    h+='</tr>';
+
+    for(let di=0;di<dates.length;di++){
+      const bg=di%2===0?'#fff':'#fafaf8';
+      h+='<tr><td style="'+cStyle+'background:'+bg+'">'+dates[di]+'</td>';
+      FI.forEach(ins=>{
+        const p=FH[ins.id]?.[di];
+        const val=p!==undefined?p:'-';
+        const fmtVal=typeof val==='number'?(ins.id==='f_btc'?fmt(val,0):ins.id==='f_dep'?fmt(val,0):fmt(val,2)):val;
+        h+='<td style="'+numStyle+'background:'+bg+'">'+fmtVal+'</td>';
+      });
+      h+='</tr>';
+    }
+  }
+
+  // ── Footer ──
+  h+='<tr><td colspan="10" style="padding:8px"></td></tr>';
+  h+='<tr><td colspan="10" style="padding:8px 12px;font-size:8px;color:#aaa">'+(tr?'Bu rapor Portfolio Tracker (Furkan Portfoyu) tarafindan olusturulmustur. Egitim amaclidir, yatirim tavsiyesi degildir.':'Generated by Portfolio Tracker (Furkan Portfolio). For educational purposes only, not investment advice.')+'</td></tr>';
+  h+='</table></body></html>';
+
+  const blob=new Blob([h],{type:'application/vnd.ms-excel;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='furkan_portfolio_'+todayStr()+'_'+Date.now()+'.xls';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  showToast(tr?'Furkan Excel indirildi':'Furkan Excel downloaded');
+}
+
+// ════════════════════════════════════════════════════════════════
 // RENDER
 // ════════════════════════════════════════════════════════════════
 // ════════════════════════════════════════════════════════════════

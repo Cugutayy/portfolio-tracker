@@ -18,22 +18,31 @@ const CSS = `
 @keyframes slideUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 @keyframes drsFlash{0%,100%{box-shadow:0 0 4px rgba(34,197,94,.4)}50%{box-shadow:0 0 12px rgba(34,197,94,.7)}}
-.f1{background:#0a0a14;min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace;position:relative;overflow:hidden}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes borderGlow{0%,100%{border-color:rgba(225,6,0,.2)}50%{border-color:rgba(225,6,0,.45)}}
+@keyframes panelAppear{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes scanLine{0%{top:-2px}100%{top:100%}}
+.f1{background:transparent;min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace;position:relative;overflow:hidden}
 .f1-shader{position:fixed;inset:0;z-index:0;pointer-events:none}
-.f1::after{content:'';position:fixed;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.025;z-index:0}
+.f1::after{content:'';position:fixed;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.02;z-index:0}
 .f1 *{box-sizing:border-box}
-.f1p{background:rgba(18,18,32,.75);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:14px 16px;position:relative;z-index:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
-.f1t{font-family:'Outfit',sans-serif;font-size:9px;color:#555;letter-spacing:.1em;font-weight:600;margin-bottom:8px;text-transform:uppercase}
-.f1r{display:flex;align-items:center;gap:6px;padding:4px 4px;border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s}
-.f1r:hover{background:rgba(255,255,255,.03);border-radius:4px}
-.f1b{border:none;border-radius:6px;padding:5px 12px;font-size:10px;color:#fff;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;transition:opacity .15s}
-.f1b:hover{opacity:.85}
-.f1-tele{background:rgba(18,18,32,.85);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 12px;cursor:pointer;transition:border-color .2s,box-shadow .2s}
-.f1-tele:hover{border-color:rgba(255,255,255,.15)}
-.f1-tele.selected{border-color:rgba(225,6,0,.4);box-shadow:0 0 16px rgba(225,6,0,.1)}
-.f1-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
-.f1-bar-fill{height:100%;border-radius:3px;transition:width .2s ease}
-.f1-label{font-family:'Outfit',sans-serif;font-size:7px;color:#444;letter-spacing:.12em;font-weight:600;text-transform:uppercase}
+.f1p{background:rgba(10,10,22,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:14px 16px;position:relative;z-index:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 32px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.15);animation:panelAppear .4s ease both;overflow:hidden}
+.f1p::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(225,6,0,.2),rgba(255,255,255,.08),rgba(225,6,0,.2),transparent)}
+.f1t{font-family:'Outfit',sans-serif;font-size:8.5px;color:#777;letter-spacing:.14em;font-weight:700;margin-bottom:8px;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.f1t::before{content:'';width:3px;height:10px;border-radius:2px;background:linear-gradient(180deg,#e10600,#b30500);flex-shrink:0}
+.f1r{display:flex;align-items:center;gap:6px;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.025);transition:all .2s ease;border-radius:4px}
+.f1r:hover{background:rgba(225,6,0,.04);border-color:rgba(225,6,0,.08)}
+.f1b{border:none;border-radius:8px;padding:5px 14px;font-size:10px;color:#fff;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;transition:all .2s ease;letter-spacing:.03em;position:relative;overflow:hidden}
+.f1b::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.08),transparent);pointer-events:none;border-radius:8px}
+.f1b:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.f1-tele{background:rgba(10,10,22,.6);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:10px 12px;cursor:pointer;transition:all .3s cubic-bezier(.4,0,.2,1);animation:panelAppear .4s ease both;position:relative;overflow:hidden}
+.f1-tele::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
+.f1-tele:hover{border-color:rgba(255,255,255,.12);box-shadow:0 8px 32px rgba(0,0,0,.2);transform:translateY(-1px)}
+.f1-tele.selected{border-color:rgba(225,6,0,.35);box-shadow:0 0 24px rgba(225,6,0,.1),inset 0 0 0 1px rgba(225,6,0,.12);animation:borderGlow 3s ease infinite}
+.f1-bar{height:5px;border-radius:3px;background:rgba(255,255,255,.05);overflow:hidden;position:relative}
+.f1-bar::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.03),transparent);border-radius:3px}
+.f1-bar-fill{height:100%;border-radius:3px;transition:width .3s cubic-bezier(.4,0,.2,1);position:relative}
+.f1-label{font-family:'Outfit',sans-serif;font-size:7px;color:#555;letter-spacing:.12em;font-weight:600;text-transform:uppercase}
 .drs-on{animation:drsFlash 1.5s infinite}
 @media(max-width:900px){.f1{overflow-y:auto!important;overflow-x:hidden!important}.f1-layout{height:auto!important;min-height:0!important}.f1-main{flex-direction:column!important;overflow:visible!important;height:auto!important;flex:none!important}.f1-side{min-width:0!important;max-width:100%!important;width:100%!important;overflow:visible!important;height:auto!important}.f1-side *{max-height:none!important}.f1-side div[style*="max-height"]{max-height:none!important;overflow:visible!important}.f1-tele-row{flex-direction:row!important;gap:6px}}
 @media(max-width:600px){.f1-bottom{flex-direction:column!important;gap:6px!important}}
@@ -225,10 +234,10 @@ export function F1Page() {
   }, [liveActive, selectedRace, selectedDrivers])
   useEffect(() => () => { if (liveRef.current) clearInterval(liveRef.current) }, [])
 
-  // === REPLAY TIMER ===
+  // === REPLAY TIMER (smoother: 60ms ticks, smaller increments) ===
   useEffect(() => {
     if (!replayPlaying) { if (replayRef.current) clearInterval(replayRef.current); return }
-    const T = 200, S = T * replaySpeed * 10
+    const T = 60, S = T * replaySpeed * 10
     replayRef.current = window.setInterval(() => setReplayTime(p => { const n = p + S; if (n >= raceEndTime) { setReplayPlaying(false); return raceEndTime } return n }), T)
     return () => { if (replayRef.current) clearInterval(replayRef.current) }
   }, [replayPlaying, replaySpeed, raceEndTime])
@@ -236,8 +245,37 @@ export function F1Page() {
   // Lap from time
   useEffect(() => { if (!lapData.length || !replayTime) return; const rl = lapData.filter((l: any) => l.driver_number === 63 && l.date_start); let c = 1; for (const l of rl) if (new Date(l.date_start).getTime() <= replayTime) c = l.lap_number; setReplayLap(c) }, [replayTime, lapData])
 
-  // Car positions from time
-  useEffect(() => { if (!allLocationData.length || !replayTime) return; const m = new Map<number, { x: number, y: number }>(); const s = new Set<number>(); for (let i = allLocationData.length - 1; i >= 0; i--) { const l = allLocationData[i]; if (s.has(l.driver_number)) continue; if (new Date(l.date).getTime() <= replayTime) { m.set(l.driver_number, { x: l.x, y: l.y }); s.add(l.driver_number) } } setCarPositions(m) }, [replayTime, allLocationData])
+  // Car positions from time — interpolated for smoothness
+  useEffect(() => {
+    if (!allLocationData.length || !replayTime) return
+    const m = new Map<number, { x: number, y: number }>()
+    const s = new Set<number>()
+    // Find position for each driver, with interpolation between two nearest points
+    for (let i = allLocationData.length - 1; i >= 0; i--) {
+      const l = allLocationData[i]
+      if (s.has(l.driver_number)) continue
+      const t = new Date(l.date).getTime()
+      if (t <= replayTime) {
+        // Find next position for interpolation
+        let next: any = null
+        for (let j = i + 1; j < allLocationData.length; j++) {
+          if (allLocationData[j].driver_number === l.driver_number) { next = allLocationData[j]; break }
+        }
+        if (next) {
+          const nt = new Date(next.date).getTime()
+          const frac = Math.min(1, Math.max(0, (replayTime - t) / (nt - t)))
+          m.set(l.driver_number, {
+            x: l.x + (next.x - l.x) * frac,
+            y: l.y + (next.y - l.y) * frac
+          })
+        } else {
+          m.set(l.driver_number, { x: l.x, y: l.y })
+        }
+        s.add(l.driver_number)
+      }
+    }
+    setCarPositions(m)
+  }, [replayTime, allLocationData])
 
   // Telemetry from car_data
   useEffect(() => {
@@ -351,22 +389,24 @@ export function F1Page() {
         />
       </div>
       {/* ═══ HEADER BAR ═══ */}
-      <div style={{ background: 'rgba(12,12,24,.95)', borderBottom: '2px solid #e10600', padding: '6px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(10px)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <a href="/" style={{ color: '#444', textDecoration: 'none', fontSize: 11, border: '1px solid #222', borderRadius: 5, padding: '2px 8px' }}>{'<-'}</a>
-          <span style={{ fontFamily: "'Outfit'", fontWeight: 800, color: '#fff', fontSize: 14 }}>F1</span>
-          <span style={{ fontFamily: "'Outfit'", fontWeight: 800, color: '#e10600', fontSize: 14 }}>PREDICTOR</span>
-          {races.length > 0 && <select value={selectedRace} onChange={e => setSelectedRace(Number(e.target.value))} style={{ background: '#111', border: '1px solid #222', borderRadius: 5, color: '#888', padding: '2px 6px', fontSize: 9 }}>
+      <div style={{ background: 'linear-gradient(180deg,rgba(8,8,18,.85),rgba(8,8,18,.75))', borderBottom: '1px solid rgba(225,6,0,.3)', padding: '8px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', boxShadow: '0 4px 40px rgba(0,0,0,.4),inset 0 -1px 0 rgba(225,6,0,.15)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <a href="/" style={{ color: '#666', textDecoration: 'none', fontSize: 11, border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, padding: '3px 10px', transition: 'all .2s', background: 'rgba(255,255,255,.03)' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(225,6,0,.3)'; e.currentTarget.style.color = '#e10600' }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,.08)'; e.currentTarget.style.color = '#666' }}>{'<-'}</a>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+            <span style={{ fontFamily: "'Outfit'", fontWeight: 800, color: '#fff', fontSize: 16, letterSpacing: '.04em' }}>F1</span>
+            <span style={{ fontFamily: "'Outfit'", fontWeight: 800, background: 'linear-gradient(135deg,#e10600,#ff3030)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: 16, letterSpacing: '.04em' } as any}>PREDICTOR</span>
+          </div>
+          {races.length > 0 && <select value={selectedRace} onChange={e => setSelectedRace(Number(e.target.value))} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, color: '#999', padding: '4px 10px', fontSize: 9, outline: 'none', transition: 'all .2s' }}>
             {races.map(r => <option key={r.key} value={r.key} disabled={!r.hasData}>{r.circuit} {r.date.slice(5)}</option>)}
           </select>}
-          {mode === 'replay' && <span style={{ background: '#e10600', padding: '1px 8px', borderRadius: 4, fontSize: 10, fontWeight: 700, color: '#fff' }}>LAP {replayLap}/{totalLaps}</span>}
+          {mode === 'replay' && <span style={{ background: 'linear-gradient(135deg,#e10600,#b30500)', padding: '3px 12px', borderRadius: 8, fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '.04em', boxShadow: '0 2px 12px rgba(225,6,0,.35),inset 0 1px 0 rgba(255,255,255,.15)' }}>LAP {replayLap}/{totalLaps}</span>}
         </div>
-        <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
-          {weatherData && <span style={{ fontSize: 8, color: '#444' }}>{weatherData.air_temperature?.toFixed(0)}deg T{weatherData.track_temperature?.toFixed(0)}deg</span>}
-          <button className="f1b" onClick={() => setMode('predict')} style={{ background: mode === 'predict' ? '#e10600' : '#1a1a2a' }}>TAHMIN</button>
-          <button className="f1b" onClick={loadReplay} style={{ background: mode === 'replay' && !liveActive ? '#e10600' : '#1a1a2a', opacity: loading ? .5 : 1 }}>{loading ? '...' : 'REPLAY'}</button>
-          <button className="f1b" onClick={toggleLive} style={{ background: liveActive ? '#dc2626' : '#1a1a2a', animation: liveActive ? 'pulse 2s infinite' : '' }}>
-            {liveActive && <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff', display: 'inline-block', marginRight: 4 }} />}CANLI
+        <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
+          {weatherData && <span style={{ fontSize: 8, color: '#555', padding: '2px 8px', background: 'rgba(255,255,255,.03)', borderRadius: 6 }}>{weatherData.air_temperature?.toFixed(0)}°C  T{weatherData.track_temperature?.toFixed(0)}°C</span>}
+          <button className="f1b" onClick={() => setMode('predict')} style={{ background: mode === 'predict' ? 'linear-gradient(135deg,#e10600,#b30500)' : 'rgba(255,255,255,.04)', boxShadow: mode === 'predict' ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8 }}>TAHMIN</button>
+          <button className="f1b" onClick={loadReplay} style={{ background: mode === 'replay' && !liveActive ? 'linear-gradient(135deg,#e10600,#b30500)' : 'rgba(255,255,255,.04)', opacity: loading ? .5 : 1, boxShadow: mode === 'replay' && !liveActive ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8 }}>{loading ? '...' : 'REPLAY'}</button>
+          <button className="f1b" onClick={toggleLive} style={{ background: liveActive ? 'linear-gradient(135deg,#dc2626,#b91c1c)' : 'rgba(255,255,255,.04)', animation: liveActive ? 'pulse 2s infinite' : '', boxShadow: liveActive ? '0 2px 12px rgba(220,38,38,.35)' : 'none', borderRadius: 8 }}>
+            {liveActive && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block', marginRight: 5, boxShadow: '0 0 8px rgba(255,255,255,.5)' }} />}CANLI
           </button>
         </div>
       </div>
@@ -376,7 +416,7 @@ export function F1Page() {
         <div className="f1-main" style={{ flex: 1, display: 'flex', overflow: 'hidden', gap: 4 }}>
 
           {/* ═══ LEFT PANEL ═══ */}
-          <div className="f1-side" style={{ width: 260, minWidth: 220, padding: '8px 6px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="f1-side" style={{ width: 260, minWidth: 220, padding: '10px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, background: 'linear-gradient(180deg,rgba(8,8,18,.15),rgba(8,8,18,.05))', borderRight: '1px solid rgba(255,255,255,.03)' }}>
             {/* Weather */}
             <WeatherCard data={weatherData} />
 
@@ -412,18 +452,21 @@ export function F1Page() {
               </>
             )}
 
-            {mode === 'predict' && <div className="f1p"><div className="f1t">MODEL</div><div style={{ fontSize: 8, color: '#555', lineHeight: 1.6 }}>Ridge40%+GB60% ELO + 14f + OpenF1</div></div>}
+            {mode === 'predict' && <div className="f1p"><div className="f1t">MODEL</div><div style={{ fontSize: 8, color: '#666', lineHeight: 1.7, padding: '4px 0' }}>
+              <span style={{ color: '#888', fontWeight: 600 }}>Ridge 40%</span> + <span style={{ color: '#888', fontWeight: 600 }}>GB 60%</span><br/>
+              <span style={{ color: '#555' }}>ELO + 14 features + OpenF1</span>
+            </div></div>}
           </div>
 
           {/* ═══ CENTER: TRACK MAP ═══ */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, position: 'relative', zIndex: 1 }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, position: 'relative', zIndex: 1, background: 'transparent' }}>
             <TrackSVG pts={trackPts} cars={carPositions} drivers={drivers} standings={standings}
               selectedDrivers={selectedDrivers} onCarClick={handleCarClick}
               lapFlags={lapFlags} replayLap={replayLap} large />
           </div>
 
           {/* ═══ RIGHT PANEL ═══ */}
-          <div className="f1-side" style={{ width: 280, minWidth: 230, padding: '8px 6px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div className="f1-side" style={{ width: 280, minWidth: 230, padding: '10px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, background: 'linear-gradient(180deg,rgba(8,8,18,.15),rgba(8,8,18,.05))', borderLeft: '1px solid rgba(255,255,255,.03)' }}>
             {mode === 'predict' ? (
               // Predict: Results vs predictions
               <div className="f1p" style={{ flex: 1 }}>
@@ -456,9 +499,9 @@ export function F1Page() {
                     {standings.slice(0, 22).map((d: any, i: number) => {
                       const lp = livePreds?.find(p => p.driverCode === d.code)
                       const isPitting = stintData.some((st: any) => st.driver_number === d.number && st.tyre_age_at_start === 0 && st.lap_start === replayLap)
-                      return <div key={d.number} className="f1r" style={{ cursor: 'pointer', opacity: d.retired ? .3 : 1 }} onClick={() => handleCarClick(d.number)}>
-                        <span style={{ width: 16, fontFamily: "'Outfit'", fontWeight: 800, color: d.retired ? '#ef4444' : i < 3 ? '#d4a843' : i < 10 ? '#aaa' : '#444', fontSize: 11 }}>{d.retired ? 'X' : i + 1}</span>
-                        <div style={{ width: 3, height: 16, borderRadius: 1, background: d.color }} />
+                      return <div key={d.number} className="f1r" style={{ cursor: 'pointer', opacity: d.retired ? .3 : 1, background: i < 3 ? 'rgba(212,168,67,.03)' : 'transparent' }} onClick={() => handleCarClick(d.number)}>
+                        <span style={{ width: 18, fontFamily: "'Outfit'", fontWeight: 800, color: d.retired ? '#ef4444' : i < 3 ? '#d4a843' : i < 10 ? '#aaa' : '#444', fontSize: 11, textAlign: 'center' }}>{d.retired ? 'X' : i + 1}</span>
+                        <div style={{ width: 3, height: 16, borderRadius: 2, background: d.color, boxShadow: i < 3 ? `0 0 6px ${d.color}40` : 'none' }} />
                         <span style={{ flex: 1, fontFamily: "'Outfit'", fontWeight: i < 3 ? 700 : 400, color: d.retired ? '#555' : i < 10 ? '#ddd' : '#666', fontSize: 10 }}>{d.code}</span>
                         {/* Status badge */}
                         {d.retired && <span style={{ fontSize: 7, color: '#ef4444', fontWeight: 700, background: 'rgba(239,68,68,.1)', padding: '1px 4px', borderRadius: 3 }}>OUT</span>}
@@ -501,15 +544,15 @@ export function F1Page() {
         </div>
 
         {/* ═══ BOTTOM BAR ═══ */}
-        <div className="f1-bottom" style={{ padding: '6px 12px', background: 'rgba(12,12,24,.95)', borderTop: '1px solid #1a1a2a', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', zIndex: 10 }}>
+        <div className="f1-bottom" style={{ padding: '8px 16px', background: 'linear-gradient(180deg,rgba(8,8,18,.7),rgba(8,8,18,.8))', borderTop: '1px solid rgba(225,6,0,.12)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', zIndex: 10, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.03)' }}>
           {mode === 'replay' ? (
             <>
               {/* Transport controls */}
-              <button className="f1b" onClick={() => setReplayTime(raceStartTime)} style={{ background: '#1a1a2a', padding: '3px 6px', fontSize: 9 }}>|{'<<'}</button>
-              <button className="f1b" onClick={() => setReplayTime(Math.max(raceStartTime, replayTime - 85000))} style={{ background: '#1a1a2a', padding: '3px 6px', fontSize: 9 }}>{'<<'}</button>
-              <button className="f1b" onClick={() => setReplayPlaying(!replayPlaying)} style={{ background: replayPlaying ? '#ef4444' : '#22c55e', padding: '4px 14px' }}>{replayPlaying ? 'STOP' : 'PLAY'}</button>
-              <button className="f1b" onClick={() => setReplayTime(Math.min(raceEndTime, replayTime + 85000))} style={{ background: '#1a1a2a', padding: '3px 6px', fontSize: 9 }}>{'>>'}</button>
-              {[.5, 1, 2, 4].map(s => <button key={s} className="f1b" onClick={() => setReplaySpeed(s)} style={{ background: replaySpeed === s ? '#e10600' : '#1a1a2a', padding: '3px 8px', fontSize: 8 }}>{s}x</button>)}
+              <button className="f1b" onClick={() => setReplayTime(raceStartTime)} style={{ background: 'rgba(255,255,255,.05)', padding: '3px 8px', fontSize: 9 }}>|{'<<'}</button>
+              <button className="f1b" onClick={() => setReplayTime(Math.max(raceStartTime, replayTime - 85000))} style={{ background: 'rgba(255,255,255,.05)', padding: '3px 8px', fontSize: 9 }}>{'<<'}</button>
+              <button className="f1b" onClick={() => setReplayPlaying(!replayPlaying)} style={{ background: replayPlaying ? 'linear-gradient(135deg,#ef4444,#dc2626)' : 'linear-gradient(135deg,#22c55e,#16a34a)', padding: '4px 16px', boxShadow: replayPlaying ? '0 2px 12px rgba(239,68,68,.3)' : '0 2px 12px rgba(34,197,94,.3)' }}>{replayPlaying ? 'STOP' : 'PLAY'}</button>
+              <button className="f1b" onClick={() => setReplayTime(Math.min(raceEndTime, replayTime + 85000))} style={{ background: 'rgba(255,255,255,.05)', padding: '3px 8px', fontSize: 9 }}>{'>>'}</button>
+              {[.5, 1, 2, 4].map(s => <button key={s} className="f1b" onClick={() => setReplaySpeed(s)} style={{ background: replaySpeed === s ? 'linear-gradient(135deg,#e10600,#b30500)' : 'rgba(255,255,255,.04)', padding: '3px 8px', fontSize: 8, boxShadow: replaySpeed === s ? '0 2px 8px rgba(225,6,0,.3)' : 'none' }}>{s}x</button>)}
               {/* Progress bar */}
               <ProgressBar lapFlags={lapFlags} currentLap={replayLap} totalLaps={totalLaps}
                 replayTime={replayTime} raceStartTime={raceStartTime} raceEndTime={raceEndTime}
@@ -536,15 +579,19 @@ export function F1Page() {
 // Weather Card
 function WeatherCard({ data }: { data: any }) {
   if (!data) return null
+  const isDry = !(data.rainfall > 0)
   return (
-    <div className="f1p">
-      <div className="f1t">WEATHER</div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px', fontSize: 9, color: '#888' }}>
-        <div><span className="f1-label">Track</span> <span style={{ color: '#ccc', fontWeight: 600 }}>{data.track_temperature?.toFixed(1)}C</span></div>
-        <div><span className="f1-label">Air</span> <span style={{ color: '#ccc', fontWeight: 600 }}>{data.air_temperature?.toFixed(1)}C</span></div>
-        <div><span className="f1-label">Humid</span> <span style={{ color: '#ccc' }}>{data.humidity?.toFixed(0)}%</span></div>
-        <div><span className="f1-label">Wind</span> <span style={{ color: '#ccc' }}>{data.wind_speed?.toFixed(1)}km/h</span></div>
-        <div style={{ gridColumn: '1 / -1' }}><span className="f1-label">Rain</span> <span style={{ color: data.rainfall > 0 ? '#3b82f6' : '#22c55e', fontWeight: 700 }}>{data.rainfall > 0 ? 'WET' : 'DRY'}</span></div>
+    <div className="f1p" style={{ padding: '10px 14px' }}>
+      <div className="f1t" style={{ marginBottom: 8 }}>WEATHER</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px 14px', fontSize: 9, color: '#888' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 6px', background: 'rgba(255,255,255,.02)', borderRadius: 4 }}><span className="f1-label">Track</span> <span style={{ color: '#eee', fontWeight: 700, fontFamily: "'Outfit'" }}>{data.track_temperature?.toFixed(1)}°</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 6px', background: 'rgba(255,255,255,.02)', borderRadius: 4 }}><span className="f1-label">Air</span> <span style={{ color: '#eee', fontWeight: 700, fontFamily: "'Outfit'" }}>{data.air_temperature?.toFixed(1)}°</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 6px' }}><span className="f1-label">Humid</span> <span style={{ color: '#bbb' }}>{data.humidity?.toFixed(0)}%</span></div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 6px' }}><span className="f1-label">Wind</span> <span style={{ color: '#bbb' }}>{data.wind_speed?.toFixed(1)}km/h</span></div>
+        <div style={{ gridColumn: '1 / -1', paddingTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="f1-label">Cond</span>
+          <span style={{ color: isDry ? '#22c55e' : '#3b82f6', fontWeight: 700, fontSize: 10, fontFamily: "'Outfit'", padding: '1px 8px', background: isDry ? 'rgba(34,197,94,.1)' : 'rgba(59,130,246,.1)', borderRadius: 4, border: `1px solid ${isDry ? 'rgba(34,197,94,.2)' : 'rgba(59,130,246,.2)'}` }}>{isDry ? 'DRY' : 'WET'}</span>
+        </div>
       </div>
     </div>
   )
@@ -570,12 +617,12 @@ function TelemetryCard({ driverNumber, telemetry, isSelected, drivers, onSwap }:
   return (
     <div className={`f1-tele ${isSelected ? 'selected' : ''}`}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
-        <span style={{ fontFamily: "'Outfit'", fontWeight: 800, color: '#fff', fontSize: 12 }}>{code}</span>
-        <span style={{ fontSize: 7, color: '#444' }}>{team}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10, paddingBottom: 6, borderBottom: '1px solid rgba(255,255,255,.04)' }}>
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, boxShadow: `0 0 8px ${color}60` }} />
+        <span style={{ fontFamily: "'Outfit'", fontWeight: 800, color: '#fff', fontSize: 13, letterSpacing: '.02em' }}>{code}</span>
+        <span style={{ fontSize: 7, color: '#555', fontFamily: "'Outfit'", fontWeight: 500 }}>{team}</span>
         <span style={{ flex: 1 }} />
-        <button onClick={onSwap} style={{ background: 'none', border: '1px solid #222', borderRadius: 4, color: '#444', fontSize: 8, padding: '1px 5px', cursor: 'pointer' }}>x</button>
+        <button onClick={onSwap} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 4, color: '#555', fontSize: 8, padding: '2px 6px', cursor: 'pointer', transition: 'all .2s' }}>x</button>
       </div>
       {/* Speed */}
       <div style={{ marginBottom: 6 }}>
@@ -651,39 +698,47 @@ function TrackSVG({ pts, cars, drivers, standings, large, selectedDrivers, onCar
   const currentFlag = lapFlags.get(replayLap) || 'green'
   const flagBorder = currentFlag === 'yellow' ? '#eab308' : currentFlag === 'red' ? '#ef4444' : currentFlag === 'sc' ? '#f97316' : currentFlag === 'vsc' ? '#fbbf24' : 'transparent'
 
-  return <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: large ? '100%' : 500, height: 'auto', borderRadius: 10, background: 'linear-gradient(135deg,#080810,#0e1018 50%,#080812)', border: flagBorder !== 'transparent' ? `2px solid ${flagBorder}` : 'none' }}>
+  return <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', maxWidth: large ? '100%' : 500, height: 'auto', borderRadius: 16, background: 'transparent', border: flagBorder !== 'transparent' ? `2px solid ${flagBorder}` : '1px solid rgba(255,255,255,.04)', filter: 'drop-shadow(0 4px 20px rgba(0,0,0,.15))' }}>
     <defs>
-      <pattern id="tg" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M 30 0 L 0 0 0 30" fill="none" stroke="#fff" strokeWidth=".2" opacity=".04" /></pattern>
-      <radialGradient id="tv" cx="50%" cy="50%" r="55%"><stop offset="0%" stopColor="transparent" /><stop offset="100%" stopColor="#000" stopOpacity=".5" /></radialGradient>
+      <pattern id="tg" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="#fff" strokeWidth=".15" opacity=".03" /></pattern>
+      <radialGradient id="tv" cx="50%" cy="50%" r="55%"><stop offset="0%" stopColor="transparent" /><stop offset="100%" stopColor="#000" stopOpacity=".2" /></radialGradient>
+      <filter id="trackGlow"><feGaussianBlur stdDeviation="2.5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <linearGradient id="trackStroke" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="rgba(80,80,120,.4)"/><stop offset="50%" stopColor="rgba(100,100,150,.5)"/><stop offset="100%" stopColor="rgba(80,80,120,.4)"/></linearGradient>
     </defs>
-    <rect width={W} height={H} fill="url(#tg)" /><rect width={W} height={H} fill="url(#tv)" />
-    {/* Track layers */}
-    <path d={path} fill="none" stroke="#1a1a2a" strokeWidth={sw + 6} strokeLinecap="round" strokeLinejoin="round" />
-    <path d={path} fill="none" stroke="#2a2a3a" strokeWidth={sw + 2} strokeLinecap="round" strokeLinejoin="round" />
-    <path d={path} fill="none" stroke="#3a3a4a" strokeWidth={sw - 2} strokeLinecap="round" strokeLinejoin="round" opacity=".5" />
+    <rect width={W} height={H} fill="url(#tg)" opacity=".5" /><rect width={W} height={H} fill="url(#tv)" />
+    {/* Track layers - semi-transparent for shader bleed-through */}
+    <path d={path} fill="none" stroke="rgba(20,20,35,.7)" strokeWidth={sw + 8} strokeLinecap="round" strokeLinejoin="round" />
+    <path d={path} fill="none" stroke="rgba(40,40,60,.6)" strokeWidth={sw + 3} strokeLinecap="round" strokeLinejoin="round" />
+    <path d={path} fill="none" stroke="rgba(70,70,100,.35)" strokeWidth={sw - 1} strokeLinecap="round" strokeLinejoin="round" filter="url(#trackGlow)" />
     {/* DRS zones (green overlay) */}
-    {drsZones.map((zp, i) => zp && <path key={`drs-${i}`} d={zp} fill="none" stroke="#22c55e" strokeWidth={sw + 3} strokeLinecap="round" strokeLinejoin="round" opacity=".25" />)}
+    {drsZones.map((zp, i) => zp && <g key={`drs-${i}`}>
+      <path d={zp} fill="none" stroke="#22c55e" strokeWidth={sw + 4} strokeLinecap="round" strokeLinejoin="round" opacity=".15" />
+      <path d={zp} fill="none" stroke="#22c55e" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" opacity=".35" />
+    </g>)}
     {/* Start/finish */}
-    <circle cx={tx(pts[0][0])} cy={ty(pts[0][1])} r={large ? 5 : 3} fill="none" stroke="#fff" strokeWidth="1.5" opacity=".5" />
-    <text x={tx(pts[0][0]) + (large ? 10 : 6)} y={ty(pts[0][1]) - 3} fill="#444" fontSize={large ? 7 : 5} fontFamily="Outfit">S/F</text>
-    {/* Cars */}
+    <circle cx={tx(pts[0][0])} cy={ty(pts[0][1])} r={large ? 6 : 3} fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.5)" strokeWidth="1.5" />
+    <circle cx={tx(pts[0][0])} cy={ty(pts[0][1])} r={large ? 2 : 1.5} fill="#fff" opacity=".6" />
+    <text x={tx(pts[0][0]) + (large ? 12 : 6)} y={ty(pts[0][1]) - 3} fill="#666" fontSize={large ? 7 : 5} fontFamily="Outfit" fontWeight="600">S/F</text>
+    {/* Cars — smooth CSS transitions for position changes */}
     {[...cars.entries()].map(([dn, pos]) => {
       const drv = drivers.find((d: any) => d.driver_number === dn); if (!drv || (!pos.x && !pos.y)) return null
       const col = '#' + (drv.team_colour || '888'), code = drv.name_acronym || '?'
       const st = standings.find((s: any) => s.number === dn), p = st?.position || 99
       const cx = tx(pos.x), cy = ty(pos.y), r = large ? (p <= 3 ? 8 : 6) : (p <= 3 ? 5 : 4)
       const isSel = selectedDrivers.includes(dn)
-      return <g key={dn} style={{ cursor: 'pointer' }} onClick={() => onCarClick(dn)}>
+      return <g key={dn} style={{ cursor: 'pointer', transition: 'transform .4s cubic-bezier(.25,.1,.25,1)', transform: `translate(${cx}px,${cy}px)` }} onClick={() => onCarClick(dn)}>
+        {/* Ambient glow */}
+        <circle cx={0} cy={0} r={r + 3} fill={col} opacity=".08" style={{ transition: 'r .3s ease' }} />
         {/* Selection glow */}
-        {isSel && <circle cx={cx} cy={cy} r={r + 5} fill="none" stroke={col} strokeWidth="1.5" opacity=".35" />}
+        {isSel && <circle cx={0} cy={0} r={r + 6} fill="none" stroke={col} strokeWidth="1.5" opacity=".4" style={{ transition: 'all .3s ease' }} />}
         {/* Podium ring */}
-        {p <= 3 && <circle cx={cx} cy={cy} r={r + 2.5} fill="none" stroke="#d4a843" strokeWidth="1" opacity=".6" />}
+        {p <= 3 && <circle cx={0} cy={0} r={r + 3} fill="none" stroke="#d4a843" strokeWidth="1" opacity=".6" />}
         {/* Main dot */}
-        <circle cx={cx} cy={cy} r={r} fill={col} stroke="#000" strokeWidth=".8" />
+        <circle cx={0} cy={0} r={r} fill={col} stroke="rgba(0,0,0,.6)" strokeWidth=".8" />
         {/* Position number */}
-        {p <= 3 && <text x={cx} y={cy + (large ? 3 : 2)} fill="#000" fontSize={large ? 6 : 4} fontFamily="Outfit" fontWeight="800" textAnchor="middle">{p}</text>}
+        {p <= 3 && <text x={0} y={large ? 3 : 2} fill="#000" fontSize={large ? 6 : 4} fontFamily="Outfit" fontWeight="800" textAnchor="middle">{p}</text>}
         {/* Driver code */}
-        <text x={cx + (large ? 12 : 8)} y={cy + 3} fill={isSel ? '#fff' : '#aaa'} fontSize={large ? 8 : 6} fontFamily="Outfit" fontWeight={p <= 3 || isSel ? '700' : '400'}>{code}</text>
+        <text x={large ? 12 : 8} y={3} fill={isSel ? '#fff' : '#bbb'} fontSize={large ? 8 : 6} fontFamily="Outfit" fontWeight={p <= 3 || isSel ? '700' : '400'} style={{ transition: 'fill .2s ease' }}>{code}</text>
       </g>
     })}
     {/* Flag label */}
@@ -699,7 +754,7 @@ function ProgressBar({ lapFlags, currentLap, totalLaps, replayTime, raceStartTim
   const flagColors: Record<string, string> = { green: '#22c55e', yellow: '#eab308', red: '#ef4444', sc: '#f97316', vsc: '#fbbf24' }
   return (
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 120 }}>
-      <div style={{ flex: 1, height: 12, borderRadius: 6, background: '#0a0a14', display: 'flex', overflow: 'hidden', cursor: 'pointer', border: '1px solid rgba(255,255,255,.05)' }}
+      <div style={{ flex: 1, height: 12, borderRadius: 6, background: 'rgba(10,10,20,.6)', display: 'flex', overflow: 'hidden', cursor: 'pointer', border: '1px solid rgba(255,255,255,.05)', backdropFilter: 'blur(8px)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,.3)' }}
         onClick={e => {
           const rect = e.currentTarget.getBoundingClientRect()
           const pct = (e.clientX - rect.left) / rect.width
