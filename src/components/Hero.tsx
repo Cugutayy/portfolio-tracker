@@ -17,15 +17,8 @@ export function Hero({ lang }: { lang: string }) {
   }, [lang])
 
   return (
-    <header className="container" style={{ paddingTop:56, paddingBottom:10, display:'flex', alignItems:'flex-end', justifyContent:'space-between', flexWrap:'wrap', gap:8 }}>
-      <div>
-        <h1 style={{ fontSize:'clamp(1.2rem, 2.5vw, 1.5rem)', fontWeight:300, lineHeight:1.15, letterSpacing:'-.02em' }}>
-          S. Cagatay <em style={{ fontWeight:300, fontStyle:'italic' }}>Sonmez</em>
-        </h1>
-      </div>
-      <div style={{ textAlign:'right' }}>
-        <div className="mono" style={{ fontSize:'.56rem', color:'var(--muted)', letterSpacing:'.04em', opacity:.5 }}>{clock}</div>
-      </div>
+    <header className="container" style={{ paddingTop:56, paddingBottom:0, display:'flex', alignItems:'center', justifyContent:'flex-end', flexWrap:'wrap', gap:8 }}>
+      <div className="mono" style={{ fontSize:'.56rem', color:'var(--muted)', letterSpacing:'.04em', opacity:.5 }}>{clock}</div>
     </header>
   )
 }
