@@ -133,6 +133,9 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
 
   const replayRef = useRef<number | null>(null)
   const liveRef = useRef<number | null>(null)
+  const preloadedRef = useRef(false)
+  const lastPredLapRef = useRef(-1)
+  const fetchedDriversRef = useRef(new Set<number>())
 
   // === INIT: races + pre-race prediction ===
   useEffect(() => {
@@ -147,6 +150,30 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
       qualiDelta: (q.q3Time ? pT(q.q3Time) : q.q2Time ? pT(q.q2Time) : q.q1Time ? pT(q.q1Time) : 83) - 78.518
     }))))
   }, [])
+
+  // === PRELOAD replay data in background (2.5s after mount) ===
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (preloadedRef.current) return
+      preloadedRef.current = true
+      const sk = selectedRace
+      ;(async () => {
+        try {
+          const [drv, laps, pos, intv, st, rc, w] = await Promise.all([openF1.getDrivers(sk), openF1.getLaps(sk), openF1.getPositions(sk), openF1.getIntervals(sk), openF1.getStints(sk), openF1.getRaceControl(sk), openF1.getWeather(sk)])
+          setDrivers(drv); setLapData(laps); setPosData(pos); setIntervalData(intv); setStintData(st); setRaceCtrl(rc)
+          if (w.length > 0) setWeatherData(w[w.length - 1])
+          const fl: any = laps.find((l: any) => l.driver_number === 63 && l.lap_number === 1)
+          const ll: any = [...laps].reverse().find((l: any) => l.driver_number === 63 && l.lap_duration > 0)
+          if (fl?.date_start) { const s = new Date(fl.date_start).getTime(), e = ll?.date_start ? new Date(ll.date_start).getTime() + 90000 : s + 5400000; setRaceStartTime(s); setRaceEndTime(e); setReplayTime(s) }
+          // Preload location data
+          const top = [63, 12, 16, 44, 4, 1, 87, 30, 5, 10]
+          const locResults = await Promise.all(top.map(dn => openF1.getLocations(sk, dn).catch(() => [])))
+          setAllLocationData(locResults.flat())
+        } catch { }
+      })()
+    }, 2500)
+    return () => clearTimeout(timer)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update totalLaps when race changes
   useEffect(() => {
@@ -176,7 +203,29 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
 
   // === LOAD REPLAY ===
   const loadReplay = useCallback(async () => {
-    const sk = selectedRace; setLoading(true)
+    const sk = selectedRace
+    // If preloaded data exists for this race, skip fetching core data
+    if (preloadedRef.current && lapData.length > 0 && sk === SESSION_KEY) {
+      // Just need to compute flags and switch mode
+      const rc = raceCtrl
+      const flags = new Map<number, string>()
+      for (let i = 1; i <= totalLaps; i++) flags.set(i, 'green')
+      for (const m of rc) {
+        if (!m.lap_number) continue
+        if (m.flag === 'RED') { for (let i = m.lap_number; i <= Math.min(m.lap_number + 2, totalLaps); i++) flags.set(i, 'red') }
+        else if (m.message?.includes('SAFETY CAR') && !m.message?.includes('VIRTUAL')) { for (let i = m.lap_number; i <= Math.min(m.lap_number + 3, totalLaps); i++) flags.set(i, 'sc') }
+        else if (m.message?.includes('VIRTUAL SAFETY CAR')) { for (let i = m.lap_number; i <= Math.min(m.lap_number + 2, totalLaps); i++) flags.set(i, 'vsc') }
+        else if (m.flag === 'YELLOW') flags.set(m.lap_number, 'yellow')
+      }
+      setLapFlags(flags)
+      // Load car data if missing
+      if (allCarData.length === 0) {
+        try { const cd = await Promise.all(selectedDrivers.map(dn => openF1.getCarData(sk, dn).catch(() => []))); setAllCarData(cd.flat()) } catch { }
+      }
+      setMode('replay'); setReplayLap(1)
+      return
+    }
+    setLoading(true)
     try {
       const [drv, laps, pos, intv, st, rc, w] = await Promise.all([openF1.getDrivers(sk), openF1.getLaps(sk), openF1.getPositions(sk), openF1.getIntervals(sk), openF1.getStints(sk), openF1.getRaceControl(sk), openF1.getWeather(sk)])
       setDrivers(drv); setLapData(laps); setPosData(pos); setIntervalData(intv); setStintData(st); setRaceCtrl(rc)
@@ -192,18 +241,15 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
         else if (m.flag === 'YELLOW') flags.set(m.lap_number, 'yellow')
       }
       setLapFlags(flags)
-      // Location data
+      // Location data + car data — all in parallel
       try {
         const top = [63, 12, 16, 44, 4, 1, 87, 30, 5, 10]
-        const r1 = await Promise.all(top.slice(0, 3).map(dn => openF1.getLocations(sk, dn).catch(() => [])))
-        const r2 = await Promise.all(top.slice(3, 6).map(dn => openF1.getLocations(sk, dn).catch(() => [])))
-        const r3 = await Promise.all(top.slice(6, 10).map(dn => openF1.getLocations(sk, dn).catch(() => [])))
-        setAllLocationData([...r1, ...r2, ...r3].flat())
-      } catch { }
-      // Car data for selected drivers
-      try {
-        const cd = await Promise.all(selectedDrivers.map(dn => openF1.getCarData(sk, dn).catch(() => [])))
-        setAllCarData(cd.flat())
+        const [locResults, cdResults] = await Promise.all([
+          Promise.all(top.map(dn => openF1.getLocations(sk, dn).catch(() => []))),
+          Promise.all(selectedDrivers.map(dn => openF1.getCarData(sk, dn).catch(() => [])))
+        ])
+        setAllLocationData(locResults.flat())
+        setAllCarData(cdResults.flat())
       } catch { }
       const fl: any = laps.find((l: any) => l.driver_number === 63 && l.lap_number === 1)
       const ll: any = [...laps].reverse().find((l: any) => l.driver_number === 63 && l.lap_duration > 0)
@@ -232,50 +278,72 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
   }, [liveActive, selectedRace, selectedDrivers])
   useEffect(() => () => { if (liveRef.current) clearInterval(liveRef.current) }, [])
 
-  // === REPLAY TIMER (smoother: 60ms ticks, smaller increments) ===
-  useEffect(() => {
-    if (!replayPlaying) { if (replayRef.current) clearInterval(replayRef.current); return }
-    const T = 60, S = T * replaySpeed * 10
-    replayRef.current = window.setInterval(() => setReplayTime(p => { const n = p + S; if (n >= raceEndTime) { setReplayPlaying(false); return raceEndTime } return n }), T)
-    return () => { if (replayRef.current) clearInterval(replayRef.current) }
-  }, [replayPlaying, replaySpeed, raceEndTime])
+  // === REPLAY TIMER (requestAnimationFrame, throttled state updates) ===
+  const replayTimeRef = useRef(0)
+  useEffect(() => { replayTimeRef.current = replayTime }, [replayTime])
 
-  // Lap from time
-  useEffect(() => { if (!lapData.length || !replayTime) return; const rl = lapData.filter((l: any) => l.driver_number === 63 && l.date_start); let c = 1; for (const l of rl) if (new Date(l.date_start).getTime() <= replayTime) c = l.lap_number; setReplayLap(c) }, [replayTime, lapData])
-
-  // Car positions from time — interpolated for smoothness
+  // Pre-process location data into per-driver sorted arrays for fast lookup
+  const driverLocRef = useRef<Map<number, { t: number, x: number, y: number }[]>>(new Map())
   useEffect(() => {
-    if (!allLocationData.length || !replayTime) return
-    const m = new Map<number, { x: number, y: number }>()
-    const s = new Set<number>()
-    // Find position for each driver, with interpolation between two nearest points
-    for (let i = allLocationData.length - 1; i >= 0; i--) {
-      const l = allLocationData[i]
-      if (s.has(l.driver_number)) continue
-      const t = new Date(l.date).getTime()
-      if (t <= replayTime) {
-        // Find next position for interpolation
-        let next: any = null
-        for (let j = i + 1; j < allLocationData.length; j++) {
-          if (allLocationData[j].driver_number === l.driver_number) { next = allLocationData[j]; break }
+    if (!allLocationData.length) return
+    const byDriver = new Map<number, { t: number, x: number, y: number }[]>()
+    for (const l of allLocationData) {
+      const arr = byDriver.get(l.driver_number) || []
+      arr.push({ t: new Date(l.date).getTime(), x: l.x, y: l.y })
+      byDriver.set(l.driver_number, arr)
+    }
+    for (const [, arr] of byDriver) arr.sort((a, b) => a.t - b.t)
+    driverLocRef.current = byDriver
+  }, [allLocationData])
+
+  useEffect(() => {
+    if (!replayPlaying) { if (replayRef.current) cancelAnimationFrame(replayRef.current); return }
+    let prev = 0
+    let lastStateUpdate = 0
+    const tick = (now: number) => {
+      replayRef.current = requestAnimationFrame(tick)
+      if (!prev) { prev = now; return }
+      const dt = Math.min(now - prev, 50)
+      prev = now
+      const advance = dt * replaySpeed * 10
+      const newTime = replayTimeRef.current + advance
+      if (newTime >= raceEndTime) { setReplayPlaying(false); setReplayTime(raceEndTime); return }
+      replayTimeRef.current = newTime
+
+      // Throttle ALL React state updates to ~30fps to avoid cascading re-renders
+      if (now - lastStateUpdate > 33) {
+        lastStateUpdate = now
+        // Compute car positions
+        const byDriver = driverLocRef.current
+        if (byDriver.size) {
+          const m = new Map<number, { x: number, y: number }>()
+          for (const [dn, pts] of byDriver) {
+            let lo = 0, hi = pts.length - 1, idx = -1
+            while (lo <= hi) { const mid = (lo + hi) >> 1; if (pts[mid].t <= newTime) { idx = mid; lo = mid + 1 } else { hi = mid - 1 } }
+            if (idx >= 0) {
+              const p = pts[idx], next = idx + 1 < pts.length ? pts[idx + 1] : null
+              if (next && next.t > p.t) {
+                const frac = Math.min(1, (newTime - p.t) / (next.t - p.t))
+                m.set(dn, { x: p.x + (next.x - p.x) * frac, y: p.y + (next.y - p.y) * frac })
+              } else { m.set(dn, { x: p.x, y: p.y }) }
+            }
+          }
+          setCarPositions(m)
         }
-        if (next) {
-          const nt = new Date(next.date).getTime()
-          const frac = Math.min(1, Math.max(0, (replayTime - t) / (nt - t)))
-          m.set(l.driver_number, {
-            x: l.x + (next.x - l.x) * frac,
-            y: l.y + (next.y - l.y) * frac
-          })
-        } else {
-          m.set(l.driver_number, { x: l.x, y: l.y })
+        setReplayTime(newTime)
+        // Update lap from time
+        if (lapData.length) {
+          const rl = lapData.filter((l: any) => l.driver_number === 63 && l.date_start)
+          let c = 1; for (const l of rl) if (new Date(l.date_start).getTime() <= newTime) c = l.lap_number
+          setReplayLap(c)
         }
-        s.add(l.driver_number)
       }
     }
-    setCarPositions(m)
-  }, [replayTime, allLocationData])
+    replayRef.current = requestAnimationFrame(tick)
+    return () => { if (replayRef.current) cancelAnimationFrame(replayRef.current) }
+  }, [replayPlaying, replaySpeed, raceEndTime, lapData]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Telemetry from car_data
+  // Telemetry from car_data — driven by replayLap changes (not replayTime) to avoid cascading
   useEffect(() => {
     if (!allCarData.length || !replayTime || mode !== 'replay') return
     const tMap = new Map<number, any>()
@@ -286,7 +354,6 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
         if (new Date(driverData[i].date).getTime() <= replayTime) { best = driverData[i]; break }
       }
       if (best) {
-        // Compute ahead/behind
         const pos = standings.findIndex(s => s.number === dn)
         const ahead = pos > 0 ? standings[pos - 1] : null
         const behind = pos < standings.length - 1 ? standings[pos + 1] : null
@@ -299,21 +366,22 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
       }
     }
     setCarTelemetry(tMap)
-  }, [replayTime, allCarData, selectedDrivers, mode])
+  }, [replayLap, allCarData, selectedDrivers, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch car_data for newly selected drivers
+  // Fetch car_data for newly selected drivers — ref-tracked to avoid cascading
   useEffect(() => {
-    if (mode !== 'replay' || !selectedRace || !allCarData.length) return
-    const existing = new Set(allCarData.map(d => d.driver_number))
-    const needed = selectedDrivers.filter(dn => !existing.has(dn))
+    if (mode !== 'replay' || !selectedRace) return
+    const needed = selectedDrivers.filter(dn => !fetchedDriversRef.current.has(dn))
     if (!needed.length) return
+    for (const dn of needed) fetchedDriversRef.current.add(dn)
     ;(async () => {
       try {
         const results = await Promise.all(needed.map(dn => openF1.getCarData(selectedRace, dn).catch(() => [])))
-        setAllCarData(prev => [...prev, ...results.flat()])
+        const flat = results.flat()
+        if (flat.length) setAllCarData(prev => [...prev, ...flat])
       } catch { }
     })()
-  }, [selectedDrivers, mode, selectedRace, allCarData.length])
+  }, [selectedDrivers, mode, selectedRace])
 
   // === STANDINGS ===
   const standings = useMemo(() => {
@@ -333,11 +401,12 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
     })).sort((a: any, b: any) => a.position - b.position)
   }, [posData, lapData, intervalData, stintData, drivers, replayLap, raceCtrl])
 
-  // AI prediction update
+  // AI prediction update — guarded to fire only once per lap
   useEffect(() => {
     if (mode !== 'replay' || !standings.length || replayLap < 2) return
+    if (lastPredLapRef.current === replayLap) return
+    lastPredLapRef.current = replayLap
     setLivePreds(predictor.updateFromLiveData(standings.map((d: any) => {
-      // Gerçek pit stop sayısı: stintData'da tyre_age_at_start === 0 olan lap_start > 1 girişleri say
       const pits = stintData.filter((st: any) => st.driver_number === d.number && st.tyre_age_at_start === 0 && (st.lap_start || 0) > 1 && (st.lap_start || 0) <= replayLap).length
       return {
         code: d.code, name: d.name, team: d.team, teamColor: d.color, position: d.position,
