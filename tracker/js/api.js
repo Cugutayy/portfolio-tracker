@@ -420,10 +420,23 @@ async function fetchFurkanHistoricalPrices(progressCb) {
 
   const fetchFund = async (fonKod, id) => {
     report(`  ${fonKod} fon fiyati cekiliyor (TEFAS)...`);
-    const data = await fetchTefasData(fonKod, tefasStart, tefasEnd);
-    const parsed = parseTefasResponse(data, START);
-    if(!parsed || parsed.dates.length === 0) throw new Error(`No ${fonKod} data from TEFAS`);
-    return { id, dates: parsed.dates, prices: parsed.prices, src: 'TEFAS API' };
+    // Try TEFAS API first
+    try {
+      const data = await fetchTefasData(fonKod, tefasStart, tefasEnd);
+      const parsed = parseTefasResponse(data, START);
+      if(parsed && parsed.dates.length > 0) {
+        return { id, dates: parsed.dates, prices: parsed.prices, src: 'TEFAS API' };
+      }
+    } catch(e) {
+      report(`  ⚠ ${fonKod} TEFAS API hata: ${e.message}`);
+    }
+    // Fallback: use hardcoded TEFAS data (verified from tefas.gov.tr)
+    if(typeof TEFAS_FALLBACK !== 'undefined' && TEFAS_FALLBACK[fonKod]) {
+      const fb = TEFAS_FALLBACK[fonKod];
+      report(`  ↳ ${fonKod} fallback verisi kullaniliyor (${fb.dates.length} gun)`);
+      return { id, dates: [...fb.dates], prices: [...fb.prices], src: 'TEFAS fallback (verified)' };
+    }
+    throw new Error(`No ${fonKod} data from TEFAS or fallback`);
   };
 
   // Fire all 6 requests simultaneously
