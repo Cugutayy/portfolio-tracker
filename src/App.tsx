@@ -32,15 +32,12 @@ function ShaderBg({ dark }: { dark: boolean }) {
     const onMove = () => { targetRef.current = 0.28 }
     window.addEventListener('mousemove', onMove, { passive: true })
 
-    let last = 0
-    const tick = (t: number) => {
+    const tick = () => {
       rafRef.current = requestAnimationFrame(tick)
-      if (t - last < 40) return // ~25fps — lighter on performance
-      last = t
-      targetRef.current += (0.15 - targetRef.current) * 0.04
-      waveRef.current += (targetRef.current - waveRef.current) * 0.12
-      const rounded = Math.round(waveRef.current * 200) / 200
-      if (rounded !== Math.round(wave * 200) / 200) setWave(rounded)
+      targetRef.current += (0.15 - targetRef.current) * 0.03
+      waveRef.current += (targetRef.current - waveRef.current) * 0.08
+      const rounded = Math.round(waveRef.current * 500) / 500
+      if (rounded !== Math.round(wave * 500) / 500) setWave(rounded)
     }
     rafRef.current = requestAnimationFrame(tick)
 
