@@ -175,11 +175,13 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
     return () => clearTimeout(timer)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update totalLaps when race changes
+  // Update totalLaps when race changes + reset refs for new race
   useEffect(() => {
     const laps = getCircuitLaps(selectedRace)
     setTotalLaps(laps)
     predictor.totalLaps = laps
+    fetchedDriversRef.current.clear()
+    lastPredLapRef.current = -1
   }, [selectedRace])
 
   // Race change -> auto qualifying fetch
