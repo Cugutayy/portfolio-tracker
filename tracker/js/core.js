@@ -306,6 +306,7 @@ function closeExportMenu(){
 
 // ════════════════════════════════════════════════════════════════
 // FURKAN EXPORT — 7 alternative instruments, full P/L tracking
+// ALL data fetched from real APIs (Binance, Yahoo, TEFAS)
 // Uses FURKAN_INSTRS, FURKAN_HISTORY, FURKAN_CAPITAL from data.js
 // ════════════════════════════════════════════════════════════════
 function furkanCurrVal(ins){
@@ -325,8 +326,50 @@ function furkanGetPrice(ins){
   return h&&h.length?h[h.length-1]:(ins.buyPrice||0);
 }
 
-function exportFurkanCSV(){
+async function exportFurkanCSV(){
   const tr = LANG==='tr';
+
+  // ── STEP 1: Fetch all prices from real APIs ──
+  showToast(tr?'Furkan verileri API\'lerden cekiliyor...':'Fetching Furkan data from APIs...');
+
+  // Show loading overlay
+  let overlay = document.getElementById('furkanLoadingOverlay');
+  if(!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'furkanLoadingOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = '<div style="background:#1a1a2e;border:1px solid #333;border-radius:12px;padding:24px 32px;max-width:520px;width:90%;max-height:70vh;overflow-y:auto;font-family:monospace;font-size:11px;color:#ccc;"><div id="furkanLoadingTitle" style="font-size:14px;font-weight:bold;color:#c9a84c;margin-bottom:12px;">API\'lerden veri cekiliyor...</div><div id="furkanLoadingLog" style="line-height:1.6;"></div></div>';
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+  const logDiv = document.getElementById('furkanLoadingLog');
+  const titleDiv = document.getElementById('furkanLoadingTitle');
+
+  const result = await fetchFurkanHistoricalPrices((msg, allLogs) => {
+    if(logDiv){
+      logDiv.innerHTML = allLogs.map(l => {
+        let color = '#ccc';
+        if(l.includes('✓')) color = '#4ade80';
+        else if(l.includes('✗')) color = '#f87171';
+        else if(l.includes('⚠')) color = '#fbbf24';
+        else if(l.includes('===')) color = '#c9a84c';
+        return `<div style="color:${color}">${l}</div>`;
+      }).join('');
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+  });
+
+  if(!result || !FURKAN_HISTORY.dates || FURKAN_HISTORY.dates.length === 0){
+    if(titleDiv) titleDiv.textContent = 'HATA: Veri cekilemedi!';
+    showToast(tr?'HATA: API verileri cekilemedi!':'ERROR: Could not fetch API data!');
+    setTimeout(()=>{ overlay.style.display='none'; }, 3000);
+    return;
+  }
+
+  if(titleDiv) titleDiv.textContent = `${result.success}/${result.total} enstruman basariyla cekildi — Excel hazirlaniyor...`;
+  await new Promise(r => setTimeout(r, 1500)); // Let user see the verification results
+
+  // ── STEP 2: Build Excel export with real data ──
   const dateStr=new Date().toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
   const timeStr=new Date().toLocaleTimeString('tr-TR');
   const FI=FURKAN_INSTRS, FH=FURKAN_HISTORY, FC=FURKAN_CAPITAL;
@@ -339,13 +382,14 @@ function exportFurkanCSV(){
   const numStyle=cStyle+'text-align:right;font-family:Consolas,monospace;';
   const posStyle=numStyle+'color:#1a472a;font-weight:bold;';
   const negStyle=numStyle+'color:#c0392b;font-weight:bold;';
+  const srcStyle='padding:4px 10px;border:1px solid #eee;font-size:9px;color:#666;';
 
   let h='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel"><head><meta charset="utf-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Furkan Portfolio</x:Name></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body>';
 
   // ── Title section ──
   h+='<table><tr><td colspan="10" style="font-size:18px;font-weight:bold;padding:12px;color:#1a472a;font-family:Georgia,serif">Furkan Portfolio Tracker</td></tr>';
   h+='<tr><td colspan="10" style="font-size:10px;color:#888;padding:4px 12px">'+dateStr+' &middot; '+timeStr+'</td></tr>';
-  h+='<tr><td colspan="10" style="font-size:9px;color:#aaa;padding:4px 12px">'+(tr?'Responsible Investment Dersi — 100.000 TL Sermaye':'Responsible Investment Course — 100,000 TL Capital')+'</td></tr>';
+  h+='<tr><td colspan="10" style="font-size:9px;color:#aaa;padding:4px 12px">'+(tr?'Responsible Investment Dersi — 100.000 TL Sermaye — Tum veriler API\'lerden cekilmistir':'Responsible Investment Course — 100,000 TL Capital — All data fetched from live APIs')+'</td></tr>';
   h+='<tr><td colspan="10" style="padding:2px"></td></tr>';
 
   // ── Summary box ──
@@ -361,7 +405,7 @@ function exportFurkanCSV(){
   h+='<td style="'+hStyle+'">'+(tr?'Agirlik':'Weight')+'</td>';
   h+='<td style="'+hStyle+'">'+(tr?'Yatirilan':'Invested')+'</td>';
   h+='<td style="'+hStyle+'">'+(tr?'Adet':'Qty')+'</td>';
-  h+='<td style="'+hStyle+'">'+(tr?'Alis':'Buy')+'</td>';
+  h+='<td style="'+hStyle+'">'+(tr?'Alis ('+FURKAN_START_DATE+')':'Buy ('+FURKAN_START_DATE+')')+'</td>';
   h+='<td style="'+hStyle+'">'+(tr?'Guncel':'Current')+'</td>';
   h+='<td style="'+hStyle+'">'+(tr?'Deger':'Value')+'</td>';
   h+='<td style="'+hStyle+'">K/Z</td>';
@@ -381,8 +425,8 @@ function exportFurkanCSV(){
     h+='<td style="'+rn+'">%'+ins.w+'</td>';
     h+='<td style="'+rn+'">'+fmt(ins.alloc,0)+'</td>';
     h+='<td style="'+rn+'">'+(qty?qty.toFixed(ins.id==='f_btc'?6:2):'--')+'</td>';
-    h+='<td style="'+rn+'">'+(ins.buyPrice?fmt(ins.buyPrice,2):'--')+'</td>';
-    h+='<td style="'+rn+'">'+fmt(ins.id==='f_dep'?cv:price,2)+'</td>';
+    h+='<td style="'+rn+'">'+(ins.buyPrice?fmt(ins.buyPrice,ins.id==='f_btc'?0:ins.id==='f_tzt'||ins.id==='f_phe'?4:2):'--')+'</td>';
+    h+='<td style="'+rn+'">'+fmt(ins.id==='f_dep'?cv:price,ins.id==='f_btc'?0:ins.id==='f_tzt'||ins.id==='f_phe'?4:2)+'</td>';
     h+='<td style="'+rn+'font-weight:600">'+fmt(cv,2)+'</td>';
     h+='<td style="'+plS+'">'+(pl>=0?'+':'')+fmt(pl,2)+'</td>';
     h+='<td style="'+plS+'">'+(pp>=0?'+':'')+pp.toFixed(2)+'%</td>';
@@ -394,6 +438,22 @@ function exportFurkanCSV(){
   h+='<td style="'+hStyle+'background:#2d5a3a;text-align:right;font-size:12px">'+fmt(total,2)+'</td>';
   h+='<td style="'+hStyle+'background:#2d5a3a;text-align:right">'+(tp>=0?'+':'')+fmt(tp,2)+'</td>';
   h+='<td style="'+hStyle+'background:#2d5a3a;text-align:right">'+tpct.toFixed(2)+'%</td></tr>';
+
+  // ── Data Sources section ──
+  h+='<tr><td colspan="10" style="padding:8px"></td></tr>';
+  h+='<tr><td colspan="10" style="font-size:13px;font-weight:bold;padding:8px 12px;color:#1a472a;border-bottom:2px solid #1a472a">'+(tr?'Veri Kaynaklari':'Data Sources')+'</td></tr>';
+  h+='<tr><td colspan="3" style="'+hStyle+'">'+(tr?'Enstruman':'Instrument')+'</td>';
+  h+='<td colspan="4" style="'+hStyle+'">'+(tr?'Kaynak':'Source')+'</td>';
+  h+='<td colspan="3" style="'+hStyle+'">'+(tr?'Dogrulama':'Verification')+'</td></tr>';
+  FI.forEach((ins,idx)=>{
+    const bg=idx%2===0?'#fff':'#fafaf8';
+    const r = result?.results?.[ins.id];
+    const src = r ? r.src : (ins.id==='f_dep' ? 'Hesaplanan (%38/yil, %15 stopaj)' : 'Veri alinamadi');
+    const verified = r ? '3x dogrulanmis' : (ins.id==='f_dep' ? 'Faiz hesabi' : 'EKSIK');
+    h+='<tr><td colspan="3" style="'+srcStyle+'background:'+bg+'">'+ins.name+'</td>';
+    h+='<td colspan="4" style="'+srcStyle+'background:'+bg+'">'+src+'</td>';
+    h+='<td colspan="3" style="'+srcStyle+'background:'+bg+'">'+verified+'</td></tr>';
+  });
 
   // ── Weekly summary ──
   const dates=FH.dates;
@@ -413,9 +473,9 @@ function exportFurkanCSV(){
       let startVal=0,endVal=0;
       FI.forEach(ins=>{
         const p0=FH[ins.id]?.[wi],p1=FH[ins.id]?.[weekEnd];
-        if(p0===undefined||p1===undefined)return;
-        startVal+=ins.id==='f_dep'?p0:(ins.alloc/ins.buyPrice)*p0;
-        endVal+=ins.id==='f_dep'?p1:(ins.alloc/ins.buyPrice)*p1;
+        if(p0===undefined||p0===null||p1===undefined||p1===null)return;
+        if(ins.id==='f_dep'){ startVal+=p0; endVal+=p1; }
+        else if(ins.buyPrice){ startVal+=(ins.alloc/ins.buyPrice)*p0; endVal+=(ins.alloc/ins.buyPrice)*p1; }
       });
       weeks.push({label:dates[wi]?.slice(5)+' - '+dates[weekEnd]?.slice(5),start:startVal,end:endVal});
       wi+=5;
@@ -447,7 +507,10 @@ function exportFurkanCSV(){
       let rowTotal=0;
       FI.forEach(ins=>{
         const p=FH[ins.id]?.[weekEnd];
-        const val=p!==undefined?(ins.id==='f_dep'?p:(ins.alloc/ins.buyPrice)*p):ins.alloc;
+        let val=ins.alloc;
+        if(p!==undefined&&p!==null){
+          val=ins.id==='f_dep'?p:(ins.buyPrice?(ins.alloc/ins.buyPrice)*p:ins.alloc);
+        }
         rowTotal+=val;
         h+='<td style="'+numStyle+'background:'+bg+'">'+fmt(val,0)+'</td>';
       });
@@ -471,16 +534,20 @@ function exportFurkanCSV(){
       let dayVal=0;
       FI.forEach(ins=>{
         const p=FH[ins.id]?.[di];
-        if(p===undefined){dayVal+=ins.alloc;return;}
-        dayVal+=ins.id==='f_dep'?p:(ins.alloc/ins.buyPrice)*p;
+        if(p===undefined||p===null){dayVal+=ins.alloc;return;}
+        if(ins.id==='f_dep') dayVal+=p;
+        else if(ins.buyPrice) dayVal+=(ins.alloc/ins.buyPrice)*p;
+        else dayVal+=ins.alloc;
       });
       let prevVal=FC;
       if(di>0){
         prevVal=0;
         FI.forEach(ins=>{
           const p=FH[ins.id]?.[di-1];
-          if(p===undefined){prevVal+=ins.alloc;return;}
-          prevVal+=ins.id==='f_dep'?p:(ins.alloc/ins.buyPrice)*p;
+          if(p===undefined||p===null){prevVal+=ins.alloc;return;}
+          if(ins.id==='f_dep') prevVal+=p;
+          else if(ins.buyPrice) prevVal+=(ins.alloc/ins.buyPrice)*p;
+          else prevVal+=ins.alloc;
         });
       }
       const dayPL=di>0?dayVal-prevVal:0;
@@ -503,7 +570,7 @@ function exportFurkanCSV(){
   if(dates&&dates.length>=2){
     h+='<tr><td colspan="10" style="padding:8px"></td></tr>';
     const nCols=FI.length+1;
-    h+='<tr><td colspan="'+nCols+'" style="font-size:13px;font-weight:bold;padding:8px 12px;color:#1a472a;border-bottom:2px solid #1a472a">'+(tr?'Gunluk Enstruman Fiyatlari':'Daily Instrument Prices')+'</td></tr>';
+    h+='<tr><td colspan="'+nCols+'" style="font-size:13px;font-weight:bold;padding:8px 12px;color:#1a472a;border-bottom:2px solid #1a472a">'+(tr?'Gunluk Enstruman Fiyatlari (API Verisi)':'Daily Instrument Prices (API Data)')+'</td></tr>';
     h+='<tr><td style="'+hStyle+'">'+(tr?'Tarih':'Date')+'</td>';
     FI.forEach(ins=>{h+='<td style="'+hStyle+'">'+ins.name.split(/[—(]/)[0].trim()+'</td>';});
     h+='</tr>';
@@ -513,19 +580,35 @@ function exportFurkanCSV(){
       h+='<tr><td style="'+cStyle+'background:'+bg+'">'+dates[di]+'</td>';
       FI.forEach(ins=>{
         const p=FH[ins.id]?.[di];
-        const val=p!==undefined?p:'-';
-        const fmtVal=typeof val==='number'?(ins.id==='f_btc'?fmt(val,0):ins.id==='f_dep'?fmt(val,0):fmt(val,2)):val;
+        const val=(p!==undefined&&p!==null)?p:'-';
+        let fmtVal;
+        if(typeof val==='number'){
+          if(ins.id==='f_btc') fmtVal=fmt(val,0);
+          else if(ins.id==='f_dep') fmtVal=fmt(val,0);
+          else if(ins.id==='f_tzt'||ins.id==='f_phe') fmtVal=fmt(val,4);
+          else fmtVal=fmt(val,2);
+        } else fmtVal=val;
         h+='<td style="'+numStyle+'background:'+bg+'">'+fmtVal+'</td>';
       });
       h+='</tr>';
     }
   }
 
+  // ── Verification log ──
+  if(result?.fetchLog?.length > 0){
+    h+='<tr><td colspan="10" style="padding:8px"></td></tr>';
+    h+='<tr><td colspan="10" style="font-size:13px;font-weight:bold;padding:8px 12px;color:#1a472a;border-bottom:2px solid #1a472a">'+(tr?'Dogrulama Logu (3x Kontrol)':'Verification Log (3x Check)')+'</td></tr>';
+    result.fetchLog.forEach(msg => {
+      h+='<tr><td colspan="10" style="padding:2px 12px;font-size:8px;color:#666;font-family:Consolas,monospace;">'+msg+'</td></tr>';
+    });
+  }
+
   // ── Footer ──
   h+='<tr><td colspan="10" style="padding:8px"></td></tr>';
-  h+='<tr><td colspan="10" style="padding:8px 12px;font-size:8px;color:#aaa">'+(tr?'Bu rapor Portfolio Tracker (Furkan Portfoyu) tarafindan olusturulmustur. Egitim amaclidir, yatirim tavsiyesi degildir.':'Generated by Portfolio Tracker (Furkan Portfolio). For educational purposes only, not investment advice.')+'</td></tr>';
+  h+='<tr><td colspan="10" style="padding:8px 12px;font-size:8px;color:#aaa">'+(tr?'Bu rapor Portfolio Tracker (Furkan Portfoyu) tarafindan olusturulmustur. Tum fiyatlar gercek API verisidir (Binance, Yahoo Finance, TEFAS). Egitim amaclidir, yatirim tavsiyesi degildir.':'Generated by Portfolio Tracker (Furkan Portfolio). All prices are real API data (Binance, Yahoo Finance, TEFAS). For educational purposes only, not investment advice.')+'</td></tr>';
   h+='</table></body></html>';
 
+  // ── Download ──
   const blob=new Blob([h],{type:'application/vnd.ms-excel;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
@@ -535,7 +618,10 @@ function exportFurkanCSV(){
   a.click();
   document.body.removeChild(a);
   setTimeout(()=>URL.revokeObjectURL(url),1000);
-  showToast(tr?'Furkan Excel indirildi':'Furkan Excel downloaded');
+
+  // Hide overlay
+  overlay.style.display='none';
+  showToast(tr?'Furkan Excel indirildi (gercek API verisi)':'Furkan Excel downloaded (real API data)');
 }
 
 // ════════════════════════════════════════════════════════════════

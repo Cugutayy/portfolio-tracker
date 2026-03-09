@@ -1,8 +1,13 @@
 // Cloudflare Pages Function: /api/prices?sym=AAPL
+// Supports: range (1d, 1mo, 3mo) and period1/period2 (Unix timestamps)
 // Zero cold start — runs on Cloudflare edge (300+ locations)
 export async function onRequest(context) {
   const url = new URL(context.request.url);
   const sym = url.searchParams.get('sym');
+  const range = url.searchParams.get('range') || '1d';
+  const period1 = url.searchParams.get('period1');
+  const period2 = url.searchParams.get('period2');
+  const interval = url.searchParams.get('interval') || '1d';
 
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -19,7 +24,15 @@ export async function onRequest(context) {
   }
 
   try {
-    const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=1d&interval=1d`;
+    let yahooUrl;
+    if (period1 && period2) {
+      // Explicit date range (Unix timestamps)
+      yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?period1=${period1}&period2=${period2}&interval=${interval}`;
+    } else {
+      // Range-based (1d, 1mo, 3mo, etc.)
+      yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=${range}&interval=${interval}`;
+    }
+
     const resp = await fetch(yahooUrl, {
       headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
     });
