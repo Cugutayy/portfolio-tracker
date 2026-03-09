@@ -345,9 +345,13 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
     return () => { if (replayRef.current) cancelAnimationFrame(replayRef.current) }
   }, [replayPlaying, replaySpeed, raceEndTime, lapData]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Telemetry from car_data — driven by replayLap changes (not replayTime) to avoid cascading
+  // Telemetry from car_data — throttled to ~5fps (200ms) for smooth UI updates
+  const telemetryTimerRef = useRef<number>(0)
   useEffect(() => {
     if (!allCarData.length || !replayTime || mode !== 'replay') return
+    const now = Date.now()
+    if (now - telemetryTimerRef.current < 200) return
+    telemetryTimerRef.current = now
     const tMap = new Map<number, any>()
     for (const dn of selectedDrivers) {
       const driverData = allCarData.filter(d => d.driver_number === dn)
@@ -368,7 +372,7 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
       }
     }
     setCarTelemetry(tMap)
-  }, [replayLap, allCarData, selectedDrivers, mode]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [replayTime, allCarData, selectedDrivers, mode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch car_data for newly selected drivers — ref-tracked to avoid cascading
   useEffect(() => {
@@ -816,7 +820,7 @@ function TrackSVG({ pts, cars, drivers, standings, large, selectedDrivers, onCar
       const snapped = snapToTrack(pos.x, pos.y, pts)
       const cx = tx(snapped.x), cy = ty(snapped.y), r = large ? (p <= 3 ? 8 : 6) : (p <= 3 ? 5 : 4)
       const isSel = selectedDrivers.includes(dn)
-      return <g key={dn} style={{ cursor: 'pointer', transition: 'transform .4s cubic-bezier(.25,.1,.25,1)', transform: `translate(${cx}px,${cy}px)` }} onClick={() => onCarClick(dn)}>
+      return <g key={dn} style={{ cursor: 'pointer', transform: `translate(${cx}px,${cy}px)` }} onClick={() => onCarClick(dn)}>
         {/* Ambient glow */}
         <circle cx={0} cy={0} r={r + 3} fill={col} opacity=".08" style={{ transition: 'r .3s ease' }} />
         {/* Selection glow */}
