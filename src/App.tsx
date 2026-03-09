@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
 import { Navbar } from './components/Navbar'
 import { Hero } from './components/Hero'
+import { InteractiveGraph } from './components/InteractiveGraph'
 import { ProjectCards } from './components/ProjectCards'
 import { Footer } from './components/Footer'
 import { F1Page } from './components/F1Page'
@@ -18,22 +19,26 @@ function ShaderBg({ dark }: { dark: boolean }) {
   const targetRef = useRef(0.15)
   const rafRef = useRef(0)
   const [wave, setWave] = useState(0.15)
+  const [ready, setReady] = useState(false)
+
+  // Delay shader render to avoid initial load stutter
+  useEffect(() => {
+    const t = setTimeout(() => setReady(true), 350)
+    return () => clearTimeout(t)
+  }, [])
 
   useEffect(() => {
+    if (!ready) return
     const onMove = () => { targetRef.current = 0.28 }
     window.addEventListener('mousemove', onMove, { passive: true })
 
-    // Smooth animation loop — 30fps, wave drifts toward target then decays
     let last = 0
     const tick = (t: number) => {
       rafRef.current = requestAnimationFrame(tick)
-      if (t - last < 33) return // ~30fps cap
+      if (t - last < 40) return // ~25fps — lighter on performance
       last = t
-      // Decay target back to base
       targetRef.current += (0.15 - targetRef.current) * 0.04
-      // Smooth interpolation
       waveRef.current += (targetRef.current - waveRef.current) * 0.12
-      // Only update state when value actually changes visually
       const rounded = Math.round(waveRef.current * 200) / 200
       if (rounded !== Math.round(wave * 200) / 200) setWave(rounded)
     }
@@ -43,29 +48,31 @@ function ShaderBg({ dark }: { dark: boolean }) {
       window.removeEventListener('mousemove', onMove)
       cancelAnimationFrame(rafRef.current)
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ready]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const colors = dark
     ? ['hsl(200,100%,12%)', 'hsl(170,100%,65%)', 'hsl(185,90%,25%)', 'hsl(175,100%,70%)']
     : ['hsl(195,80%,55%)', 'hsl(165,90%,78%)', 'hsl(185,70%,45%)', 'hsl(175,85%,85%)']
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity: dark ? 0.4 : 0.45 }}>
-      <Suspense fallback={null}>
-        <Warp
-          colors={colors}
-          speed={0.3}
-          proportion={0.45}
-          softness={1}
-          distortion={wave}
-          swirl={0.5}
-          swirlIterations={8}
-          shape="checks"
-          shapeScale={0.1}
-          scale={1}
-          rotation={0}
-          style={{ width:'100%', height:'100%' }}
-        />
-      </Suspense>
+    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity: ready ? (dark ? 0.4 : 0.45) : 0, transition: 'opacity 1.2s ease' }}>
+      {ready && (
+        <Suspense fallback={null}>
+          <Warp
+            colors={colors}
+            speed={0.25}
+            proportion={0.45}
+            softness={1}
+            distortion={wave}
+            swirl={0.5}
+            swirlIterations={6}
+            shape="checks"
+            shapeScale={0.1}
+            scale={1}
+            rotation={0}
+            style={{ width:'100%', height:'100%' }}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }
@@ -91,7 +98,7 @@ export default function App() {
   }, [])
 
   if (page === 'f1') {
-    return <F1Page />
+    return <F1Page dark={dark} setDark={setDark} />
   }
 
   return (
@@ -100,6 +107,9 @@ export default function App() {
       <div style={{ position:'relative', zIndex:1 }}>
         <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />
         <Hero lang={lang} />
+        <div className="container" style={{ paddingTop: 0, paddingBottom: 16 }}>
+          <InteractiveGraph dark={dark} t={t} />
+        </div>
         <ProjectCards t={t} />
         <Footer />
       </div>

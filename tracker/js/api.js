@@ -368,126 +368,96 @@ async function fetchFurkanHistoricalPrices(progressCb) {
     console.log('[FURKAN]', msg);
   };
 
-  report('Furkan portfoy verileri API\'lerden cekiliyor...');
+  report('Furkan portfoy verileri API\'lerden paralel cekiliyor...');
 
-  // ── 1) BTC/TRY — Binance klines (direct, no CORS) ──
-  report('1/6 BTC/TRY cekiliyor (Binance klines)...');
-  try {
-    const fromMs = new Date(START).getTime();
-    const nowMs = Date.now();
+  const fromMs = new Date(START).getTime();
+  const nowMs = Date.now();
+
+  // ═══ ALL 6 INSTRUMENTS FETCHED IN PARALLEL ═══
+  const fetchBTC = async () => {
+    report('  BTC/TRY cekiliyor (Binance)...');
     const [btcData, tryData] = await Promise.all([
       safeGet(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${fromMs}&endTime=${nowMs}&limit=30`),
       safeGet('https://api.binance.com/api/v3/ticker/price?symbol=USDTTRY')
     ]);
     const usdtTry = parseFloat(tryData.price);
     if(!Array.isArray(btcData) || btcData.length === 0 || !usdtTry) throw new Error('Empty Binance response');
-
     const dates = [], prices = [];
     btcData.forEach(k => {
       const d = new Date(k[0]).toISOString().slice(0,10);
-      if(d >= START){
-        dates.push(d);
-        prices.push(Math.round(parseFloat(k[4]) * usdtTry)); // close * USDT/TRY
-      }
+      if(d >= START){ dates.push(d); prices.push(Math.round(parseFloat(k[4]) * usdtTry)); }
     });
-    results.f_btc = { dates, prices, src: 'Binance klines + USDT/TRY' };
-    report(`  ✓ BTC/TRY: ${prices.length} gun — son: ${prices[prices.length-1]?.toLocaleString()} TL`);
-  } catch(e) {
-    report(`  ✗ BTC/TRY HATA: ${e.message}`);
-  }
-  await sleep(300);
+    return { id: 'f_btc', dates, prices, src: 'Binance klines + USDT/TRY' };
+  };
 
-  // ── 2) EREGL.IS — Yahoo Finance ──
-  report('2/6 EREGL.IS cekiliyor (Yahoo Finance)...');
-  try {
-    const data = await safeGet(yahooHistProxy('EREGL.IS', startTs, endTs), 25000, 2);
+  const fetchYahooStock = async (sym, id) => {
+    report(`  ${sym} cekiliyor (Yahoo Finance)...`);
+    const data = await safeGet(yahooHistProxy(sym, startTs, endTs), 15000, 1);
     const parsed = parseYahooHistorical(data, START);
-    if(!parsed || parsed.dates.length === 0) throw new Error('No EREGL data from Yahoo');
-    results.f_eregl = { dates: parsed.dates, prices: parsed.prices.map(p => +p.toFixed(2)), src: 'Yahoo Finance' };
-    report(`  ✓ EREGL: ${parsed.dates.length} gun — son: ${parsed.prices[parsed.prices.length-1]?.toFixed(2)} TL`);
-  } catch(e) {
-    report(`  ✗ EREGL HATA: ${e.message}`);
-  }
-  await sleep(300);
+    if(!parsed || parsed.dates.length === 0) throw new Error(`No ${sym} data from Yahoo`);
+    return { id, dates: parsed.dates, prices: parsed.prices.map(p => +p.toFixed(2)), src: 'Yahoo Finance' };
+  };
 
-  // ── 3) ARCLK.IS — Yahoo Finance ──
-  report('3/6 ARCLK.IS cekiliyor (Yahoo Finance)...');
-  try {
-    const data = await safeGet(yahooHistProxy('ARCLK.IS', startTs, endTs), 25000, 2);
-    const parsed = parseYahooHistorical(data, START);
-    if(!parsed || parsed.dates.length === 0) throw new Error('No ARCLK data from Yahoo');
-    results.f_arclk = { dates: parsed.dates, prices: parsed.prices.map(p => +p.toFixed(2)), src: 'Yahoo Finance' };
-    report(`  ✓ ARCLK: ${parsed.dates.length} gun — son: ${parsed.prices[parsed.prices.length-1]?.toFixed(2)} TL`);
-  } catch(e) {
-    report(`  ✗ ARCLK HATA: ${e.message}`);
-  }
-  await sleep(300);
-
-  // ── 4) Gold (gram TRY) — Yahoo GC=F + USD/TRY conversion ──
-  report('4/6 Gram Altin cekiliyor (Yahoo GC=F + USD/TRY)...');
-  try {
-    // Fetch gold (USD/oz) and USD/TRY historical in parallel
+  const fetchGold = async () => {
+    report('  Gram Altin cekiliyor (Yahoo GC=F + USD/TRY)...');
     const [goldData, usdTryData] = await Promise.all([
-      safeGet(yahooHistProxy('GC=F', startTs, endTs), 25000, 2),
-      safeGet(yahooHistProxy('USDTRY=X', startTs, endTs), 25000, 2)
+      safeGet(yahooHistProxy('GC=F', startTs, endTs), 15000, 1),
+      safeGet(yahooHistProxy('USDTRY=X', startTs, endTs), 15000, 1)
     ]);
     const goldParsed = parseYahooHistorical(goldData, START);
     const usdTryParsed = parseYahooHistorical(usdTryData, START);
     if(!goldParsed || goldParsed.dates.length === 0) throw new Error('No gold data');
-
-    // Build USD/TRY map (date → rate)
     const usdTryMap = {};
     if(usdTryParsed) usdTryParsed.dates.forEach((d,i) => { usdTryMap[d] = usdTryParsed.prices[i]; });
-
     const goldDates = [], goldPrices = [];
     goldParsed.dates.forEach((d, i) => {
-      const rate = usdTryMap[d] || usdTryRate; // Historical rate or current
-      const gramTry = (goldParsed.prices[i] / 31.1035) * rate;
+      const rate = usdTryMap[d] || usdTryRate;
       goldDates.push(d);
-      goldPrices.push(Math.round(gramTry));
+      goldPrices.push(Math.round((goldParsed.prices[i] / 31.1035) * rate));
     });
-    results.f_altin = { dates: goldDates, prices: goldPrices, src: 'Yahoo (GC=F * USD/TRY / 31.1035)' };
-    report(`  ✓ Gram Altin: ${goldDates.length} gun — son: ${goldPrices[goldPrices.length-1]?.toLocaleString()} TL`);
-  } catch(e) {
-    // Fallback: use main portfolio's gold HISTORY if available
-    if(HISTORY?.gold?.length > 0 && HISTORY?.dates?.length > 0){
-      const gd = [], gp = [];
-      HISTORY.dates.forEach((d, i) => { if(d >= START && HISTORY.gold[i]){ gd.push(d); gp.push(HISTORY.gold[i]); }});
-      if(gd.length > 0){
-        results.f_altin = { dates: gd, prices: gp, src: 'Ana portfolio HISTORY (fallback)' };
-        report(`  ⚠ Gram Altin: Yahoo hata — ana portfolio verisi kullaniliyor (${gd.length} gun)`);
-      } else {
-        report(`  ✗ Gram Altin HATA: ${e.message}`);
-      }
+    return { id: 'f_altin', dates: goldDates, prices: goldPrices, src: 'Yahoo (GC=F * USD/TRY / 31.1035)' };
+  };
+
+  const fetchFund = async (fonKod, id) => {
+    report(`  ${fonKod} fon fiyati cekiliyor (TEFAS)...`);
+    const data = await fetchTefasData(fonKod, tefasStart, tefasEnd);
+    const parsed = parseTefasResponse(data, START);
+    if(!parsed || parsed.dates.length === 0) throw new Error(`No ${fonKod} data from TEFAS`);
+    return { id, dates: parsed.dates, prices: parsed.prices, src: 'TEFAS API' };
+  };
+
+  // Fire all 6 requests simultaneously
+  const settled = await Promise.allSettled([
+    fetchBTC(),
+    fetchYahooStock('EREGL.IS', 'f_eregl'),
+    fetchYahooStock('ARCLK.IS', 'f_arclk'),
+    fetchGold(),
+    fetchFund('TZT', 'f_tzt'),
+    fetchFund('PHE', 'f_phe'),
+  ]);
+
+  // Process results
+  const labels = ['BTC/TRY','EREGL.IS','ARCLK.IS','Gram Altin','TZT','PHE'];
+  settled.forEach((s, i) => {
+    if(s.status === 'fulfilled'){
+      const r = s.value;
+      results[r.id] = r;
+      const lastP = r.prices[r.prices.length-1];
+      const fmtP = r.id === 'f_btc' ? lastP?.toLocaleString() : r.id.includes('f_t') || r.id.includes('f_p') ? lastP?.toFixed(4) : lastP?.toFixed?.(2) || lastP;
+      report(`  ✓ ${labels[i]}: ${r.dates.length} gun — son: ${fmtP} TL — ${r.src}`);
     } else {
-      report(`  ✗ Gram Altin HATA: ${e.message}`);
+      report(`  ✗ ${labels[i]} HATA: ${s.reason?.message || s.reason}`);
     }
-  }
-  await sleep(300);
+  });
 
-  // ── 5) TZT (TEFAS) ──
-  report('5/6 TZT fon fiyati cekiliyor (TEFAS API)...');
-  try {
-    const data = await fetchTefasData('TZT', tefasStart, tefasEnd);
-    const parsed = parseTefasResponse(data, START);
-    if(!parsed || parsed.dates.length === 0) throw new Error('No TZT data from TEFAS');
-    results.f_tzt = { dates: parsed.dates, prices: parsed.prices, src: 'TEFAS API' };
-    report(`  ✓ TZT: ${parsed.dates.length} gun — son: ${parsed.prices[parsed.prices.length-1]?.toFixed(4)} TL`);
-  } catch(e) {
-    report(`  ✗ TZT HATA: ${e.message} (TEFAS yerel gelistirmede CORS nedeniyle calismayabilir — uretimde calisir)`);
-  }
-  await sleep(300);
-
-  // ── 6) PHE (TEFAS) ──
-  report('6/6 PHE fon fiyati cekiliyor (TEFAS API)...');
-  try {
-    const data = await fetchTefasData('PHE', tefasStart, tefasEnd);
-    const parsed = parseTefasResponse(data, START);
-    if(!parsed || parsed.dates.length === 0) throw new Error('No PHE data from TEFAS');
-    results.f_phe = { dates: parsed.dates, prices: parsed.prices, src: 'TEFAS API' };
-    report(`  ✓ PHE: ${parsed.dates.length} gun — son: ${parsed.prices[parsed.prices.length-1]?.toFixed(4)} TL`);
-  } catch(e) {
-    report(`  ✗ PHE HATA: ${e.message} (TEFAS yerel gelistirmede CORS nedeniyle calismayabilir — uretimde calisir)`);
+  // Gold fallback: use main portfolio HISTORY if Yahoo failed
+  if(!results.f_altin && HISTORY?.gold?.length > 0 && HISTORY?.dates?.length > 0){
+    const gd = [], gp = [];
+    HISTORY.dates.forEach((d, i) => { if(d >= START && HISTORY.gold[i]){ gd.push(d); gp.push(HISTORY.gold[i]); }});
+    if(gd.length > 0){
+      results.f_altin = { dates: gd, prices: gp, src: 'Ana portfolio HISTORY (fallback)' };
+      report(`  ⚠ Gram Altin: Yahoo hata — ana portfolio verisi kullaniliyor (${gd.length} gun)`);
+    }
   }
 
   // ════════════════════════════════════════════════════════
@@ -575,37 +545,39 @@ async function fetchFurkanHistoricalPrices(progressCb) {
     if(nullCount === 0 && zeroCount === 0 && negCount === 0) report(`  ✓ ${ins.id}: ${arr.length} gun, tum degerler gecerli`);
   });
 
-  // CHECK 2: Cross-source verification (BTC: Binance vs CoinGecko)
+  // CHECK 2: Cross-source verification (all in parallel)
   report('Kontrol 2/3: Capraz kaynak dogrulama...');
-  try {
-    const cgData = await safeGet('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=try', 10000);
-    if(cgData?.bitcoin?.try){
-      const cgPrice = cgData.bitcoin.try;
-      const binanceLatest = results.f_btc?.prices?.[results.f_btc.prices.length-1];
-      if(binanceLatest){
-        const diff = Math.abs(cgPrice - binanceLatest) / cgPrice * 100;
-        report(`  BTC dogrulama: Binance=${binanceLatest.toLocaleString()} TL, CoinGecko=${Math.round(cgPrice).toLocaleString()} TL (fark: %${diff.toFixed(1)})`);
-        if(diff > 10) report(`  ⚠ BTC fiyatlarinda >%10 fark! Piyasa volatilitesi veya kur farki olabilir.`);
-        else report(`  ✓ BTC fiyatlari tutarli`);
-      }
-    }
-  } catch(e){ report(`  ⚠ CoinGecko dogrulama hatasi: ${e.message}`); }
+  const crossChecks = await Promise.allSettled([
+    safeGet('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=try', 8000),
+    safeGet(yahooProxy('EREGL.IS'), 8000),
+    safeGet(yahooProxy('ARCLK.IS'), 8000),
+  ]);
 
-  // Cross-check stocks with current Yahoo spot price
-  for(const sym of ['EREGL.IS', 'ARCLK.IS']){
+  // BTC cross-check
+  if(crossChecks[0].status === 'fulfilled'){
+    const cgPrice = crossChecks[0].value?.bitcoin?.try;
+    const binanceLatest = results.f_btc?.prices?.[results.f_btc.prices.length-1];
+    if(cgPrice && binanceLatest){
+      const diff = Math.abs(cgPrice - binanceLatest) / cgPrice * 100;
+      report(`  BTC: Binance=${binanceLatest.toLocaleString()} TL, CoinGecko=${Math.round(cgPrice).toLocaleString()} TL (fark: %${diff.toFixed(1)})`);
+      report(diff > 10 ? `  ⚠ BTC >%10 fark!` : `  ✓ BTC tutarli`);
+    }
+  } else { report(`  ⚠ CoinGecko dogrulama hatasi: ${crossChecks[0].reason?.message}`); }
+
+  // Stock cross-checks
+  ['EREGL.IS','ARCLK.IS'].forEach((sym, idx) => {
     const insId = sym === 'EREGL.IS' ? 'f_eregl' : 'f_arclk';
-    try {
-      const spotData = await safeGet(yahooProxy(sym), 20000);
-      const spotPrice = spotData?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    const check = crossChecks[idx + 1];
+    if(check.status === 'fulfilled'){
+      const spotPrice = check.value?.chart?.result?.[0]?.meta?.regularMarketPrice;
       const histLatest = results[insId]?.prices?.[results[insId].prices.length-1];
       if(spotPrice && histLatest){
         const diff = Math.abs(spotPrice - histLatest) / spotPrice * 100;
-        report(`  ${sym} dogrulama: Tarihsel=${histLatest.toFixed(2)} TL, Spot=${spotPrice.toFixed(2)} TL (fark: %${diff.toFixed(1)})`);
-        if(diff > 15) report(`  ⚠ ${sym}: >%15 fark — BIST kapali olabilir veya veri gecikmeli`);
-        else report(`  ✓ ${sym} fiyatlari tutarli`);
+        report(`  ${sym}: Tarihsel=${histLatest.toFixed(2)}, Spot=${spotPrice.toFixed(2)} (fark: %${diff.toFixed(1)})`);
+        report(diff > 15 ? `  ⚠ ${sym} >%15 fark` : `  ✓ ${sym} tutarli`);
       }
-    } catch(e){ report(`  ⚠ ${sym} spot dogrulama hatasi: ${e.message}`); }
-  }
+    } else { report(`  ⚠ ${sym} spot dogrulama hatasi`); }
+  });
 
   // CHECK 3: Reasonableness (no extreme daily swings)
   report('Kontrol 3/3: Mantiklilik kontrolu...');

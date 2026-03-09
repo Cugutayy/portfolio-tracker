@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo, Suspense, lazy } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { TEAMS, DRIVERS, DRIVER_NUMBER_MAP } from '../f1/data'
 import { AUSTRALIA_2026_QUALI, AUSTRALIA_2026_RACE_RESULT, computeBacktest } from '../f1/realdata'
 import { predictor } from '../f1/predictor'
@@ -6,7 +6,6 @@ import { openF1 } from '../f1/api'
 import { TRACK_COORDS, CIRCUIT_MAP, getCircuitLaps } from '../f1/trackData'
 import { ALBERT_PARK_DRS } from '../f1/tracks'
 import type { PredictionResult } from '../f1/types'
-import { SmokeRing } from '@paper-design/shaders-react'
 
 const SESSION_KEY = 11234
 
@@ -21,15 +20,23 @@ const CSS = `
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes borderGlow{0%,100%{border-color:rgba(225,6,0,.2)}50%{border-color:rgba(225,6,0,.45)}}
 @keyframes panelAppear{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
-@keyframes scanLine{0%{top:-2px}100%{top:100%}}
-.f1{background:transparent;min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace;position:relative;overflow:hidden}
-.f1-shader{position:fixed;inset:0;z-index:0;pointer-events:none}
+@keyframes ledPulse{0%,100%{opacity:.4}50%{opacity:.8}}
+@keyframes ledSweep{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.f1{min-height:100vh;color:#e0e0e8;font-family:'JetBrains Mono',monospace;position:relative;overflow:hidden}
+/* LED Background — dark mode */
+.f1{background:#080810}
+.f1::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% -10%,rgba(225,6,0,.07) 0%,transparent 55%),radial-gradient(ellipse at 0% 50%,rgba(225,6,0,.03) 0%,transparent 40%),radial-gradient(ellipse at 100% 50%,rgba(225,6,0,.03) 0%,transparent 40%),radial-gradient(ellipse at 50% 110%,rgba(225,6,0,.04) 0%,transparent 45%)}
 .f1::after{content:'';position:fixed;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.02;z-index:0}
+/* LED strip accents */
+.f1-led-top{position:fixed;top:0;left:0;right:0;height:2px;z-index:100;background:linear-gradient(90deg,transparent 5%,#e10600 30%,#ff3030 50%,#e10600 70%,transparent 95%);opacity:.6;background-size:200% 100%;animation:ledSweep 6s ease-in-out infinite}
+.f1-led-left,.f1-led-right{position:fixed;top:0;width:1px;height:100%;z-index:100;pointer-events:none}
+.f1-led-left{left:0;background:linear-gradient(180deg,#e10600 0%,transparent 30%,transparent 70%,#e10600 100%);opacity:.15}
+.f1-led-right{right:0;background:linear-gradient(180deg,#e10600 0%,transparent 30%,transparent 70%,#e10600 100%);opacity:.15}
 .f1 *{box-sizing:border-box}
 .f1p{background:rgba(10,10,22,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:14px 16px;position:relative;z-index:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 32px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.15);animation:panelAppear .4s ease both;overflow:hidden}
-.f1p::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(225,6,0,.2),rgba(255,255,255,.08),rgba(225,6,0,.2),transparent)}
+.f1p::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(225,6,0,.25),rgba(255,255,255,.08),rgba(225,6,0,.25),transparent)}
 .f1t{font-family:'Outfit',sans-serif;font-size:8.5px;color:#777;letter-spacing:.14em;font-weight:700;margin-bottom:8px;text-transform:uppercase;display:flex;align-items:center;gap:6px}
-.f1t::before{content:'';width:3px;height:10px;border-radius:2px;background:linear-gradient(180deg,#e10600,#b30500);flex-shrink:0}
+.f1t::before{content:'';width:3px;height:10px;border-radius:2px;background:linear-gradient(180deg,#e10600,#b30500);flex-shrink:0;box-shadow:0 0 6px rgba(225,6,0,.4)}
 .f1r{display:flex;align-items:center;gap:6px;padding:4px 6px;border-bottom:1px solid rgba(255,255,255,.025);transition:all .2s ease;border-radius:4px}
 .f1r:hover{background:rgba(225,6,0,.04);border-color:rgba(225,6,0,.08)}
 .f1b{border:none;border-radius:8px;padding:5px 14px;font-size:10px;color:#fff;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;transition:all .2s ease;letter-spacing:.03em;position:relative;overflow:hidden}
@@ -44,6 +51,20 @@ const CSS = `
 .f1-bar-fill{height:100%;border-radius:3px;transition:width .3s cubic-bezier(.4,0,.2,1);position:relative}
 .f1-label{font-family:'Outfit',sans-serif;font-size:7px;color:#555;letter-spacing:.12em;font-weight:600;text-transform:uppercase}
 .drs-on{animation:drsFlash 1.5s infinite}
+/* Light theme */
+.f1.f1-light{background:#f0ece5;color:#1c1c18}
+.f1.f1-light::before{background:radial-gradient(ellipse at 50% -10%,rgba(225,6,0,.04) 0%,transparent 55%)}
+.f1.f1-light .f1p{background:rgba(255,255,255,.75);border-color:rgba(0,0,0,.08);box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.f1.f1-light .f1p::before{background:linear-gradient(90deg,transparent,rgba(225,6,0,.15),rgba(0,0,0,.04),rgba(225,6,0,.15),transparent)}
+.f1.f1-light .f1t{color:#888}
+.f1.f1-light .f1r{border-color:rgba(0,0,0,.04)}
+.f1.f1-light .f1r:hover{background:rgba(225,6,0,.04)}
+.f1.f1-light .f1b{color:#333}
+.f1.f1-light .f1-tele{background:rgba(255,255,255,.7);border-color:rgba(0,0,0,.08)}
+.f1.f1-light .f1-bar{background:rgba(0,0,0,.06)}
+.f1.f1-light .f1-label{color:#888}
+.f1.f1-light .f1-led-top{opacity:.3}
+.f1.f1-light .f1-led-left,.f1.f1-light .f1-led-right{opacity:.06}
 @media(max-width:900px){.f1{overflow-y:auto!important;overflow-x:hidden!important}.f1-layout{height:auto!important;min-height:0!important}.f1-main{flex-direction:column!important;overflow:visible!important;height:auto!important;flex:none!important}.f1-side{min-width:0!important;max-width:100%!important;width:100%!important;overflow:visible!important;height:auto!important}.f1-side *{max-height:none!important}.f1-side div[style*="max-height"]{max-height:none!important;overflow:visible!important}.f1-tele-row{flex-direction:row!important;gap:6px}}
 @media(max-width:600px){.f1-bottom{flex-direction:column!important;gap:6px!important}}
 `
@@ -75,7 +96,7 @@ function bsearch(arr: any[], time: number, dn: number): any | null {
 // ═══════════════════════════════════════════════════
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════
-export function F1Page() {
+export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d: boolean) => void }) {
   // === STATE ===
   const [preds, setPreds] = useState<PredictionResult[] | null>(null)
   const [mode, setMode] = useState<'predict' | 'replay'>('predict')
@@ -109,29 +130,6 @@ export function F1Page() {
   }>>(new Map())
   // Progress
   const [lapFlags, setLapFlags] = useState<Map<number, string>>(new Map())
-
-  // Shader interaction
-  const [shaderScale, setShaderScale] = useState(1.5)
-  const shaderTarget = useRef(1.5)
-  const shaderRaf = useRef(0)
-
-  useEffect(() => {
-    const onMove = () => { shaderTarget.current = 2.2 }
-    window.addEventListener('mousemove', onMove, { passive: true })
-    let last = 0
-    const tick = (t: number) => {
-      shaderRaf.current = requestAnimationFrame(tick)
-      if (t - last < 50) return
-      last = t
-      shaderTarget.current += (1.5 - shaderTarget.current) * 0.03
-      const cur = shaderScale
-      const next = cur + (shaderTarget.current - cur) * 0.08
-      const r = Math.round(next * 100) / 100
-      if (r !== Math.round(cur * 100) / 100) setShaderScale(r)
-    }
-    shaderRaf.current = requestAnimationFrame(tick)
-    return () => { window.removeEventListener('mousemove', onMove); cancelAnimationFrame(shaderRaf.current) }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const replayRef = useRef<number | null>(null)
   const liveRef = useRef<number | null>(null)
@@ -371,43 +369,47 @@ export function F1Page() {
   // ═══════════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════════
+  const isDark = dark
+  const headerBg = isDark ? 'linear-gradient(180deg,rgba(8,8,18,.85),rgba(8,8,18,.75))' : 'linear-gradient(180deg,rgba(255,255,255,.92),rgba(248,246,240,.88))'
+  const headerBorder = isDark ? '1px solid rgba(225,6,0,.3)' : '1px solid rgba(225,6,0,.15)'
+  const headerShadow = isDark ? '0 4px 40px rgba(0,0,0,.4),inset 0 -1px 0 rgba(225,6,0,.15)' : '0 2px 16px rgba(0,0,0,.06)'
+  const headerText = isDark ? '#fff' : '#1c1c18'
+  const headerMuted = isDark ? '#666' : '#999'
+  const sideBg = isDark ? 'linear-gradient(180deg,rgba(8,8,18,.15),rgba(8,8,18,.05))' : 'linear-gradient(180deg,rgba(248,246,240,.3),rgba(248,246,240,.1))'
+  const sideBorder = isDark ? '1px solid rgba(255,255,255,.03)' : '1px solid rgba(0,0,0,.04)'
+
   return (
-    <div className="f1"><style>{CSS}</style>
-      {/* ═══ SHADER BACKGROUND ═══ */}
-      <div className="f1-shader" style={{ opacity: 0.35 }}>
-        <SmokeRing
-          colorBack="#080810"
-          colors={['#e10600', '#ff2020', '#8b0000', '#e10600', '#1a0020']}
-          speed={0.12}
-          noiseScale={1.6}
-          thickness={0.7}
-          radius={0.45}
-          innerShape={2.5}
-          noiseIterations={6}
-          scale={shaderScale}
-          style={{ width: '100%', height: '100%' }}
-        />
-      </div>
+    <div className={`f1${isDark ? '' : ' f1-light'}`}><style>{CSS}</style>
+      {/* ═══ LED ACCENT STRIPS ═══ */}
+      <div className="f1-led-top" />
+      <div className="f1-led-left" />
+      <div className="f1-led-right" />
       {/* ═══ HEADER BAR ═══ */}
-      <div style={{ background: 'linear-gradient(180deg,rgba(8,8,18,.85),rgba(8,8,18,.75))', borderBottom: '1px solid rgba(225,6,0,.3)', padding: '8px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', boxShadow: '0 4px 40px rgba(0,0,0,.4),inset 0 -1px 0 rgba(225,6,0,.15)' }}>
+      <div style={{ background: headerBg, borderBottom: headerBorder, padding: '8px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)', boxShadow: headerShadow }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <a href="/" style={{ color: '#666', textDecoration: 'none', fontSize: 11, border: '1px solid rgba(255,255,255,.08)', borderRadius: 6, padding: '3px 10px', transition: 'all .2s', background: 'rgba(255,255,255,.03)' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(225,6,0,.3)'; e.currentTarget.style.color = '#e10600' }} onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,.08)'; e.currentTarget.style.color = '#666' }}>{'<-'}</a>
+          <a href="/" style={{ color: headerMuted, textDecoration: 'none', fontSize: 11, border: `1px solid ${isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.1)'}`, borderRadius: 6, padding: '3px 10px', transition: 'all .2s', background: isDark ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.02)' }} onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(225,6,0,.3)'; e.currentTarget.style.color = '#e10600' }} onMouseLeave={e => { e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.1)'; e.currentTarget.style.color = headerMuted }}>{'<-'}</a>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-            <span style={{ fontFamily: "'Outfit'", fontWeight: 800, color: '#fff', fontSize: 16, letterSpacing: '.04em' }}>F1</span>
+            <span style={{ fontFamily: "'Outfit'", fontWeight: 800, color: headerText, fontSize: 16, letterSpacing: '.04em' }}>F1</span>
             <span style={{ fontFamily: "'Outfit'", fontWeight: 800, background: 'linear-gradient(135deg,#e10600,#ff3030)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: 16, letterSpacing: '.04em' } as any}>PREDICTOR</span>
           </div>
-          {races.length > 0 && <select value={selectedRace} onChange={e => setSelectedRace(Number(e.target.value))} style={{ background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: 8, color: '#999', padding: '4px 10px', fontSize: 9, outline: 'none', transition: 'all .2s' }}>
+          {races.length > 0 && <select value={selectedRace} onChange={e => setSelectedRace(Number(e.target.value))} style={{ background: isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.03)', border: `1px solid ${isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.1)'}`, borderRadius: 8, color: isDark ? '#999' : '#666', padding: '4px 10px', fontSize: 9, outline: 'none', transition: 'all .2s' }}>
             {races.map(r => <option key={r.key} value={r.key} disabled={!r.hasData}>{r.circuit} {r.date.slice(5)}</option>)}
           </select>}
           {mode === 'replay' && <span style={{ background: 'linear-gradient(135deg,#e10600,#b30500)', padding: '3px 12px', borderRadius: 8, fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '.04em', boxShadow: '0 2px 12px rgba(225,6,0,.35),inset 0 1px 0 rgba(255,255,255,.15)' }}>LAP {replayLap}/{totalLaps}</span>}
         </div>
         <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
-          {weatherData && <span style={{ fontSize: 8, color: '#555', padding: '2px 8px', background: 'rgba(255,255,255,.03)', borderRadius: 6 }}>{weatherData.air_temperature?.toFixed(0)}°C  T{weatherData.track_temperature?.toFixed(0)}°C</span>}
-          <button className="f1b" onClick={() => setMode('predict')} style={{ background: mode === 'predict' ? 'linear-gradient(135deg,#e10600,#b30500)' : 'rgba(255,255,255,.04)', boxShadow: mode === 'predict' ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8 }}>TAHMIN</button>
-          <button className="f1b" onClick={loadReplay} style={{ background: mode === 'replay' && !liveActive ? 'linear-gradient(135deg,#e10600,#b30500)' : 'rgba(255,255,255,.04)', opacity: loading ? .5 : 1, boxShadow: mode === 'replay' && !liveActive ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8 }}>{loading ? '...' : 'REPLAY'}</button>
-          <button className="f1b" onClick={toggleLive} style={{ background: liveActive ? 'linear-gradient(135deg,#dc2626,#b91c1c)' : 'rgba(255,255,255,.04)', animation: liveActive ? 'pulse 2s infinite' : '', boxShadow: liveActive ? '0 2px 12px rgba(220,38,38,.35)' : 'none', borderRadius: 8 }}>
+          {weatherData && <span style={{ fontSize: 8, color: isDark ? '#555' : '#888', padding: '2px 8px', background: isDark ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.03)', borderRadius: 6 }}>{weatherData.air_temperature?.toFixed(0)}°C  T{weatherData.track_temperature?.toFixed(0)}°C</span>}
+          <button className="f1b" onClick={() => setMode('predict')} style={{ background: mode === 'predict' ? 'linear-gradient(135deg,#e10600,#b30500)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', boxShadow: mode === 'predict' ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8, color: mode === 'predict' ? '#fff' : headerText }}>TAHMIN</button>
+          <button className="f1b" onClick={loadReplay} style={{ background: mode === 'replay' && !liveActive ? 'linear-gradient(135deg,#e10600,#b30500)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', opacity: loading ? .5 : 1, boxShadow: mode === 'replay' && !liveActive ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8, color: mode === 'replay' && !liveActive ? '#fff' : headerText }}>{loading ? '...' : 'REPLAY'}</button>
+          <button className="f1b" onClick={toggleLive} style={{ background: liveActive ? 'linear-gradient(135deg,#dc2626,#b91c1c)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', animation: liveActive ? 'pulse 2s infinite' : '', boxShadow: liveActive ? '0 2px 12px rgba(220,38,38,.35)' : 'none', borderRadius: 8, color: liveActive ? '#fff' : headerText }}>
             {liveActive && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block', marginRight: 5, boxShadow: '0 0 8px rgba(255,255,255,.5)' }} />}CANLI
           </button>
+          {/* Dark/Light Toggle */}
+          {setDark && <div onClick={() => setDark(!dark)} style={{ width: 36, height: 20, padding: 2, borderRadius: 99, cursor: 'pointer', border: `1px solid ${isDark ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.12)'}`, background: isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', transition: 'all .3s', marginLeft: 2, position: 'relative', display: 'flex', alignItems: 'center' }} title="Dark/Light">
+            <div style={{ width: 14, height: 14, borderRadius: '50%', transition: 'all .3s cubic-bezier(.16,1,.3,1)', position: 'absolute', left: 2, transform: isDark ? 'translateX(16px)' : 'translateX(0)', background: isDark ? '#252420' : '#e8e4dc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 8 }}>{isDark ? '☀' : '☾'}</span>
+            </div>
+          </div>}
         </div>
       </div>
 
@@ -416,7 +418,7 @@ export function F1Page() {
         <div className="f1-main" style={{ flex: 1, display: 'flex', overflow: 'hidden', gap: 4 }}>
 
           {/* ═══ LEFT PANEL ═══ */}
-          <div className="f1-side" style={{ width: 260, minWidth: 220, padding: '10px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, background: 'linear-gradient(180deg,rgba(8,8,18,.15),rgba(8,8,18,.05))', borderRight: '1px solid rgba(255,255,255,.03)' }}>
+          <div className="f1-side" style={{ width: 260, minWidth: 220, padding: '10px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, background: sideBg, borderRight: sideBorder }}>
             {/* Weather */}
             <WeatherCard data={weatherData} />
 
@@ -466,7 +468,7 @@ export function F1Page() {
           </div>
 
           {/* ═══ RIGHT PANEL ═══ */}
-          <div className="f1-side" style={{ width: 280, minWidth: 230, padding: '10px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, background: 'linear-gradient(180deg,rgba(8,8,18,.15),rgba(8,8,18,.05))', borderLeft: '1px solid rgba(255,255,255,.03)' }}>
+          <div className="f1-side" style={{ width: 280, minWidth: 230, padding: '10px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, background: sideBg, borderLeft: sideBorder }}>
             {mode === 'predict' ? (
               // Predict: Results vs predictions
               <div className="f1p" style={{ flex: 1 }}>
@@ -544,7 +546,7 @@ export function F1Page() {
         </div>
 
         {/* ═══ BOTTOM BAR ═══ */}
-        <div className="f1-bottom" style={{ padding: '8px 16px', background: 'linear-gradient(180deg,rgba(8,8,18,.7),rgba(8,8,18,.8))', borderTop: '1px solid rgba(225,6,0,.12)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', zIndex: 10, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.03)' }}>
+        <div className="f1-bottom" style={{ padding: '8px 16px', background: isDark ? 'linear-gradient(180deg,rgba(8,8,18,.7),rgba(8,8,18,.8))' : 'linear-gradient(180deg,rgba(255,255,255,.85),rgba(248,246,240,.9))', borderTop: `1px solid ${isDark ? 'rgba(225,6,0,.12)' : 'rgba(225,6,0,.08)'}`, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', zIndex: 10, backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,.03)' : 'inset 0 1px 0 rgba(0,0,0,.03)' }}>
           {mode === 'replay' ? (
             <>
               {/* Transport controls */}
