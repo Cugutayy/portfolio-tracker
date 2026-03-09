@@ -7,7 +7,7 @@ interface Node {
 }
 
 const NODES: Node[] = [
-  { id: 'name', label: 'S. Cagatay Sonmez', x: 50, y: 48, r: 38, type: 'center', sub: 'Sabanci University' },
+  { id: 'name', label: 'S. Cagatay Sonmez', x: 50, y: 48, r: 38, type: 'center' },
   { id: 'portfolio', label: 'Portfolio Tracker', x: 22, y: 28, r: 26, type: 'project', href: '/tracker/', sub: '100K TL · 7 instruments' },
   { id: 'f1', label: 'F1 Predictor', x: 78, y: 28, r: 26, type: 'project', href: '#/f1', sub: 'Ensemble ML · OpenF1' },
   { id: 'soon', label: 'Coming Soon', x: 50, y: 82, r: 18, type: 'project', sub: 'TBA' },
@@ -191,10 +191,10 @@ export function InteractiveGraph({ dark }: Props) {
         // Label
         const fontSize = isCenter ? w * 0.024 : isProject ? w * 0.016 : w * 0.011
         ctx.font = isCenter
-          ? `italic 300 ${fontSize}px 'Newsreader', Georgia, serif`
+          ? `italic 500 ${fontSize}px 'Newsreader', Georgia, serif`
           : isTech
-            ? `400 ${fontSize}px 'DM Mono', monospace`
-            : `400 ${fontSize}px 'Newsreader', Georgia, serif`
+            ? `500 ${fontSize}px 'DM Mono', monospace`
+            : `500 ${fontSize}px 'Newsreader', Georgia, serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillStyle = isDark
@@ -206,7 +206,7 @@ export function InteractiveGraph({ dark }: Props) {
         // Sub label
         if (node.sub && !isTech) {
           const subSize = Math.max(8, w * 0.0085)
-          ctx.font = `400 ${subSize}px 'DM Mono', monospace`
+          ctx.font = `500 ${subSize}px 'DM Mono', monospace`
           ctx.globalAlpha = isHovered ? 0.8 : 0.4
           ctx.fillStyle = isDark ? '#7a756c' : '#999'
           ctx.fillText(node.sub, px, py + fontSize * 0.7)
