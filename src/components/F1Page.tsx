@@ -744,6 +744,22 @@ function TelemetryCard({ driverNumber, telemetry, isSelected, drivers, onSwap }:
 }
 
 // Enhanced Track SVG
+// Snap a point to the nearest position on the track polyline
+function snapToTrack(x: number, y: number, trackPts: number[][]): { x: number, y: number } {
+  let minDist = Infinity, bestX = x, bestY = y
+  for (let i = 0; i < trackPts.length - 1; i++) {
+    const [ax, ay] = trackPts[i], [bx, by] = trackPts[i + 1]
+    const dx = bx - ax, dy = by - ay
+    const len2 = dx * dx + dy * dy
+    if (len2 === 0) continue
+    const t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / len2))
+    const px = ax + t * dx, py = ay + t * dy
+    const d = (x - px) * (x - px) + (y - py) * (y - py)
+    if (d < minDist) { minDist = d; bestX = px; bestY = py }
+  }
+  return { x: bestX, y: bestY }
+}
+
 function TrackSVG({ pts, cars, drivers, standings, large, selectedDrivers, onCarClick, lapFlags, replayLap }: {
   pts: number[][], cars: Map<number, { x: number, y: number }>, drivers: any[], standings: any[],
   large?: boolean, selectedDrivers: number[], onCarClick: (dn: number) => void,
@@ -792,12 +808,13 @@ function TrackSVG({ pts, cars, drivers, standings, large, selectedDrivers, onCar
     <circle cx={tx(pts[0][0])} cy={ty(pts[0][1])} r={large ? 6 : 3} fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.5)" strokeWidth="1.5" />
     <circle cx={tx(pts[0][0])} cy={ty(pts[0][1])} r={large ? 2 : 1.5} fill="#fff" opacity=".6" />
     <text x={tx(pts[0][0]) + (large ? 12 : 6)} y={ty(pts[0][1]) - 3} fill="#666" fontSize={large ? 7 : 5} fontFamily="Outfit" fontWeight="600">S/F</text>
-    {/* Cars — smooth CSS transitions for position changes */}
+    {/* Cars — snapped to track polyline for accuracy */}
     {[...cars.entries()].map(([dn, pos]) => {
       const drv = drivers.find((d: any) => d.driver_number === dn); if (!drv || (!pos.x && !pos.y)) return null
       const col = '#' + (drv.team_colour || '888'), code = drv.name_acronym || '?'
       const st = standings.find((s: any) => s.number === dn), p = st?.position || 99
-      const cx = tx(pos.x), cy = ty(pos.y), r = large ? (p <= 3 ? 8 : 6) : (p <= 3 ? 5 : 4)
+      const snapped = snapToTrack(pos.x, pos.y, pts)
+      const cx = tx(snapped.x), cy = ty(snapped.y), r = large ? (p <= 3 ? 8 : 6) : (p <= 3 ? 5 : 4)
       const isSel = selectedDrivers.includes(dn)
       return <g key={dn} style={{ cursor: 'pointer', transition: 'transform .4s cubic-bezier(.25,.1,.25,1)', transform: `translate(${cx}px,${cy}px)` }} onClick={() => onCarClick(dn)}>
         {/* Ambient glow */}
