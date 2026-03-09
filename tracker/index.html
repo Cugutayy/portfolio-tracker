@@ -42,7 +42,15 @@
       <span class="status-dot live" id="statusDot"></span><span id="lastUpd">--</span>
     </span>
     <button class="btn btn-ghost" id="fetchBtn" onclick="fetchAllPrices()"><span data-i18n="updatePrices">Fiyatları Güncelle</span></button>
-    <button class="btn btn-gold" onclick="exportCSV()" aria-label="Export to Excel">Export Excel</button>
+    <div class="export-dropdown" id="exportDropdown">
+      <button class="btn btn-gold" onclick="exportCSV()" aria-label="Export to Excel">Export Excel</button>
+      <button class="export-arrow" onclick="toggleExportMenu(event)" aria-label="More export options" title="Diger export secenekleri">
+        <svg width="8" height="5" viewBox="0 0 8 5"><path d="M0.5 0.5L4 4L7.5 0.5" stroke="currentColor" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="export-menu" id="exportMenu">
+        <button class="export-menu-item" onclick="exportFurkanCSV();closeExportMenu()">Furkan Export</button>
+      </div>
+    </div>
     <a href="/" title="Hub" style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.5);font-size:0.7rem;text-decoration:none;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#fff'" onmouseout="this.style.borderColor='rgba(255,255,255,0.15)';this.style.color='rgba(255,255,255,0.5)'">&#8592;</a>
     <div class="theme-toggle" id="themeToggle" title="Dark/Light">
       <div class="toggle-knob" id="toggleKnob">
