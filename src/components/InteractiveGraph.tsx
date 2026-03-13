@@ -248,7 +248,8 @@ export function InteractiveGraph({ dark }: Props) {
         const isProject = node.type === 'project'
         const isTech = node.type === 'tech'
         const scale = isDragged ? 1.18 : isHovered ? 1.10 : 1
-        const rPx = node.r * 0.003 * w * scale
+        const baseW = Math.min(w, 960)
+        const rPx = node.r * 0.003 * baseW * scale
 
         // Glow
         if ((isDragged || isHovered) && isProject && GLOW_COLORS[node.id]) {
@@ -294,7 +295,7 @@ export function InteractiveGraph({ dark }: Props) {
         }
 
         // Label
-        const fontSize = isCenter ? w * 0.030 : isProject ? w * 0.020 : w * 0.014
+        const fontSize = isCenter ? baseW * 0.030 : isProject ? baseW * 0.020 : baseW * 0.014
         ctx.font = isCenter
           ? `italic 600 ${fontSize}px 'Newsreader', Georgia, serif`
           : isTech
@@ -314,7 +315,7 @@ export function InteractiveGraph({ dark }: Props) {
 
         // Sub label
         if (node.sub && !isTech) {
-          ctx.font = `500 ${Math.max(10, w * 0.011)}px 'DM Mono', monospace`
+          ctx.font = `500 ${Math.max(10, baseW * 0.011)}px 'DM Mono', monospace`
           ctx.globalAlpha = isHovered || isDragged ? 0.9 : 0.55
           ctx.fillStyle = isDark ? '#9a958c' : '#888'
           ctx.fillText(node.sub, px, py + fontSize * 0.65)
