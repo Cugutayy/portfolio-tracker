@@ -120,8 +120,8 @@ export function InteractiveGraph({ dark }: Props) {
         const dx = mxPct - S.drag.startX, dy = myPct - S.drag.startY
         if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) S.drag.moved = true
         S.positions[S.drag.idx] = {
-          x: Math.max(-10, Math.min(110, S.drag.origX + dx)),
-          y: Math.max(-10, Math.min(110, S.drag.origY + dy)),
+          x: S.drag.origX + dx,
+          y: S.drag.origY + dy,
         }
         setCursor('grabbing')
         return
@@ -339,7 +339,7 @@ export function InteractiveGraph({ dark }: Props) {
     <div
       ref={containerRef}
       style={{
-        width: '100%', maxWidth: 960, margin: '0 auto',
+        width: '100%',
         height: 'clamp(400px, 55vh, 600px)',
         position: 'relative',
         userSelect: 'none',
