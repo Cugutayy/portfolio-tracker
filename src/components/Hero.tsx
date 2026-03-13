@@ -58,7 +58,7 @@ export function Hero({ lang }: { lang: string }) {
         transform: vis ? 'translateY(0)' : 'translateY(24px)',
         transition: 'opacity 1.1s cubic-bezier(.16,1,.3,1), transform 1.1s cubic-bezier(.16,1,.3,1)',
       }}>
-        S. \u00C7a\u011Fatay<br/>S\u00F6nmez
+        {"S. \u00C7a\u011Fatay"}<br/>{"S\u00F6nmez"}
       </h1>
 
       {/* Role subtitle */}
