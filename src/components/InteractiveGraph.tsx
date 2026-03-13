@@ -10,7 +10,7 @@ const NODES: Node[] = [
   { id: 'name', label: 'S. Cagatay Sonmez', x: 50, y: 48, r: 38, type: 'center' },
   { id: 'portfolio', label: 'Portfolio Tracker', x: 22, y: 28, r: 26, type: 'project', href: '/tracker/', sub: '100K TL · 7 instruments' },
   { id: 'f1', label: 'F1 Predictor', x: 78, y: 28, r: 26, type: 'project', href: '#/f1', sub: 'Ensemble ML · OpenF1' },
-  { id: 'soon', label: 'Coming Soon', x: 50, y: 82, r: 18, type: 'project', sub: 'TBA' },
+  { id: 'thesis', label: 'Tez Konusu', x: 50, y: 82, r: 22, type: 'project', href: '/tez/', sub: '209 IPO · BIST 2020-2025' },
   { id: 'react', label: 'React', x: 88, y: 56, r: 13, type: 'tech' },
   { id: 'ts', label: 'TypeScript', x: 90, y: 72, r: 13, type: 'tech' },
   { id: 'finance', label: 'Finance', x: 10, y: 56, r: 13, type: 'tech' },
@@ -20,13 +20,14 @@ const NODES: Node[] = [
   { id: 'esg', label: 'ESG', x: 14, y: 72, r: 11, type: 'tech' },
   { id: 'api', label: 'Live API', x: 30, y: 68, r: 11, type: 'tech' },
   { id: 'python', label: 'Python', x: 70, y: 70, r: 11, type: 'tech' },
+  { id: 'streamlit', label: 'Streamlit', x: 36, y: 80, r: 11, type: 'tech' },
 ]
 
 const EDGES: [string, string][] = [
-  ['name', 'portfolio'], ['name', 'f1'], ['name', 'soon'],
+  ['name', 'portfolio'], ['name', 'f1'], ['name', 'thesis'],
   ['portfolio', 'finance'], ['portfolio', 'chartjs'], ['portfolio', 'esg'], ['portfolio', 'api'],
   ['f1', 'react'], ['f1', 'ml'], ['f1', 'openf1'], ['f1', 'ts'],
-  ['soon', 'python'], ['soon', 'react'],
+  ['thesis', 'python'], ['thesis', 'streamlit'],
 ]
 
 // Pre-compute float params once (deterministic per node index)
@@ -38,7 +39,7 @@ const FLOAT_PARAMS = NODES.map((n, i) => ({
 }))
 
 const DOT_COLORS: Record<string, string> = {
-  portfolio: '#22c55e', f1: '#e10600',
+  portfolio: '#22c55e', f1: '#e10600', thesis: '#d45a3e',
 }
 
 interface Props { dark: boolean; t: (k: string) => string }
@@ -140,9 +141,9 @@ export function InteractiveGraph({ dark }: Props) {
         ctx.moveTo(posX[ai], posY[ai])
         ctx.lineTo(posX[bi], posY[bi])
         ctx.strokeStyle = isEdgeHovered
-          ? (isDark ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.15)')
-          : (isDark ? 'rgba(255,255,255,.09)' : 'rgba(0,0,0,.07)')
-        ctx.lineWidth = isEdgeHovered ? 1.2 : 0.6
+          ? (isDark ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.18)')
+          : (isDark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.09)')
+        ctx.lineWidth = isEdgeHovered ? 1.5 : 1
         ctx.stroke()
       }
 
@@ -160,21 +161,21 @@ export function InteractiveGraph({ dark }: Props) {
         ctx.beginPath()
         ctx.arc(px, py, rPx, 0, Math.PI * 2)
         ctx.fillStyle = isDark
-          ? (isCenter ? 'rgba(255,255,255,.04)' : isProject ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.02)')
-          : (isCenter ? 'rgba(0,0,0,.03)' : isProject ? 'rgba(0,0,0,.02)' : 'rgba(0,0,0,.015)')
+          ? (isCenter ? 'rgba(255,255,255,.05)' : isProject ? 'rgba(255,255,255,.04)' : 'rgba(255,255,255,.025)')
+          : (isCenter ? 'rgba(0,0,0,.04)' : isProject ? 'rgba(0,0,0,.03)' : 'rgba(0,0,0,.02)')
         ctx.fill()
         ctx.strokeStyle = isDark
-          ? (isHovered ? 'rgba(255,255,255,.2)' : isCenter ? 'rgba(255,255,255,.1)' : 'rgba(255,255,255,.05)')
-          : (isHovered ? 'rgba(0,0,0,.15)' : isCenter ? 'rgba(0,0,0,.08)' : 'rgba(0,0,0,.04)')
-        ctx.lineWidth = 1
+          ? (isHovered ? 'rgba(255,255,255,.28)' : isCenter ? 'rgba(255,255,255,.15)' : isProject ? 'rgba(255,255,255,.10)' : 'rgba(255,255,255,.07)')
+          : (isHovered ? 'rgba(0,0,0,.20)' : isCenter ? 'rgba(0,0,0,.12)' : isProject ? 'rgba(0,0,0,.08)' : 'rgba(0,0,0,.05)')
+        ctx.lineWidth = isCenter ? 1.8 : isProject ? 1.5 : 1.2
         ctx.stroke()
 
         // Hover glow
         if (isHovered) {
           ctx.beginPath()
           ctx.arc(px, py, rPx * 1.15, 0, Math.PI * 2)
-          ctx.strokeStyle = isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.04)'
-          ctx.lineWidth = 0.6
+          ctx.strokeStyle = isDark ? 'rgba(255,255,255,.10)' : 'rgba(0,0,0,.06)'
+          ctx.lineWidth = 1
           ctx.stroke()
         }
 
@@ -189,17 +190,17 @@ export function InteractiveGraph({ dark }: Props) {
         }
 
         // Label
-        const fontSize = isCenter ? w * 0.024 : isProject ? w * 0.016 : w * 0.011
+        const fontSize = isCenter ? w * 0.025 : isProject ? w * 0.017 : w * 0.012
         ctx.font = isCenter
-          ? `italic 500 ${fontSize}px 'Newsreader', Georgia, serif`
+          ? `italic 600 ${fontSize}px 'Newsreader', Georgia, serif`
           : isTech
             ? `500 ${fontSize}px 'DM Mono', monospace`
-            : `500 ${fontSize}px 'Newsreader', Georgia, serif`
+            : `600 ${fontSize}px 'Newsreader', Georgia, serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
         ctx.fillStyle = isDark
-          ? (isCenter ? '#e4e0d8' : isProject ? '#b5b0a6' : '#7a756c')
-          : (isCenter ? '#1c1c18' : isProject ? '#444' : '#888')
+          ? (isCenter ? '#ece8e0' : isProject ? '#c5c0b6' : '#8a857c')
+          : (isCenter ? '#1c1c18' : isProject ? '#333' : '#777')
         const labelY = node.sub && !isTech ? py - fontSize * 0.25 : py + fontSize * 0.1
         ctx.fillText(node.label, px, labelY)
 
