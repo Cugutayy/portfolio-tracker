@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from 'react'
+import { useRef, useEffect } from 'react'
 
 interface Node {
   id: string; label: string; x: number; y: number; r: number
@@ -30,7 +30,10 @@ const EDGES: [string, string][] = [
   ['thesis', 'python'], ['thesis', 'streamlit'],
 ]
 
-// Pre-compute float params once (deterministic per node index)
+// Pre-compute edge index pairs (avoid findIndex every frame)
+const NODE_ID_MAP = new Map(INITIAL_NODES.map((n, i) => [n.id, i]))
+const EDGE_INDICES = EDGES.map(([a, b]) => [NODE_ID_MAP.get(a)!, NODE_ID_MAP.get(b)!] as const)
+
 const FLOAT_PARAMS = INITIAL_NODES.map((n, i) => ({
   phase: (i * 2.399) % (Math.PI * 2),
   speed: 0.3 + (i * 0.618) % 0.4,
@@ -42,30 +45,28 @@ const DOT_COLORS: Record<string, string> = {
   portfolio: '#22c55e', f1: '#e10600', thesis: '#d45a3e',
 }
 
-// Accent glow colors for project nodes
 const GLOW_COLORS: Record<string, string> = {
   portfolio: 'rgba(34,197,94,', f1: 'rgba(225,6,0,', thesis: 'rgba(212,90,62,',
 }
+
+const N = INITIAL_NODES.length
 
 interface Props { dark: boolean; t: (k: string) => string }
 
 export function InteractiveGraph({ dark }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const mouseRef = useRef({ x: -1000, y: -1000 })
-  const hoveredRef = useRef<string | null>(null)
-  const [cursorStyle, setCursorStyle] = useState<string>('default')
-  const rafRef = useRef(0)
-  const dprRef = useRef(1)
 
-  // Dragging state
-  const dragRef = useRef<{
-    nodeIdx: number; startX: number; startY: number
-    origX: number; origY: number; moved: boolean
-  } | null>(null)
-  const nodePositions = useRef(INITIAL_NODES.map(n => ({ x: n.x, y: n.y })))
+  // All mutable state lives in a single ref — ZERO React re-renders during interaction
+  const stateRef = useRef({
+    mx: -1000, my: -1000,
+    hovered: null as string | null,
+    drag: null as { idx: number; startX: number; startY: number; origX: number; origY: number; moved: boolean } | null,
+    positions: INITIAL_NODES.map(n => ({ x: n.x, y: n.y })),
+    cursor: 'default',
+    raf: 0,
+  })
 
-  // Canvas draw loop
   useEffect(() => {
     const canvas = canvasRef.current
     const container = containerRef.current
@@ -75,7 +76,7 @@ export function InteractiveGraph({ dark }: Props) {
     if (!ctx) return
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2)
-    dprRef.current = dpr
+    const S = stateRef.current
 
     const resize = () => {
       const rect = container.getBoundingClientRect()
@@ -88,53 +89,120 @@ export function InteractiveGraph({ dark }: Props) {
     const ro = new ResizeObserver(resize)
     ro.observe(container)
 
-    const smoothX = new Float64Array(INITIAL_NODES.length)
-    const smoothY = new Float64Array(INITIAL_NODES.length)
+    const smoothX = new Float64Array(N)
+    const smoothY = new Float64Array(N)
 
+    // ---- Hit-test (pure function, no allocations) ----
+    const hitTest = (clientX: number, clientY: number, rect: DOMRect): number => {
+      const mxPct = ((clientX - rect.left) / rect.width) * 100
+      const myPct = ((clientY - rect.top) / rect.height) * 100
+      for (let i = 0; i < N; i++) {
+        const p = S.positions[i]
+        const dx = p.x - mxPct, dy = p.y - myPct
+        if (dx * dx + dy * dy < (INITIAL_NODES[i].r * 0.30) ** 2) return i
+      }
+      return -1
+    }
+
+    // ---- Cursor helper (direct DOM, no React) ----
+    const setCursor = (c: string) => {
+      if (S.cursor !== c) { S.cursor = c; container.style.cursor = c }
+    }
+
+    // ---- Native event handlers (bypass React synthetic events) ----
+    const onMouseMove = (e: MouseEvent) => {
+      S.mx = e.clientX; S.my = e.clientY
+      const rect = container.getBoundingClientRect()
+
+      if (S.drag) {
+        const mxPct = ((e.clientX - rect.left) / rect.width) * 100
+        const myPct = ((e.clientY - rect.top) / rect.height) * 100
+        const dx = mxPct - S.drag.startX, dy = myPct - S.drag.startY
+        if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) S.drag.moved = true
+        S.positions[S.drag.idx] = {
+          x: Math.max(5, Math.min(95, S.drag.origX + dx)),
+          y: Math.max(5, Math.min(95, S.drag.origY + dy)),
+        }
+        setCursor('grabbing')
+        return
+      }
+
+      const idx = hitTest(e.clientX, e.clientY, rect)
+      S.hovered = idx >= 0 ? INITIAL_NODES[idx].id : null
+      setCursor(idx >= 0 ? 'grab' : 'default')
+    }
+
+    const onMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return
+      const rect = container.getBoundingClientRect()
+      const idx = hitTest(e.clientX, e.clientY, rect)
+      if (idx < 0) return
+      const p = S.positions[idx]
+      S.drag = {
+        idx,
+        startX: ((e.clientX - rect.left) / rect.width) * 100,
+        startY: ((e.clientY - rect.top) / rect.height) * 100,
+        origX: p.x, origY: p.y, moved: false,
+      }
+      setCursor('grabbing')
+      e.preventDefault()
+    }
+
+    const onMouseUp = () => {
+      if (!S.drag) return
+      if (!S.drag.moved) {
+        const node = INITIAL_NODES[S.drag.idx]
+        if (node.href) window.location.href = node.href
+      }
+      S.drag = null
+      setCursor('grab')
+    }
+
+    const onMouseLeave = () => {
+      S.mx = -1000; S.my = -1000; S.hovered = null; S.drag = null
+      setCursor('default')
+    }
+
+    container.addEventListener('mousemove', onMouseMove, { passive: true })
+    container.addEventListener('mousedown', onMouseDown)
+    container.addEventListener('mouseup', onMouseUp)
+    container.addEventListener('mouseleave', onMouseLeave)
+
+    // ---- Render loop ----
     const tick = (t: number) => {
-      rafRef.current = requestAnimationFrame(tick)
+      S.raf = requestAnimationFrame(tick)
 
       const w = canvas.width / dpr
       const h = canvas.height / dpr
       if (w === 0 || h === 0) return
 
       const time = t / 1000
-      const mx = mouseRef.current.x
-      const my = mouseRef.current.y
-      const rect = container.getBoundingClientRect()
       const isDark = dark
-      const hovered = hoveredRef.current
-      const dragging = dragRef.current
-      const positions = nodePositions.current
+      const { hovered, drag, positions } = S
+      const rect = container.getBoundingClientRect()
 
       // Compute positions
-      const posX = new Float64Array(INITIAL_NODES.length)
-      const posY = new Float64Array(INITIAL_NODES.length)
+      const posX = new Float64Array(N)
+      const posY = new Float64Array(N)
 
-      for (let i = 0; i < INITIAL_NODES.length; i++) {
-        const node = INITIAL_NODES[i]
+      for (let i = 0; i < N; i++) {
         const f = FLOAT_PARAMS[i]
         const pos = positions[i]
 
-        // If this node is being dragged, use direct position
-        if (dragging && dragging.nodeIdx === i) {
+        if (drag && drag.idx === i) {
           posX[i] = pos.x / 100 * w
           posY[i] = pos.y / 100 * h
-          smoothX[i] = 0
-          smoothY[i] = 0
+          smoothX[i] = 0; smoothY[i] = 0
           continue
         }
 
-        // Float target
         let dx = Math.sin(time * f.speed + f.phase) * f.ampX
         let dy = Math.cos(time * f.speed * 0.7 + f.phase + 1) * f.ampY
 
-        // Mouse repulsion (only when not dragging any node)
-        if (!dragging && mx > -900) {
-          const mxPct = ((mx - rect.left) / rect.width) * 100
-          const myPct = ((my - rect.top) / rect.height) * 100
-          const ddx = pos.x - mxPct
-          const ddy = pos.y - myPct
+        if (!drag && S.mx > -900) {
+          const mxPct = ((S.mx - rect.left) / rect.width) * 100
+          const myPct = ((S.my - rect.top) / rect.height) * 100
+          const ddx = pos.x - mxPct, ddy = pos.y - myPct
           const dist = Math.sqrt(ddx * ddx + ddy * ddy)
           if (dist < 20 && dist > 0) {
             const force = (20 - dist) / 20 * 2.5
@@ -145,7 +213,6 @@ export function InteractiveGraph({ dark }: Props) {
 
         smoothX[i] += (dx - smoothX[i]) * 0.08
         smoothY[i] += (dy - smoothY[i]) * 0.08
-
         posX[i] = (pos.x + smoothX[i]) / 100 * w
         posY[i] = (pos.y + smoothY[i]) / 100 * h
       }
@@ -155,11 +222,9 @@ export function InteractiveGraph({ dark }: Props) {
       ctx.clearRect(0, 0, w, h)
 
       // Draw edges
-      for (const [a, b] of EDGES) {
-        const ai = INITIAL_NODES.findIndex(n => n.id === a)
-        const bi = INITIAL_NODES.findIndex(n => n.id === b)
-        const isEdgeHovered = hovered === a || hovered === b
-        const isEdgeDragged = dragging && (dragging.nodeIdx === ai || dragging.nodeIdx === bi)
+      for (const [ai, bi] of EDGE_INDICES) {
+        const isEdgeHovered = hovered === INITIAL_NODES[ai].id || hovered === INITIAL_NODES[bi].id
+        const isEdgeDragged = drag && (drag.idx === ai || drag.idx === bi)
 
         ctx.beginPath()
         ctx.moveTo(posX[ai], posY[ai])
@@ -174,42 +239,40 @@ export function InteractiveGraph({ dark }: Props) {
       }
 
       // Draw nodes
-      for (let i = 0; i < INITIAL_NODES.length; i++) {
+      for (let i = 0; i < N; i++) {
         const node = INITIAL_NODES[i]
         const px = posX[i], py = posY[i]
         const isHovered = hovered === node.id
-        const isDragged = dragging?.nodeIdx === i
+        const isDragged = drag?.idx === i
         const isCenter = node.type === 'center'
         const isProject = node.type === 'project'
         const isTech = node.type === 'tech'
         const scale = isDragged ? 1.18 : isHovered ? 1.10 : 1
         const rPx = node.r * 0.003 * w * scale
 
-        // Outer glow for dragged/hovered project nodes
+        // Glow
         if ((isDragged || isHovered) && isProject && GLOW_COLORS[node.id]) {
-          const glowBase = GLOW_COLORS[node.id]
+          const base = GLOW_COLORS[node.id]
           const grad = ctx.createRadialGradient(px, py, rPx * 0.8, px, py, rPx * 1.6)
-          grad.addColorStop(0, glowBase + (isDragged ? '0.15)' : '0.08)'))
-          grad.addColorStop(1, glowBase + '0)')
+          grad.addColorStop(0, base + (isDragged ? '0.15)' : '0.08)'))
+          grad.addColorStop(1, base + '0)')
           ctx.beginPath()
           ctx.arc(px, py, rPx * 1.6, 0, Math.PI * 2)
           ctx.fillStyle = grad
           ctx.fill()
         }
 
-        // Background circle — more visible fills
+        // Circle fill
         ctx.beginPath()
         ctx.arc(px, py, rPx, 0, Math.PI * 2)
-        if (isDragged) {
-          ctx.fillStyle = isDark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.08)'
-        } else {
-          ctx.fillStyle = isDark
+        ctx.fillStyle = isDragged
+          ? (isDark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.08)')
+          : isDark
             ? (isCenter ? 'rgba(255,255,255,.08)' : isProject ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.04)')
             : (isCenter ? 'rgba(0,0,0,.06)' : isProject ? 'rgba(0,0,0,.05)' : 'rgba(0,0,0,.03)')
-        }
         ctx.fill()
 
-        // Border — stronger strokes
+        // Border
         ctx.strokeStyle = isDragged
           ? (isDark ? 'rgba(255,255,255,.50)' : 'rgba(0,0,0,.40)')
           : isHovered
@@ -220,18 +283,17 @@ export function InteractiveGraph({ dark }: Props) {
         ctx.lineWidth = isDragged ? 2.5 : isCenter ? 2 : isProject ? 1.8 : 1.4
         ctx.stroke()
 
-        // Dot indicator for projects
+        // Dot indicator
         if (isProject && DOT_COLORS[node.id]) {
-          const dotR = isDragged ? 4.5 : 3.5
           ctx.beginPath()
-          ctx.arc(px, py - rPx * 0.6, dotR, 0, Math.PI * 2)
+          ctx.arc(px, py - rPx * 0.6, isDragged ? 4.5 : 3.5, 0, Math.PI * 2)
           ctx.fillStyle = DOT_COLORS[node.id]
           ctx.globalAlpha = isHovered || isDragged ? 1 : 0.7
           ctx.fill()
           ctx.globalAlpha = 1
         }
 
-        // Label — bigger, bolder fonts
+        // Label
         const fontSize = isCenter ? w * 0.030 : isProject ? w * 0.020 : w * 0.014
         ctx.font = isCenter
           ? `italic 600 ${fontSize}px 'Newsreader', Georgia, serif`
@@ -241,25 +303,18 @@ export function InteractiveGraph({ dark }: Props) {
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
 
-        // Text shadow for readability
-        if (isDark) {
-          ctx.save()
-          ctx.shadowColor = 'rgba(0,0,0,.6)'
-          ctx.shadowBlur = 4
-        }
+        if (isDark) { ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 4 }
 
         ctx.fillStyle = isDark
           ? (isCenter ? '#f0ece4' : isProject ? '#ddd8cf' : '#a8a29e')
           : (isCenter ? '#1a1a16' : isProject ? '#2a2a2a' : '#666')
-        const labelY = node.sub && !isTech ? py - fontSize * 0.3 : py + fontSize * 0.05
-        ctx.fillText(node.label, px, labelY)
+        ctx.fillText(node.label, px, node.sub && !isTech ? py - fontSize * 0.3 : py + fontSize * 0.05)
 
         if (isDark) ctx.restore()
 
-        // Sub label — more readable
+        // Sub label
         if (node.sub && !isTech) {
-          const subSize = Math.max(10, w * 0.011)
-          ctx.font = `500 ${subSize}px 'DM Mono', monospace`
+          ctx.font = `500 ${Math.max(10, w * 0.011)}px 'DM Mono', monospace`
           ctx.globalAlpha = isHovered || isDragged ? 0.9 : 0.55
           ctx.fillStyle = isDark ? '#9a958c' : '#888'
           ctx.fillText(node.sub, px, py + fontSize * 0.65)
@@ -268,132 +323,25 @@ export function InteractiveGraph({ dark }: Props) {
       }
     }
 
-    rafRef.current = requestAnimationFrame(tick)
+    S.raf = requestAnimationFrame(tick)
+
     return () => {
-      cancelAnimationFrame(rafRef.current)
+      cancelAnimationFrame(S.raf)
       ro.disconnect()
+      container.removeEventListener('mousemove', onMouseMove)
+      container.removeEventListener('mousedown', onMouseDown)
+      container.removeEventListener('mouseup', onMouseUp)
+      container.removeEventListener('mouseleave', onMouseLeave)
     }
   }, [dark])
-
-  // Hit-test helper
-  const hitTest = useCallback((clientX: number, clientY: number): number => {
-    const container = containerRef.current
-    if (!container) return -1
-    const rect = container.getBoundingClientRect()
-    const mxPct = ((clientX - rect.left) / rect.width) * 100
-    const myPct = ((clientY - rect.top) / rect.height) * 100
-    const positions = nodePositions.current
-
-    for (let i = 0; i < INITIAL_NODES.length; i++) {
-      const pos = positions[i]
-      const dx = pos.x - mxPct
-      const dy = pos.y - myPct
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      const hitR = INITIAL_NODES[i].r * 0.30
-      if (dist < hitR) return i
-    }
-    return -1
-  }, [])
-
-  // Mouse move — hover detection + dragging
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    mouseRef.current = { x: e.clientX, y: e.clientY }
-    const container = containerRef.current
-    if (!container) return
-    const rect = container.getBoundingClientRect()
-
-    // Handle dragging
-    const drag = dragRef.current
-    if (drag) {
-      const mxPct = ((e.clientX - rect.left) / rect.width) * 100
-      const myPct = ((e.clientY - rect.top) / rect.height) * 100
-      const dx = mxPct - drag.startX
-      const dy = myPct - drag.startY
-      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) drag.moved = true
-      nodePositions.current[drag.nodeIdx] = {
-        x: Math.max(5, Math.min(95, drag.origX + dx)),
-        y: Math.max(5, Math.min(95, drag.origY + dy)),
-      }
-      setCursorStyle('grabbing')
-      return
-    }
-
-    // Hover detection
-    const idx = hitTest(e.clientX, e.clientY)
-    const nodeId = idx >= 0 ? INITIAL_NODES[idx].id : null
-
-    if (nodeId !== hoveredRef.current) {
-      hoveredRef.current = nodeId
-    }
-
-    if (idx >= 0) {
-      setCursorStyle('grab')
-    } else {
-      setCursorStyle('default')
-    }
-  }, [hitTest])
-
-  const handleMouseLeave = useCallback(() => {
-    mouseRef.current = { x: -1000, y: -1000 }
-    hoveredRef.current = null
-    if (dragRef.current) {
-      dragRef.current = null
-    }
-    setCursorStyle('default')
-  }, [])
-
-  // Mouse down — start dragging
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (e.button !== 0) return // left click only
-    const idx = hitTest(e.clientX, e.clientY)
-    if (idx < 0) return
-
-    const container = containerRef.current
-    if (!container) return
-    const rect = container.getBoundingClientRect()
-    const mxPct = ((e.clientX - rect.left) / rect.width) * 100
-    const myPct = ((e.clientY - rect.top) / rect.height) * 100
-    const pos = nodePositions.current[idx]
-
-    dragRef.current = {
-      nodeIdx: idx,
-      startX: mxPct,
-      startY: myPct,
-      origX: pos.x,
-      origY: pos.y,
-      moved: false,
-    }
-    setCursorStyle('grabbing')
-    e.preventDefault()
-  }, [hitTest])
-
-  // Mouse up — end drag or navigate
-  const handleMouseUp = useCallback(() => {
-    const drag = dragRef.current
-    if (!drag) return
-
-    // If barely moved, treat as a click → navigate
-    if (!drag.moved) {
-      const node = INITIAL_NODES[drag.nodeIdx]
-      if (node.href) window.location.href = node.href
-    }
-
-    dragRef.current = null
-    setCursorStyle('grab')
-  }, [])
 
   return (
     <div
       ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
       style={{
         width: '100%', maxWidth: 960, margin: '0 auto',
         height: 'clamp(400px, 55vh, 600px)',
         position: 'relative',
-        cursor: cursorStyle,
         userSelect: 'none',
       }}
     >
