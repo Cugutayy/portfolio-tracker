@@ -104,9 +104,7 @@ export default function App() {
       <div style={{ position:'relative', zIndex:1 }}>
         <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />
         <Hero lang={lang} />
-        <div className="container" style={{ paddingTop: 0, paddingBottom: 16 }}>
-          <InteractiveGraph dark={dark} t={t} />
-        </div>
+        <InteractiveGraph dark={dark} t={t} />
         <ProjectCards t={t} />
         <Footer />
       </div>
