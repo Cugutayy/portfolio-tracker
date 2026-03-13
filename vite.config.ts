@@ -9,7 +9,8 @@ export default defineConfig({
     // tracker klasörünü dist'e kopyala (portfolio tracker dokunulmaz)
     viteStaticCopy({
       targets: [
-        { src: 'tracker', dest: '' }
+        { src: 'tracker', dest: '' },
+        { src: 'tez', dest: '' }
       ]
     })
   ],

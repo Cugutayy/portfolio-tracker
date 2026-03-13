@@ -42,12 +42,16 @@ export function ProjectCards({ t }: Props) {
         </ScrollReveal>
 
         <ScrollReveal delay={240}>
-          <GlassCard label="03" disabled>
-            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6, opacity:.35 }}>{t('cs')}</h3>
-            <p style={{ color:'var(--muted)', opacity:.3, fontSize:'.72rem', lineHeight:1.45 }}>{t('csd')}</p>
-            <div style={{ marginTop:12 }}>
-              <span className="mono" style={{ fontSize:'.5rem', padding:'2px 8px', borderRadius:99, border:'1px solid var(--rule)', color:'var(--muted)', opacity:.25 }}>{t('tba')}</span>
+          <GlassCard href="/tez/" label="03" accent="var(--accent)">
+            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>{t('p3t')}</h3>
+            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>{t('p3d')}</p>
+            <IpoMini />
+            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
+              <Stat label="IPOs" value="209" />
+              <Stat label="Underpricing" value="67.8%" pos />
+              <Stat label="CAAR" value="−7.4%" />
             </div>
+            <Tags items={['Event Study','CSAD','OLS']} />
           </GlassCard>
         </ScrollReveal>
       </div>
@@ -182,6 +186,34 @@ function TrackMini() {
           <circle cx="-3.5" cy="-2.5" r=".8" fill="#222"/><circle cx="-3.5" cy="2.5" r=".8" fill="#222"/>
         </g>
       ))}
+    </svg>
+  )
+}
+
+// ═══════════════════════════════════════════
+// IPO MINI (Thesis) — bar chart showing yearly IPO distribution
+// ═══════════════════════════════════════════
+function IpoMini() {
+  const bars = [
+    { year: '20', h: 8, max: 56 },
+    { year: '21', h: 53, max: 56 },
+    { year: '22', h: 39, max: 56 },
+    { year: '23', h: 56, max: 56 },
+    { year: '24', h: 33, max: 56 },
+    { year: '25', h: 20, max: 56 },
+  ]
+  return (
+    <svg style={{width:'100%',height:40,display:'block'}} viewBox="0 0 300 50" preserveAspectRatio="none">
+      {bars.map((b, i) => {
+        const bw = 30, gap = 20, x = i * (bw + gap) + 10
+        const barH = (b.h / b.max) * 38
+        return (
+          <g key={i}>
+            <rect x={x} y={40 - barH} width={bw} height={barH} rx={3} fill="var(--accent)" opacity={0.6 + (b.h / b.max) * 0.4} />
+            <text x={x + bw/2} y={48} textAnchor="middle" fontSize="6" fill="var(--muted)" fontFamily="DM Mono, monospace">{b.year}</text>
+          </g>
+        )
+      })}
     </svg>
   )
 }
