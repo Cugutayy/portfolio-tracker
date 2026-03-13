@@ -6,21 +6,21 @@ interface Node {
   href?: string; sub?: string
 }
 
-const NODES: Node[] = [
-  { id: 'name', label: 'S. Cagatay Sonmez', x: 50, y: 48, r: 38, type: 'center' },
-  { id: 'portfolio', label: 'Portfolio Tracker', x: 22, y: 28, r: 26, type: 'project', href: '/tracker/', sub: '100K TL · 7 instruments' },
-  { id: 'f1', label: 'F1 Predictor', x: 78, y: 28, r: 26, type: 'project', href: '#/f1', sub: 'Ensemble ML · OpenF1' },
-  { id: 'thesis', label: 'Tez Konusu', x: 50, y: 82, r: 22, type: 'project', href: '/tez/', sub: '209 IPO · BIST 2020-2025' },
-  { id: 'react', label: 'React', x: 88, y: 56, r: 13, type: 'tech' },
-  { id: 'ts', label: 'TypeScript', x: 90, y: 72, r: 13, type: 'tech' },
-  { id: 'finance', label: 'Finance', x: 10, y: 56, r: 13, type: 'tech' },
-  { id: 'ml', label: 'ML', x: 82, y: 12, r: 13, type: 'tech' },
-  { id: 'chartjs', label: 'Chart.js', x: 8, y: 22, r: 11, type: 'tech' },
-  { id: 'openf1', label: 'OpenF1', x: 92, y: 42, r: 11, type: 'tech' },
-  { id: 'esg', label: 'ESG', x: 14, y: 72, r: 11, type: 'tech' },
-  { id: 'api', label: 'Live API', x: 30, y: 68, r: 11, type: 'tech' },
-  { id: 'python', label: 'Python', x: 70, y: 70, r: 11, type: 'tech' },
-  { id: 'streamlit', label: 'Streamlit', x: 36, y: 80, r: 11, type: 'tech' },
+const INITIAL_NODES: Node[] = [
+  { id: 'name', label: 'S. Cagatay Sonmez', x: 50, y: 45, r: 42, type: 'center' },
+  { id: 'portfolio', label: 'Portfolio Tracker', x: 22, y: 25, r: 30, type: 'project', href: '/tracker/', sub: '100K TL · 7 instruments' },
+  { id: 'f1', label: 'F1 Predictor', x: 78, y: 25, r: 30, type: 'project', href: '#/f1', sub: 'Ensemble ML · OpenF1' },
+  { id: 'thesis', label: 'Tez Konusu', x: 50, y: 80, r: 26, type: 'project', href: '/tez/', sub: '209 IPO · BIST 2020-2025' },
+  { id: 'react', label: 'React', x: 88, y: 54, r: 15, type: 'tech' },
+  { id: 'ts', label: 'TypeScript', x: 90, y: 70, r: 15, type: 'tech' },
+  { id: 'finance', label: 'Finance', x: 10, y: 54, r: 15, type: 'tech' },
+  { id: 'ml', label: 'ML', x: 82, y: 10, r: 15, type: 'tech' },
+  { id: 'chartjs', label: 'Chart.js', x: 8, y: 20, r: 14, type: 'tech' },
+  { id: 'openf1', label: 'OpenF1', x: 92, y: 40, r: 14, type: 'tech' },
+  { id: 'esg', label: 'ESG', x: 14, y: 70, r: 14, type: 'tech' },
+  { id: 'api', label: 'Live API', x: 30, y: 66, r: 14, type: 'tech' },
+  { id: 'python', label: 'Python', x: 70, y: 68, r: 14, type: 'tech' },
+  { id: 'streamlit', label: 'Streamlit', x: 36, y: 80, r: 14, type: 'tech' },
 ]
 
 const EDGES: [string, string][] = [
@@ -31,8 +31,8 @@ const EDGES: [string, string][] = [
 ]
 
 // Pre-compute float params once (deterministic per node index)
-const FLOAT_PARAMS = NODES.map((n, i) => ({
-  phase: (i * 2.399) % (Math.PI * 2), // golden angle spread
+const FLOAT_PARAMS = INITIAL_NODES.map((n, i) => ({
+  phase: (i * 2.399) % (Math.PI * 2),
   speed: 0.3 + (i * 0.618) % 0.4,
   ampX: n.type === 'center' ? 0.3 : n.type === 'project' ? 0.6 : 0.9,
   ampY: n.type === 'center' ? 0.2 : n.type === 'project' ? 0.5 : 0.8,
@@ -42,6 +42,11 @@ const DOT_COLORS: Record<string, string> = {
   portfolio: '#22c55e', f1: '#e10600', thesis: '#d45a3e',
 }
 
+// Accent glow colors for project nodes
+const GLOW_COLORS: Record<string, string> = {
+  portfolio: 'rgba(34,197,94,', f1: 'rgba(225,6,0,', thesis: 'rgba(212,90,62,',
+}
+
 interface Props { dark: boolean; t: (k: string) => string }
 
 export function InteractiveGraph({ dark }: Props) {
@@ -49,11 +54,18 @@ export function InteractiveGraph({ dark }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mouseRef = useRef({ x: -1000, y: -1000 })
   const hoveredRef = useRef<string | null>(null)
-  const [hoveredNode, setHoveredNode] = useState<string | null>(null)
+  const [cursorStyle, setCursorStyle] = useState<string>('default')
   const rafRef = useRef(0)
   const dprRef = useRef(1)
 
-  // Canvas draw loop — no React state updates, pure imperative rendering
+  // Dragging state
+  const dragRef = useRef<{
+    nodeIdx: number; startX: number; startY: number
+    origX: number; origY: number; moved: boolean
+  } | null>(null)
+  const nodePositions = useRef(INITIAL_NODES.map(n => ({ x: n.x, y: n.y })))
+
+  // Canvas draw loop
   useEffect(() => {
     const canvas = canvasRef.current
     const container = containerRef.current
@@ -76,9 +88,8 @@ export function InteractiveGraph({ dark }: Props) {
     const ro = new ResizeObserver(resize)
     ro.observe(container)
 
-    // Smoothed offsets — persisted across frames
-    const smoothX = new Float64Array(NODES.length)
-    const smoothY = new Float64Array(NODES.length)
+    const smoothX = new Float64Array(INITIAL_NODES.length)
+    const smoothY = new Float64Array(INITIAL_NODES.length)
 
     const tick = (t: number) => {
       rafRef.current = requestAnimationFrame(tick)
@@ -93,25 +104,37 @@ export function InteractiveGraph({ dark }: Props) {
       const rect = container.getBoundingClientRect()
       const isDark = dark
       const hovered = hoveredRef.current
+      const dragging = dragRef.current
+      const positions = nodePositions.current
 
       // Compute positions
-      const posX = new Float64Array(NODES.length)
-      const posY = new Float64Array(NODES.length)
+      const posX = new Float64Array(INITIAL_NODES.length)
+      const posY = new Float64Array(INITIAL_NODES.length)
 
-      for (let i = 0; i < NODES.length; i++) {
-        const node = NODES[i]
+      for (let i = 0; i < INITIAL_NODES.length; i++) {
+        const node = INITIAL_NODES[i]
         const f = FLOAT_PARAMS[i]
+        const pos = positions[i]
+
+        // If this node is being dragged, use direct position
+        if (dragging && dragging.nodeIdx === i) {
+          posX[i] = pos.x / 100 * w
+          posY[i] = pos.y / 100 * h
+          smoothX[i] = 0
+          smoothY[i] = 0
+          continue
+        }
 
         // Float target
         let dx = Math.sin(time * f.speed + f.phase) * f.ampX
         let dy = Math.cos(time * f.speed * 0.7 + f.phase + 1) * f.ampY
 
-        // Mouse repulsion
-        if (mx > -900) {
+        // Mouse repulsion (only when not dragging any node)
+        if (!dragging && mx > -900) {
           const mxPct = ((mx - rect.left) / rect.width) * 100
           const myPct = ((my - rect.top) / rect.height) * 100
-          const ddx = node.x - mxPct
-          const ddy = node.y - myPct
+          const ddx = pos.x - mxPct
+          const ddy = pos.y - myPct
           const dist = Math.sqrt(ddx * ddx + ddy * ddy)
           if (dist < 20 && dist > 0) {
             const force = (20 - dist) / 20 * 2.5
@@ -120,12 +143,11 @@ export function InteractiveGraph({ dark }: Props) {
           }
         }
 
-        // Smooth interpolation (lerp toward target)
         smoothX[i] += (dx - smoothX[i]) * 0.08
         smoothY[i] += (dy - smoothY[i]) * 0.08
 
-        posX[i] = (node.x + smoothX[i]) / 100 * w
-        posY[i] = (node.y + smoothY[i]) / 100 * h
+        posX[i] = (pos.x + smoothX[i]) / 100 * w
+        posY[i] = (pos.y + smoothY[i]) / 100 * h
       }
 
       // Clear
@@ -134,63 +156,83 @@ export function InteractiveGraph({ dark }: Props) {
 
       // Draw edges
       for (const [a, b] of EDGES) {
-        const ai = NODES.findIndex(n => n.id === a)
-        const bi = NODES.findIndex(n => n.id === b)
+        const ai = INITIAL_NODES.findIndex(n => n.id === a)
+        const bi = INITIAL_NODES.findIndex(n => n.id === b)
         const isEdgeHovered = hovered === a || hovered === b
+        const isEdgeDragged = dragging && (dragging.nodeIdx === ai || dragging.nodeIdx === bi)
+
         ctx.beginPath()
         ctx.moveTo(posX[ai], posY[ai])
         ctx.lineTo(posX[bi], posY[bi])
-        ctx.strokeStyle = isEdgeHovered
-          ? (isDark ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.18)')
-          : (isDark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.09)')
-        ctx.lineWidth = isEdgeHovered ? 1.5 : 1
+        ctx.strokeStyle = isEdgeDragged
+          ? (isDark ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.25)')
+          : isEdgeHovered
+            ? (isDark ? 'rgba(255,255,255,.30)' : 'rgba(0,0,0,.22)')
+            : (isDark ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.12)')
+        ctx.lineWidth = isEdgeDragged ? 2 : isEdgeHovered ? 1.8 : 1.2
         ctx.stroke()
       }
 
       // Draw nodes
-      for (let i = 0; i < NODES.length; i++) {
-        const node = NODES[i]
+      for (let i = 0; i < INITIAL_NODES.length; i++) {
+        const node = INITIAL_NODES[i]
         const px = posX[i], py = posY[i]
         const isHovered = hovered === node.id
+        const isDragged = dragging?.nodeIdx === i
         const isCenter = node.type === 'center'
         const isProject = node.type === 'project'
         const isTech = node.type === 'tech'
-        const rPx = node.r * 0.0025 * w * (isHovered ? 1.12 : 1)
+        const scale = isDragged ? 1.18 : isHovered ? 1.10 : 1
+        const rPx = node.r * 0.003 * w * scale
 
-        // Background circle
+        // Outer glow for dragged/hovered project nodes
+        if ((isDragged || isHovered) && isProject && GLOW_COLORS[node.id]) {
+          const glowBase = GLOW_COLORS[node.id]
+          const grad = ctx.createRadialGradient(px, py, rPx * 0.8, px, py, rPx * 1.6)
+          grad.addColorStop(0, glowBase + (isDragged ? '0.15)' : '0.08)'))
+          grad.addColorStop(1, glowBase + '0)')
+          ctx.beginPath()
+          ctx.arc(px, py, rPx * 1.6, 0, Math.PI * 2)
+          ctx.fillStyle = grad
+          ctx.fill()
+        }
+
+        // Background circle — more visible fills
         ctx.beginPath()
         ctx.arc(px, py, rPx, 0, Math.PI * 2)
-        ctx.fillStyle = isDark
-          ? (isCenter ? 'rgba(255,255,255,.05)' : isProject ? 'rgba(255,255,255,.04)' : 'rgba(255,255,255,.025)')
-          : (isCenter ? 'rgba(0,0,0,.04)' : isProject ? 'rgba(0,0,0,.03)' : 'rgba(0,0,0,.02)')
-        ctx.fill()
-        ctx.strokeStyle = isDark
-          ? (isHovered ? 'rgba(255,255,255,.28)' : isCenter ? 'rgba(255,255,255,.15)' : isProject ? 'rgba(255,255,255,.10)' : 'rgba(255,255,255,.07)')
-          : (isHovered ? 'rgba(0,0,0,.20)' : isCenter ? 'rgba(0,0,0,.12)' : isProject ? 'rgba(0,0,0,.08)' : 'rgba(0,0,0,.05)')
-        ctx.lineWidth = isCenter ? 1.8 : isProject ? 1.5 : 1.2
-        ctx.stroke()
-
-        // Hover glow
-        if (isHovered) {
-          ctx.beginPath()
-          ctx.arc(px, py, rPx * 1.15, 0, Math.PI * 2)
-          ctx.strokeStyle = isDark ? 'rgba(255,255,255,.10)' : 'rgba(0,0,0,.06)'
-          ctx.lineWidth = 1
-          ctx.stroke()
+        if (isDragged) {
+          ctx.fillStyle = isDark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.08)'
+        } else {
+          ctx.fillStyle = isDark
+            ? (isCenter ? 'rgba(255,255,255,.08)' : isProject ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.04)')
+            : (isCenter ? 'rgba(0,0,0,.06)' : isProject ? 'rgba(0,0,0,.05)' : 'rgba(0,0,0,.03)')
         }
+        ctx.fill()
+
+        // Border — stronger strokes
+        ctx.strokeStyle = isDragged
+          ? (isDark ? 'rgba(255,255,255,.50)' : 'rgba(0,0,0,.40)')
+          : isHovered
+            ? (isDark ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.28)')
+            : isDark
+              ? (isCenter ? 'rgba(255,255,255,.22)' : isProject ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.10)')
+              : (isCenter ? 'rgba(0,0,0,.18)' : isProject ? 'rgba(0,0,0,.14)' : 'rgba(0,0,0,.08)')
+        ctx.lineWidth = isDragged ? 2.5 : isCenter ? 2 : isProject ? 1.8 : 1.4
+        ctx.stroke()
 
         // Dot indicator for projects
         if (isProject && DOT_COLORS[node.id]) {
+          const dotR = isDragged ? 4.5 : 3.5
           ctx.beginPath()
-          ctx.arc(px, py - rPx * 0.65, 3, 0, Math.PI * 2)
+          ctx.arc(px, py - rPx * 0.6, dotR, 0, Math.PI * 2)
           ctx.fillStyle = DOT_COLORS[node.id]
-          ctx.globalAlpha = isHovered ? 1 : 0.5
+          ctx.globalAlpha = isHovered || isDragged ? 1 : 0.7
           ctx.fill()
           ctx.globalAlpha = 1
         }
 
-        // Label
-        const fontSize = isCenter ? w * 0.025 : isProject ? w * 0.017 : w * 0.012
+        // Label — bigger, bolder fonts
+        const fontSize = isCenter ? w * 0.030 : isProject ? w * 0.020 : w * 0.014
         ctx.font = isCenter
           ? `italic 600 ${fontSize}px 'Newsreader', Georgia, serif`
           : isTech
@@ -198,19 +240,29 @@ export function InteractiveGraph({ dark }: Props) {
             : `600 ${fontSize}px 'Newsreader', Georgia, serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
+
+        // Text shadow for readability
+        if (isDark) {
+          ctx.save()
+          ctx.shadowColor = 'rgba(0,0,0,.6)'
+          ctx.shadowBlur = 4
+        }
+
         ctx.fillStyle = isDark
-          ? (isCenter ? '#ece8e0' : isProject ? '#c5c0b6' : '#8a857c')
-          : (isCenter ? '#1c1c18' : isProject ? '#333' : '#777')
-        const labelY = node.sub && !isTech ? py - fontSize * 0.25 : py + fontSize * 0.1
+          ? (isCenter ? '#f0ece4' : isProject ? '#ddd8cf' : '#a8a29e')
+          : (isCenter ? '#1a1a16' : isProject ? '#2a2a2a' : '#666')
+        const labelY = node.sub && !isTech ? py - fontSize * 0.3 : py + fontSize * 0.05
         ctx.fillText(node.label, px, labelY)
 
-        // Sub label
+        if (isDark) ctx.restore()
+
+        // Sub label — more readable
         if (node.sub && !isTech) {
-          const subSize = Math.max(8, w * 0.0085)
+          const subSize = Math.max(10, w * 0.011)
           ctx.font = `500 ${subSize}px 'DM Mono', monospace`
-          ctx.globalAlpha = isHovered ? 0.8 : 0.4
-          ctx.fillStyle = isDark ? '#7a756c' : '#999'
-          ctx.fillText(node.sub, px, py + fontSize * 0.7)
+          ctx.globalAlpha = isHovered || isDragged ? 0.9 : 0.55
+          ctx.fillStyle = isDark ? '#9a958c' : '#888'
+          ctx.fillText(node.sub, px, py + fontSize * 0.65)
           ctx.globalAlpha = 1
         }
       }
@@ -223,42 +275,111 @@ export function InteractiveGraph({ dark }: Props) {
     }
   }, [dark])
 
-  // Hit-test on mouse move
+  // Hit-test helper
+  const hitTest = useCallback((clientX: number, clientY: number): number => {
+    const container = containerRef.current
+    if (!container) return -1
+    const rect = container.getBoundingClientRect()
+    const mxPct = ((clientX - rect.left) / rect.width) * 100
+    const myPct = ((clientY - rect.top) / rect.height) * 100
+    const positions = nodePositions.current
+
+    for (let i = 0; i < INITIAL_NODES.length; i++) {
+      const pos = positions[i]
+      const dx = pos.x - mxPct
+      const dy = pos.y - myPct
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      const hitR = INITIAL_NODES[i].r * 0.30
+      if (dist < hitR) return i
+    }
+    return -1
+  }, [])
+
+  // Mouse move — hover detection + dragging
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     mouseRef.current = { x: e.clientX, y: e.clientY }
     const container = containerRef.current
     if (!container) return
     const rect = container.getBoundingClientRect()
-    const mxPct = ((e.clientX - rect.left) / rect.width) * 100
-    const myPct = ((e.clientY - rect.top) / rect.height) * 100
 
-    let found: string | null = null
-    // Check project/center nodes first (larger), then tech
-    for (let i = 0; i < NODES.length; i++) {
-      const node = NODES[i]
-      const dx = node.x - mxPct
-      const dy = node.y - myPct
-      const dist = Math.sqrt(dx * dx + dy * dy)
-      const hitR = node.r * 0.27
-      if (dist < hitR) { found = node.id; break }
+    // Handle dragging
+    const drag = dragRef.current
+    if (drag) {
+      const mxPct = ((e.clientX - rect.left) / rect.width) * 100
+      const myPct = ((e.clientY - rect.top) / rect.height) * 100
+      const dx = mxPct - drag.startX
+      const dy = myPct - drag.startY
+      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) drag.moved = true
+      nodePositions.current[drag.nodeIdx] = {
+        x: Math.max(5, Math.min(95, drag.origX + dx)),
+        y: Math.max(5, Math.min(95, drag.origY + dy)),
+      }
+      setCursorStyle('grabbing')
+      return
     }
-    if (found !== hoveredRef.current) {
-      hoveredRef.current = found
-      setHoveredNode(found)
+
+    // Hover detection
+    const idx = hitTest(e.clientX, e.clientY)
+    const nodeId = idx >= 0 ? INITIAL_NODES[idx].id : null
+
+    if (nodeId !== hoveredRef.current) {
+      hoveredRef.current = nodeId
     }
-  }, [])
+
+    if (idx >= 0) {
+      setCursorStyle('grab')
+    } else {
+      setCursorStyle('default')
+    }
+  }, [hitTest])
 
   const handleMouseLeave = useCallback(() => {
     mouseRef.current = { x: -1000, y: -1000 }
     hoveredRef.current = null
-    setHoveredNode(null)
+    if (dragRef.current) {
+      dragRef.current = null
+    }
+    setCursorStyle('default')
   }, [])
 
-  const handleClick = useCallback(() => {
-    const h = hoveredRef.current
-    if (!h) return
-    const node = NODES.find(n => n.id === h)
-    if (node?.href) window.location.href = node.href
+  // Mouse down — start dragging
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return // left click only
+    const idx = hitTest(e.clientX, e.clientY)
+    if (idx < 0) return
+
+    const container = containerRef.current
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+    const mxPct = ((e.clientX - rect.left) / rect.width) * 100
+    const myPct = ((e.clientY - rect.top) / rect.height) * 100
+    const pos = nodePositions.current[idx]
+
+    dragRef.current = {
+      nodeIdx: idx,
+      startX: mxPct,
+      startY: myPct,
+      origX: pos.x,
+      origY: pos.y,
+      moved: false,
+    }
+    setCursorStyle('grabbing')
+    e.preventDefault()
+  }, [hitTest])
+
+  // Mouse up — end drag or navigate
+  const handleMouseUp = useCallback(() => {
+    const drag = dragRef.current
+    if (!drag) return
+
+    // If barely moved, treat as a click → navigate
+    if (!drag.moved) {
+      const node = INITIAL_NODES[drag.nodeIdx]
+      if (node.href) window.location.href = node.href
+    }
+
+    dragRef.current = null
+    setCursorStyle('grab')
   }, [])
 
   return (
@@ -266,12 +387,14 @@ export function InteractiveGraph({ dark }: Props) {
       ref={containerRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
+      onMouseDown={handleMouseDown}
+      onMouseUp={handleMouseUp}
       style={{
         width: '100%', maxWidth: 960, margin: '0 auto',
-        height: 'clamp(380px, 52vh, 560px)',
+        height: 'clamp(400px, 55vh, 600px)',
         position: 'relative',
-        cursor: hoveredNode && NODES.find(n => n.id === hoveredNode)?.href ? 'pointer' : 'default',
+        cursor: cursorStyle,
+        userSelect: 'none',
       }}
     >
       <canvas
