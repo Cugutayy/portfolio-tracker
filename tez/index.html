@@ -412,6 +412,95 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  /* ═══ LIQUID AMBIENT BACKGROUND ═══ */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+      radial-gradient(ellipse 600px 400px at 25% 30%, rgba(30,58,95,0.045) 0%, transparent 70%),
+      radial-gradient(ellipse 500px 500px at 75% 60%, rgba(201,112,42,0.035) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 600px at 50% 85%, rgba(109,74,173,0.03) 0%, transparent 70%);
+    animation: liquidDrift 25s ease-in-out infinite alternate;
+    z-index: -1;
+    pointer-events: none;
+    will-change: transform;
+  }
+  @keyframes liquidDrift {
+    0%   { transform: translate(0, 0) rotate(0deg) scale(1); }
+    33%  { transform: translate(1.5%, -1%) rotate(1.5deg) scale(1.01); }
+    66%  { transform: translate(-1%, 1.5%) rotate(-1deg) scale(0.99); }
+    100% { transform: translate(2%, -2%) rotate(2deg) scale(1.02); }
+  }
+
+  /* ═══ SCROLL REVEAL ═══ */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ═══ GLASSMORPHISM ENHANCEMENT ═══ */
+  @supports (backdrop-filter: blur(1px)) {
+    .metric {
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: blur(12px) saturate(1.2);
+      -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    }
+    .theory-card {
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: blur(12px) saturate(1.2);
+      -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    }
+    .info, .success, .warning {
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .sq-card {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(10px) saturate(1.15);
+      -webkit-backdrop-filter: blur(10px) saturate(1.15);
+    }
+  }
+
+  /* ═══ NAV GLOW ═══ */
+  .nav-btn.active {
+    box-shadow: 0 2px 12px rgba(30,58,95,0.15);
+  }
+  .nav {
+    backdrop-filter: blur(16px) saturate(1.3);
+    -webkit-backdrop-filter: blur(16px) saturate(1.3);
+    background: rgba(255,255,255,0.88);
+  }
+
+  /* ═══ IMPROVED PAGE TRANSITION ═══ */
+  .page {
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                filter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* ═══ METRIC HOVER GLOW ═══ */
+  .metric:hover {
+    box-shadow: var(--shadow-md), 0 0 20px rgba(30,58,95,0.06);
+  }
+
+  /* ═══ CHART CONTAINER ANIMATION ═══ */
+  .plotly-chart {
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
 </style>
 </head>
 <body>
@@ -946,20 +1035,27 @@ function showPage(id, btn) {
   const currentPage = document.querySelector('.page.active');
   if (currentPage) {
     currentPage.style.opacity = '0';
-    currentPage.style.transform = 'translateY(8px)';
+    currentPage.style.transform = 'translateY(16px) scale(0.995)';
+    currentPage.style.filter = 'blur(2px)';
     setTimeout(() => {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => {
+        p.classList.remove('active');
+        p.style.filter = '';
+      });
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       const newPage = document.getElementById(id);
       newPage.classList.add('active');
+      newPage.style.opacity = '0';
+      newPage.style.transform = 'translateY(16px) scale(0.995)';
+      newPage.style.filter = 'blur(2px)';
       if (btn) btn.classList.add('active');
       window.scrollTo({top: 0, behavior: 'instant'});
-      // Trigger animation
       requestAnimationFrame(() => {
         newPage.style.opacity = '1';
-        newPage.style.transform = 'translateY(0)';
+        newPage.style.transform = 'translateY(0) scale(1)';
+        newPage.style.filter = 'blur(0px)';
       });
-    }, 150);
+    }, 200);
   } else {
     document.getElementById(id).classList.add('active');
     if (btn) btn.classList.add('active');
@@ -1548,10 +1644,79 @@ showPage = function(id, btn) {
   }
 };
 
+// ═══ SCROLL REVEAL + ANIMATED COUNTERS ═══
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+      // If it's a metric value, animate the counter
+      const val = entry.target.querySelector('.value');
+      if (val && !val.dataset.animated) animateCounter(val);
+    }
+  });
+}, { threshold: 0.15, rootMargin: '0px 0px -30px 0px' });
+
+function initReveals(container) {
+  const selectors = '.metric, .info, .success, .warning, .theory-card, h2, .sq-card, .grid > div, [id$="-chart"], .table-container';
+  const targets = container.querySelectorAll(selectors);
+  targets.forEach((el, i) => {
+    if (el.classList.contains('visible')) return;
+    el.classList.add('reveal');
+    // Stagger within each grid group
+    const parent = el.parentElement;
+    if (parent && (parent.classList.contains('metrics') || parent.classList.contains('grid'))) {
+      const siblings = Array.from(parent.children);
+      const idx = siblings.indexOf(el);
+      el.style.transitionDelay = `${idx * 80}ms`;
+    }
+    revealObserver.observe(el);
+  });
+}
+
+function animateCounter(el) {
+  el.dataset.animated = '1';
+  const text = el.textContent.trim();
+  // Match patterns: "67.8%", "209", "−3.3%", "4.4", "$1.13B", "1,496" etc
+  const match = text.match(/^([^0-9]*?)([0-9,]+[.]?[0-9]*)(.*)/);
+  if (!match) return;
+  const prefix = match[1];
+  const numStr = match[2].replace(/,/g, '');
+  const target = parseFloat(numStr);
+  if (isNaN(target) || target === 0) return;
+  const suffix = match[3];
+  const hasComma = match[2].includes(',');
+  const decimals = numStr.includes('.') ? numStr.split('.')[1].length : 0;
+  const duration = 1000;
+  const start = performance.now();
+  function update(now) {
+    const elapsed = now - start;
+    const t = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    let current = (target * eased).toFixed(decimals);
+    if (hasComma) current = parseFloat(current).toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals});
+    el.textContent = prefix + current + suffix;
+    if (t < 1) requestAnimationFrame(update);
+    else el.textContent = text; // restore exact original
+  }
+  requestAnimationFrame(update);
+}
+
 // Init first page on load
 document.addEventListener('DOMContentLoaded', () => {
-  // Nothing extra needed for overview
+  const overview = document.getElementById('overview');
+  if (overview) initReveals(overview);
 });
+
+// Hook into page switches to init reveals on new pages
+const origShowPage2 = showPage;
+showPage = function(id, btn) {
+  origShowPage2(id, btn);
+  setTimeout(() => {
+    const page = document.getElementById(id);
+    if (page) initReveals(page);
+  }, 200);
+};
 </script>
 </body>
 </html>
