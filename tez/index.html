@@ -3,733 +3,892 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IPO Fever &amp; the Cost of the Crowd</title>
+  <title>Tez Sunumu — IPO Fever &amp; the Cost of the Crowd</title>
   <meta name="description" content="BIST 2020-2025 IPO underpricing, herding behavior, and post-listing performance analysis.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23111'/%3E%3Ctext x='6' y='24' font-family='Georgia' font-size='22' fill='%23e8e4dc'%3Es%3C/text%3E%3C/svg%3E">
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
   <style>
-    :root {
-      --bg: #f7f5f0; --bg2: #fff; --ink: #1c1c18; --muted: #8a8578; --rule: #ddd9d0;
-      --accent: #b5442e; --card-bg: #fff; --card-border: #e4e0d8;
-      --green: #22c55e; --green-t: #16a34a; --shadow: rgba(0,0,0,0.04);
-      --card-hover: rgba(0,0,0,0.06); --info-bg: rgba(181,68,46,0.06); --info-border: rgba(181,68,46,0.18);
-    }
-    [data-theme="dark"] {
-      --bg: #0a0a09; --bg2: #131312; --ink: #e4e0d8; --muted: #7a756c; --rule: #1e1c16;
-      --accent: #d45a3e; --card-bg: #131312; --card-border: #1e1c16;
-      --green: #4ade80; --green-t: #4ade80; --shadow: rgba(0,0,0,0.4);
-      --card-hover: rgba(255,255,255,0.04); --info-bg: rgba(212,90,62,0.06); --info-border: rgba(212,90,62,0.20);
-    }
-    [data-theme="dark"] body::after { opacity: 0.04; mix-blend-mode: screen; }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      background: var(--bg); color: var(--ink);
-      font-family: 'Newsreader', Georgia, serif;
-      -webkit-font-smoothing: antialiased; line-height: 1.6;
-      transition: background .4s ease, color .4s ease;
-    }
-    body::after {
-      content:''; position:fixed; inset:0; pointer-events:none; z-index:9999;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      opacity: 0.025; mix-blend-mode: multiply;
-    }
-    a { color: inherit; text-decoration: none; }
-    .container { max-width: 880px; margin: 0 auto; padding: 0 28px; }
-    .mono { font-family: 'DM Mono', monospace; }
-    .divider { border: none; border-top: 1px solid var(--rule); margin: 32px 0; transition: border-color .3s; }
+    :root{--bg:#f7f5f0;--bg2:#fff;--ink:#1c1c18;--muted:#8a8578;--rule:#ddd9d0;--accent:#b5442e;--card-bg:#fff;--card-border:#e4e0d8;--green:#22c55e;--green-t:#16a34a;--shadow:rgba(0,0,0,.04);--card-hover:rgba(0,0,0,.06);--info-bg:rgba(181,68,46,.06);--info-border:rgba(181,68,46,.18);--blue:#3b82f6;--blue-t:rgba(59,130,246,.12)}
+    [data-theme="dark"]{--bg:#0a0a09;--bg2:#131312;--ink:#e4e0d8;--muted:#7a756c;--rule:#1e1c16;--accent:#d45a3e;--card-bg:#131312;--card-border:#1e1c16;--green:#4ade80;--green-t:#4ade80;--shadow:rgba(0,0,0,.4);--card-hover:rgba(255,255,255,.04);--info-bg:rgba(212,90,62,.06);--info-border:rgba(212,90,62,.20);--blue:#60a5fa;--blue-t:rgba(96,165,250,.12)}
+    [data-theme="dark"] body::after{opacity:.04;mix-blend-mode:screen}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--bg);color:var(--ink);font-family:'Newsreader',Georgia,serif;-webkit-font-smoothing:antialiased;line-height:1.6;transition:background .4s,color .4s}
+    body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.025;mix-blend-mode:multiply}
+    a{color:inherit;text-decoration:none}
+    .container{max-width:920px;margin:0 auto;padding:0 28px}
+    .mono{font-family:'DM Mono',monospace}
+    .divider{border:none;border-top:1px solid var(--rule);margin:32px 0}
 
     /* Nav */
-    .nav {
-      position: sticky; top: 0; z-index: 100;
-      background: var(--bg); backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--rule); padding: 12px 0;
-    }
-    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
-    .nav a.back {
-      font-size: .75rem; color: var(--muted); display: flex; align-items: center; gap: 6px; transition: color .3s;
-    }
-    .nav a.back:hover { color: var(--ink); }
-    .nav-links { display: flex; align-items: center; gap: 14px; }
-    .nav-links a {
-      font-family: 'DM Mono', monospace; font-size: .6rem; color: var(--muted);
-      letter-spacing: .04em; transition: color .3s;
-    }
-    .nav-links a:hover { color: var(--ink); }
-    .theme-btn {
-      background: none; border: 1px solid var(--rule); border-radius: 6px;
-      padding: 4px 10px; cursor: pointer; color: var(--muted); font-size: .7rem;
-      font-family: 'DM Mono', monospace; transition: all .3s;
-    }
-    .theme-btn:hover { border-color: var(--muted); color: var(--ink); }
+    .nav{position:sticky;top:0;z-index:100;background:var(--bg);backdrop-filter:blur(12px);border-bottom:1px solid var(--rule);padding:10px 0}
+    .nav-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+    .nav a.back{font-size:.72rem;color:var(--muted);display:flex;align-items:center;gap:6px;transition:color .3s}
+    .nav a.back:hover{color:var(--ink)}
+    .nav-links{display:flex;align-items:center;gap:2px;flex-wrap:wrap}
+    .nav-link{font-family:'DM Mono',monospace;font-size:.56rem;color:var(--muted);letter-spacing:.03em;padding:5px 10px;border-radius:6px;cursor:pointer;transition:all .3s;border:1px solid transparent;background:none}
+    .nav-link:hover{color:var(--ink);background:var(--card-hover)}
+    .nav-link.active{color:var(--ink);background:var(--card-hover);border-color:var(--rule)}
+    .theme-btn{background:none;border:1px solid var(--rule);border-radius:6px;padding:4px 10px;cursor:pointer;color:var(--muted);font-size:.7rem;font-family:'DM Mono',monospace;transition:all .3s}
+    .theme-btn:hover{border-color:var(--muted);color:var(--ink)}
+
+    /* Page sections */
+    .page{display:none}
+    .page.active{display:block}
 
     /* Hero */
-    .hero { padding: 48px 0 24px; }
-    .hero-label {
-      font-family: 'DM Mono', monospace;
-      font-size: .6rem; color: var(--accent); letter-spacing: .08em;
-      text-transform: uppercase; margin-bottom: 12px; opacity: .8;
-    }
-    .hero h1 {
-      font-size: clamp(1.4rem, 3.5vw, 2rem);
-      font-weight: 300; line-height: 1.2; letter-spacing: -.02em; margin-bottom: 10px;
-    }
-    .hero h1 em { font-weight: 300; font-style: italic; color: var(--accent); }
-    .hero-meta {
-      font-size: .72rem; color: var(--muted); line-height: 1.6;
-    }
-    .hero-meta strong { font-weight: 500; color: var(--ink); }
+    .hero{padding:40px 0 20px}
+    .hero-label{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px;opacity:.8}
+    .hero h1{font-size:clamp(1.3rem,3.2vw,1.9rem);font-weight:300;line-height:1.2;letter-spacing:-.02em;margin-bottom:8px}
+    .hero h1 em{font-weight:300;font-style:italic;color:var(--accent)}
+    .hero-meta{font-size:.7rem;color:var(--muted);line-height:1.6}
+    .hero-meta strong{font-weight:500;color:var(--ink)}
 
     /* Info box */
-    .info-box {
-      border: 1px solid var(--info-border); border-radius: 10px;
-      padding: 16px 20px; background: var(--info-bg);
-      margin-bottom: 20px; font-size: .76rem; line-height: 1.65; color: var(--ink);
-    }
-    .info-box strong { font-weight: 600; }
-    .info-box .label {
-      font-family: 'DM Mono', monospace; font-size: .55rem;
-      color: var(--accent); text-transform: uppercase; letter-spacing: .06em;
-      margin-bottom: 8px; display: block;
-    }
+    .info-box{border:1px solid var(--info-border);border-radius:10px;padding:14px 18px;background:var(--info-bg);margin-bottom:16px;font-size:.74rem;line-height:1.6;color:var(--ink)}
+    .info-box strong{font-weight:600}
+    .info-box .label{font-family:'DM Mono',monospace;font-size:.52rem;color:var(--accent);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:block}
+    .info-green{border-color:rgba(74,222,128,.18);background:rgba(74,222,128,.04)}
+    .info-green .label{color:var(--green-t)}
+    .info-blue{border-color:rgba(59,130,246,.18);background:rgba(59,130,246,.04)}
+    .info-blue .label{color:var(--blue)}
 
     /* Stats row */
-    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 24px 0; }
-    .stat-card {
-      border: 1px solid var(--rule); border-radius: 10px;
-      padding: 14px 16px; background: var(--card-hover); transition: border-color .3s;
-    }
-    .stat-card:hover { border-color: var(--muted); }
-    .stat-label {
-      font-family: 'DM Mono', monospace;
-      font-size: .48rem; color: var(--muted); text-transform: uppercase;
-      letter-spacing: .06em; margin-bottom: 4px;
-    }
-    .stat-value { font-family: 'DM Mono', monospace; font-size: 1.1rem; font-weight: 500; }
-    .stat-value.green { color: var(--green-t); }
-    .stat-value.red { color: var(--accent); }
+    .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:20px 0}
+    .stat-card{border:1px solid var(--rule);border-radius:10px;padding:12px 14px;background:var(--card-hover);transition:border-color .3s}
+    .stat-card:hover{border-color:var(--muted)}
+    .stat-label{font-family:'DM Mono',monospace;font-size:.46rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+    .stat-value{font-family:'DM Mono',monospace;font-size:1rem;font-weight:500}
+    .stat-value.green{color:var(--green-t)}
+    .stat-value.red{color:var(--accent)}
+    .stat-sub{font-family:'DM Mono',monospace;font-size:.5rem;color:var(--muted);margin-top:2px}
 
     /* Section */
-    .section { margin-bottom: 36px; }
-    .section-header {
-      display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 16px;
-    }
-    .section-header h2 { font-size: 1rem; font-weight: 400; letter-spacing: -.01em; }
-    .section-header .count {
-      font-family: 'DM Mono', monospace; font-size: .55rem; color: var(--muted);
-    }
+    .section{margin-bottom:32px}
+    .section-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+    .section-header h2{font-size:.95rem;font-weight:400;letter-spacing:-.01em}
+    .section-header .count{font-family:'DM Mono',monospace;font-size:.52rem;color:var(--muted)}
 
     /* Glass card */
-    .glass {
-      position: relative; overflow: hidden;
-      border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px 20px;
-      background: rgba(255,255,255,0.03);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      transition: transform .4s cubic-bezier(.16,1,.3,1), border-color .3s;
-      margin-bottom: 10px;
-    }
-    [data-theme=""] .glass, :root:not([data-theme="dark"]) .glass {
-      background: rgba(0,0,0,0.02); border-color: var(--card-border);
-    }
-    .glass:hover { border-color: var(--muted); transform: translateY(-1px); }
-    .glass-num {
-      font-family: 'DM Mono', monospace;
-      font-size: .5rem; color: var(--accent); letter-spacing: .06em;
-      margin-bottom: 6px; opacity: .7;
-    }
-    .glass h3 { font-size: .85rem; font-weight: 500; margin-bottom: 6px; line-height: 1.3; }
-    .glass p { font-size: .72rem; color: var(--muted); line-height: 1.5; }
-    .glass .result {
-      font-family: 'DM Mono', monospace; font-size: .65rem;
-      margin-top: 8px; padding: 8px 12px; border-radius: 6px;
-      background: var(--card-hover); border: 1px solid var(--rule);
-      line-height: 1.5;
-    }
-    .glass .result .val { color: var(--ink); font-weight: 500; }
-    .glass .result .sig { color: var(--green-t); font-size: .55rem; }
-    .glass .result .nsig { color: var(--muted); font-size: .55rem; }
-    .glass .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
-    .glass .tag {
-      font-family: 'DM Mono', monospace;
-      font-size: .44rem; letter-spacing: .05em; text-transform: uppercase;
-      padding: 1px 6px; border-radius: 4px; border: 1px solid var(--rule);
-      color: var(--muted); opacity: .6;
-    }
+    .glass{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:16px 18px;background:rgba(255,255,255,.03);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:transform .4s cubic-bezier(.16,1,.3,1),border-color .3s;margin-bottom:8px}
+    :root:not([data-theme="dark"]) .glass{background:rgba(0,0,0,.02);border-color:var(--card-border)}
+    .glass:hover{border-color:var(--muted);transform:translateY(-1px)}
+    .glass-num{font-family:'DM Mono',monospace;font-size:.48rem;color:var(--accent);letter-spacing:.06em;margin-bottom:4px;opacity:.7}
+    .glass h3{font-size:.82rem;font-weight:500;margin-bottom:5px;line-height:1.3}
+    .glass p{font-size:.7rem;color:var(--muted);line-height:1.5}
+    .glass .result{font-family:'DM Mono',monospace;font-size:.62rem;margin-top:8px;padding:7px 10px;border-radius:6px;background:var(--card-hover);border:1px solid var(--rule);line-height:1.5}
+    .glass .result .val{color:var(--ink);font-weight:500}
+    .glass .result .sig{color:var(--green-t);font-size:.52rem}
+    .glass .result .nsig{color:var(--muted);font-size:.52rem}
+    .glass .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+    .glass .tag{font-family:'DM Mono',monospace;font-size:.42rem;letter-spacing:.04em;text-transform:uppercase;padding:1px 6px;border-radius:4px;border:1px solid var(--rule);color:var(--muted);opacity:.6}
+
+    /* Chart */
+    .chart-wrap{border:1px solid var(--rule);border-radius:12px;padding:14px;background:var(--card-hover);margin-bottom:10px;transition:border-color .3s}
+    .chart-wrap:hover{border-color:var(--muted)}
+    .chart-title{font-family:'DM Mono',monospace;font-size:.52rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+    .chart-desc{font-size:.66rem;color:var(--muted);line-height:1.5;margin-bottom:10px;max-width:700px}
+
+    /* Two col */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+
+    /* Table */
+    .data-table{width:100%;border-collapse:collapse;font-size:.65rem;font-family:'DM Mono',monospace}
+    .data-table th{text-align:left;padding:6px 10px;border-bottom:2px solid var(--rule);color:var(--muted);font-weight:500;font-size:.5rem;text-transform:uppercase;letter-spacing:.06em}
+    .data-table td{padding:5px 10px;border-bottom:1px solid var(--rule)}
+    .data-table tr:hover td{background:var(--card-hover)}
+
+    /* Formula box */
+    .formula{font-family:'DM Mono',monospace;font-size:.68rem;padding:12px 16px;border-radius:8px;background:var(--card-hover);border:1px solid var(--rule);margin:10px 0;line-height:1.8;overflow-x:auto}
+    .formula .var{color:var(--accent);font-weight:500}
+    .formula .explain{color:var(--muted);font-size:.58rem;display:block;margin-top:4px}
 
     /* Collapsible */
-    .collapsible { cursor: pointer; user-select: none; }
-    .collapsible .arrow {
-      display: inline-block; transition: transform .3s; font-size: .7rem; margin-right: 6px;
-      color: var(--muted);
-    }
-    .collapsible.open .arrow { transform: rotate(90deg); }
-    .collapse-body {
-      max-height: 0; overflow: hidden; transition: max-height .4s ease;
-      padding: 0;
-    }
-    .collapse-body.show { max-height: 2000px; }
-
-    /* Chart container */
-    .chart-wrap {
-      border: 1px solid var(--rule); border-radius: 12px;
-      padding: 16px; background: var(--card-hover);
-      margin-bottom: 12px; transition: border-color .3s;
-    }
-    .chart-wrap:hover { border-color: var(--muted); }
-    .chart-title {
-      font-family: 'DM Mono', monospace;
-      font-size: .55rem; color: var(--muted); text-transform: uppercase;
-      letter-spacing: .06em; margin-bottom: 8px;
-    }
-    .chart-desc {
-      font-size: .68rem; color: var(--muted); line-height: 1.5;
-      margin-bottom: 12px; max-width: 640px;
-    }
-
-    /* Findings grid */
-    .findings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
-    .finding { padding: 16px 18px; }
-    .finding-label {
-      font-family: 'DM Mono', monospace; font-size: .44rem;
-      color: var(--accent); text-transform: uppercase; letter-spacing: .08em;
-      margin-bottom: 8px; opacity: .7;
-    }
-    .finding h4 { font-size: .78rem; font-weight: 500; margin-bottom: 4px; }
-    .finding p { font-size: .65rem; color: var(--muted); line-height: 1.45; }
-
-    /* Method cards */
-    .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .method .glass-num { color: var(--green-t); }
-
-    /* Tabs */
-    .tab-bar { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 1px solid var(--rule); }
-    .tab-btn {
-      font-family: 'DM Mono', monospace; font-size: .6rem;
-      padding: 8px 16px; background: none; border: none; cursor: pointer;
-      color: var(--muted); transition: all .3s; border-bottom: 2px solid transparent;
-      letter-spacing: .04em;
-    }
-    .tab-btn:hover { color: var(--ink); }
-    .tab-btn.active { color: var(--ink); border-bottom-color: var(--accent); }
-    .tab-panel { display: none; }
-    .tab-panel.active { display: block; }
+    .collapsible{cursor:pointer;user-select:none}
+    .collapsible .arrow{display:inline-block;transition:transform .3s;font-size:.65rem;margin-right:6px;color:var(--muted)}
+    .collapsible.open .arrow{transform:rotate(90deg)}
+    .collapse-body{max-height:0;overflow:hidden;transition:max-height .5s ease;padding:0}
+    .collapse-body.show{max-height:5000px}
 
     /* Footer */
-    .footer {
-      padding: 32px 0 24px; border-top: 1px solid var(--rule); margin-top: 48px;
-    }
-    .footer-inner {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      flex-wrap: wrap; gap: 16px;
-    }
-    .footer p { font-size: .65rem; color: var(--muted); line-height: 1.5; }
-
-    /* Scroll reveal */
-    .reveal {
-      opacity: 0; transform: translateY(20px);
-      transition: opacity .6s cubic-bezier(.16,1,.3,1), transform .6s cubic-bezier(.16,1,.3,1);
-    }
-    .reveal.visible { opacity: 1; transform: translateY(0); }
+    .footer{padding:28px 0 20px;border-top:1px solid var(--rule);margin-top:40px}
+    .footer p{font-size:.62rem;color:var(--muted);line-height:1.5}
 
     /* Responsive */
-    @media(max-width:640px) {
-      .container { padding: 0 16px; }
-      .stats-row { grid-template-columns: repeat(2, 1fr); }
-      .method-grid { grid-template-columns: 1fr; }
-      .hero h1 { font-size: 1.3rem; }
-      .footer-inner { flex-direction: column; }
-      .tab-btn { padding: 6px 10px; font-size: .52rem; }
+    @media(max-width:640px){
+      .container{padding:0 14px}
+      .stats-row{grid-template-columns:repeat(2,1fr)}
+      .two-col,.three-col{grid-template-columns:1fr}
+      .hero h1{font-size:1.2rem}
+      .nav-link{font-size:.48rem;padding:4px 6px}
     }
   </style>
 </head>
 <body>
 
-  <!-- Nav -->
-  <nav class="nav">
-    <div class="container nav-inner">
-      <a href="/" class="back mono">&#8592; hub</a>
-      <div class="nav-links">
-        <a href="#overview">genel</a>
-        <a href="#questions">sorular</a>
-        <a href="#findings">bulgular</a>
-        <a href="#data">veri</a>
-        <a href="#method">metod</a>
-        <button class="theme-btn" onclick="toggleTheme()">&#9685;</button>
-      </div>
+<!-- Nav -->
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="/" class="back mono">&#8592; hub</a>
+    <div class="nav-links">
+      <button class="nav-link active" onclick="showPage('app',this)">Ana Sayfa</button>
+      <button class="nav-link" onclick="showPage('ipo',this)">Halka Arz</button>
+      <button class="nav-link" onclick="showPage('manip',this)">Manipulasyon</button>
+      <button class="nav-link" onclick="showPage('inflation',this)">Enflasyon</button>
+      <button class="nav-link" onclick="showPage('conclusions',this)">Sonuclar</button>
+      <button class="nav-link" onclick="showPage('method',this)">Metodoloji</button>
+      <button class="theme-btn" onclick="toggleTheme()">&#9685;</button>
     </div>
-  </nav>
+  </div>
+</nav>
 
-  <div class="container">
+<div class="container">
 
-    <!-- Hero -->
-    <header id="overview" class="hero reveal">
-      <div class="hero-label">03 &mdash; tez konusu</div>
-      <h1>IPO Fever <em>&amp;</em> the Cost of the Crowd</h1>
-      <div class="hero-meta">
-        <strong>S. Cagatay Sonmez</strong> &middot; Dokuz Eylul University<br>
-        <span class="mono" style="font-size:.6rem; opacity:.6">BIST 2020&ndash;2025 &middot; 209 halka arz &middot; 47 SPK cezasi &middot; 5 arastirma sorusu</span>
-      </div>
-    </header>
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE: ANA SAYFA                                        -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-app" class="page active">
 
-    <!-- Context Info Box -->
-    <div class="info-box reveal" style="transition-delay:.08s">
-      <span class="label">Neden Bu Arastirma?</span>
-      2020&ndash;2025 yillari arasinda Borsa Istanbul tarihinin en yogun halka arz dalgasini yasadi.
-      Milyonlarca bireysel yatirimci her yeni halka arza akin etti.
-      Bu calisma <strong>halka arzlarin sistematik olarak dusuk fiyatlanip fiyatlanmadigini</strong>,
-      <strong>suru davranisinin piyasayi etkileyip etkilemedigini</strong> ve
-      <strong>SPK cezalarinin yatirimci davranisini degistirip degistirmedigini</strong> inceliyor.
+  <header class="hero">
+    <div class="hero-label">tez konusu</div>
+    <h1>IPO Fever <em>&amp;</em> the Cost of the Crowd</h1>
+    <div class="hero-meta">
+      <strong>S. Cagatay Sonmez</strong> &middot; Dokuz Eylul Universitesi<br>
+      <span class="mono" style="font-size:.58rem;opacity:.6">BIST 2020&ndash;2025 &middot; 209 halka arz &middot; 47 SPK cezasi &middot; 5 arastirma sorusu</span>
     </div>
+  </header>
 
-    <div class="info-box reveal" style="transition-delay:.12s; border-color: rgba(74,222,128,0.18); background: rgba(74,222,128,0.04);">
-      <span class="label" style="color: var(--green-t);">Tavan Serisi Nedir?</span>
-      BIST'te gunluk fiyat limiti &plusmn;10%'dur. Halka arzlarin buyuk cogunlugu ilk gun tavan fiyata ulasir
-      ve birden fazla gun art arda tavana kilitlenir. Gercek dusuk fiyatlama olcusu,
-      <strong>tavan serisinin tamamindaki kumulatif getiridir</strong> (arz fiyatindan ilk serbest islem gunune kadar).
-      Ortalama tavan suresi: <strong>4.4 gun</strong>. Halka arzlarin <strong>%67.2'si</strong> ilk gun tavan yapmistir.
-    </div>
-
-    <!-- Stats -->
-    <div class="stats-row reveal" style="transition-delay:.15s">
-      <div class="stat-card">
-        <div class="stat-label">Halka Arz</div>
-        <div class="stat-value">209</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Ort. Dusuk Fiyatlama</div>
-        <div class="stat-value green">%67.8</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">CAAR (30 gun)</div>
-        <div class="stat-value red">&minus;%7.4</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">SPK Cezasi</div>
-        <div class="stat-value">47</div>
-      </div>
-    </div>
-
-    <hr class="divider">
-
-    <!-- Research Questions -->
-    <section id="questions" class="section reveal" style="transition-delay:.1s">
-      <div class="section-header">
-        <h2>Arastirma Sorulari</h2>
-        <span class="count">5 soru</span>
-      </div>
-
-      <div class="glass">
-        <div class="glass-num">RQ1</div>
-        <h3>BIST'te halka arz dusuk fiyatlamasi, tavan serisi ile olculdugunde ne kadar buyuktur?</h3>
-        <p>"Tavan serisi" metodolojisi, fiyat limitli piyasalarda standart ilk gun getirilerinin kaciracagi tam fiyat ayarlamasini yakalamamizi saglar.</p>
-        <div class="result">
-          <span class="val">Ortalama: %67.8</span> &middot; Medyan: %33.1 &middot;
-          Ort. tavan suresi: 4.4 gun <span class="sig">p &lt; 0.001</span>
-        </div>
-        <div class="tags">
-          <span class="tag">Loughran, Ritter & Rydqvist 1994</span>
-          <span class="tag">Ljungqvist 2007</span>
-        </div>
-      </div>
-
-      <div class="glass">
-        <div class="glass-num">RQ2</div>
-        <h3>Hangi firma ve teklif ozellikleri, dusuk fiyatlamadaki kesitsel farkliligi aciklar?</h3>
-        <p>Teklif fiyati, piyasa degeri, F/K, PD/DD oranlari, sektor ve piyasa kosullari dusuk fiyatlama belirleyicileri olarak test edilmistir.</p>
-        <div class="result">
-          <span class="val">Anlamli faktor: yalnizca PD/DD (p=0.040)</span> &middot;
-          R&sup2; = %10&ndash;21 <span class="nsig">F/K anlamsiz (p=0.19)</span>
-        </div>
-        <div class="tags">
-          <span class="tag">Bildik & Yilmaz 2008</span>
-          <span class="tag">Kiymaz 2000</span>
-        </div>
-      </div>
-
-      <div class="glass">
-        <div class="glass-num">RQ3</div>
-        <h3>Halka arz sonrasi islem doneminde suru davranisi yogunlasiyor mu?</h3>
-        <p>CSAD metodolojisi, asiri piyasa hareketlerinde getiri dagılımının azalip azalmadıgını &mdash; surunun imzasini &mdash; test eder.</p>
-        <div class="result">
-          <span class="val">CSAD &#947;&#8322; = &minus;0.079</span> &middot;
-          p = 0.706 <span class="nsig">Istatistiksel olarak anlamli suru davranisi yok</span>
-          &middot; Test gucu: %59
-        </div>
-        <div class="tags">
-          <span class="tag">Chang, Cheng & Khorana 2000</span>
-          <span class="tag">Economou et al. 2018</span>
-        </div>
-      </div>
-
-      <div class="glass">
-        <div class="glass-num">RQ4</div>
-        <h3>SPK ceza aciklamalari halka arz manipulasyonu icin getirileri etkiler mi?</h3>
-        <p>SPK yaptirım eylemlerinin piyasaya yeni bilgi iletip iletmedigini test eden olay calismasi.</p>
-        <div class="result">
-          <span class="val">CAAR(0,+30) = &minus;%7.4</span> &middot;
-          47 ceza olayi <span class="sig">Anlamli negatif surukleme</span>
-        </div>
-        <div class="tags">
-          <span class="tag">MacKinlay 1997</span>
-          <span class="tag">Boehmer 1991</span>
-          <span class="tag">SPK Yillik Raporlari</span>
-        </div>
-      </div>
-
-      <div class="glass">
-        <div class="glass-num">RQ5</div>
-        <h3>BIST halka arzlari uzun vadeli asiri tepki gosteriyor mu ve karsi strateji bunu kullanabilir mi?</h3>
-        <p>Asiri tepki hipotezi: en yuksek dusuk fiyatlanan halka arzlar sonradan dusuk performans gosteriyor mu, karsi (contrarian) long-short strateji olusturulabilir mi?</p>
-        <div class="result">
-          <span class="val">5 gun: &minus;%3.3</span> <span class="sig">anlamli</span> &middot;
-          <span class="val">365 gun: +%72.6</span> <span class="sig">anlamli</span> &middot;
-          Kisa vadede SAT, uzun vadede TUT
-        </div>
-        <div class="tags">
-          <span class="tag">De Bondt & Thaler 1985</span>
-          <span class="tag">Loughran & Ritter 1995</span>
-        </div>
-      </div>
-    </section>
-
-    <hr class="divider">
-
-    <!-- Key Findings -->
-    <section id="findings" class="section reveal" style="transition-delay:.1s">
-      <div class="section-header">
-        <h2>Temel Bulgular</h2>
-        <span class="count">6 bulgu</span>
-      </div>
-
-      <div class="findings-grid">
-        <div class="glass finding">
-          <div class="finding-label">RQ1 &mdash; Dusuk Fiyatlama</div>
-          <h4>Asiri Dusuk Fiyatlama</h4>
-          <p>Ortalama %67.8, medyan %33.1. Ortalama tavan serisi: 4.4 gun. Halka arzlarin %67.2'si ilk gun tavan yapmistir. t-test ve Wilcoxon sonuclari istatistiksel olarak anlamlidir (p &lt; 0.001).</p>
-        </div>
-        <div class="glass finding">
-          <div class="finding-label">RQ2 &mdash; Belirleyiciler</div>
-          <h4>Yalnizca PD/DD Anlamli</h4>
-          <p>Kesitsel OLS (HC3 robust SE) yalnizca PD/DD oraninin anlamli belirleyici oldugunu gostermektedir (p=0.040). R&sup2; = %10&ndash;21. F/K orani anlamli degildir.</p>
-        </div>
-        <div class="glass finding">
-          <div class="finding-label">RQ3 &mdash; Suru Davranisi</div>
-          <h4>Suru Davranisi Tespit Edilmedi</h4>
-          <p>CSAD &#947;&#8322; = &minus;0.079 (p=0.706). 2020&ndash;2025 doneminde istatistiksel olarak anlamli suru davranisi bulunamamistir. Test gucu %59 (Zhang 2024).</p>
-        </div>
-        <div class="glass finding">
-          <div class="finding-label">RQ4 &mdash; SPK Cezalari</div>
-          <h4>SPK Cezalari: &minus;%7.4 CAAR</h4>
-          <p>47 ceza olayi, aciklama sonrasi 30 gun icinde kumulatif &minus;%7.4 anormal getiri gostermektedir. Anlamli negatif surukleme.</p>
-        </div>
-        <div class="glass finding">
-          <div class="finding-label">RQ5 &mdash; Kisa Vade</div>
-          <h4>Kisa Vadeli Asiri Tepki</h4>
-          <p>Tavan sonrasi 5 gunluk getiri: &minus;%3.3 (anlamli). Baslangic cofkusu, tavan serisi bittikten sonra hizla tersine donmektedir.</p>
-        </div>
-        <div class="glass finding">
-          <div class="finding-label">RQ5 &mdash; Uzun Vade</div>
-          <h4>Uzun Vadeli Toparlanma</h4>
-          <p>365 gunluk tavan sonrasi getiri: +%72.6 (anlamli). Contrarian long-short stratejisi, baslangic yanlis fiyatlamasini 1 yil icinde degerlendirebilir.</p>
-        </div>
-      </div>
-    </section>
-
-    <hr class="divider">
-
-    <!-- Interactive Data -->
-    <section id="data" class="section reveal" style="transition-delay:.1s">
-      <div class="section-header">
-        <h2>Interaktif Veri</h2>
-        <span class="count">3 grafik</span>
-      </div>
-
-      <!-- Tab navigation -->
-      <div class="tab-bar">
-        <button class="tab-btn active" onclick="showTab('tab-dist')">Dagilim</button>
-        <button class="tab-btn" onclick="showTab('tab-caar')">CAAR Analizi</button>
-        <button class="tab-btn" onclick="showTab('tab-contrarian')">Contrarian Strateji</button>
-      </div>
-
-      <!-- Tab 1: Distribution -->
-      <div id="tab-dist" class="tab-panel active">
-        <div class="chart-wrap">
-          <div class="chart-title">Yillara Gore Halka Arz Dagilimi</div>
-          <div class="chart-desc">
-            2021 ve 2023 en yogun yillar olmustur. 2020'deki dusuk sayi COVID-19 pandemi etkisini yansitmaktadir.
-            2024-2025'teki dusus, SPK'nin sikilan duzenleme politikalariyla aciklanabilir.
-          </div>
-          <div id="chart-yearly" style="width:100%;height:280px;"></div>
-        </div>
-        <div class="info-box" style="margin-top: 12px;">
-          <span class="label">Yorum</span>
-          Halka arz dalgasi, 2020 sonrasi yaratilan parasal genisleme ve dusuk faiz ortaminda hiz kazanmistir.
-          Bireysel yatirimci sayisindaki patlama (2M'den 8M'ye) bu dalganin temel suruculerinden biridir.
-        </div>
-      </div>
-
-      <!-- Tab 2: CAAR -->
-      <div id="tab-caar" class="tab-panel">
-        <div class="chart-wrap">
-          <div class="chart-title">SPK Ceza Aciklamalari Etrafinda CAAR (&minus;30 ile +30 Gun)</div>
-          <div class="chart-desc">
-            Kumulatif Ortalama Anormal Getiri (CAAR), SPK ceza aciklamasinin 30 gun oncesinden 30 gun sonrasina kadar izlenmistir.
-            Olay gunu (t=0) SPK'nin ceza kararini acikladi tarihdir.
-          </div>
-          <div id="chart-caar" style="width:100%;height:320px;"></div>
-        </div>
-        <div class="info-box" style="margin-top: 12px;">
-          <span class="label">Olay Calismasi Metodolojisi</span>
-          MacKinlay (1997) piyasa modeli kullanilarak anormal getiriler hesaplanmistir.
-          Boehmer (1991) testi ile olay basina sigma_i tahmin edilmistir.
-          Olay oncesi donem (&minus;30, &minus;1) zaten negatif CAAR gostermektedir; bu da
-          piyasanin olasi cezayi onceden fiyatlamaya basladigini dusundurmektedir.
-        </div>
-      </div>
-
-      <!-- Tab 3: Contrarian -->
-      <div id="tab-contrarian" class="tab-panel">
-        <div class="chart-wrap">
-          <div class="chart-title">Tavan Sonrasi Contrarian Getirileri (Ufka Gore)</div>
-          <div class="chart-desc">
-            Tavan serisi sona erdikten sonra farkli yatirim ufuklarinda ortalama getiri.
-            Yildizli (*) degerler istatistiksel olarak anlamlidir (p &lt; 0.05).
-          </div>
-          <div id="chart-contrarian" style="width:100%;height:300px;"></div>
-        </div>
-        <div class="info-box" style="margin-top: 12px;">
-          <span class="label">Strateji Cikarimlari</span>
-          Kisa vadede (5&ndash;10 gun) tavan sonrasi getiriler negatiftir:
-          yatirimci cofkusu hizla geri cekilmektedir. Ancak 60+ gunluk ufuklarda getiriler pozitife donmektedir.
-          Bu, De Bondt &amp; Thaler (1985) asiri tepki hipotezini destekler:
-          <strong>kisa vadede SAT, uzun vadede TUT</strong>.
-        </div>
-      </div>
-    </section>
-
-    <hr class="divider">
-
-    <!-- Methodology -->
-    <section id="method" class="section reveal" style="transition-delay:.1s">
-      <div class="section-header">
-        <h2>Metodoloji</h2>
-        <span class="count">4 yontem</span>
-      </div>
-
-      <div class="method-grid method">
-        <div class="glass">
-          <div class="glass-num">M1</div>
-          <h3>Tavan Serisi ile Dusuk Fiyatlama</h3>
-          <p>Loughran, Ritter &amp; Rydqvist (1994) izlenerek, art arda gunluk limit-up metodolojisi. Getiriler, ilk kisitlanmamis kapanis fiyatindan olculmustur. Her halka arz icin tavan gun sayisi ve kumulatif getiri hesaplanmistir.</p>
-        </div>
-        <div class="glass">
-          <div class="glass-num">M2</div>
-          <h3>Olay Calismasi (Event Study)</h3>
-          <p>MacKinlay (1997) piyasa modeli anormal getirileri ile Boehmer (1991) testi. SPK ceza aciklamalari etrafinda olay basina &#963; tahmini yapilmistir. Tahmin penceresi: &minus;250, &minus;31. Olay penceresi: &minus;30, +30.</p>
-        </div>
-        <div class="glass">
-          <div class="glass-num">M3</div>
-          <h3>CSAD Suru Davranisi Testi</h3>
-          <p>Chang, Cheng &amp; Khorana (2000) metodu. Kesitsel Mutlak Sapma (CSAD) ile dogrusal olmayan getiri dagılımı testi. Negatif &#947;&#8322; katsayisi suru davranisina isaret eder.</p>
-        </div>
-        <div class="glass">
-          <div class="glass-num">M4</div>
-          <h3>Kesitsel OLS Regresyon</h3>
-          <p>HC3 heteroskedastisite-robust standart hatalar. Firma ve teklif ozellikleri ile 4 model spesifikasyonu. Bagimsiz degiskenler: ln(piyasa degeri), F/K, PD/DD, teklif fiyati, BIST-100 getirisi.</p>
-        </div>
-      </div>
-
-      <!-- Statistical Details (collapsible) -->
-      <div style="margin-top: 16px;">
-        <div class="glass collapsible" onclick="toggleCollapse(this)">
-          <span class="arrow">&#9654;</span>
-          <h3 style="display:inline; font-size:.8rem;">Istatistiksel Test Detaylari</h3>
-          <div class="collapse-body">
-            <div style="padding-top: 12px; font-size: .7rem; color: var(--muted); line-height: 1.6;">
-              <strong style="color: var(--ink);">Dusuk fiyatlama testi (RQ1):</strong><br>
-              t-test: H0 reddedildi (p &lt; 0.001). Ortalama tavan serisi getirisi = %67.8, std = 0.72, N = 209.<br>
-              Wilcoxon signed-rank testi de H0'i reddeder (p &lt; 0.001).<br><br>
-              <strong style="color: var(--ink);">CSAD suru testi (RQ3):</strong><br>
-              &#947;&#8322; = &minus;0.079, p = 0.706. Test gucu %59 (Zhang 2024 metodu). Minimum tespit edilebilir etki buyuklugu &#947;&#8322; &ge; 0.15.<br><br>
-              <strong style="color: var(--ink);">Kesitsel regresyon (RQ2):</strong><br>
-              Model 4 (tam): R&sup2; = 0.21, F(5,109) = 5.82, p &lt; 0.001.<br>
-              Anlamli degisken: PD/DD (&#946; = &minus;0.023, p = 0.040).<br>
-              Anlamsiz: ln(Mcap), F/K, teklif fiyati, BIST getirisi.<br><br>
-              <strong style="color: var(--ink);">Olay calismasi (RQ4):</strong><br>
-              CAAR(&minus;30, +30) = &minus;%7.4. Boehmer t-stat = &minus;2.41 (p = 0.018).<br>
-              47 olay, tahmin penceresi 220 gun.
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
+  <div class="info-box">
+    <span class="label">Neden Bu Arastirma?</span>
+    2020&ndash;2025 yillari arasinda Borsa Istanbul tarihinin en yogun halka arz dalgasini yasadi.
+    Milyonlarca bireysel yatirimci her yeni halka arza akin etti.
+    Bu calisma <strong>halka arzlarin sistematik olarak dusuk fiyatlanip fiyatlanmadigini</strong>,
+    <strong>suru davranisinin piyasayi etkileyip etkilemedigini</strong> ve
+    <strong>enflasyon illuzyonunun yatirimci algilarini nasil bozup bozmadigini</strong> inceliyor.
   </div>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="container footer-inner">
-      <div>
-        <p><strong style="color:var(--ink)">S. Cagatay Sonmez</strong></p>
-        <p>Dokuz Eylul University &middot; Department of Economics</p>
-        <p class="mono" style="font-size:.55rem; margin-top:4px; opacity:.5">BIST 2020&ndash;2025 &middot; 209 IPO &middot; Python + Streamlit</p>
-      </div>
-      <div style="text-align:right">
-        <p class="mono" style="font-size:.55rem; opacity:.5">snmez.xyz/tez</p>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Halka Arz</div><div class="stat-value">209</div></div>
+    <div class="stat-card"><div class="stat-label">Ort. Dusuk Fiyatlama</div><div class="stat-value green">%67.8</div><div class="stat-sub">medyan: %33.1</div></div>
+    <div class="stat-card"><div class="stat-label">SPK Cezasi</div><div class="stat-value">47</div><div class="stat-sub">1.13 milyar TL</div></div>
+    <div class="stat-card"><div class="stat-label">CAAR (30 gun)</div><div class="stat-value red">&minus;%7.4</div><div class="stat-sub">48 hisse analizi</div></div>
+    <div class="stat-card"><div class="stat-label">TUFE Artisi</div><div class="stat-value red">%782</div><div class="stat-sub">2019&ndash;2025</div></div>
+    <div class="stat-card"><div class="stat-label">Zirve YoY Enflasyon</div><div class="stat-value red">%85.5</div><div class="stat-sub">Ekim 2022</div></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Research Questions -->
+  <div class="section">
+    <div class="section-header"><h2>Arastirma Sorulari</h2><span class="count">5 soru</span></div>
+
+    <div class="glass">
+      <div class="glass-num">RQ1 &mdash; DUSUK FIYATLAMA</div>
+      <h3>BIST'te halka arz dusuk fiyatlamasi, tavan serisi ile olculdugunde ne kadar buyuktur?</h3>
+      <div class="result"><span class="val">Ortalama: %67.8</span> &middot; Medyan: %33.1 &middot; Ort. tavan: 4.4 gun &middot; t = 10.82 <span class="sig">p &lt; 0.001</span></div>
+    </div>
+    <div class="glass">
+      <div class="glass-num">RQ2 &mdash; BELIRLEYICILER</div>
+      <h3>Hangi firma ve teklif ozellikleri, dusuk fiyatlamadaki kesitsel farkliligi aciklar?</h3>
+      <div class="result"><span class="val">Anlamli: yalnizca PD/DD (p=0.040)</span> &middot; R&sup2; = %21 <span class="nsig">F/K anlamsiz (rho=0.09, p=0.37)</span></div>
+    </div>
+    <div class="glass">
+      <div class="glass-num">RQ3 &mdash; SURU DAVRANISI</div>
+      <h3>Halka arz sonrasi islem doneminde suru davranisi yogunlasiyor mu?</h3>
+      <div class="result"><span class="val">CSAD &#947;&#8322; = +0.645</span> &middot; p = 0.666 <span class="nsig">Istatistiksel olarak anlamli suru davranisi yok</span></div>
+    </div>
+    <div class="glass">
+      <div class="glass-num">RQ4 &mdash; MANIPULASYON</div>
+      <h3>SPK ceza aciklamalari hisse fiyatlarini anlamli olarak etkiler mi?</h3>
+      <div class="result"><span class="val">CAAR(0,+30) = &minus;%7.4</span> &middot; 48 hisse &middot; 32/48 negatif CAR <span class="sig">40/48 anlamli (p&lt;0.05)</span></div>
+    </div>
+    <div class="glass">
+      <div class="glass-num">RQ5 &mdash; CONTRARIAN</div>
+      <h3>BIST halka arzlari uzun vadeli asiri tepki gosteriyor mu ve karsi strateji bunu kullanabilir mi?</h3>
+      <div class="result"><span class="val">5 gun: &minus;%3.3</span> <span class="sig">p=0.021</span> &middot; <span class="val">365 gun: +%72.6</span> <span class="sig">p&lt;0.001</span> &middot; Kisa vadede SAT, uzun vadede TUT</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <div class="section-header"><h2>Metodoloji Ozeti</h2></div>
+    <table class="data-table">
+      <tr><th>Yontem</th><th>Uygulama</th><th>Temel Metrik</th></tr>
+      <tr><td>Olay Calismasi (CAR)</td><td>Halka arz ilk gun, SPK ceza tarihleri</td><td>Kumulatif Anormal Getiri</td></tr>
+      <tr><td>CSAD Regresyonu</td><td>Piyasa genelinde suru tespiti</td><td>&#947;&#8322; katsayisi (negatif = suru)</td></tr>
+      <tr><td>Contrarian Backtest</td><td>Sat-gun-1 vs tut stratejisi</td><td>Kazanma orani, fazla getiri</td></tr>
+      <tr><td>Fisher Denklemi</td><td>Nominal &rarr; Reel getiriler</td><td>Reel halka arz getirileri</td></tr>
+      <tr><td>Kesitsel OLS</td><td>Dusuk fiyatlama belirleyicileri</td><td>HC3 robust SE, R&sup2;</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE: HALKA ARZ ANALIZI                                -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-ipo" class="page">
+  <header class="hero">
+    <div class="hero-label">Boyut 1</div>
+    <h1>Halka Arz <em>Analizi</em></h1>
+    <div class="hero-meta">209 halka arz &middot; Tavan serisi metodolojisi &middot; 2020&ndash;2025</div>
+  </header>
+
+  <div class="info-box info-green">
+    <span class="label">Tavan Serisi Nedir?</span>
+    BIST'te gunluk fiyat limiti &plusmn;10%'dur. Halka arzlarin buyuk cogunlugu ilk gun tavan fiyata ulasir
+    ve birden fazla gun art arda tavana kilitlenir. Gercek dusuk fiyatlama olcusu,
+    <strong>tavan serisinin tamamindaki kumulatif getiridir</strong> (arz fiyatindan ilk serbest islem gunune kadar).
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Toplam Halka Arz</div><div class="stat-value">209</div></div>
+    <div class="stat-card"><div class="stat-label">Ort. Dusuk Fiyatlama</div><div class="stat-value green">%67.8</div></div>
+    <div class="stat-card"><div class="stat-label">Medyan</div><div class="stat-value green">%33.1</div></div>
+    <div class="stat-card"><div class="stat-label">Ort. Tavan Gun</div><div class="stat-value">4.4</div></div>
+    <div class="stat-card"><div class="stat-label">Ilk Gun Tavan</div><div class="stat-value">%67.2</div></div>
+    <div class="stat-card"><div class="stat-label">Maks Tavan</div><div class="stat-value">21 gun</div></div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <div class="section-header"><h2>Yillara Gore Halka Arz Dagilimi</h2></div>
+    <div class="chart-desc">2021 ve 2023 en yogun yillar olmustur. 2020'deki dusuk sayi COVID-19 pandemi etkisini yansitmaktadir.</div>
+    <div class="chart-wrap"><div id="chart-ipo-yearly" style="width:100%;height:280px"></div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="section">
+      <div class="section-header"><h2>Tavan Serisi Dagilimi</h2></div>
+      <div class="chart-wrap"><div id="chart-tavan-dist" style="width:100%;height:260px"></div></div>
+    </div>
+    <div class="section">
+      <div class="section-header"><h2>Cok Donemli Getiri</h2></div>
+      <div class="chart-wrap"><div id="chart-multi-period" style="width:100%;height:260px"></div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- F/K Analysis -->
+  <div class="section">
+    <div class="section-header"><h2>F/K (Fiyat/Kazanc) Analizi</h2></div>
+    <div class="info-box">
+      <span class="label">F/K Nedir?</span>
+      F/K orani (Fiyat/Kazanc, Ingilizce: P/E &mdash; Price/Earnings), bir hissenin fiyatinin hisse basina kazanca bolunmesiyle elde edilir.
+      <strong>Dusuk F/K</strong> = hisse "ucuz" (kazancina gore), <strong>Yuksek F/K</strong> = buyume beklentisi fiyatlanmis.
+      Eger dusuk fiyatlama temeller ile aciklansaydi (dusuk F/K &rarr; yuksek dusuk fiyatlama),
+      bu "yanlis fiyatlama" hipotezini desteklerdi. Korelasyon yoksa, dusuk fiyatlama <strong>davranissal</strong> (arz-talep dinamikleri) kaynaklidir.
+      <br><br>
+      <strong>Not:</strong> Buradaki F/K degerleri Yahoo Finance'tan alinan <strong>guncel takip eden F/K</strong> oranlaridir,
+      halka arz tarihindeki F/K degil. Bu bir limitasyondur.
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">F/K Verisi Olan</div><div class="stat-value">115/209</div></div>
+      <div class="stat-card"><div class="stat-label">Medyan F/K</div><div class="stat-value">18.6</div></div>
+      <div class="stat-card"><div class="stat-label">Spearman rho</div><div class="stat-value">0.09</div><div class="stat-sub">p = 0.37 (anlamsiz)</div></div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">F/K vs Dusuk Fiyatlama Iliskisi</div>
+      <div class="chart-desc">F/K orani ile dusuk fiyatlama arasindaki korelasyon zayif ve istatistiksel olarak anlamsizdir.
+        Bu, dusuk fiyatlamanin temel deger (fundamental value) ile degil, davranissal faktorlerle (yatirimci heyecani, tavan mekanizmasi) aciklandigini gosterir.</div>
+      <div id="chart-pe-scatter" style="width:100%;height:280px"></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Contrarian Strategy -->
+  <div class="section">
+    <div class="section-header"><h2>Contrarian Strateji: Tavan Sonrasi SAT mi TUT mu?</h2></div>
+    <div class="info-box info-blue">
+      <span class="label">Strateji Mantigi</span>
+      BIST'te tavan serisi boyunca satis yapmaniz fiilen mumkun degildir (limit fiyatta alici yoktur).
+      Gercek yatirim karari <strong>tavan serisi bittikten sonra</strong> (ilk serbest islem gunu) verilir.
+      Soru: Ilk serbest gunde mi satmaliyiz, yoksa tutmali miyiz?
+    </div>
+    <div class="chart-wrap"><div id="chart-contrarian" style="width:100%;height:300px"></div></div>
+    <div class="info-box" style="margin-top:10px">
+      <span class="label">Sonuc</span>
+      <strong>Kisa vadede SAT</strong> (5&ndash;10 gun negatif getiri, ortalama &minus;%3.3). Yatirimci cofkusu tavan sonrasi hizla geri cekilir.
+      <strong>Uzun vadede TUT</strong> (60+ gun pozitif getiri, 365 gun: +%72.6). Ancak bu buyuk olcude boga piyasasi ve enflasyonla aciklanir.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE: MANIPULASYON                                     -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-manip" class="page">
+  <header class="hero">
+    <div class="hero-label">Boyut 2</div>
+    <h1>SPK <em>Manipulasyon</em> Analizi</h1>
+    <div class="hero-meta">47 ceza olayi &middot; Olay calismasi (Event Study) &middot; 2020&ndash;2025</div>
+  </header>
+
+  <div class="info-box">
+    <span class="label">SPK Nedir?</span>
+    Sermaye Piyasasi Kurulu (SPK), Borsa Istanbul'daki piyasa manipulasyonunu sorusturur ve cezalandirir.
+    Bu bolum, 2020&ndash;2025 donemindeki <strong>47 dogrulanmis manipulasyon vakasini</strong> analiz eder ve sorar:
+    <em>SPK cezalari aciklandiginda hisse fiyatlarinda anormal paternler (pump-and-dump) tespit edilebilir mi?</em>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">Toplam Vaka</div><div class="stat-value">47</div></div>
+    <div class="stat-card"><div class="stat-label">Toplam Ceza</div><div class="stat-value">1.13 Milyar TL</div></div>
+    <div class="stat-card"><div class="stat-label">Cezali Kisi</div><div class="stat-value">217</div></div>
+    <div class="stat-card"><div class="stat-label">Islem Yasagi</div><div class="stat-value">%77</div></div>
+    <div class="stat-card"><div class="stat-label">Ort. CAR</div><div class="stat-value red">&minus;%7.4</div></div>
+    <div class="stat-card"><div class="stat-label">Negatif CAR</div><div class="stat-value">32/48</div></div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="two-col">
+    <div class="section">
+      <div class="section-header"><h2>Yillara Gore Cezalar</h2></div>
+      <div class="chart-wrap"><div id="chart-spk-yearly" style="width:100%;height:280px"></div></div>
+    </div>
+    <div class="section">
+      <div class="section-header"><h2>Ceza Turune Gore Dagılım</h2></div>
+      <div class="chart-wrap"><div id="chart-spk-type" style="width:100%;height:280px"></div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- CAAR Chart -->
+  <div class="section">
+    <div class="section-header"><h2>CAAR: Ceza Etrafinda Ortalama Fiyat Hareketi</h2></div>
+    <div class="info-box info-blue">
+      <span class="label">Olay Calismasi Nasil Calisir?</span>
+      1. SPK ceza aciklama tarihini "olay" (Gun 0) olarak aliyoruz.<br>
+      2. Olaydan <strong>&minus;30 ile +30 gun</strong> arasindaki hisse fiyatlarini inceliyoruz.<br>
+      3. Piyasa modeli regresyonu ile hissenin <strong>"normal" getirisini</strong> hesapliyoruz.<br>
+      4. <strong>Anormal Getiri (AR)</strong> = Gercek Getiri &minus; Beklenen Getiri.<br>
+      5. AR'leri toplayarak <strong>Kumulatif Anormal Getiri (CAR)</strong> elde ediyoruz.<br>
+      6. CAR anlamli olarak negatifse, hisse ceza etrafinda beklenenden fazla deger kaybetmistir.
+    </div>
+    <div class="chart-wrap"><div id="chart-caar" style="width:100%;height:320px"></div></div>
+    <div class="info-box" style="margin-top:10px">
+      <span class="label">Yorum</span>
+      CAAR &minus;30. gunden itibaren dususe gecer &mdash; bu, piyasanin olasi cezayi <strong>onceden fiyatlamaya</strong> basladigini gosterir.
+      Ceza aciklamasindan 30 gun sonra CAAR = <strong>&minus;%7.42</strong>. 48 hisseden 32'si (%67) negatif CAR gostermistir.
+      40/48 (%83) istatistiksel olarak anlamlidir.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE: ENFLASYON                                        -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-inflation" class="page">
+  <header class="hero">
+    <div class="hero-label">Boyut 3</div>
+    <h1>Enflasyon <em>Illuzyonu</em></h1>
+    <div class="hero-meta">84 ay TUFE verisi &middot; Nominal vs Reel getiriler &middot; 2019&ndash;2025</div>
+  </header>
+
+  <div class="info-box">
+    <span class="label">Enflasyon Illuzyonu Nedir?</span>
+    Turkiye 2020&ndash;2025 arasinda asiri enflasyon yasadi.
+    Yatirimcilar <strong>nominal kazanclari</strong> (TL rakamlari yukseliyor) ile
+    <strong>gercek servet artisini</strong> (alis gucu) karistirabilir.
+    Bir halka arzdan +%50 getiri iyi gorunur &mdash; ama o yil enflasyon %60 ise, aslinda alis gucunuz <em>azalmistir</em>.<br><br>
+    <strong>Formul:</strong> Reel Getiri = (1 + Nominal Getiri) / (1 + Enflasyon) &minus; 1
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-label">TUFE Artisi (2019&ndash;2025)</div><div class="stat-value red">%782</div><div class="stat-sub">398 &rarr; 3,514</div></div>
+    <div class="stat-card"><div class="stat-label">Zirve YoY</div><div class="stat-value red">%85.5</div><div class="stat-sub">Ekim 2022</div></div>
+    <div class="stat-card"><div class="stat-label">Ortalama YoY</div><div class="stat-value red">%38.3</div></div>
+    <div class="stat-card"><div class="stat-label">Son Ay YoY</div><div class="stat-value">%30.9</div><div class="stat-sub">Aralik 2025</div></div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="two-col">
+    <div class="section">
+      <div class="section-header"><h2>Aylik YoY Enflasyon (%)</h2></div>
+      <div class="chart-wrap"><div id="chart-tufe-yoy" style="width:100%;height:280px"></div></div>
+    </div>
+    <div class="section">
+      <div class="section-header"><h2>TUFE Endeksi (2003=100)</h2></div>
+      <div class="chart-wrap"><div id="chart-tufe-index" style="width:100%;height:280px"></div></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <div class="section-header"><h2>Nominal vs Reel Halka Arz Getirileri</h2></div>
+    <div class="chart-desc">Her halka arzin gercek getirisi, o donemdeki TUFE verisiyle bireysel olarak hesaplanmistir &mdash; tek bir ortalama enflasyon degeri kullanilmamistir.</div>
+    <div class="chart-wrap"><div id="chart-nominal-real" style="width:100%;height:300px"></div></div>
+    <div class="info-box" style="margin-top:10px">
+      <span class="label">Temel Bulgu</span>
+      Kisa vadeli halka arz getirileri (tavan serisi) enflasyondan buyuktur, dolayisiyla reel getiri de pozitiftir.
+      Ancak uzun vadeli getirilerin onemli bir kismi enflasyon tarafindan asindilir.
+      <strong>Nominal kazanclarin buyuk gosterdiginin, reel servet artisini garanti etmedigi</strong> &mdash; bu enflasyon illuzyonudur.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE: SONUCLAR                                         -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-conclusions" class="page">
+  <header class="hero">
+    <div class="hero-label">Sonuclar</div>
+    <h1>Tez <em>Sonuclari</em></h1>
+    <div class="hero-meta">Tum istatistikler verilerden hesaplanmistir &mdash; sabit kodlanmis deger yoktur</div>
+  </header>
+
+  <div class="section">
+    <div class="section-header"><h2>Arastirma Sorulari Ozet Tablosu</h2></div>
+    <table class="data-table">
+      <tr><th>Soru</th><th>Bulgu</th><th>Istatistik</th><th>Karar</th></tr>
+      <tr>
+        <td>RQ1: Dusuk Fiyatlama</td>
+        <td>Ort. %67.8, medyan %33.1 (tavan serisi)</td>
+        <td>t=10.82, p&lt;0.001</td>
+        <td style="color:var(--green-t);font-weight:600">DOGRULANDI</td>
+      </tr>
+      <tr>
+        <td>RQ2: Belirleyiciler</td>
+        <td>Yalnizca PD/DD anlamli, F/K anlamsiz</td>
+        <td>R&sup2;=%21, PD/DD p=0.040</td>
+        <td style="color:var(--green-t);font-weight:600">KISMI</td>
+      </tr>
+      <tr>
+        <td>RQ3: Suru Davranisi</td>
+        <td>CSAD &#947;&#8322;=+0.645, anlamli suru yok</td>
+        <td>p=0.666, N=1,496</td>
+        <td style="color:var(--accent);font-weight:600">REDDEDILDI</td>
+      </tr>
+      <tr>
+        <td>RQ4: SPK Cezalari</td>
+        <td>CAAR=&minus;%7.4, 32/48 negatif</td>
+        <td>40/48 anlamli (p&lt;0.05)</td>
+        <td style="color:var(--green-t);font-weight:600">DOGRULANDI</td>
+      </tr>
+      <tr>
+        <td>RQ5: Contrarian</td>
+        <td>5g: &minus;%3.3 SAT, 365g: +%72.6 TUT</td>
+        <td>5g p=0.021, 365g p&lt;0.001</td>
+        <td style="color:var(--green-t);font-weight:600">DOGRULANDI</td>
+      </tr>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <div class="section-header"><h2>Temel Cikarimlar</h2></div>
+    <div class="glass"><div class="glass-num">1</div><h3>Dusuk Fiyatlama Yapisaldir</h3><p>BIST'te halka arzlar gunluk &plusmn;10% fiyat limitine tabidir. Halka arzlarin %67.2'si ilk gun tavan yapar ve ortalama 4.4 gun devam eder. Dusuk fiyatlamanin dogru olcusu tekil gun getirisi degil, kumulatif tavan serisi getirisidir.</p></div>
+    <div class="glass"><div class="glass-num">2</div><h3>Dusuk Fiyatlama Davranissaldir, Temel Degil</h3><p>F/K orani ile dusuk fiyatlama arasinda anlamli iliski yoktur (Spearman rho=0.09, p=0.37). Kesitsel regresyonda R&sup2;=%21 &mdash; temeller yalnizca kucuk bir kismi aciklar. Yatirimci heyecani ve tavan mekanizmasi birincil suruculerdir.</p></div>
+    <div class="glass"><div class="glass-num">3</div><h3>Manipulasyon Iz Birakir</h3><p>SPK cezasi alan hisseler, ceza aciklamasi etrafinda anlamli negatif anormal getiriler gosterir (CAAR=&minus;%7.4). Bu, manipulasyonun fiyatlari bozundurdigunu ve piyasanin bunu duzelttigini dogrulamaktadir.</p></div>
+    <div class="glass"><div class="glass-num">4</div><h3>Suru Davranisi Sinirlidir</h3><p>BIST-30 mavi cip hisselerinde istatistiksel olarak anlamli suru davranisi tespit edilmemistir (&#947;&#8322;=+0.645, p=0.666). Ayi piyasalarinda hafif bir suru egilimi gozlenebilir (&#947;&#8322;=&minus;0.778) ancak istatistiksel olarak anlamli degildir.</p></div>
+    <div class="glass"><div class="glass-num">5</div><h3>Enflasyon Illuzyonu Yaygindir</h3><p>Nominal ve reel getiriler arasindaki ucurum devasa bir illuzyon yaratir. TUFE 2019&ndash;2025'te %782 artmistir. Bireysel yatirimcilarin nominal kazanclarini gercek servet artisi ile karistirma riski yuksektir.</p></div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <div class="section-header"><h2>Contrarian Strateji Detaylari</h2></div>
+    <table class="data-table">
+      <tr><th>Ufuk</th><th>N</th><th>Ort. Getiri</th><th>Medyan</th><th>% Pozitif</th><th>t-ist.</th><th>p-degeri</th><th>Sinyal</th></tr>
+      <tr><td>5 gun</td><td>141</td><td style="color:var(--accent)">&minus;3.3%</td><td>&minus;4.1%</td><td>33%</td><td>&minus;2.335</td><td>0.021</td><td style="color:var(--accent);font-weight:600">SAT</td></tr>
+      <tr><td>10 gun</td><td>141</td><td style="color:var(--accent)">&minus;3.4%</td><td>&minus;4.8%</td><td>31%</td><td>&minus;1.606</td><td>0.111</td><td style="color:var(--accent)">SAT</td></tr>
+      <tr><td>20 gun</td><td>141</td><td>+1.1%</td><td>&minus;3.7%</td><td>39%</td><td>0.311</td><td>0.756</td><td>TUT</td></tr>
+      <tr><td>30 gun</td><td>141</td><td>+4.8%</td><td>&minus;1.3%</td><td>37%</td><td>1.092</td><td>0.277</td><td>TUT</td></tr>
+      <tr><td>60 gun</td><td>141</td><td style="color:var(--green-t)">+16.6%</td><td>+0.9%</td><td>43%</td><td>2.386</td><td>0.018</td><td style="color:var(--green-t);font-weight:600">TUT</td></tr>
+      <tr><td>90 gun</td><td>141</td><td style="color:var(--green-t)">+21.7%</td><td>+3.3%</td><td>46%</td><td>2.783</td><td>0.006</td><td style="color:var(--green-t);font-weight:600">TUT</td></tr>
+      <tr><td>180 gun</td><td>141</td><td style="color:var(--green-t)">+46.0%</td><td>+12.6%</td><td>52%</td><td>4.056</td><td>&lt;0.001</td><td style="color:var(--green-t);font-weight:600">TUT</td></tr>
+      <tr><td>365 gun</td><td>141</td><td style="color:var(--green-t)">+72.6%</td><td>+18.0%</td><td>62%</td><td>5.022</td><td>&lt;0.001</td><td style="color:var(--green-t);font-weight:600">TUT</td></tr>
+    </table>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <div class="section-header"><h2>CSAD Suru Davranisi Detaylari</h2></div>
+    <div class="formula">
+      CSAD<sub>t</sub> = <span class="var">&alpha;</span> + <span class="var">&#947;<sub>1</sub></span> |R<sub>m,t</sub>| + <span class="var">&#947;<sub>2</sub></span> R<sub>m,t</sub><sup>2</sup> + &epsilon;<sub>t</sub>
+      <span class="explain">&#947;&#8322; &lt; 0 ve anlamli ise &rarr; suru davranisi var</span>
+    </div>
+    <table class="data-table">
+      <tr><th>Parametre</th><th>Deger</th><th>t-ist.</th><th>p-degeri</th><th>Yorum</th></tr>
+      <tr><td>&alpha; (sabit)</td><td>0.0139</td><td>&mdash;</td><td>&mdash;</td><td>Baz CSAD seviyesi</td></tr>
+      <tr><td>&#947;<sub>1</sub></td><td>0.1064</td><td>&mdash;</td><td>&mdash;</td><td>Dogrusal piyasa duyarliligi</td></tr>
+      <tr><td><strong>&#947;<sub>2</sub></strong></td><td><strong>+0.6450</strong></td><td>0.432</td><td>0.666</td><td><strong>Suru davranisi YOK</strong> (pozitif, anlamsiz)</td></tr>
+      <tr><td>R&sup2;</td><td>0.0960</td><td colspan="3">1,496 islem gunu</td></tr>
+    </table>
+    <div class="info-box" style="margin-top:12px">
+      <span class="label">Rejim Analizi</span>
+      <strong>Boga piyasasi</strong> (N=847): &#947;&#8322; = +4.010 &mdash; suru davranisi yok<br>
+      <strong>Ayi piyasasi</strong> (N=647): &#947;&#8322; = &minus;0.778 &mdash; hafif suru egilimi ama istatistiksel olarak anlamli degil
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- PAGE: METODOLOJI                                       -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div id="page-method" class="page">
+  <header class="hero">
+    <div class="hero-label">Metodoloji</div>
+    <h1>Istatistiksel <em>Hesaplamalar</em></h1>
+    <div class="hero-meta">Her formul ve istatistik nasil hesaplandi &mdash; adim adim</div>
+  </header>
+
+  <div class="info-box info-green">
+    <span class="label">Neden Bu Bolum?</span>
+    Bu bolum, tezdeki tum istatistiksel testlerin ve hesaplamalarin <strong>nasil ve neden</strong> yapildigini aciklar.
+    Standart sapma, t-istatistigi, p-degeri gibi kavramlarin ne anlama geldigini ve sonuclarin nasil elde edildigini gosterir.
+  </div>
+
+  <hr class="divider">
+
+  <!-- 1. Standart Sapma -->
+  <div class="section">
+    <div class="glass collapsible" onclick="toggleCollapse(this)">
+      <span class="arrow">&#9654;</span>
+      <h3 style="display:inline;font-size:.82rem">1. Standart Sapma (&#963;) &mdash; Dagilimin Genisligi</h3>
+      <div class="collapse-body">
+        <div style="padding-top:10px;font-size:.7rem;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--ink)">Ne olcer?</strong> Verilerin ortalamadan ne kadar uzaklasiyor oldugunu olcer.<br><br>
+          <div class="formula">
+            <span class="var">s</span> = &radic;[ &Sigma;(x<sub>i</sub> &minus; x&#772;)&sup2; / (n &minus; 1) ]
+            <span class="explain">x<sub>i</sub> = her gozlem, x&#772; = ortalama, n = gozlem sayisi, (n&minus;1) = serbestlik derecesi (Bessel duzeltmesi)</span>
+          </div>
+          <strong style="color:var(--ink)">Tezde nasil kullandik?</strong><br>
+          Dusuk fiyatlama icin: N=204, ortalama=%67.8, <strong>s=0.8946</strong> (%89.5 puan).<br>
+          Bu yuksek standart sapma, dusuk fiyatlama degerlerinin cok genis bir aralikta dagıldığını gosterir
+          (min=%0, maks=%630).
+        </div>
       </div>
     </div>
-  </footer>
+  </div>
 
-  <script>
-    // =======================================
-    // THEME
-    // =======================================
-    function toggleTheme() {
-      const html = document.documentElement;
-      const isDark = html.getAttribute('data-theme') === 'dark';
-      html.setAttribute('data-theme', isDark ? '' : 'dark');
-      localStorage.setItem('theme', isDark ? 'light' : 'dark');
-      renderCharts();
-    }
-    (function() {
-      const saved = localStorage.getItem('theme');
-      if (saved === 'light') document.documentElement.setAttribute('data-theme', '');
-    })();
+  <!-- 2. t-istatistigi -->
+  <div class="section">
+    <div class="glass collapsible" onclick="toggleCollapse(this)">
+      <span class="arrow">&#9654;</span>
+      <h3 style="display:inline;font-size:.82rem">2. t-Istatistigi &mdash; Ortalamanin Anlamliligi</h3>
+      <div class="collapse-body">
+        <div style="padding-top:10px;font-size:.7rem;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--ink)">Ne yapar?</strong> "Ortalama sifirdan farkli mi, yoksa bu fark rastgele mi?" sorusunu cevaplar.<br><br>
+          <div class="formula">
+            <span class="var">t</span> = x&#772; / SE &nbsp;&nbsp; burada &nbsp;&nbsp; <span class="var">SE</span> = s / &radic;n
+            <span class="explain">SE = standart hata = orneklem ortalamasinin belirsizligi</span>
+          </div>
+          <strong style="color:var(--ink)">Tezde (RQ1 &mdash; Dusuk Fiyatlama):</strong><br>
+          x&#772; = 0.6779, s = 0.8946, n = 204<br>
+          SE = 0.8946 / &radic;204 = 0.8946 / 14.28 = <strong>0.0626</strong><br>
+          t = 0.6779 / 0.0626 = <strong>10.82</strong><br>
+          Serbestlik derecesi = 204 &minus; 1 = 203<br>
+          p-degeri: t=10.82 ile p &lt; 0.001 &mdash; ortalama sifirdan <strong>istatistiksel olarak kesinlikle farklidir</strong>.<br><br>
+          <strong style="color:var(--ink)">Yorum:</strong> p &lt; 0.05 ise H0 (ortalama=0) reddedilir.
+          p &lt; 0.001 ise sonuc "cok guclu" olarak degerlendirilir.
+          10.82 gibi yuksek bir t degeri, ortalamanin sifirdan cok uzak oldugunu ve bunun sans eseri olma olasiliginin son derece dusuk oldugunu gosterir.
+        </div>
+      </div>
+    </div>
+  </div>
 
-    // =======================================
-    // SCROLL REVEAL
-    // =======================================
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
-      });
-    }, { threshold: 0, rootMargin: '60px' });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  <!-- 3. p-degeri -->
+  <div class="section">
+    <div class="glass collapsible" onclick="toggleCollapse(this)">
+      <span class="arrow">&#9654;</span>
+      <h3 style="display:inline;font-size:.82rem">3. p-Degeri &mdash; Rastgelelik Olcusu</h3>
+      <div class="collapse-body">
+        <div style="padding-top:10px;font-size:.7rem;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--ink)">Ne anlama gelir?</strong> "Eger H0 (sifir hipotezi) dogru olsaydi, bu kadar asiri bir sonuc elde etme olasiligi kactir?"<br><br>
+          <strong>p &lt; 0.05:</strong> Istatistiksel olarak anlamli (%5 anlamlilik duzeyi)<br>
+          <strong>p &lt; 0.01:</strong> Cok anlamli<br>
+          <strong>p &lt; 0.001:</strong> Son derece anlamli<br>
+          <strong>p &gt; 0.05:</strong> Anlamsiz &mdash; H0 reddedilemez<br><br>
+          <strong style="color:var(--ink)">Tezde ornekler:</strong><br>
+          &bull; Dusuk fiyatlama: p = 7.55 &times; 10<sup>&minus;22</sup> &rarr; son derece anlamli<br>
+          &bull; Contrarian 5g: p = 0.021 &rarr; anlamli<br>
+          &bull; CSAD &#947;&#8322;: p = 0.666 &rarr; anlamsiz (suru yok)<br>
+          &bull; F/K korelasyonu: p = 0.37 &rarr; anlamsiz
+        </div>
+      </div>
+    </div>
+  </div>
 
-    // =======================================
-    // TABS
-    // =======================================
-    function showTab(id) {
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      event.target.classList.add('active');
-      // Re-render charts when switching tabs (Plotly needs visible container)
-      setTimeout(renderCharts, 50);
-    }
+  <!-- 4. Event Study -->
+  <div class="section">
+    <div class="glass collapsible" onclick="toggleCollapse(this)">
+      <span class="arrow">&#9654;</span>
+      <h3 style="display:inline;font-size:.82rem">4. Olay Calismasi (Event Study) &mdash; CAR ve CAAR</h3>
+      <div class="collapse-body">
+        <div style="padding-top:10px;font-size:.7rem;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--ink)">Amac:</strong> Bir olayın (SPK cezasi) hisse fiyati uzerindeki etkisini olcmek.<br><br>
+          <div class="formula">
+            1. Tahmin penceresi: [&minus;250, &minus;31] gunde piyasa modeli tahmin et<br>
+            &nbsp;&nbsp; R<sub>i,t</sub> = <span class="var">&alpha;<sub>i</sub></span> + <span class="var">&beta;<sub>i</sub></span> R<sub>m,t</sub> + &epsilon;<sub>i,t</sub><br><br>
+            2. Olay penceresinde Anormal Getiri hesapla: [&minus;30, +30]<br>
+            &nbsp;&nbsp; <span class="var">AR<sub>i,t</sub></span> = R<sub>i,t</sub> &minus; (&alpha;&#770;<sub>i</sub> + &beta;&#770;<sub>i</sub> R<sub>m,t</sub>)<br><br>
+            3. Kumulatif Anormal Getiri:<br>
+            &nbsp;&nbsp; <span class="var">CAR<sub>i</sub></span>(t<sub>1</sub>, t<sub>2</sub>) = &Sigma; AR<sub>i,t</sub><br><br>
+            4. Tum hisselerin ortalamasi:<br>
+            &nbsp;&nbsp; <span class="var">CAAR</span>(t<sub>1</sub>, t<sub>2</sub>) = (1/N) &Sigma; CAR<sub>i</sub>
+            <span class="explain">Boehmer (1991) testi: her olay icin ayri &#963;<sub>i</sub> tahmini yapilir</span>
+          </div>
+          <strong style="color:var(--ink)">Tez sonuclari:</strong><br>
+          Tahmin penceresi: 220 gun &middot; Olay penceresi: [&minus;30, +30]<br>
+          CAAR(&minus;30, +30) = <strong>&minus;%7.42</strong><br>
+          48 hisse analiz edildi, 32/48 negatif CAR, 40/48 anlamli (p&lt;0.05)
+        </div>
+      </div>
+    </div>
+  </div>
 
-    // =======================================
-    // COLLAPSIBLE
-    // =======================================
-    function toggleCollapse(el) {
-      el.classList.toggle('open');
-      const body = el.querySelector('.collapse-body');
-      body.classList.toggle('show');
-    }
+  <!-- 5. CSAD -->
+  <div class="section">
+    <div class="glass collapsible" onclick="toggleCollapse(this)">
+      <span class="arrow">&#9654;</span>
+      <h3 style="display:inline;font-size:.82rem">5. CSAD Suru Davranisi Testi</h3>
+      <div class="collapse-body">
+        <div style="padding-top:10px;font-size:.7rem;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--ink)">Chang, Cheng &amp; Khorana (2000) metodu:</strong><br><br>
+          <div class="formula">
+            <span class="var">CSAD<sub>t</sub></span> = &alpha; + &#947;<sub>1</sub> |R<sub>m,t</sub>| + <span class="var">&#947;<sub>2</sub></span> R<sub>m,t</sub><sup>2</sup> + &epsilon;<sub>t</sub>
+            <span class="explain">CSAD = Kesitsel Mutlak Sapma = (1/N) &Sigma; |R<sub>i,t</sub> &minus; R<sub>m,t</sub>|</span>
+          </div>
+          <strong style="color:var(--ink)">Mantik:</strong><br>
+          Normal kosullarda, piyasa asiri hareket ettiginde bireysel hisseler <em>daha fazla</em> dagilir (CSAD artar).<br>
+          <strong>Suru davranisinda</strong>, yatirimcilar birbirini taklit eder &rarr; hisseler birlikte hareket eder &rarr; CSAD <em>azalir</em>.<br>
+          Bu &#947;&#8322; &lt; 0 ve anlamli olarak gozukmesi beklenir.<br><br>
+          <strong style="color:var(--ink)">Tez sonuclari:</strong><br>
+          &#947;&#8322; = <strong>+0.645</strong> (pozitif, suru yok), t = 0.432, p = 0.666<br>
+          N = 1,496 islem gunu, R&sup2; = 0.096<br>
+          Sonuc: BIST-30'da istatistiksel olarak anlamli suru davranisi <strong>tespit edilmemistir</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
 
-    // =======================================
-    // CHARTS
-    // =======================================
-    function getColors() {
-      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-      return {
-        bg: 'rgba(0,0,0,0)', paper: 'rgba(0,0,0,0)',
-        text: isDark ? '#e4e0d8' : '#1c1c18',
-        muted: isDark ? '#7a756c' : '#8a8578',
-        grid: isDark ? '#1e1c16' : '#ddd9d0',
-        accent: isDark ? '#d45a3e' : '#b5442e',
-        green: isDark ? '#4ade80' : '#22c55e',
-        greenT: isDark ? 'rgba(74,222,128,0.15)' : 'rgba(34,197,94,0.15)',
-        redT: isDark ? 'rgba(212,90,62,0.15)' : 'rgba(181,68,46,0.15)',
-      };
-    }
+  <!-- 6. Cross-sectional OLS -->
+  <div class="section">
+    <div class="glass collapsible" onclick="toggleCollapse(this)">
+      <span class="arrow">&#9654;</span>
+      <h3 style="display:inline;font-size:.82rem">6. Kesitsel OLS Regresyon (HC3 Robust SE)</h3>
+      <div class="collapse-body">
+        <div style="padding-top:10px;font-size:.7rem;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--ink)">Amac:</strong> Dusuk fiyatlamada kesitsel farkliliklari aciklayan faktorleri bulmak.<br><br>
+          <div class="formula">
+            <span class="var">Underpricing<sub>i</sub></span> = &beta;<sub>0</sub> + &beta;<sub>1</sub> ln(Mcap<sub>i</sub>) + &beta;<sub>2</sub> F/K<sub>i</sub> + &beta;<sub>3</sub> PD/DD<sub>i</sub> + ... + &epsilon;<sub>i</sub>
+            <span class="explain">HC3 = heteroskedastisite-robust standart hatalar (MacKinnon &amp; White)</span>
+          </div>
+          <strong style="color:var(--ink)">Neden HC3?</strong><br>
+          OLS standart hatalari, varyans sabit olmayan (heteroskedastik) verilerde yanlis sonuc verir.
+          HC3, kucuk orneklemlerde bile guvenilir standart hatalar uretir.<br><br>
+          <strong style="color:var(--ink)">Log-Level Model Sonuclari (N=112, R&sup2;=%21.4):</strong>
+          <table class="data-table" style="margin-top:8px">
+            <tr><th>Degisken</th><th>Katsayi</th><th>Std Hata</th><th>t</th><th>p</th><th>Anl.</th></tr>
+            <tr><td>Sabit</td><td>2.007</td><td>0.901</td><td>2.227</td><td>0.026</td><td>**</td></tr>
+            <tr><td>ln(Piyasa Degeri)</td><td>&minus;0.067</td><td>0.040</td><td>&minus;1.667</td><td>0.096</td><td>*</td></tr>
+            <tr><td>F/K</td><td>0.001</td><td>0.001</td><td>0.647</td><td>0.517</td><td></td></tr>
+            <tr><td>PD/DD</td><td>0.017</td><td>0.008</td><td>2.049</td><td>0.040</td><td>**</td></tr>
+            <tr><td>Hot Market</td><td>0.063</td><td>0.084</td><td>0.745</td><td>0.456</td><td></td></tr>
+          </table>
+          <div style="margin-top:6px;font-size:.58rem;color:var(--muted)">
+            *** p&lt;0.01 &nbsp; ** p&lt;0.05 &nbsp; * p&lt;0.10
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    function chartLayout(c, extra) {
-      return Object.assign({
-        paper_bgcolor: c.paper, plot_bgcolor: c.bg,
-        font: { family: 'DM Mono, monospace', size: 10, color: c.muted },
-        margin: { t: 8, r: 16, b: 36, l: 48 },
-        xaxis: { gridcolor: c.grid, zerolinecolor: c.grid, tickfont: { size: 9 } },
-        yaxis: { gridcolor: c.grid, zerolinecolor: c.grid, tickfont: { size: 9 } },
-        showlegend: false, hovermode: 'x unified',
-      }, extra || {});
-    }
+  <!-- 7. Fisher equation -->
+  <div class="section">
+    <div class="glass collapsible" onclick="toggleCollapse(this)">
+      <span class="arrow">&#9654;</span>
+      <h3 style="display:inline;font-size:.82rem">7. Fisher Denklemi &mdash; Reel Getiri Hesaplama</h3>
+      <div class="collapse-body">
+        <div style="padding-top:10px;font-size:.7rem;color:var(--muted);line-height:1.7">
+          <div class="formula">
+            <span class="var">Reel Getiri</span> = (1 + Nominal Getiri) / (1 + Enflasyon) &minus; 1
+            <span class="explain">Enflasyon, her halka arz icin TUFE endeksinden bireysel olarak hesaplanir</span>
+          </div>
+          <strong style="color:var(--ink)">Ornek:</strong><br>
+          Bir halka arz nominal %50 getiri sagladi. O donemde enflasyon %60 ise:<br>
+          Reel = (1 + 0.50) / (1 + 0.60) &minus; 1 = 1.50 / 1.60 &minus; 1 = <strong>&minus;%6.25</strong><br>
+          Yatirimci nominal olarak para kazanmis gorunur, ancak alis gucu <strong>azalmistir</strong>.<br><br>
+          <strong style="color:var(--ink)">Tezde:</strong> Her halka arz icin arz tarihi ve vade sonu arasindaki TUFE endeksi kullanilarak
+          doneme ozgu enflasyon hesaplanir. Bu, tek bir ortalama enflasyon degeri kullanmaktan cok daha dogrudur.
+        </div>
+      </div>
+    </div>
+  </div>
 
-    const plotCfg = { displayModeBar: false, responsive: true };
+  <!-- 8. Spearman -->
+  <div class="section">
+    <div class="glass collapsible" onclick="toggleCollapse(this)">
+      <span class="arrow">&#9654;</span>
+      <h3 style="display:inline;font-size:.82rem">8. Spearman Korelasyonu &mdash; F/K vs Dusuk Fiyatlama</h3>
+      <div class="collapse-body">
+        <div style="padding-top:10px;font-size:.7rem;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--ink)">Neden Spearman (Pearson degil)?</strong><br>
+          Pearson dogrusal iliski varsayar ve asiri degerlere (outlier) duyarlidir.
+          Spearman, <strong>sira korelasyonu</strong> oldugundan dagilim varsayimi gerektirmez ve outlier'lara dayaniklidir.<br><br>
+          <div class="formula">
+            <span class="var">&rho;</span> = 1 &minus; 6 &Sigma; d<sub>i</sub>&sup2; / [ n(n&sup2; &minus; 1) ]
+            <span class="explain">d<sub>i</sub> = siralardaki fark, n = gozlem sayisi. &rho; = &minus;1 ile +1 arasi deger alir.</span>
+          </div>
+          <strong style="color:var(--ink)">Tez sonucu:</strong><br>
+          F/K vs Dusuk Fiyatlama: <strong>&rho; = 0.09</strong>, p = 0.37<br>
+          Yorum: Zayif ve istatistiksel olarak anlamsiz. F/K orani, dusuk fiyatlama uzerinde belirleyici bir etkiye sahip degildir.
+        </div>
+      </div>
+    </div>
+  </div>
 
-    function renderCharts() {
-      const c = getColors();
+  <!-- 9. Wilcoxon -->
+  <div class="section">
+    <div class="glass collapsible" onclick="toggleCollapse(this)">
+      <span class="arrow">&#9654;</span>
+      <h3 style="display:inline;font-size:.82rem">9. Wilcoxon Isaretli Sira Testi</h3>
+      <div class="collapse-body">
+        <div style="padding-top:10px;font-size:.7rem;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--ink)">Neden t-testin yaninda Wilcoxon?</strong><br>
+          t-testi normal dagilim varsayar. Halka arz getirileri sagacipli (positive skew) ve normal degildir.
+          Wilcoxon, <strong>parametrik olmayan</strong> bir testtir &mdash; dagilim varsayimi gerektirmez.<br><br>
+          <strong style="color:var(--ink)">Nasil calisir?</strong><br>
+          1. Gozlemlerin mutlak degerlerini sirala<br>
+          2. Pozitif ve negatif gruplarin sira toplamlarini hesapla<br>
+          3. Kucuk olan toplam test istatistigi olur<br><br>
+          <strong style="color:var(--ink)">Tez sonucu:</strong><br>
+          W = 0.0, p = 3.15 &times; 10<sup>&minus;24</sup> &mdash; son derece anlamli.
+          t-testi ile tutarli, sonucumuz dagilim varsayimina bagli degildir.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-      // 1) IPOs by year
-      const yearColors = [c.muted, c.green, c.green, c.green, c.accent, c.accent];
-      Plotly.react('chart-yearly', [{
-        x: ['2020', '2021', '2022', '2023', '2024', '2025'],
-        y: [8, 53, 39, 56, 33, 20],
-        type: 'bar',
-        marker: { color: yearColors, opacity: 0.85, line: { width: 0 } },
-        text: [8, 53, 39, 56, 33, 20],
-        textposition: 'outside',
-        textfont: { family: 'DM Mono', size: 10, color: c.muted },
-        hovertemplate: '%{x}: %{y} IPO<extra></extra>',
-      }], chartLayout(c, {
-        yaxis: { gridcolor: c.grid, zerolinecolor: c.grid, tickfont: { size: 9 }, range: [0, 68] },
-        xaxis: { gridcolor: c.grid, zerolinecolor: c.grid, tickfont: { size: 9 } },
-      }), plotCfg);
+</div><!-- end container -->
 
-      // 2) CAAR
-      const caarData = [[-30,0.0074],[-29,0.0011],[-28,-0.0076],[-27,-0.0015],[-26,0.0048],[-25,-0.0033],[-24,-0.0066],[-23,-0.0009],[-22,-0.0048],[-21,-0.0116],[-20,-0.0120],[-19,-0.0152],[-18,-0.0121],[-17,-0.0142],[-16,-0.0189],[-15,-0.0231],[-14,-0.0324],[-13,-0.0334],[-12,-0.0375],[-11,-0.0435],[-10,-0.0409],[-9,-0.0424],[-8,-0.0432],[-7,-0.0471],[-6,-0.0499],[-5,-0.0448],[-4,-0.0463],[-3,-0.0444],[-2,-0.0538],[-1,-0.0543],[0,-0.0482],[1,-0.0461],[2,-0.0474],[3,-0.0457],[4,-0.0466],[5,-0.0547],[6,-0.0541],[7,-0.0494],[8,-0.0536],[9,-0.0559],[10,-0.0538],[11,-0.0491],[12,-0.0353],[13,-0.0335],[14,-0.0410],[15,-0.0325],[16,-0.0295],[17,-0.0261],[18,-0.0210],[19,-0.0277],[20,-0.0268],[21,-0.0232],[22,-0.0264],[23,-0.0351],[24,-0.0358],[25,-0.0300],[26,-0.0330],[27,-0.0417],[28,-0.0542],[29,-0.0620],[30,-0.0742]];
-      const caarDays = caarData.map(d => d[0]);
-      const caarVals = caarData.map(d => d[1] * 100);
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <p><strong style="color:var(--ink)">S. Cagatay Sonmez</strong> &middot; Dokuz Eylul Universitesi</p>
+    <p class="mono" style="font-size:.52rem;margin-top:4px;opacity:.5">BIST 2020&ndash;2025 &middot; 209 IPO &middot; Python + Streamlit &middot; snmez.xyz/tez</p>
+  </div>
+</footer>
 
-      Plotly.react('chart-caar', [
-        {
-          x: caarDays, y: caarVals, type: 'scatter', mode: 'lines',
-          line: { color: c.accent, width: 2, shape: 'spline' },
-          fill: 'tozeroy', fillcolor: c.redT,
-          hovertemplate: 'Gun %{x}: %{y:.2f}%<extra></extra>',
-        },
-        {
-          x: [0, 0], y: [-8, 2], type: 'scatter', mode: 'lines',
-          line: { color: c.muted, width: 1, dash: 'dot' }, hoverinfo: 'skip',
-        }
-      ], chartLayout(c, {
-        yaxis: { gridcolor: c.grid, zerolinecolor: c.grid, tickfont: { size: 9 }, ticksuffix: '%', title: { text: 'CAAR (%)', font: { size: 9 } } },
-        xaxis: { gridcolor: c.grid, zerolinecolor: c.grid, tickfont: { size: 9 }, title: { text: 'SPK aciklamasina gore gun', font: { size: 9 } } },
-        annotations: [{
-          x: 0, y: -4.8, text: 'Olay Gunu', showarrow: false, font: { size: 8, color: c.muted },
-        }],
-      }), plotCfg);
+<script>
+// ═══════════ THEME ═══════════
+function toggleTheme(){const h=document.documentElement;const d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'':'dark');localStorage.setItem('theme',d?'light':'dark');renderAllCharts()}
+(function(){const s=localStorage.getItem('theme');if(s==='light')document.documentElement.setAttribute('data-theme','')})();
 
-      // 3) Contrarian returns
-      const horizons = ['5g', '10g', '20g', '30g', '60g', '90g', '180g', '365g'];
-      const returns = [-3.3, -3.4, 1.1, 4.8, 16.6, 21.7, 46.0, 72.6];
-      const sig = [true, false, false, false, true, true, true, true];
+// ═══════════ NAVIGATION ═══════════
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');else if(event&&event.target)event.target.closest('.nav-link')?.classList.add('active');
+  window.scrollTo(0,0);
+  setTimeout(renderAllCharts,80);
+}
 
-      Plotly.react('chart-contrarian', [{
-        x: horizons, y: returns, type: 'bar',
-        marker: {
-          color: returns.map((r, i) => r < 0 ? c.accent : sig[i] ? c.green : c.muted),
-          opacity: 0.85, line: { width: 0 },
-        },
-        text: returns.map((r, i) => (sig[i] ? r.toFixed(1) + '%*' : r.toFixed(1) + '%')),
-        textposition: 'outside',
-        textfont: { family: 'DM Mono', size: 9, color: c.muted },
-        hovertemplate: '%{x}: %{y:.1f}%<extra></extra>',
-      }], chartLayout(c, {
-        yaxis: { gridcolor: c.grid, zerolinecolor: c.grid, tickfont: { size: 9 }, ticksuffix: '%', range: [-15, 85] },
-        xaxis: { gridcolor: c.grid, zerolinecolor: c.grid, tickfont: { size: 9 } },
-        annotations: [{
-          x: '365g', y: 76, text: '* p < 0.05', showarrow: false, font: { size: 8, color: c.muted },
-        }],
-      }), plotCfg);
-    }
+// ═══════════ COLLAPSIBLE ═══════════
+function toggleCollapse(el){el.classList.toggle('open');el.querySelector('.collapse-body').classList.toggle('show')}
 
-    // Render on load
-    renderCharts();
-    window.addEventListener('resize', () => { clearTimeout(window._rc); window._rc = setTimeout(renderCharts, 200); });
-  </script>
+// ═══════════ CHART HELPERS ═══════════
+function getC(){
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  return{bg:'rgba(0,0,0,0)',paper:'rgba(0,0,0,0)',text:d?'#e4e0d8':'#1c1c18',muted:d?'#7a756c':'#8a8578',grid:d?'#1e1c16':'#ddd9d0',accent:d?'#d45a3e':'#b5442e',green:d?'#4ade80':'#22c55e',greenT:d?'rgba(74,222,128,.15)':'rgba(34,197,94,.15)',redT:d?'rgba(212,90,62,.15)':'rgba(181,68,46,.15)',blue:d?'#60a5fa':'#3b82f6'}
+}
+function L(c,e){return Object.assign({paper_bgcolor:c.paper,plot_bgcolor:c.bg,font:{family:'DM Mono,monospace',size:10,color:c.muted},margin:{t:8,r:16,b:36,l:48},xaxis:{gridcolor:c.grid,zerolinecolor:c.grid,tickfont:{size:9}},yaxis:{gridcolor:c.grid,zerolinecolor:c.grid,tickfont:{size:9}},showlegend:false,hovermode:'x unified'},e||{})}
+const PC={displayModeBar:false,responsive:true};
 
+// ═══════════ CHART DATA ═══════════
+function renderAllCharts(){
+  const c=getC();
+
+  // IPO Yearly
+  if(document.getElementById('chart-ipo-yearly')){
+    Plotly.react('chart-ipo-yearly',[{x:['2020','2021','2022','2023','2024','2025'],y:[8,53,39,56,33,20],type:'bar',marker:{color:[c.muted,c.green,c.green,c.green,c.accent,c.accent],opacity:.85},text:[8,53,39,56,33,20],textposition:'outside',textfont:{family:'DM Mono',size:10,color:c.muted}}],L(c,{yaxis:{gridcolor:c.grid,zerolinecolor:c.grid,tickfont:{size:9},range:[0,68]}}),PC)
+  }
+
+  // Tavan distribution (actual: 204 IPOs, bins from tavan_days)
+  if(document.getElementById('chart-tavan-dist')){
+    const tv_x=[0,2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,19,21];
+    const tv_y=[67,15,21,11,19,11,16,6,10,8,5,4,3,3,2,1,1,1];
+    Plotly.react('chart-tavan-dist',[{x:tv_x,y:tv_y,type:'bar',marker:{color:tv_x.map(v=>v===0?c.muted:c.blue),opacity:.85},text:tv_y,textposition:'outside',textfont:{family:'DM Mono',size:8,color:c.muted}}],L(c,{xaxis:{title:{text:'Tavan Gun Sayisi',font:{size:9}},gridcolor:c.grid,tickfont:{size:9},dtick:2},yaxis:{title:{text:'Halka Arz Sayisi',font:{size:9}},gridcolor:c.grid,tickfont:{size:9},range:[0,78]},annotations:[{x:0,y:72,text:'0 = tavan yok',showarrow:false,font:{size:7,color:c.muted}}]}),PC)
+  }
+
+  // Multi-period returns
+  if(document.getElementById('chart-multi-period')){
+    Plotly.react('chart-multi-period',[{x:['1g','5g','10g','30g','60g','90g','180g','365g'],y:[5.6,17.6,33.2,51.0,61.4,73.1,107.2,164.5],type:'bar',marker:{color:c.green,opacity:.85},text:['5.6%','17.6%','33.2%','51.0%','61.4%','73.1%','107.2%','164.5%'],textposition:'outside',textfont:{family:'DM Mono',size:8,color:c.muted}}],L(c,{yaxis:{gridcolor:c.grid,ticksuffix:'%',tickfont:{size:9},range:[0,190]},xaxis:{title:{text:'Elde Tutma Suresi',font:{size:9}},gridcolor:c.grid,tickfont:{size:9}}}),PC)
+  }
+
+  // F/K scatter (actual data: 109 IPOs with valid trailing P/E)
+  if(document.getElementById('chart-pe-scatter')){
+    const pe_x=[25.8,38.3,99.8,33.4,9.0,13.0,2.7,16.2,13.9,26.4,14.2,8.7,23.4,16.0,5.0,14.9,61.5,57.3,23.3,13.6,8.6,17.5,13.7,24.7,39.1,38.5,12.7,3.8,14.9,30.2,11.7,16.7,62.9,37.5,8.9,37.7,21.8,13.3,94.0,97.6,45.4,186.0,99.0,12.7,18.6,16.3,27.0,5.6,107.7,22.1,25.1,7.5,12.5,11.3,40.2,18.4,14.1,13.0,77.6,2.6,3.0,36.0,10.9,32.7,20.9,15.9,16.0,180.6,3.8,22.8,80.5,35.8,3.5,25.7,22.0,6.2,18.0,15.1,12.3,9.1,11.7,50.3,9.4,15.8,188.6,12.1,10.4,6.9,35.3,98.6,36.3,15.6,44.6,38.2,31.2,13.7,8.2,34.8,13.4,12.5,12.8,2.6,7.9,156.2,136.2,47.2,13.1,75.4,21.4];
+    const pe_y=[0.0,1.57,0.94,0.95,0.94,0.95,0.61,0.0,0.0,0.0,0.0,0.0,0.33,0.0,0.93,0.0,0.33,0.0,0.61,0.33,1.59,0.21,0.0,0.0,0.21,0.0,0.77,0.0,0.0,0.0,0.20,0.33,0.46,0.0,0.0,0.0,0.0,0.0,0.46,0.77,0.0,0.94,0.77,2.44,1.35,1.35,0.21,1.14,5.08,0.33,1.35,1.14,0.21,1.14,0.94,0.77,0.21,0.21,0.46,0.33,0.33,0.77,0.61,2.78,3.15,2.78,1.59,0.61,0.61,0.61,1.84,1.14,0.77,0.46,0.94,0.0,0.46,0.0,0.0,3.16,1.35,2.13,1.59,0.95,1.59,0.0,0.0,0.0,1.35,0.94,0.33,0.0,0.0,0.33,0.33,0.33,0.0,0.0,0.0,0.0,0.0,0.46,0.0,0.61,0.33,0.0,0.33,1.58,0.21];
+    Plotly.react('chart-pe-scatter',[{x:pe_x,y:pe_y,type:'scatter',mode:'markers',marker:{color:c.blue,size:5,opacity:.5},hovertemplate:'F/K: %{x:.1f}<br>Dusuk Fiyatlama: %{y:.0%}<extra></extra>'}],L(c,{xaxis:{title:{text:'F/K Orani',font:{size:9}},gridcolor:c.grid,tickfont:{size:9}},yaxis:{title:{text:'Dusuk Fiyatlama',font:{size:9}},gridcolor:c.grid,tickfont:{size:9},tickformat:'.0%'},annotations:[{x:100,y:4.5,text:'Spearman rho=0.09, p=0.37<br>N=109',showarrow:false,font:{size:8,color:c.muted},align:'right'}]}),PC)
+  }
+
+  // Contrarian
+  if(document.getElementById('chart-contrarian')){
+    const h=['5g','10g','20g','30g','60g','90g','180g','365g'];
+    const r=[-3.3,-3.4,1.1,4.8,16.6,21.7,46.0,72.6];
+    const sig=[true,false,false,false,true,true,true,true];
+    Plotly.react('chart-contrarian',[{x:h,y:r,type:'bar',marker:{color:r.map((v,i)=>v<0?c.accent:sig[i]?c.green:c.muted),opacity:.85},text:r.map((v,i)=>(sig[i]?v.toFixed(1)+'%*':v.toFixed(1)+'%')),textposition:'outside',textfont:{family:'DM Mono',size:9,color:c.muted}}],L(c,{yaxis:{gridcolor:c.grid,ticksuffix:'%',tickfont:{size:9},range:[-15,85]},annotations:[{x:'365g',y:76,text:'* p<0.05',showarrow:false,font:{size:8,color:c.muted}}]}),PC)
+  }
+
+  // SPK yearly
+  if(document.getElementById('chart-spk-yearly')){
+    Plotly.react('chart-spk-yearly',[{x:['2020','2021','2022','2023','2024','2025'],y:[6,10,10,12,7,2],type:'bar',marker:{color:c.accent,opacity:.85},text:[6,10,10,12,7,2],textposition:'outside',textfont:{family:'DM Mono',size:10,color:c.muted}},{x:['2020','2021','2022','2023','2024','2025'],y:[17.4,41.0,70.9,812.2,155.7,30.5],type:'scatter',mode:'lines+markers',line:{color:c.blue,width:2},marker:{size:5},yaxis:'y2',name:'Ceza (M TL)'}],L(c,{yaxis:{title:{text:'Vaka Sayisi',font:{size:9}},gridcolor:c.grid,tickfont:{size:9}},yaxis2:{title:{text:'Ceza (M TL)',font:{size:9}},overlaying:'y',side:'right',showgrid:false,tickfont:{size:9}},showlegend:true,legend:{x:0,y:1,font:{size:8}}}),PC)
+  }
+
+  // SPK type
+  if(document.getElementById('chart-spk-type')){
+    Plotly.react('chart-spk-type',[{labels:['Islem Bazli','Bilgi Bazli','Piyasa Bozucu'],values:[37,9,1],type:'pie',marker:{colors:[c.accent,c.blue,c.muted]},textinfo:'label+value',textfont:{family:'DM Mono',size:9}}],L(c,{margin:{t:8,r:8,b:8,l:8}}),PC)
+  }
+
+  // CAAR
+  if(document.getElementById('chart-caar')){
+    const cd=[[-30,0.0074],[-29,0.0011],[-28,-0.0076],[-27,-0.0015],[-26,0.0048],[-25,-0.0033],[-24,-0.0066],[-23,-0.0009],[-22,-0.0048],[-21,-0.0116],[-20,-0.0120],[-19,-0.0152],[-18,-0.0121],[-17,-0.0142],[-16,-0.0189],[-15,-0.0231],[-14,-0.0324],[-13,-0.0334],[-12,-0.0375],[-11,-0.0435],[-10,-0.0409],[-9,-0.0424],[-8,-0.0432],[-7,-0.0471],[-6,-0.0499],[-5,-0.0448],[-4,-0.0463],[-3,-0.0444],[-2,-0.0538],[-1,-0.0543],[0,-0.0482],[1,-0.0461],[2,-0.0474],[3,-0.0457],[4,-0.0466],[5,-0.0547],[6,-0.0541],[7,-0.0494],[8,-0.0536],[9,-0.0559],[10,-0.0538],[11,-0.0491],[12,-0.0353],[13,-0.0335],[14,-0.0410],[15,-0.0325],[16,-0.0295],[17,-0.0261],[18,-0.0210],[19,-0.0277],[20,-0.0268],[21,-0.0232],[22,-0.0264],[23,-0.0351],[24,-0.0358],[25,-0.0300],[26,-0.0330],[27,-0.0417],[28,-0.0542],[29,-0.0620],[30,-0.0742]];
+    Plotly.react('chart-caar',[{x:cd.map(d=>d[0]),y:cd.map(d=>d[1]*100),type:'scatter',mode:'lines',line:{color:c.accent,width:2,shape:'spline'},fill:'tozeroy',fillcolor:c.redT},{x:[0,0],y:[-8,2],type:'scatter',mode:'lines',line:{color:c.muted,width:1,dash:'dot'},hoverinfo:'skip'}],L(c,{yaxis:{gridcolor:c.grid,ticksuffix:'%',title:{text:'CAAR (%)',font:{size:9}},tickfont:{size:9}},xaxis:{gridcolor:c.grid,title:{text:'SPK aciklamasina gore gun',font:{size:9}},tickfont:{size:9}},annotations:[{x:0,y:-4.8,text:'Olay Gunu',showarrow:false,font:{size:8,color:c.muted}}]}),PC)
+  }
+
+  // TUFE YoY
+  if(document.getElementById('chart-tufe-yoy')){
+    const dates=['2019-01','2019-04','2019-07','2019-10','2020-01','2020-04','2020-07','2020-10','2021-01','2021-04','2021-07','2021-10','2022-01','2022-04','2022-07','2022-10','2023-01','2023-04','2023-07','2023-10','2024-01','2024-04','2024-07','2024-10','2025-01','2025-04','2025-07','2025-10'];
+    const yoy=[20.35,19.50,16.65,8.55,12.15,10.94,11.76,11.89,14.97,17.14,18.95,19.89,48.69,69.97,79.60,85.51,57.68,43.68,47.83,61.36,64.86,69.80,61.78,48.58,42.12,37.86,33.52,32.87];
+    Plotly.react('chart-tufe-yoy',[{x:dates,y:yoy,type:'scatter',mode:'lines',fill:'tozeroy',line:{color:c.accent,width:1.5},fillcolor:c.redT},{x:dates,y:Array(dates.length).fill(50),type:'scatter',mode:'lines',line:{color:c.muted,width:1,dash:'dot'},hoverinfo:'skip'}],L(c,{yaxis:{gridcolor:c.grid,ticksuffix:'%',tickfont:{size:9}},xaxis:{gridcolor:c.grid,tickfont:{size:8},tickangle:-45},annotations:[{x:'2022-10',y:88,text:'Zirve: %85.5',showarrow:false,font:{size:8,color:c.accent}}]}),PC)
+  }
+
+  // TUFE Index
+  if(document.getElementById('chart-tufe-index')){
+    const dates2=['2019-01','2019-07','2020-01','2020-07','2021-01','2021-07','2022-01','2022-07','2023-01','2023-07','2024-01','2024-07','2025-01','2025-07','2025-12'];
+    const idx=[398,419,447,469,513,557,763,1001,1203,1480,1984,2394,2820,3197,3514];
+    Plotly.react('chart-tufe-index',[{x:dates2,y:idx,type:'scatter',mode:'lines',line:{color:c.accent,width:2},fill:'tozeroy',fillcolor:c.redT}],L(c,{yaxis:{gridcolor:c.grid,tickfont:{size:9},title:{text:'TUFE Endeksi (2003=100)',font:{size:9}}},xaxis:{gridcolor:c.grid,tickfont:{size:8},tickangle:-45}}),PC)
+  }
+
+  // Nominal vs Real (Fisher equation, each IPO computed individually)
+  if(document.getElementById('chart-nominal-real')){
+    const periods=['Tavan Serisi','30 Gun','90 Gun','180 Gun','365 Gun'];
+    const nominal=[67.8,51.0,73.1,107.2,164.5];
+    const real=[67.8,48.6,60.2,75.1,74.1];
+    const gap=nominal.map((n,i)=>(n-real[i]).toFixed(0));
+    Plotly.react('chart-nominal-real',[{x:periods,y:nominal,type:'bar',name:'Nominal Getiri',marker:{color:c.blue,opacity:.85},text:nominal.map(v=>'+'+v.toFixed(0)+'%'),textposition:'outside',textfont:{family:'DM Mono',size:8,color:c.muted}},{x:periods,y:real,type:'bar',name:'Reel Getiri (Fisher)',marker:{color:c.green,opacity:.85},text:real.map(v=>'+'+v.toFixed(0)+'%'),textposition:'outside',textfont:{family:'DM Mono',size:8,color:c.muted}}],L(c,{barmode:'group',yaxis:{gridcolor:c.grid,ticksuffix:'%',tickfont:{size:9},range:[0,185]},showlegend:true,legend:{x:0,y:1,font:{size:9}},annotations:[{x:'365 Gun',y:170,text:'Enflasyon asindirmasi:<br>365g: '+gap[4]+' puan',showarrow:false,font:{size:8,color:c.accent},align:'center'}]}),PC)
+  }
+}
+
+renderAllCharts();
+window.addEventListener('resize',()=>{clearTimeout(window._rc);window._rc=setTimeout(renderAllCharts,200)});
+</script>
 </body>
 </html>
