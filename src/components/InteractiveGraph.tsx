@@ -7,7 +7,7 @@ interface Node {
 }
 
 const INITIAL_NODES: Node[] = [
-  { id: 'name', label: 'S. Cagatay Sonmez', x: 50, y: 45, r: 42, type: 'center' },
+  { id: 'name', label: 'S. Cagatay Sonmez', x: 50, y: 45, r: 36, type: 'center' },
   { id: 'portfolio', label: 'Portfolio Tracker', x: 22, y: 25, r: 30, type: 'project', href: '/tracker/', sub: '100K TL · 7 instruments' },
   { id: 'f1', label: 'F1 Predictor', x: 78, y: 25, r: 30, type: 'project', href: '#/f1', sub: 'Ensemble ML · OpenF1' },
   { id: 'thesis', label: 'Tez Konusu', x: 50, y: 80, r: 26, type: 'project', href: '/tez/', sub: '209 IPO · BIST 2020-2025' },
@@ -230,11 +230,11 @@ export function InteractiveGraph({ dark }: Props) {
         ctx.moveTo(posX[ai], posY[ai])
         ctx.lineTo(posX[bi], posY[bi])
         ctx.strokeStyle = isEdgeDragged
-          ? (isDark ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.25)')
+          ? (isDark ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.18)')
           : isEdgeHovered
-            ? (isDark ? 'rgba(255,255,255,.30)' : 'rgba(0,0,0,.22)')
-            : (isDark ? 'rgba(255,255,255,.15)' : 'rgba(0,0,0,.12)')
-        ctx.lineWidth = isEdgeDragged ? 2 : isEdgeHovered ? 1.8 : 1.2
+            ? (isDark ? 'rgba(255,255,255,.18)' : 'rgba(0,0,0,.14)')
+            : (isDark ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.06)')
+        ctx.lineWidth = isEdgeDragged ? 1.5 : isEdgeHovered ? 1.2 : 0.7
         ctx.stroke()
       }
 
@@ -267,21 +267,21 @@ export function InteractiveGraph({ dark }: Props) {
         ctx.beginPath()
         ctx.arc(px, py, rPx, 0, Math.PI * 2)
         ctx.fillStyle = isDragged
-          ? (isDark ? 'rgba(255,255,255,.12)' : 'rgba(0,0,0,.08)')
+          ? (isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.05)')
           : isDark
-            ? (isCenter ? 'rgba(255,255,255,.08)' : isProject ? 'rgba(255,255,255,.06)' : 'rgba(255,255,255,.04)')
-            : (isCenter ? 'rgba(0,0,0,.06)' : isProject ? 'rgba(0,0,0,.05)' : 'rgba(0,0,0,.03)')
+            ? (isCenter ? 'rgba(255,255,255,.05)' : isProject ? 'rgba(255,255,255,.04)' : 'rgba(255,255,255,.025)')
+            : (isCenter ? 'rgba(0,0,0,.035)' : isProject ? 'rgba(0,0,0,.03)' : 'rgba(0,0,0,.018)')
         ctx.fill()
 
         // Border
         ctx.strokeStyle = isDragged
-          ? (isDark ? 'rgba(255,255,255,.50)' : 'rgba(0,0,0,.40)')
+          ? (isDark ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.28)')
           : isHovered
-            ? (isDark ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.28)')
+            ? (isDark ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.20)')
             : isDark
-              ? (isCenter ? 'rgba(255,255,255,.22)' : isProject ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.10)')
-              : (isCenter ? 'rgba(0,0,0,.18)' : isProject ? 'rgba(0,0,0,.14)' : 'rgba(0,0,0,.08)')
-        ctx.lineWidth = isDragged ? 2.5 : isCenter ? 2 : isProject ? 1.8 : 1.4
+              ? (isCenter ? 'rgba(255,255,255,.14)' : isProject ? 'rgba(255,255,255,.10)' : 'rgba(255,255,255,.06)')
+              : (isCenter ? 'rgba(0,0,0,.12)' : isProject ? 'rgba(0,0,0,.09)' : 'rgba(0,0,0,.05)')
+        ctx.lineWidth = isDragged ? 2 : isCenter ? 1.5 : isProject ? 1.2 : 0.8
         ctx.stroke()
 
         // Dot indicator
@@ -341,7 +341,7 @@ export function InteractiveGraph({ dark }: Props) {
       ref={containerRef}
       style={{
         width: '100%',
-        height: 'clamp(400px, 55vh, 600px)',
+        height: 'clamp(340px, 45vh, 520px)',
         position: 'relative',
         userSelect: 'none',
       }}

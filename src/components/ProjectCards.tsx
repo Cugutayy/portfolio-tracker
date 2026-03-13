@@ -4,15 +4,15 @@ interface Props { t: (k: string) => string }
 
 export function ProjectCards({ t }: Props) {
   return (
-    <section id="projects" className="container" style={{ padding:'16px 0 32px' }}>
+    <section id="projects" className="container" style={{ padding:'24px 0 40px' }}>
       <ScrollReveal delay={0}>
-        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:16 }}>
-          <h2 style={{ fontSize:'1.1rem', fontWeight:300, letterSpacing:'-.01em' }}>{t('secP')}</h2>
-          <span className="mono" style={{ fontSize:'.6rem', color:'var(--muted)' }}>{t('pCnt')}</span>
+        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:20 }}>
+          <h2 style={{ fontSize:'1rem', fontWeight:300, letterSpacing:'.08em', textTransform:'uppercase', fontFamily:'DM Mono, monospace' }}>{t('secP')}</h2>
+          <span className="mono" style={{ fontSize:'.55rem', color:'var(--muted)', opacity:0.5 }}>{t('pCnt')}</span>
         </div>
       </ScrollReveal>
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(240px, 1fr))', gap:12 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))', gap:16 }}>
         <ScrollReveal delay={80}>
           <GlassCard href="/tracker/" label="01" accent="var(--green-t)">
             <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>Portfolio Tracker</h3>
@@ -128,15 +128,15 @@ function GlassCard({ children, href, disabled, label, accent }: { children: Reac
         onMouseLeave={handleMouseLeave}
         style={{
           position:'relative', overflow:'hidden',
-          border: disabled ? '1px dashed rgba(255,255,255,0.06)' : '1px solid rgba(255,255,255,0.08)',
-          borderRadius:14, padding:'20px 22px',
-          background: disabled ? 'transparent' : 'rgba(255,255,255,0.03)',
-          backdropFilter: disabled ? 'none' : 'blur(12px)',
-          WebkitBackdropFilter: disabled ? 'none' : 'blur(12px)',
+          border: disabled ? '1px dashed var(--card-border)' : '1px solid var(--card-border)',
+          borderRadius:16, padding:'22px 24px',
+          background: disabled ? 'transparent' : 'var(--card-bg)',
+          backdropFilter: disabled ? 'none' : 'blur(20px) saturate(1.1)',
+          WebkitBackdropFilter: disabled ? 'none' : 'blur(20px) saturate(1.1)',
           cursor: disabled ? 'default' : 'pointer',
-          transition:'transform .4s cubic-bezier(.16,1,.3,1), box-shadow .4s ease, border-color .3s',
+          transition:'transform .5s cubic-bezier(.16,1,.3,1), box-shadow .5s ease, border-color .3s',
           transformStyle:'preserve-3d', willChange:'transform',
-          boxShadow: disabled ? 'none' : '0 2px 16px rgba(0,0,0,0.15)',
+          boxShadow: disabled ? 'none' : '0 4px 24px var(--shadow), 0 1px 3px rgba(0,0,0,0.04)',
           opacity: disabled ? 0.5 : 1,
           height:'100%',
         }}
