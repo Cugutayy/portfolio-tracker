@@ -48,10 +48,10 @@ function ShaderBg({ dark }: { dark: boolean }) {
   }, [ready]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const colors = dark
-    ? ['hsl(200,100%,12%)', 'hsl(170,100%,65%)', 'hsl(185,90%,25%)', 'hsl(175,100%,70%)']
-    : ['hsl(195,80%,55%)', 'hsl(165,90%,78%)', 'hsl(185,70%,45%)', 'hsl(175,85%,85%)']
+    ? ['hsl(30,20%,8%)', 'hsl(25,30%,16%)', 'hsl(35,15%,10%)', 'hsl(20,25%,14%)']
+    : ['hsl(35,30%,88%)', 'hsl(28,25%,82%)', 'hsl(32,20%,90%)', 'hsl(25,35%,85%)']
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity: ready ? (dark ? 0.4 : 0.45) : 0, transition: 'opacity 1.2s ease' }}>
+    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity: ready ? (dark ? 0.22 : 0.18) : 0, transition: 'opacity 1.5s ease' }}>
       {ready && (
         <Suspense fallback={null}>
           <Warp
