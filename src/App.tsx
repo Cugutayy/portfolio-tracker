@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, lazy, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { Navbar } from './components/Navbar'
 import { Hero } from './components/Hero'
 import { InteractiveGraph } from './components/InteractiveGraph'
@@ -6,70 +6,52 @@ import { ProjectCards } from './components/ProjectCards'
 import { Footer } from './components/Footer'
 import { F1Page } from './components/F1Page'
 
-const Warp = lazy(() => import('@paper-design/shaders-react').then(m => ({ default: m.Warp })))
-
 const I18N: Record<string, Record<string, string>> = {
   tr: { secP:'Projeler', pCnt:'3 proje', p1d:'Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi.', pf:'Portföy', ch:'Değişim', gd:'Altın', lv:'Canlı', tF:'Finans', tA:'Canlı API', p2t:'F1 Yarış Tahmini', p2d:'Ensemble ML (Ridge+GB+ELO) ile F1 yarış tahmini. Canlı telemetri, sektör analizi, lap-by-lap güncelleme.', drivers:'sürücü', p3t:'Tez Konusu', p3d:'BIST 2020–2025 halka arz düşük fiyatlaması, sürü davranışı ve SPK cezaları. 209 halka arz, 5 araştırma sorusu.', navP:'projeler', navC:'iletişim' },
   en: { secP:'Projects', pCnt:'3 projects', p1d:'Portfolio tracking system for Responsible Investment course. 100K TL, 7 instruments, live prices, ESG analysis.', pf:'Portfolio', ch:'Change', gd:'Gold', lv:'Live', tF:'Finance', tA:'Live API', p2t:'F1 Race Predictor', p2d:'F1 race prediction with Ensemble ML. Live telemetry, sector analysis, lap-by-lap updates.', drivers:'drivers', p3t:'Thesis', p3d:'BIST 2020–2025 IPO underpricing, herding behavior & SPK penalties. 209 IPOs, 5 research questions.', navP:'projects', navC:'contact' },
   zh: { secP:'项目', pCnt:'3个项目', p1d:'负责任投资课程的投资组合跟踪系统。', pf:'投资组合', ch:'变化', gd:'黄金', lv:'实时', tF:'金融', tA:'实时API', p2t:'F1比赛预测', p2d:'集成ML模型预测F1比赛。实时遥测、扇区分析。', drivers:'车手', p3t:'毕业论文', p3d:'BIST 2020-2025 IPO定价不足和羊群行为研究。209家IPO。', navP:'项目', navC:'联系' },
 }
 
-function ShaderBg({ dark }: { dark: boolean }) {
-  const waveRef = useRef(0.15)
-  const targetRef = useRef(0.15)
-  const rafRef = useRef(0)
-  const [wave, setWave] = useState(0.15)
-  const [ready, setReady] = useState(false)
-
-  // Delay shader render to avoid initial load stutter
-  useEffect(() => {
-    const t = setTimeout(() => setReady(true), 350)
-    return () => clearTimeout(t)
-  }, [])
-
-  useEffect(() => {
-    if (!ready) return
-    const onMove = () => { targetRef.current = 0.28 }
-    window.addEventListener('mousemove', onMove, { passive: true })
-
-    const tick = () => {
-      rafRef.current = requestAnimationFrame(tick)
-      targetRef.current += (0.15 - targetRef.current) * 0.03
-      waveRef.current += (targetRef.current - waveRef.current) * 0.08
-      const rounded = Math.round(waveRef.current * 500) / 500
-      if (rounded !== Math.round(wave * 500) / 500) setWave(rounded)
-    }
-    rafRef.current = requestAnimationFrame(tick)
-
-    return () => {
-      window.removeEventListener('mousemove', onMove)
-      cancelAnimationFrame(rafRef.current)
-    }
-  }, [ready]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const colors = dark
-    ? ['hsl(30,20%,8%)', 'hsl(25,30%,16%)', 'hsl(35,15%,10%)', 'hsl(20,25%,14%)']
-    : ['hsl(35,30%,88%)', 'hsl(28,25%,82%)', 'hsl(32,20%,90%)', 'hsl(25,35%,85%)']
+/* Pure CSS ambient orbs — zero JS, GPU composited */
+function AmbientOrbs({ dark }: { dark: boolean }) {
   return (
-    <div style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', opacity: ready ? (dark ? 0.22 : 0.18) : 0, transition: 'opacity 1.5s ease' }}>
-      {ready && (
-        <Suspense fallback={null}>
-          <Warp
-            colors={colors}
-            speed={0.25}
-            proportion={0.45}
-            softness={1}
-            distortion={wave}
-            swirl={0.5}
-            swirlIterations={6}
-            shape="checks"
-            shapeScale={0.1}
-            scale={1}
-            rotation={0}
-            style={{ width:'100%', height:'100%' }}
-          />
-        </Suspense>
-      )}
+    <div className="ambient-orbs" aria-hidden="true" style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', overflow:'hidden' }}>
+      <div className="orb orb-1" style={{
+        position:'absolute', width:'45vmax', height:'45vmax', borderRadius:'50%',
+        top:'-10%', left:'-5%',
+        background: dark
+          ? 'radial-gradient(circle, rgba(200,160,100,0.07) 0%, transparent 70%)'
+          : 'radial-gradient(circle, rgba(180,140,80,0.08) 0%, transparent 70%)',
+        filter:'blur(60px)',
+        animation:'orbFloat1 30s ease-in-out infinite alternate',
+      }} />
+      <div className="orb orb-2" style={{
+        position:'absolute', width:'40vmax', height:'40vmax', borderRadius:'50%',
+        top:'30%', right:'-10%',
+        background: dark
+          ? 'radial-gradient(circle, rgba(80,110,160,0.06) 0%, transparent 70%)'
+          : 'radial-gradient(circle, rgba(100,130,180,0.06) 0%, transparent 70%)',
+        filter:'blur(70px)',
+        animation:'orbFloat2 35s ease-in-out infinite alternate',
+      }} />
+      <div className="orb orb-3" style={{
+        position:'absolute', width:'35vmax', height:'35vmax', borderRadius:'50%',
+        bottom:'-5%', left:'30%',
+        background: dark
+          ? 'radial-gradient(circle, rgba(160,90,100,0.05) 0%, transparent 70%)'
+          : 'radial-gradient(circle, rgba(180,100,120,0.05) 0%, transparent 70%)',
+        filter:'blur(80px)',
+        animation:'orbFloat3 28s ease-in-out infinite alternate',
+      }} />
+      <div className="orb orb-4" style={{
+        position:'absolute', width:'25vmax', height:'25vmax', borderRadius:'50%',
+        top:'60%', left:'10%',
+        background: dark
+          ? 'radial-gradient(circle, rgba(100,180,140,0.04) 0%, transparent 70%)'
+          : 'radial-gradient(circle, rgba(80,160,120,0.04) 0%, transparent 70%)',
+        filter:'blur(50px)',
+        animation:'orbFloat4 32s ease-in-out infinite alternate',
+      }} />
     </div>
   )
 }
@@ -100,7 +82,7 @@ export default function App() {
 
   return (
     <>
-      <ShaderBg dark={dark} />
+      <AmbientOrbs dark={dark} />
       <div style={{ position:'relative', zIndex:1 }}>
         <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />
         <Hero lang={lang} />
