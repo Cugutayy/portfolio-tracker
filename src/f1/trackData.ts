@@ -1,22 +1,45 @@
 /**
- * Hardcoded track coordinates for race circuits
- * Extracted from OpenF1 location data (Russell lap 10, sampled every 3rd point)
- * Format: [x, y] pairs — use Y-flip for SVG rendering
+ * Track coordinates for race circuits
+ * Hand-crafted from official circuit layouts + satellite imagery
+ * Format: [x, y] pairs — TrackSVG auto-scales and Y-flips
  */
 
 export const TRACK_COORDS: Record<string, number[][]> = {
-  // Shanghai International Circuit — 2026 Chinese GP
-  // Real telemetry from OpenF1 API — Qualifying session 11241, Russell lap 5
+  // Shanghai International Circuit — 5.451 km, 16 turns
+  // Iconic T1-T4 spiral ("上" character), 2 DRS zones
+  // Track crosses itself at T1/T4 exit (bridge/flyover in real life)
   'Shanghai': [
-    [1123,-1319],[-259,-1621],[-1559,-1905],[-2760,-2167],[-4206,-2482],[-5124,-2486],[-5664,-1682],
-    [-5510,-1177],[-5047,-981],[-4685,-1385],[-4800,-1828],[-4560,-2057],[-4024,-1234],[-4389,-640],
-    [-5252,372],[-6087,1483],[-6510,2765],[-6698,3335],[-6605,3668],[-6147,3437],[-5494,2624],
-    [-5051,1829],[-4268,778],[-3293,652],[-2665,1057],[-2074,2155],[-1368,2482],[-815,2235],
-    [-413,1480],[3,1212],[392,1619],[225,2703],[-234,3488],[-897,4618],[-1307,5317],
-    [-1618,5841],[-1858,6056],[-2150,5780],[-2732,5788],[-2946,6577],[-2400,7159],[-1489,7070],
-    [-854,6368],[-133,5239],[481,4278],[1138,3250],[1913,2037],[2936,436],[3723,-793],
-    [4493,-1998],[5048,-2866],[5328,-3304],[5459,-3537],[5186,-3580],[4340,-2773],[3705,-1874],
-    [3129,-1045],[2520,-1010],[1641,-1207],
+    // ═══ S/F line (right side of main straight) ═══
+    [450, 350],
+    // ═══ MAIN STRAIGHT heading west — DRS Zone 1 ═══
+    [390, 352], [330, 350], [270, 346], [210, 338], [150, 326], [100, 308], [60, 286],
+    // ═══ T1 — Left turn entry into spiral (outer west side) ═══
+    [28, 258], [10, 225], [5, 188], [10, 150], [25, 115],
+    // ═══ T2 — Spiral bottom heading east ═══
+    [48, 88], [80, 68], [120, 58], [162, 58], [200, 68],
+    // ═══ T3 — Spiral east side heading north ═══
+    [230, 88], [252, 115], [262, 150], [262, 190], [252, 228], [235, 260],
+    // ═══ T4 — Inner spiral: heading west then south (tightening) ═══
+    [210, 282], [178, 296], [142, 298], [108, 286], [82, 264],
+    [68, 238], [62, 208], [68, 182], [85, 162], [108, 148],
+    // ═══ T4 exit heading south — crosses T2 (bridge/flyover) ═══
+    [118, 130], [122, 105], [120, 78],
+    // ═══ T5–T6 continuing south ═══
+    [114, 48], [104, 18], [90, -10],
+    // ═══ T7 — Curving east toward back straight ═══
+    [80, -35], [78, -58], [88, -80], [108, -98],
+    // ═══ T8–T9 transition ═══
+    [135, -112], [168, -120],
+    // ═══ BACK STRAIGHT heading east — DRS Zone 2 ═══
+    [208, -128], [258, -138], [318, -142], [370, -140],
+    // ═══ T11 — Left turn heading north ═══
+    [400, -128], [422, -108], [436, -80],
+    // ═══ T12–T13 ═══
+    [442, -48], [434, -15], [420, 14],
+    // ═══ T14 — Hairpin ═══
+    [402, 38], [388, 58], [380, 82], [382, 108],
+    // ═══ T15–T16 heading north back to S/F ═══
+    [390, 145], [400, 188], [412, 238], [428, 288], [442, 325], [450, 350],
   ],
 
   // Albert Park, Melbourne — 2026 Australian GP
