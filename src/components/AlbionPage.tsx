@@ -223,14 +223,36 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
     return arr
   }, [scan.opportunities, filters, strategyFilter])
 
-  // Top trades candidates (pre-volume enrichment)
+  // Top trades candidates — use ALL opportunities (not filtered), deduplicated
   const topCandidates = useMemo(() => {
-    if (!filtered.length) return []
-    return [...filtered]
-      .filter(o => o.expectedValue > 0 && o.freshness !== 'stale')
+    if (scan.status !== 'complete' || !scan.opportunities.length) return []
+    const all = scan.opportunities.filter(o => o.expectedValue > 0 && o.freshness !== 'stale')
+
+    // Separate BM instant-sell and city-to-city trades
+    const bmTrades = all.filter(o => o.isBlackMarket && o.strategy === 'instant-sell')
       .sort((a, b) => b.expectedValue - a.expectedValue)
-      .slice(0, 30) // take more to filter by volume later
-  }, [filtered])
+    const cityTrades = all.filter(o => !o.isBlackMarket)
+      .sort((a, b) => b.expectedValue - a.expectedValue)
+
+    // Deduplicate: max 2 routes per unique itemId per category
+    function dedup(arr: ArbitrageOpportunity[], maxPerItem: number, limit: number) {
+      const countMap = new Map<string, number>()
+      const result: ArbitrageOpportunity[] = []
+      for (const o of arr) {
+        const cnt = countMap.get(o.itemId) || 0
+        if (cnt >= maxPerItem) continue
+        countMap.set(o.itemId, cnt + 1)
+        result.push(o)
+        if (result.length >= limit) break
+      }
+      return result
+    }
+
+    // Take diverse candidates: BM flips are priority (instant profit)
+    const bmCandidates = dedup(bmTrades, 2, 50)
+    const cityCandidates = dedup(cityTrades, 2, 60)
+    return [...bmCandidates, ...cityCandidates]
+  }, [scan.status, scan.opportunities])
 
   // Enriched top trades with volume data
   const [enrichedTrades, setEnrichedTrades] = useState<ArbitrageOpportunity[]>([])
@@ -249,7 +271,7 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
         // Collect unique item IDs from candidates
         const uniqueItems = [...new Set(topCandidates.map(t => t.itemId))]
         // Fetch history in small batches
-        const allHistory: Map<string, { city: string; avgVol: number; avgPrice: number }[]> = new Map()
+        const allHistory: Map<string, { city: string; avgVol: number; avgPrice: number; dataPoints: number }[]> = new Map()
         for (let i = 0; i < uniqueItems.length; i += 10) {
           if (cancelled) return
           const batch = uniqueItems.slice(i, i + 10)
@@ -258,58 +280,98 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
             for (const h of hist) {
               const key = h.item_id
               const points = h.data.filter(d => d.item_count > 0)
-              if (!points.length) continue
-              const avgVol = points.reduce((s, d) => s + d.item_count, 0) / Math.max(points.length, 1)
-              const avgPrice = points.reduce((s, d) => s + d.avg_price, 0) / Math.max(points.length, 1)
+              const allPoints = h.data
+              // Even if no volume, record avg_price from all data points
+              const pricePoints = allPoints.filter(d => d.avg_price > 0)
+              const avgVol = points.length > 0
+                ? points.reduce((s, d) => s + d.item_count, 0) / Math.max(points.length, 1)
+                : 0
+              const avgPrice = pricePoints.length > 0
+                ? pricePoints.reduce((s, d) => s + d.avg_price, 0) / pricePoints.length
+                : 0
               const existing = allHistory.get(key) || []
-              existing.push({ city: h.location, avgVol, avgPrice })
+              existing.push({ city: h.location, avgVol, avgPrice, dataPoints: points.length })
               allHistory.set(key, existing)
             }
           } catch { /* continue with partial data */ }
         }
         if (cancelled) return
 
-        // Enrich candidates with volume data and filter
+        // Enrich candidates with volume data
         const enriched: ArbitrageOpportunity[] = []
         for (const trade of topCandidates) {
           const histEntries = allHistory.get(trade.itemId) || []
           const srcHist = histEntries.find(h => h.city === trade.sourceCity)
+          // For BM trades, dest history might be under 'Caerleon' or 'Black Market'
           const dstHist = histEntries.find(h => h.city === trade.destCity)
+            || (trade.destCity === 'Black Market' ? histEntries.find(h => h.city === 'Caerleon') : null)
 
           const dailyVolSrc = srcHist?.avgVol || 0
           const dailyVolDst = dstHist?.avgVol || 0
           const avgPriceSrc = srcHist?.avgPrice || 0
           const avgPriceDst = dstHist?.avgPrice || 0
+          const hasHistoryData = histEntries.length > 0
 
-          // Skip items with zero volume in BOTH cities (never traded → untradable)
-          if (dailyVolSrc === 0 && dailyVolDst === 0) continue
+          // Validate prices against 7-day historical averages
+          // Source price: reject if wildly different from avg (too cheap OR too expensive)
+          if (avgPriceSrc > 0) {
+            const srcRatio = trade.sourcePrice / avgPriceSrc
+            if (srcRatio < 0.3 || srcRatio > 3) continue // price is 3x+ off from historical
+          }
 
-          // For sell-order: validate current price against historical average
-          // If current dest sell_price_min is > 2x the historical avg, it's likely fake
-          if (trade.strategy === 'sell-order' && avgPriceDst > 0 && trade.destPrice > avgPriceDst * 2) continue
+          // Dest price for sell-order: reject if > 2.5x historical avg (inflated listing)
+          if (trade.strategy === 'sell-order' && avgPriceDst > 0 && trade.destPrice > avgPriceDst * 2.5) continue
 
-          // Recommended quantity: min(30% of daily dest volume, affordable amount)
-          const destVol = Math.max(dailyVolDst, dailyVolSrc * 0.5) // estimate if dest has low vol
-          const recommendedQty = Math.max(1, Math.floor(destVol * 0.3))
+          // Dest price for instant-sell: reject if > 3x historical avg
+          if (trade.strategy === 'instant-sell' && avgPriceDst > 0 && trade.destPrice > avgPriceDst * 3) continue
+
+          // Reject if source is > 5x dest historical avg (buying overpriced item)
+          if (avgPriceDst > 0 && trade.sourcePrice > avgPriceDst * 5) continue
+
+          // For sell-order: skip if dest has 0 daily volume (nobody buys here)
+          if (trade.strategy === 'sell-order' && dailyVolDst === 0 && dailyVolSrc === 0) continue
+
+          // Recommended quantity based on dest volume
+          const destVol = dailyVolDst > 0 ? dailyVolDst : (dailyVolSrc > 0 ? dailyVolSrc * 0.3 : 0)
+          const recommendedQty = destVol > 0 ? Math.max(1, Math.floor(destVol * 0.3)) : 1
           const daysToSell = recommendedQty > 0 && destVol > 0
-            ? Math.ceil(recommendedQty / destVol)
-            : 99
+            ? Math.round((recommendedQty / destVol) * 10) / 10
+            : -1 // -1 = unknown
 
           // Liquidity score (0-100)
-          // Based on: dest volume, price consistency, market depth
           let liquidityScore = 0
-          if (destVol >= 50) liquidityScore += 40
-          else if (destVol >= 10) liquidityScore += 25
-          else if (destVol >= 3) liquidityScore += 15
-          else if (destVol > 0) liquidityScore += 5
 
-          if (dailyVolSrc >= 10) liquidityScore += 20
+          // Volume component (0-40) — use ACTUAL dest volume, not estimated
+          if (dailyVolDst >= 50) liquidityScore += 40
+          else if (dailyVolDst >= 20) liquidityScore += 30
+          else if (dailyVolDst >= 10) liquidityScore += 25
+          else if (dailyVolDst >= 3) liquidityScore += 15
+          else if (dailyVolDst > 0) liquidityScore += 5
+          // Zero dest volume penalty for sell-order
+          else if (trade.strategy === 'sell-order') liquidityScore -= 10
+
+          // Source volume (0-20)
+          if (dailyVolSrc >= 20) liquidityScore += 20
+          else if (dailyVolSrc >= 10) liquidityScore += 15
           else if (dailyVolSrc >= 3) liquidityScore += 10
           else if (dailyVolSrc > 0) liquidityScore += 5
 
-          // Price consistency bonus
-          if (avgPriceSrc > 0 && Math.abs(trade.sourcePrice - avgPriceSrc) / avgPriceSrc < 0.3) liquidityScore += 20
-          if (avgPriceDst > 0 && Math.abs(trade.destPrice - avgPriceDst) / avgPriceDst < 0.3) liquidityScore += 20
+          // Price consistency with 7d average (0-20 each side)
+          if (avgPriceSrc > 0) {
+            const srcDev = Math.abs(trade.sourcePrice - avgPriceSrc) / avgPriceSrc
+            if (srcDev < 0.15) liquidityScore += 20
+            else if (srcDev < 0.3) liquidityScore += 12
+            else if (srcDev < 0.5) liquidityScore += 5
+          }
+          if (avgPriceDst > 0) {
+            const dstDev = Math.abs(trade.destPrice - avgPriceDst) / avgPriceDst
+            if (dstDev < 0.15) liquidityScore += 20
+            else if (dstDev < 0.3) liquidityScore += 12
+            else if (dstDev < 0.5) liquidityScore += 5
+          }
+
+          // BM instant-sell bonus: always liquid (NPC buy orders)
+          if (trade.isBlackMarket && trade.strategy === 'instant-sell') liquidityScore += 15
 
           const volume: VolumeData = {
             dailyVolumeSrc: Math.round(dailyVolSrc * 10) / 10,
@@ -318,24 +380,73 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
             avgPriceDst: Math.round(avgPriceDst),
             recommendedQty,
             liquidityScore: Math.min(100, liquidityScore),
-            daysToSell,
+            daysToSell: daysToSell > 0 ? Math.ceil(daysToSell) : 99,
           }
 
           enriched.push({ ...trade, volume })
         }
 
-        // Sort by expectedValue * liquidityScore (balance profit with sellability)
-        enriched.sort((a, b) => {
-          const scoreA = a.expectedValue * (a.volume?.liquidityScore || 0)
-          const scoreB = b.expectedValue * (b.volume?.liquidityScore || 0)
-          return scoreB - scoreA
-        })
+        // Composite score: EV * (liquidityScore/100)^1.5 — heavily penalizes low liquidity
+        // A LIQ 15 item gets multiplier 0.058, LIQ 50 gets 0.354, LIQ 65 gets 0.524
+        function compositeScore(t: ArbitrageOpportunity) {
+          const liq = Math.max(0, t.volume?.liquidityScore || 0) / 100
+          return t.expectedValue * Math.pow(liq, 1.5)
+        }
 
-        if (!cancelled) setEnrichedTrades(enriched.slice(0, 10))
+        enriched.sort((a, b) => compositeScore(b) - compositeScore(a))
+
+        // Final selection: deduplicate by BASE item (strip enchantment), max 1 per base item
+        // Minimum liquidity threshold: LIQ >= 25 for recommended trades (user said "elimizde patlamasın")
+        const MIN_LIQ_FOR_TOP = 25
+        const finalTrades: ArbitrageOpportunity[] = []
+        const seenItems = new Set<string>()
+        const bmPicks: ArbitrageOpportunity[] = []
+        const cityPicks: ArbitrageOpportunity[] = []
+
+        for (const t of enriched) {
+          const liq = t.volume?.liquidityScore || 0
+          if (liq < MIN_LIQ_FOR_TOP) continue // skip illiquid items — too risky to recommend
+          const baseId = t.itemId.replace(/@\d+$/, '') // T8_BAG_INSIGHT@3 → T8_BAG_INSIGHT
+          if (seenItems.has(baseId)) continue
+          seenItems.add(baseId)
+          if (t.isBlackMarket) bmPicks.push(t)
+          else cityPicks.push(t)
+        }
+
+        // BM instant flips are primary (instant profit, no waiting)
+        // Fill up to 7 BM slots, then city trades, total 10
+        const bmSlots = Math.min(bmPicks.length, 7)
+        for (let i = 0; i < bmSlots; i++) finalTrades.push(bmPicks[i])
+        for (const t of cityPicks) {
+          if (finalTrades.length >= 10) break
+          finalTrades.push(t)
+        }
+        // Fill remaining with more BM if we still have room
+        for (let i = bmSlots; i < bmPicks.length && finalTrades.length < 10; i++) {
+          finalTrades.push(bmPicks[i])
+        }
+
+        // If not enough items above threshold, relax to LIQ >= 15
+        if (finalTrades.length < 5) {
+          const relaxedSeenItems = new Set(seenItems)
+          for (const t of enriched) {
+            if (finalTrades.length >= 10) break
+            const liq = t.volume?.liquidityScore || 0
+            if (liq < 15) continue
+            const baseId = t.itemId.replace(/@\d+$/, '')
+            if (relaxedSeenItems.has(baseId)) continue
+            relaxedSeenItems.add(baseId)
+            finalTrades.push(t)
+          }
+        }
+
+        // Re-sort final by composite score
+        finalTrades.sort((a, b) => compositeScore(b) - compositeScore(a))
+
+        if (!cancelled) setEnrichedTrades(finalTrades)
       } catch (err) {
         console.error('Volume enrichment failed:', err)
-        // Fallback to non-enriched
-        if (!cancelled) setEnrichedTrades(topCandidates.slice(0, 10))
+        if (!cancelled) setEnrichedTrades([])
       } finally {
         if (!cancelled) setEnriching(false)
       }
@@ -445,108 +556,48 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
             <StatBox label="API Calls" value={String(albionApi.requestCount)} />
           </div>
 
-          {/* ── Top Trades Guide ── */}
-          {(enrichedTrades.length > 0 || enriching) && (
-            <div className="aop" style={{ marginBottom: 12 }}>
-              <div className="aot">Top 10 Trades — Step-by-Step Guide</div>
-              <div style={{ fontSize: 9, color: '#888', marginBottom: 10, fontFamily: 'Outfit,sans-serif' }}>
-                Ranked by Expected Value × Liquidity. Filters out zero-volume items and validates prices against 7-day historical averages.
+          {/* ── Top Trades — Split by BM Flips / City Trades ── */}
+          {(enrichedTrades.length > 0 || enriching) && (() => {
+            const bmFlips = enrichedTrades.filter(t => t.isBlackMarket)
+            const cityTrades = enrichedTrades.filter(t => !t.isBlackMarket)
+
+            return <>
+            {/* ── BM Instant Flips ── */}
+            <div className="aop" style={{ marginBottom: 12, borderColor: 'rgba(76,175,80,.15)' }}>
+              <div className="aot" style={{ gap: 8 }}>
+                <span style={{ color: '#4caf50' }}>⚡</span> BM Instant Flips — Buy & Sell Immediately
+              </div>
+              <div style={{ fontSize: 9, color: '#888', marginBottom: 8, fontFamily: 'Outfit,sans-serif' }}>
+                Buy from city → instant-sell to Black Market buy orders. No tax, no waiting. Prices verified against 7d history.
               </div>
               {enriching && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#888', padding: 12 }}>
                   <span className="ao-spinner" style={{ width: 12, height: 12 }} />
-                  Fetching volume data and validating prices...
+                  Fetching 7-day history, validating volumes & prices...
                 </div>
               )}
-              {enrichedTrades.map((t, i) => {
-                const v = t.volume
-                return (
-                <div key={`guide-${i}`} className="ao-guide-card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 12, fontWeight: 800, color: GOLD, minWidth: 18 }}>#{i + 1}</span>
-                      <span style={{ fontSize: 12, fontWeight: 600 }}>{t.displayName}</span>
-                      <span className={`ao-strategy ${t.strategy === 'instant-sell' ? 'ao-strategy-instant' : 'ao-strategy-sell'}`}>
-                        {t.strategy === 'instant-sell' ? 'INSTANT' : 'ORDER'}
-                      </span>
-                      <span className={`ao-guide-tag ao-risk-${t.riskLevel}`} style={{ background: t.riskLevel === 'safe' ? 'rgba(76,175,80,.1)' : t.riskLevel === 'medium' ? 'rgba(255,152,0,.1)' : 'rgba(244,67,54,.1)' }}>
-                        {t.riskLevel === 'safe' ? '🛡️' : t.riskLevel === 'medium' ? '⚠️' : '💀'} {Math.round(t.deathRisk * 100)}% risk
-                      </span>
-                      {v && <LiquidityBadge score={v.liquidityScore} />}
-                    </div>
-                    <div style={{ display: 'flex', gap: 14, alignItems: 'baseline', flexWrap: 'wrap' }}>
-                      <div>
-                        <div style={{ fontSize: 7, color: '#888', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'Outfit,sans-serif' }}>Expected Value</div>
-                        <div className="ao-guide-ev" style={{ color: t.expectedValue > 0 ? '#4caf50' : '#f44336' }}>{fmtSilver(t.expectedValue)}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 7, color: '#888', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'Outfit,sans-serif' }}>Per Hour</div>
-                        <div className="ao-guide-ev" style={{ color: isDark ? '#ccc' : '#444' }}>{fmtSilver(t.profitPerHour)}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 7, color: '#888', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'Outfit,sans-serif' }}>Net Profit</div>
-                        <div className="ao-guide-profit" style={{ color: GOLD }}>{fmtSilver(t.netProfit)}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ marginTop: 8 }}>
-                    <div className="ao-guide-step">
-                      <span className="ao-guide-num">1</span>
-                      <span>Go to <CityBadge city={t.sourceCity} /> marketplace. Search for <strong>{t.displayName}</strong>.</span>
-                    </div>
-                    <div className="ao-guide-step">
-                      <span className="ao-guide-num">2</span>
-                      <span>
-                        Buy <strong style={{ color: GOLD }}>{v ? v.recommendedQty : 1}x</strong> at <strong style={{ color: GOLD }}>{fmtSilver(t.sourcePrice)}</strong> silver each.
-                        {v && v.avgPriceSrc > 0 && <em style={{ color: '#888' }}> (7d avg: {fmtSilver(v.avgPriceSrc)})</em>}
-                        {v ? <> — Total cost: <strong>{fmtSilver(t.sourcePrice * v.recommendedQty)}</strong></> : null}
-                      </span>
-                    </div>
-                    <div className="ao-guide-step">
-                      <span className="ao-guide-num">3</span>
-                      <span>
-                        Transport to <CityBadge city={t.destCity} />
-                        {' '}(~{t.transportMinutes} min).
-                        {t.riskLevel === 'safe' && ' Safe zone roads — low risk.'}
-                        {t.riskLevel === 'medium' && ' Red zone roads — use fast mount, avoid gankers.'}
-                        {t.riskLevel === 'dangerous' && ' Black zone — high death risk! Use scout or travel light.'}
-                      </span>
-                    </div>
-                    <div className="ao-guide-step">
-                      <span className="ao-guide-num">4</span>
-                      <span>
-                        {t.strategy === 'instant-sell'
-                          ? <>Instant-sell to buy order at <strong style={{ color: '#4caf50' }}>{fmtSilver(t.destPrice)}</strong> silver. <em style={{ color: '#888' }}>No tax. Immediate profit.</em></>
-                          : <>List sell order at <strong style={{ color: '#2196f3' }}>{fmtSilver(t.destPrice)}</strong> silver.
-                              <em style={{ color: '#888' }}> Tax: {fmtSilver(t.taxPaid)}.
-                              {v && v.avgPriceDst > 0 && <> 7d avg: {fmtSilver(v.avgPriceDst)}.</>}
-                              {v && v.daysToSell <= 1 ? ' Should sell within a day.' : v && v.daysToSell <= 3 ? ` ~${v.daysToSell} days to sell.` : ' May take time to sell.'}
-                              </em>
-                            </>
-                        }
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Volume & Liquidity Stats */}
-                  <div style={{ marginTop: 8, padding: '6px 8px', background: isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.02)', borderRadius: 6, display: 'flex', gap: 16, flexWrap: 'wrap', fontSize: 9, color: '#888', fontFamily: 'Outfit,sans-serif' }}>
-                    <span>Profit/unit: <strong style={{ color: '#4caf50' }}>{fmtSilver(t.netProfit)}</strong> ({t.profitPercent}%)</span>
-                    {v && <>
-                      <span>Qty: <strong style={{ color: GOLD }}>{v.recommendedQty}x</strong></span>
-                      <span>Total profit: <strong style={{ color: '#4caf50' }}>{fmtSilver(t.netProfit * v.recommendedQty)}</strong></span>
-                      <span>Vol/day src: <strong>{v.dailyVolumeSrc}</strong></span>
-                      <span>Vol/day dst: <strong>{v.dailyVolumeDst}</strong></span>
-                      <span>Sell time: <strong>{v.daysToSell <= 1 ? '<1 day' : `~${v.daysToSell} days`}</strong></span>
-                    </>}
-                    <span>Risk: <strong className={`ao-risk-${t.riskLevel}`}>{Math.round(t.deathRisk * 100)}%</strong></span>
-                    <span>Data: <FreshBadge f={t.freshness} /></span>
-                  </div>
+              {bmFlips.length === 0 && !enriching && (
+                <div style={{ fontSize: 10, color: '#888', padding: 12, textAlign: 'center' }}>
+                  No profitable BM flips found with current data. Try scanning again in a few minutes.
                 </div>
-                )
-              })}
+              )}
+              {bmFlips.map((t, i) => <TradeCard key={`bm-${i}`} t={t} i={i} isDark={isDark} taxMode={taxMode} />)}
             </div>
-          )}
+
+            {/* ── City-to-City Trades ── */}
+            {cityTrades.length > 0 && (
+              <div className="aop" style={{ marginBottom: 12, borderColor: 'rgba(33,150,243,.15)' }}>
+                <div className="aot" style={{ gap: 8 }}>
+                  <span style={{ color: '#2196f3' }}>📦</span> City Trades — Sell Order Arbitrage
+                </div>
+                <div style={{ fontSize: 9, color: '#888', marginBottom: 8, fontFamily: 'Outfit,sans-serif' }}>
+                  Buy from one city → transport → list sell order in another city. Higher profit potential but requires waiting for buyer.
+                </div>
+                {cityTrades.map((t, i) => <TradeCard key={`city-${i}`} t={t} i={i} isDark={isDark} taxMode={taxMode} />)}
+              </div>
+            )}
+            </>
+          })()}
 
           {/* ── Filters ── */}
           <div className="aop" style={{ marginBottom: 12 }}>
@@ -715,6 +766,89 @@ function LiquidityBadge({ score }: { score: number }) {
     <span className="ao-guide-tag" style={{ color, background: color + '18', border: `1px solid ${color}25`, fontSize: 7, letterSpacing: '.08em' }}>
       {label} {score}
     </span>
+  )
+}
+
+function TradeCard({ t, i, isDark, taxMode }: { t: ArbitrageOpportunity; i: number; isDark: boolean; taxMode: TaxMode }) {
+  const v = t.volume
+  const srcVerified = v && v.avgPriceSrc > 0
+  const dstVerified = v && v.avgPriceDst > 0
+  const srcDeviation = srcVerified ? Math.round(Math.abs(t.sourcePrice - v!.avgPriceSrc) / v!.avgPriceSrc * 100) : -1
+  const dstDeviation = dstVerified ? Math.round(Math.abs(t.destPrice - v!.avgPriceDst) / v!.avgPriceDst * 100) : -1
+  const confidence = srcVerified && dstVerified && srcDeviation < 30 && dstDeviation < 30
+    ? 'HIGH' : srcVerified || dstVerified ? 'MED' : 'LOW'
+  const confColor = confidence === 'HIGH' ? '#4caf50' : confidence === 'MED' ? '#ff9800' : '#f44336'
+  const maxSafe = v ? Math.max(1, Math.floor((v.dailyVolumeDst > 0 ? v.dailyVolumeDst : v.dailyVolumeSrc) * 0.3)) : 1
+  return (
+    <div className="ao-guide-card">
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: 'Outfit,sans-serif', fontSize: 13, fontWeight: 800, color: GOLD, minWidth: 20 }}>#{i + 1}</span>
+          <span style={{ fontSize: 12, fontWeight: 600 }}>{t.displayName}</span>
+          <span style={{ fontSize: 9, color: '#888' }}>T{t.tier}{t.enchantment ? `.${t.enchantment}` : ''}</span>
+          <span className={`ao-guide-tag ao-risk-${t.riskLevel}`} style={{ background: t.riskLevel === 'safe' ? 'rgba(76,175,80,.1)' : t.riskLevel === 'medium' ? 'rgba(255,152,0,.1)' : 'rgba(244,67,54,.1)' }}>
+            {t.riskLevel === 'safe' ? '🛡️' : t.riskLevel === 'medium' ? '⚠️' : '💀'} {Math.round(t.deathRisk * 100)}% risk
+          </span>
+          {v && <LiquidityBadge score={v.liquidityScore} />}
+          <span className="ao-guide-tag" style={{ color: confColor, background: confColor + '15', border: `1px solid ${confColor}25`, fontSize: 7 }}>
+            {confidence === 'HIGH' ? '✓ VERIFIED' : confidence === 'MED' ? '~ PARTIAL' : '? UNVERIFIED'}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 14, alignItems: 'baseline', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: 7, color: '#666', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'Outfit,sans-serif' }}>EV</div>
+            <div className="ao-guide-ev" style={{ color: t.expectedValue > 0 ? '#4caf50' : '#f44336' }}>{fmtSilver(t.expectedValue)}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 7, color: '#666', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'Outfit,sans-serif' }}>$/hr</div>
+            <div className="ao-guide-ev" style={{ color: isDark ? '#ccc' : '#444' }}>{fmtSilver(t.profitPerHour)}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 7, color: '#666', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'Outfit,sans-serif' }}>Net</div>
+            <div className="ao-guide-profit" style={{ color: GOLD }}>{fmtSilver(t.netProfit)}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 7, color: '#666', textTransform: 'uppercase', letterSpacing: '.1em', fontFamily: 'Outfit,sans-serif' }}>Qty</div>
+            <div className="ao-guide-profit" style={{ color: '#2196f3', fontSize: 14 }}>{maxSafe}x</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Compact steps */}
+      <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap', fontSize: 10 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span className="ao-guide-num" style={{ width: 16, height: 16, fontSize: 7 }}>1</span>
+          Buy <strong style={{ color: GOLD }}>{maxSafe}x</strong> at <CityBadge city={t.sourceCity} /> for <strong style={{ color: GOLD }}>{fmtSilver(t.sourcePrice)}</strong>
+          {srcVerified && <em style={{ color: srcDeviation < 15 ? '#4caf50' : srcDeviation < 30 ? '#ff9800' : '#f44336', fontSize: 8 }}>
+            ({fmtSilver(v!.avgPriceSrc)} avg, {srcDeviation}%)
+          </em>}
+        </span>
+        <span style={{ color: '#555' }}>→</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span className="ao-guide-num" style={{ width: 16, height: 16, fontSize: 7 }}>2</span>
+          {t.strategy === 'instant-sell'
+            ? <>Sell at <CityBadge city={t.destCity} /> for <strong style={{ color: '#4caf50' }}>{fmtSilver(t.destPrice)}</strong></>
+            : <>List at <CityBadge city={t.destCity} /> for <strong style={{ color: '#2196f3' }}>{fmtSilver(t.destPrice)}</strong></>
+          }
+          {dstVerified && <em style={{ color: dstDeviation < 15 ? '#4caf50' : dstDeviation < 30 ? '#ff9800' : '#f44336', fontSize: 8 }}>
+            ({fmtSilver(v!.avgPriceDst)} avg, {dstDeviation}%)
+          </em>}
+        </span>
+      </div>
+
+      {/* Stats row */}
+      <div style={{ marginTop: 6, display: 'flex', gap: 14, flexWrap: 'wrap', fontSize: 9, color: '#888', fontFamily: 'Outfit,sans-serif', padding: '5px 8px', background: isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.02)', borderRadius: 5 }}>
+        <span>Cost: <strong>{fmtSilver(t.sourcePrice * maxSafe)}</strong></span>
+        <span>Profit: <strong style={{ color: '#4caf50' }}>{fmtSilver(t.netProfit * maxSafe)}</strong> ({t.profitPercent}%)</span>
+        {t.taxPaid > 0 && <span>Tax: <strong style={{ color: '#f44336' }}>-{fmtSilver(t.taxPaid * maxSafe)}</strong></span>}
+        {v && <span>Vol: <strong style={{ color: v.dailyVolumeDst >= 10 ? '#4caf50' : v.dailyVolumeDst >= 3 ? '#ff9800' : '#f44336' }}>{v.dailyVolumeDst}/day</strong> dst</span>}
+        {v && <span>Src: <strong>{v.dailyVolumeSrc}/day</strong></span>}
+        <span>Risk: <strong className={`ao-risk-${t.riskLevel}`}>{Math.round(t.deathRisk * 100)}%</strong></span>
+        {v && <span>Sell: <strong>{v.daysToSell <= 1 ? 'instant' : v.daysToSell < 99 ? `~${v.daysToSell}d` : '?'}</strong></span>}
+        <span>EV: {fmtSilver(t.netProfit)}×{Math.round((1 - t.deathRisk) * 100)}% - {fmtSilver(t.sourcePrice)}×{Math.round(t.deathRisk * 100)}% = <strong style={{ color: t.expectedValue > 0 ? '#4caf50' : '#f44336' }}>{fmtSilver(t.expectedValue)}</strong></span>
+      </div>
+    </div>
   )
 }
 
