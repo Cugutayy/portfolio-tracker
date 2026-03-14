@@ -55,6 +55,20 @@ export function ProjectCards({ t }: Props) {
             <Tags items={['Event Study','CSAD','OLS']} />
           </GlassCard>
         </ScrollReveal>
+
+        <ScrollReveal delay={320} style={{ height: '100%' }}>
+          <GlassCard href="#/albion" label="04" accent="#d4a843">
+            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>{t('p4t')}</h3>
+            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>{t('p4d')}</p>
+            <ArbitrageMini />
+            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
+              <Stat label="Cities" value="7+BM" />
+              <Stat label="Items" value="~5K" />
+              <LiveDot label="Real-time" />
+            </div>
+            <Tags items={['Arbitrage','AO Data API','React']} />
+          </GlassCard>
+        </ScrollReveal>
       </div>
     </section>
   )
@@ -212,6 +226,35 @@ function IpoMini() {
           <g key={i}>
             <rect x={x} y={40 - barH} width={bw} height={barH} rx={3} fill="var(--accent)" opacity={0.6 + (b.h / b.max) * 0.4} />
             <text x={x + bw/2} y={48} textAnchor="middle" fontSize="6" fill="var(--muted)" fontFamily="DM Mono, monospace">{b.year}</text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+// ═══════════════════════════════════════════
+// ARBITRAGE MINI (Albion) — buy/sell spread bars
+// ═══════════════════════════════════════════
+function ArbitrageMini() {
+  const items = [
+    { buy: 18, sell: 32, c: '#e2a44f' },
+    { buy: 25, sell: 41, c: '#5bb5e0' },
+    { buy: 12, sell: 28, c: '#4caf50' },
+    { buy: 30, sell: 45, c: '#e53935' },
+    { buy: 22, sell: 35, c: '#ab47bc' },
+  ]
+  return (
+    <svg style={{width:'100%',height:40,display:'block'}} viewBox="0 0 300 50" preserveAspectRatio="none">
+      {items.map((it, i) => {
+        const y = i * 10 + 2
+        const bw = (it.buy / 50) * 280
+        const sw = (it.sell / 50) * 280
+        return (
+          <g key={i}>
+            <rect x={10} y={y} width={sw} height={7} rx={2} fill={it.c} opacity={.2} />
+            <rect x={10} y={y} width={bw} height={7} rx={2} fill={it.c} opacity={.6} />
+            <rect x={bw + 10} y={y} width={sw - bw} height={7} rx={0} fill="#d4a843" opacity={.35} />
           </g>
         )
       })}
