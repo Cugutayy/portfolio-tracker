@@ -1,15 +1,13 @@
 /**
- * F1 Predictor v3 — Pre-trained + Live Update
- * =============================================
- * 
+ * F1 Predictor v4 — Pre-trained + Live Update + Auto-Learning
+ * =============================================================
+ *
  * YAKLAŞIM:
  * 1. Model 2025 verisiyle ÖNCEDEN eğitilmiş — ağırlıklar hardcoded
  * 2. Sayfa açıldığında anında hazır — API beklemek yok
- * 3. 2026 yarış günü: Tek buton "Başlat" → canlı veri çeker → lap-by-lap günceller
- * 4. Her 5 saniyede: positions + laps + stints + intervals → tahmin güncelle
- * 
- * 2025 eğitim verisinden öğrenilen ağırlıklar burada hardcoded.
- * Canlı yarışta bu ağırlıklar + anlık veri → tahmin.
+ * 3. Her yarış sonrası: ELO + form vektörleri otomatik güncellenir (localStorage)
+ * 4. Canlı yarışta: lastik, hava durumu, momentum → tahmin günceller
+ * 5. Her 5 saniyede: positions + laps + stints + intervals + weather → tahmin güncelle
  */
 
 import { openF1 } from './api'
@@ -19,10 +17,59 @@ function clamp(v: number, lo: number, hi: number) { return Math.max(lo, Math.min
 function mean(a: number[]) { return a.length ? a.reduce((s,v) => s+v, 0) / a.length : 0 }
 
 // ═══════════════════════════════════════════
+// TIRE PERFORMANCE MODEL — real F1 compound windows
+// ═══════════════════════════════════════════
+const TIRE_WINDOWS: Record<string, { peak: number; cliff: number }> = {
+  SOFT:         { peak: 12, cliff: 20 },
+  MEDIUM:       { peak: 22, cliff: 35 },
+  HARD:         { peak: 32, cliff: 48 },
+  INTERMEDIATE: { peak: 15, cliff: 25 },
+  WET:          { peak: 8,  cliff: 15 },
+}
+
+function tireFreshness(compound: string, age: number): number {
+  const w = TIRE_WINDOWS[compound] || TIRE_WINDOWS.MEDIUM
+  if (age <= 3) return 0.3          // warming up
+  if (age <= w.peak) return 0       // optimal grip zone
+  if (age <= w.cliff) return -0.4   // degrading
+  return -1.0                       // cliff — very slow
+}
+
+function compoundGrip(compound: string): number {
+  // Softer = more peak grip = position advantage (negative = better)
+  const map: Record<string, number> = { SOFT: -0.3, MEDIUM: 0, HARD: 0.2, INTERMEDIATE: 0.1, WET: 0.3 }
+  return map[compound] || 0
+}
+
+// ═══════════════════════════════════════════
+// WET WEATHER SKILL — based on historical wet race performances
+// Negative = good in wet (gains positions), positive = loses positions
+// ═══════════════════════════════════════════
+const WET_SKILL: Record<string, number> = {
+  HAM: -1.5, VER: -1.2, RUS: -1.0, ALO: -0.8, NOR: 0.3, PIA: 0.5,
+  LEC: -0.3, SAI: 0.2, GAS: -0.2, OCO: 0, STR: 0.3, ALB: 0,
+  HUL: 0.2, LAW: 0, HAD: 0, ANT: 0, BEA: 0, COL: 0.3,
+  BOR: 0, BOT: 0.2, PER: 0.5, LIN: 0,
+}
+
+// ═══════════════════════════════════════════
+// AUTO-LEARNING — localStorage persistence
+// ═══════════════════════════════════════════
+function loadLearned<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key)
+    return raw ? JSON.parse(raw) : fallback
+  } catch { return fallback }
+}
+
+function saveLearned(key: string, data: unknown) {
+  try { localStorage.setItem(key, JSON.stringify(data)) } catch { /* quota exceeded */ }
+}
+
+// ═══════════════════════════════════════════
 // PRE-TRAINED MODEL WEIGHTS (2025 sezonundan)
-// Bu ağırlıklar OpenF1 API'den çekilen 2024-2025
-// gerçek yarış verileriyle eğitilmiştir.
-// Kullanıcı beklemez — sayfa açılınca hazır.
+// ELO + Form: localStorage'dan yüklenir (varsa), yoksa baseline
+// Her yarış sonrası learnFromRaceResults() ile güncellenir
 // ═══════════════════════════════════════════
 const PRETRAINED = {
   // Ridge Regression ağırlıkları (14 feature)
@@ -58,23 +105,22 @@ const PRETRAINED = {
   gbBase: 10.5,
   gbLr: 0.12,
   
-  // ELO ratings (post-Australia 2026 GP — Round 1 results incorporated)
-  // AUS results: RUS P1, ANT P2, LEC P3, HAM P4, NOR P5, VER P6, BEA P7, LIN P8, BOR P9, GAS P10
-  driverELO: {
+  // ELO ratings — baseline post-Australia 2026 GP, auto-updated via learnFromRaceResults()
+  driverELO: loadLearned<Record<string, number>>('f1_elo_driver_v1', {
     VER: 1810, NOR: 1775, PIA: 1710, LEC: 1750, RUS: 1740, HAM: 1710,
     SAI: 1670, ALO: 1640, GAS: 1605, OCO: 1590, ALB: 1580, STR: 1545,
     HUL: 1560, LAW: 1550, HAD: 1505, ANT: 1545, BEA: 1520, COL: 1495,
     BOR: 1500, BOT: 1510, PER: 1535, LIN: 1490,
-  } as Record<string, number>,
+  }),
 
-  teamELO: {
+  teamELO: loadLearned<Record<string, number>>('f1_elo_team_v1', {
     'McLaren': 1790, 'Red Bull': 1760, 'Ferrari': 1760, 'Mercedes': 1780,
     'Aston Martin': 1600, 'Williams': 1570, 'Alpine': 1575, 'Haas': 1575,
     'Racing Bulls': 1565, 'Audi': 1545, 'Cadillac': 1480,
-  } as Record<string, number>,
+  }),
 
-  // Son form verileri (2025 son 4 yarış + Avustralya 2026 GP sonucu)
-  driverForm: {
+  // Form verileri — baseline, auto-updated via learnFromRaceResults()
+  driverForm: loadLearned<Record<string, number[]>>('f1_form_driver_v1', {
     VER: [2,1,3,1,6], NOR: [1,2,1,2,5], PIA: [4,3,2,4,0], LEC: [3,5,4,3,3],
     RUS: [5,4,6,5,1], HAM: [6,7,5,6,4], SAI: [7,6,8,7,15], ALO: [9,10,7,9,0],
     GAS: [11,9,12,10,10], OCO: [10,11,13,11,11], ALB: [12,13,11,12,12],
@@ -82,15 +128,15 @@ const PRETRAINED = {
     HAD: [15,8,9,15,0], ANT: [16,16,16,16,2], BEA: [17,17,17,17,7],
     COL: [18,18,18,18,14], BOR: [19,19,19,19,9], BOT: [20,20,20,20,0],
     PER: [20,20,20,20,16], LIN: [0,0,0,0,8],
-  } as Record<string, number[]>,
+  }),
 
-  teamForm: {
+  teamForm: loadLearned<Record<string, number[]>>('f1_form_team_v1', {
     'McLaren': [2,2,1,3,5], 'Red Bull': [8,4,6,8,6], 'Ferrari': [4,6,4,5,3],
     'Mercedes': [10,10,11,10,1], 'Aston Martin': [11,12,10,11,0],
     'Williams': [9,9,9,9,12], 'Alpine': [14,13,15,14,10],
     'Haas': [13,14,14,13,7], 'Racing Bulls': [8,11,8,8,8],
     'Audi': [16,16,16,16,9], 'Cadillac': [20,20,20,20,16],
-  } as Record<string, number[]>,
+  }),
 }
 
 // ═══════════════════════════════════════════
@@ -101,9 +147,12 @@ export class F1Predictor {
   private _logs: string[] = []
   
   // Canlı yarış state
-  private _liveLapData = new Map<string, { laps: number[]; pos: number; pits: number; gap: number; stint: string }>()
+  private _liveLapData = new Map<string, { laps: number[]; pos: number; pits: number; gap: number; stint: string; tireAge: number; stintStart: number }>()
   private _currentLap = 0
   private _totalLaps = 58 // default, setTotalLaps ile güncellenir
+  private _rainfall = false
+  private _trackTemp = 30
+  private _learnedSessions = new Set<number>(loadLearned<number[]>('f1_learned_sessions', []))
   
   get initialized() { return this._ok }
   get logs() { return this._logs }
@@ -247,26 +296,31 @@ export class F1Predictor {
     position: number; lastLapTime: number | null; gap: number; pitStops: number; compound: string;
   }[], currentLap: number): PredictionResult[] {
     this._currentLap = currentLap
-    
+
     // Her sürücünün canlı verisini kaydet
     for (const d of liveDrivers) {
-      const cur = this._liveLapData.get(d.code) || { laps: [], pos: 22, pits: 0, gap: 0, stint: 'M' }
+      const cur = this._liveLapData.get(d.code) || { laps: [], pos: 22, pits: 0, gap: 0, stint: 'M', tireAge: 0, stintStart: currentLap }
+      // Lastik değişimi tespit — compound değiştiyse stint sıfırla
+      if (cur.stint !== d.compound && d.compound) {
+        cur.stintStart = currentLap
+      }
       cur.pos = d.position
       cur.pits = d.pitStops
       cur.gap = d.gap
       cur.stint = d.compound
+      cur.tireAge = currentLap - cur.stintStart
       if (d.lastLapTime && d.lastLapTime > 0) cur.laps.push(d.lastLapTime)
       this._liveLapData.set(d.code, cur)
     }
-    
+
     // Her sürücü için tahmin güncelle
     const scored = liveDrivers.map(d => {
       const live = this._liveLapData.get(d.code)!
       const features = this.extractFeatures(d.position, d.gap / 10, d.code, d.team)
-      
+
       // Base tahmin
       let pred = this.predictSingle(features)
-      
+
       // Canlı ayarlamalar
       // 1. Momentum: son 3 tur pace trendi
       const last3 = live.laps.slice(-3)
@@ -275,25 +329,32 @@ export class F1Predictor {
         const momentum = mean(prev3) - mean(last3) // pozitif = hızlanıyor
         pred -= momentum * 2 // hızlanan sürücü daha iyi bitiş
       }
-      
-      // 2. Mevcut pozisyon ağırlığı — yarış ilerledikçe mevcut pozisyon daha önemli
-      const raceProgress = clamp(currentLap / this._totalLaps, 0, 1)
-      pred = pred * (1 - raceProgress * 0.7) + d.position * raceProgress * 0.7
 
-      // 3. Pit stop etkisi — henüz pit yapmamış sürücü düşecek
-      // Yarışın %40'ından sonra en az 1 pit yapılmalı
+      // 2. Mevcut pozisyon ağırlığı — yarış ilerledikçe önemli ama model hep katkı sağlasın
+      const raceProgress = clamp(currentLap / this._totalLaps, 0, 1)
+      pred = pred * (1 - raceProgress * 0.5) + d.position * raceProgress * 0.5
+
+      // 3. Pit stop etkisi
       if (raceProgress > 0.4 && d.pitStops === 0) {
-        const penaltyStr = clamp((raceProgress - 0.4) * 5, 0, 3) // max 3 pozisyon ceza
-        pred += penaltyStr
+        pred += clamp((raceProgress - 0.4) * 5, 0, 3)
       }
-      // Fazla pit = dezavantaj (her ekstra pit ~2 poz kayıp)
       if (d.pitStops > 1) {
         pred += (d.pitStops - 1) * 1.5
       }
 
-      return { ...d, pred: clamp(pred, 1, 22), features }
+      // 4. Lastik etkisi — compound + yaş → pozisyon ayarlaması
+      const tFresh = tireFreshness(d.compound, live.tireAge)
+      const tGrip = compoundGrip(d.compound)
+      pred += (tFresh * 0.8 + tGrip) // worn tires = higher pred = worse, fresh softs = lower = better
+
+      // 5. Hava durumu etkisi — yağmurda uzman sürücüler avantajlı
+      if (this._rainfall) {
+        pred += (WET_SKILL[d.code] || 0)
+      }
+
+      return { ...d, pred: clamp(pred, 1, 22), features, compound: d.compound, tireAge: live.tireAge }
     }).sort((a, b) => a.pred - b.pred)
-    
+
     return this._toPredictions(scored)
   }
   
@@ -336,14 +397,32 @@ export class F1Predictor {
       const gapMap = new Map<number, number>()
       for (const iv of intervals) if (iv.gap_to_leader != null) gapMap.set(iv.driver_number, iv.gap_to_leader)
       
-      // Stint (lastik) verileri
-      const stintMap = new Map<number, string>()
-      for (const s of stints) stintMap.set(s.driver_number, s.compound || 'MEDIUM')
-      
+      // Stint (lastik) verileri — en son stint per driver
+      const stintMap = new Map<number, { compound: string; lapStart: number; tireAge: number }>()
+      for (const s of stints) {
+        const existing = stintMap.get(s.driver_number)
+        if (!existing || (s.stint_number || 0) >= (existing as any)._stintNum) {
+          stintMap.set(s.driver_number, {
+            compound: s.compound || 'MEDIUM',
+            lapStart: s.lap_start || 0,
+            tireAge: (s.tyre_age_at_start || 0) + Math.max(0, maxLap - (s.lap_start || 0)),
+            ...({ _stintNum: s.stint_number || 0 } as any),
+          })
+        }
+      }
+
+      // Hava durumu güncelle
+      const latestWeather = weather.length > 0 ? weather[weather.length - 1] : null
+      if (latestWeather) {
+        this._rainfall = !!latestWeather.rainfall
+        this._trackTemp = latestWeather.track_temperature || 30
+      }
+
       // Tahmin güncelle
       const liveDrivers = [...latestPos.entries()].map(([num, pos]) => {
         const d = driverMap.get(num)
         if (!d) return null
+        const stint = stintMap.get(num)
         return {
           code: d.name_acronym, name: d.full_name, team: d.team_name,
           teamColor: `#${d.team_colour || '888'}`,
@@ -351,12 +430,11 @@ export class F1Predictor {
           lastLapTime: latestLap.get(num) || null,
           gap: gapMap.get(num) || 0,
           pitStops: pitCounts.get(num) || 0,
-          compound: stintMap.get(num) || 'MEDIUM',
+          compound: stint?.compound || 'MEDIUM',
         }
       }).filter(Boolean) as any[]
-      
+
       const predictions = this.updateFromLiveData(liveDrivers, maxLap)
-      const latestWeather = weather.length > 0 ? weather[weather.length - 1] : null
       
       return { predictions, lap: maxLap, weather: latestWeather, raceControl, stints, laps }
     } catch (e: any) {
@@ -375,6 +453,111 @@ export class F1Predictor {
   async initialize(onProgress?: (m: string) => void): Promise<void> {
     onProgress?.('✅ Model önceden eğitilmiş — anında hazır')
     onProgress?.(`  14 feature · Ensemble (Ridge+GB+ELO) · 2024-2025 verisi`)
+    const learnedCount = this._learnedSessions.size
+    if (learnedCount > 0) onProgress?.(`  📊 ${learnedCount} yarıştan öğrenilmiş ELO/form güncellemesi`)
+  }
+
+  /**
+   * YARIŞTAN ÖĞREN — ELO + form vektörlerini gerçek sonuçlardan güncelle
+   * Her yarış sonrası 1 kez çağrılır, localStorage'a kaydeder
+   */
+  async learnFromRaceResults(sessionKey: number): Promise<boolean> {
+    if (this._learnedSessions.has(sessionKey)) return false // zaten öğrenilmiş
+
+    try {
+      const [positions, drivers] = await Promise.all([
+        openF1.getPositions(sessionKey),
+        openF1.getDrivers(sessionKey),
+      ])
+
+      // Son pozisyonları al (en yüksek tarihli kayıt per driver)
+      const finalPos = new Map<number, { pos: number; date: string }>()
+      for (const p of positions) {
+        const entry = finalPos.get(p.driver_number)
+        if (!entry || p.date > entry.date) {
+          finalPos.set(p.driver_number, { pos: p.position, date: p.date })
+        }
+      }
+
+      // Driver number → code mapping
+      const driverMap = new Map(drivers.map((d: any) => [d.driver_number, {
+        code: d.name_acronym as string,
+        team: d.team_name as string,
+      }]))
+
+      // Sonuçları topla
+      const results: { code: string; team: string; pos: number }[] = []
+      for (const [num, { pos }] of finalPos) {
+        const d = driverMap.get(num)
+        if (d && pos > 0 && pos <= 22) results.push({ code: d.code, team: d.team, pos })
+      }
+      if (results.length < 10) return false // yetersiz veri
+
+      // 1. Pairwise ELO güncelleme (K=16)
+      const K = 16
+      for (let i = 0; i < results.length; i++) {
+        for (let j = i + 1; j < results.length; j++) {
+          const w = results[i], l = results[j]
+          if (w.pos >= l.pos) continue // w should be ahead of l
+
+          const wElo = PRETRAINED.driverELO[w.code] || 1500
+          const lElo = PRETRAINED.driverELO[l.code] || 1500
+          const expectedW = 1 / (1 + Math.pow(10, (lElo - wElo) / 400))
+
+          PRETRAINED.driverELO[w.code] = Math.round(wElo + K * (1 - expectedW))
+          PRETRAINED.driverELO[l.code] = Math.round(lElo + K * (0 - (1 - expectedW)))
+        }
+      }
+
+      // Team ELO — takımın en iyi sürücüsünün pozisyonunu kullan
+      const teamBest = new Map<string, number>()
+      for (const r of results) {
+        const cur = teamBest.get(r.team) || 99
+        if (r.pos < cur) teamBest.set(r.team, r.pos)
+      }
+      const teamResults = [...teamBest.entries()].sort((a, b) => a[1] - b[1])
+      for (let i = 0; i < teamResults.length; i++) {
+        for (let j = i + 1; j < teamResults.length; j++) {
+          const wTeam = teamResults[i][0], lTeam = teamResults[j][0]
+          const wElo = PRETRAINED.teamELO[wTeam] || 1500
+          const lElo = PRETRAINED.teamELO[lTeam] || 1500
+          const expectedW = 1 / (1 + Math.pow(10, (lElo - wElo) / 400))
+          PRETRAINED.teamELO[wTeam] = Math.round(wElo + K * (1 - expectedW))
+          PRETRAINED.teamELO[lTeam] = Math.round(lElo + K * (0 - (1 - expectedW)))
+        }
+      }
+
+      // 2. Form vektörlerini güncelle — son pozisyonu ekle, en eskisini çıkar
+      for (const r of results) {
+        const form = PRETRAINED.driverForm[r.code]
+        if (form) {
+          form.push(r.pos)
+          if (form.length > 5) form.shift() // 5 yarış penceresi
+        }
+      }
+      // Team form — takımın en iyi pozisyonunu ekle
+      for (const [team, pos] of teamBest) {
+        const form = PRETRAINED.teamForm[team]
+        if (form) {
+          form.push(pos)
+          if (form.length > 5) form.shift()
+        }
+      }
+
+      // 3. Persist
+      saveLearned('f1_elo_driver_v1', PRETRAINED.driverELO)
+      saveLearned('f1_elo_team_v1', PRETRAINED.teamELO)
+      saveLearned('f1_form_driver_v1', PRETRAINED.driverForm)
+      saveLearned('f1_form_team_v1', PRETRAINED.teamForm)
+      this._learnedSessions.add(sessionKey)
+      saveLearned('f1_learned_sessions', [...this._learnedSessions])
+
+      this.log(`✅ Yarış #${sessionKey} sonuçlarından öğrenildi: ${results.length} sürücü ELO + form güncellendi`)
+      return true
+    } catch (e: any) {
+      this.log(`⚠️ Yarış öğrenme hatası: ${e.message}`)
+      return false
+    }
   }
   
   private _toPredictions(scored: any[]): PredictionResult[] {
@@ -391,7 +574,7 @@ export class F1Predictor {
         historicalForm: Math.max(0, 1 - (s.features?.[2] || 10) / 22),
         teamStrength: Math.max(0, 1 - (s.features?.[3] || 10) / 22),
         circuitAffinity: 0.5,
-        weatherAdaptation: 0.5,
+        weatherAdaptation: this._rainfall ? clamp(0.5 - (WET_SKILL[s.code] || 0) * 0.3, 0, 1) : 0.5,
       }
     }))
   }

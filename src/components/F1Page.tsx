@@ -932,7 +932,7 @@ function TrackSVG({ pts, cars, drivers, standings, large, selectedDrivers, onCar
     <circle cx={tx(pts[0][0])} cy={ty(pts[0][1])} r={large ? 6 : 3} fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.5)" strokeWidth="1.5" />
     <circle cx={tx(pts[0][0])} cy={ty(pts[0][1])} r={large ? 2 : 1.5} fill="#fff" opacity=".6" />
     <text x={tx(pts[0][0]) + (large ? 12 : 6)} y={ty(pts[0][1]) - 3} fill="#666" fontSize={large ? 7 : 5} fontFamily="Outfit" fontWeight="600">S/F</text>
-    {/* Cars — snapped to track polyline for accuracy */}
+    {/* Cars — snapped to track polyline with tire compound ring */}
     {[...cars.entries()].map(([dn, pos]) => {
       const drv = drivers.find((d: any) => d.driver_number === dn); if (!drv || (!pos.x && !pos.y)) return null
       const col = '#' + (drv.team_colour || '888'), code = drv.name_acronym || '?'
@@ -940,19 +940,26 @@ function TrackSVG({ pts, cars, drivers, standings, large, selectedDrivers, onCar
       const snapped = snapToTrack(pos.x, pos.y, pts)
       const cx = tx(snapped.x), cy = ty(snapped.y), r = large ? (p <= 3 ? 8 : 6) : (p <= 3 ? 5 : 4)
       const isSel = selectedDrivers.includes(dn)
+      // Tire compound color
+      const compound = st?.stint?.compound || ''
+      const tireCol = compound === 'SOFT' ? '#dc2626' : compound === 'HARD' ? '#e5e5e5' : compound === 'INTERMEDIATE' ? '#22c55e' : compound === 'WET' ? '#3b82f6' : compound === 'MEDIUM' ? '#eab308' : ''
+      const tireAge = st?.stint ? Math.max(0, replayLap - (st.stint.lap_start || 0)) : 0
       return <g key={dn} style={{ cursor: 'pointer', transform: `translate(${cx}px,${cy}px)` }} onClick={() => onCarClick(dn)}>
         {/* Ambient glow */}
         <circle cx={0} cy={0} r={r + 3} fill={col} opacity=".08" style={{ transition: 'r .3s ease' }} />
+        {/* Tire compound ring — outer ring showing current tire */}
+        {tireCol && <circle cx={0} cy={0} r={r + 4} fill="none" stroke={tireCol} strokeWidth={large ? 2 : 1.5} opacity=".7" />}
         {/* Selection glow */}
-        {isSel && <circle cx={0} cy={0} r={r + 6} fill="none" stroke={col} strokeWidth="1.5" opacity=".4" style={{ transition: 'all .3s ease' }} />}
+        {isSel && <circle cx={0} cy={0} r={r + 7} fill="none" stroke={col} strokeWidth="1.5" opacity=".4" style={{ transition: 'all .3s ease' }} />}
         {/* Podium ring */}
         {p <= 3 && <circle cx={0} cy={0} r={r + 3} fill="none" stroke="#d4a843" strokeWidth="1" opacity=".6" />}
         {/* Main dot */}
         <circle cx={0} cy={0} r={r} fill={col} stroke="rgba(0,0,0,.6)" strokeWidth=".8" />
         {/* Position number */}
         {p <= 3 && <text x={0} y={large ? 3 : 2} fill="#000" fontSize={large ? 6 : 4} fontFamily="Outfit" fontWeight="800" textAnchor="middle">{p}</text>}
-        {/* Driver code */}
+        {/* Driver code + tire age */}
         <text x={large ? 12 : 8} y={3} fill={isSel ? '#fff' : '#bbb'} fontSize={large ? 8 : 6} fontFamily="Outfit" fontWeight={p <= 3 || isSel ? '700' : '400'} style={{ transition: 'fill .2s ease' }}>{code}</text>
+        {large && tireAge > 0 && <text x={large ? 12 : 8} y={12} fill={tireCol || '#555'} fontSize={5} fontFamily="Outfit" fontWeight="600" opacity=".7">{tireAge}L</text>}
       </g>
     })}
     {/* Flag label */}
