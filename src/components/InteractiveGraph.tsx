@@ -221,24 +221,32 @@ export function InteractiveGraph({ dark }: Props) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, w, h)
 
-      // Draw edges
+      // Draw edges — soft curved lines
       for (const [ai, bi] of EDGE_INDICES) {
         const isEdgeHovered = hovered === INITIAL_NODES[ai].id || hovered === INITIAL_NODES[bi].id
         const isEdgeDragged = drag && (drag.idx === ai || drag.idx === bi)
 
+        // Curved edge: offset control point perpendicular to line
+        const mx = (posX[ai] + posX[bi]) / 2
+        const my = (posY[ai] + posY[bi]) / 2
+        const dx = posX[bi] - posX[ai], dy = posY[bi] - posY[ai]
+        const len = Math.sqrt(dx * dx + dy * dy)
+        const cpx = mx + (len > 0 ? (-dy / len) * len * 0.06 : 0)
+        const cpy = my + (len > 0 ? (dx / len) * len * 0.06 : 0)
+
         ctx.beginPath()
         ctx.moveTo(posX[ai], posY[ai])
-        ctx.lineTo(posX[bi], posY[bi])
+        ctx.quadraticCurveTo(cpx, cpy, posX[bi], posY[bi])
         ctx.strokeStyle = isEdgeDragged
-          ? (isDark ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.18)')
+          ? (isDark ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.16)')
           : isEdgeHovered
-            ? (isDark ? 'rgba(255,255,255,.18)' : 'rgba(0,0,0,.14)')
-            : (isDark ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.06)')
-        ctx.lineWidth = isEdgeDragged ? 1.5 : isEdgeHovered ? 1.2 : 0.7
+            ? (isDark ? 'rgba(255,255,255,.16)' : 'rgba(0,0,0,.12)')
+            : (isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.05)')
+        ctx.lineWidth = isEdgeDragged ? 1.2 : isEdgeHovered ? 1 : 0.6
         ctx.stroke()
       }
 
-      // Draw nodes
+      // Draw nodes — premium glass orbs
       for (let i = 0; i < N; i++) {
         const node = INITIAL_NODES[i]
         const px = posX[i], py = posY[i]
@@ -247,47 +255,75 @@ export function InteractiveGraph({ dark }: Props) {
         const isCenter = node.type === 'center'
         const isProject = node.type === 'project'
         const isTech = node.type === 'tech'
-        const scale = isDragged ? 1.18 : isHovered ? 1.10 : 1
+        const scale = isDragged ? 1.15 : isHovered ? 1.08 : 1
         const baseW = Math.min(w, 960)
         const rPx = node.r * 0.003 * baseW * scale
 
-        // Glow
-        if ((isDragged || isHovered) && isProject && GLOW_COLORS[node.id]) {
+        // Soft ambient halo (always visible on project nodes, subtle)
+        if (isProject && GLOW_COLORS[node.id]) {
           const base = GLOW_COLORS[node.id]
-          const grad = ctx.createRadialGradient(px, py, rPx * 0.8, px, py, rPx * 1.6)
-          grad.addColorStop(0, base + (isDragged ? '0.15)' : '0.08)'))
-          grad.addColorStop(1, base + '0)')
+          const haloR = rPx * (isDragged ? 2.0 : isHovered ? 1.8 : 1.4)
+          const halo = ctx.createRadialGradient(px, py, rPx * 0.5, px, py, haloR)
+          halo.addColorStop(0, base + (isDragged ? '0.10)' : isHovered ? '0.06)' : '0.025)'))
+          halo.addColorStop(1, base + '0)')
           ctx.beginPath()
-          ctx.arc(px, py, rPx * 1.6, 0, Math.PI * 2)
-          ctx.fillStyle = grad
+          ctx.arc(px, py, haloR, 0, Math.PI * 2)
+          ctx.fillStyle = halo
           ctx.fill()
         }
 
-        // Circle fill
+        // Glass orb fill — radial gradient (lighter center for glass look)
+        const orbGrad = ctx.createRadialGradient(
+          px - rPx * 0.25, py - rPx * 0.3, rPx * 0.1,
+          px, py, rPx
+        )
+        if (isDark) {
+          const a = isDragged ? 0.10 : isHovered ? 0.08 : (isCenter ? 0.06 : isProject ? 0.05 : 0.03)
+          orbGrad.addColorStop(0, `rgba(255,255,255,${a * 1.8})`)
+          orbGrad.addColorStop(0.6, `rgba(255,255,255,${a * 0.8})`)
+          orbGrad.addColorStop(1, `rgba(255,255,255,${a * 0.3})`)
+        } else {
+          const a = isDragged ? 0.07 : isHovered ? 0.06 : (isCenter ? 0.045 : isProject ? 0.035 : 0.02)
+          orbGrad.addColorStop(0, `rgba(0,0,0,${a * 0.4})`)
+          orbGrad.addColorStop(0.5, `rgba(0,0,0,${a * 0.8})`)
+          orbGrad.addColorStop(1, `rgba(0,0,0,${a * 1.2})`)
+        }
         ctx.beginPath()
         ctx.arc(px, py, rPx, 0, Math.PI * 2)
-        ctx.fillStyle = isDragged
-          ? (isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.05)')
-          : isDark
-            ? (isCenter ? 'rgba(255,255,255,.05)' : isProject ? 'rgba(255,255,255,.04)' : 'rgba(255,255,255,.025)')
-            : (isCenter ? 'rgba(0,0,0,.035)' : isProject ? 'rgba(0,0,0,.03)' : 'rgba(0,0,0,.018)')
+        ctx.fillStyle = orbGrad
         ctx.fill()
 
-        // Border
+        // Glass highlight — subtle bright crescent at top
+        if (!isTech) {
+          const hlGrad = ctx.createRadialGradient(
+            px - rPx * 0.15, py - rPx * 0.35, rPx * 0.05,
+            px, py - rPx * 0.2, rPx * 0.6
+          )
+          hlGrad.addColorStop(0, isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.35)')
+          hlGrad.addColorStop(1, 'rgba(255,255,255,0)')
+          ctx.beginPath()
+          ctx.arc(px, py, rPx, 0, Math.PI * 2)
+          ctx.fillStyle = hlGrad
+          ctx.fill()
+        }
+
+        // Border — gradient stroke
+        ctx.beginPath()
+        ctx.arc(px, py, rPx, 0, Math.PI * 2)
         ctx.strokeStyle = isDragged
-          ? (isDark ? 'rgba(255,255,255,.35)' : 'rgba(0,0,0,.28)')
+          ? (isDark ? 'rgba(255,255,255,.30)' : 'rgba(0,0,0,.24)')
           : isHovered
-            ? (isDark ? 'rgba(255,255,255,.25)' : 'rgba(0,0,0,.20)')
+            ? (isDark ? 'rgba(255,255,255,.22)' : 'rgba(0,0,0,.18)')
             : isDark
-              ? (isCenter ? 'rgba(255,255,255,.14)' : isProject ? 'rgba(255,255,255,.10)' : 'rgba(255,255,255,.06)')
-              : (isCenter ? 'rgba(0,0,0,.12)' : isProject ? 'rgba(0,0,0,.09)' : 'rgba(0,0,0,.05)')
-        ctx.lineWidth = isDragged ? 2 : isCenter ? 1.5 : isProject ? 1.2 : 0.8
+              ? (isCenter ? 'rgba(255,255,255,.12)' : isProject ? 'rgba(255,255,255,.08)' : 'rgba(255,255,255,.045)')
+              : (isCenter ? 'rgba(0,0,0,.10)' : isProject ? 'rgba(0,0,0,.07)' : 'rgba(0,0,0,.04)')
+        ctx.lineWidth = isDragged ? 1.5 : isCenter ? 1.2 : isProject ? 1 : 0.6
         ctx.stroke()
 
         // Dot indicator
         if (isProject && DOT_COLORS[node.id]) {
           ctx.beginPath()
-          ctx.arc(px, py - rPx * 0.6, isDragged ? 4.5 : 3.5, 0, Math.PI * 2)
+          ctx.arc(px, py - rPx * 0.6, isDragged ? 4 : 3, 0, Math.PI * 2)
           ctx.fillStyle = DOT_COLORS[node.id]
           ctx.globalAlpha = isHovered || isDragged ? 1 : 0.7
           ctx.fill()
@@ -295,28 +331,28 @@ export function InteractiveGraph({ dark }: Props) {
         }
 
         // Label
-        const fontSize = isCenter ? baseW * 0.030 : isProject ? baseW * 0.020 : baseW * 0.014
+        const fontSize = isCenter ? baseW * 0.028 : isProject ? baseW * 0.019 : baseW * 0.013
         ctx.font = isCenter
-          ? `italic 600 ${fontSize}px 'Newsreader', Georgia, serif`
+          ? `italic 500 ${fontSize}px 'Newsreader', Georgia, serif`
           : isTech
-            ? `500 ${fontSize}px 'DM Mono', monospace`
-            : `600 ${fontSize}px 'Newsreader', Georgia, serif`
+            ? `400 ${fontSize}px 'DM Mono', monospace`
+            : `500 ${fontSize}px 'Newsreader', Georgia, serif`
         ctx.textAlign = 'center'
         ctx.textBaseline = 'middle'
 
-        if (isDark) { ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 4 }
+        if (isDark) { ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 3 }
 
         ctx.fillStyle = isDark
-          ? (isCenter ? '#f0ece4' : isProject ? '#ddd8cf' : '#a8a29e')
-          : (isCenter ? '#1a1a16' : isProject ? '#2a2a2a' : '#666')
+          ? (isCenter ? '#f0ece4' : isProject ? '#ddd8cf' : '#9a958c')
+          : (isCenter ? '#1a1a16' : isProject ? '#2a2a2a' : '#777')
         ctx.fillText(node.label, px, node.sub && !isTech ? py - fontSize * 0.3 : py + fontSize * 0.05)
 
         if (isDark) ctx.restore()
 
         // Sub label
         if (node.sub && !isTech) {
-          ctx.font = `500 ${Math.max(10, baseW * 0.011)}px 'DM Mono', monospace`
-          ctx.globalAlpha = isHovered || isDragged ? 0.9 : 0.55
+          ctx.font = `400 ${Math.max(9, baseW * 0.010)}px 'DM Mono', monospace`
+          ctx.globalAlpha = isHovered || isDragged ? 0.85 : 0.45
           ctx.fillStyle = isDark ? '#9a958c' : '#888'
           ctx.fillText(node.sub, px, py + fontSize * 0.65)
           ctx.globalAlpha = 1

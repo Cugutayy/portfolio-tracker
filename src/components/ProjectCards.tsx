@@ -4,16 +4,17 @@ interface Props { t: (k: string) => string }
 
 export function ProjectCards({ t }: Props) {
   return (
-    <section id="projects" className="container" style={{ padding:'24px 0 40px' }}>
+    <section id="projects" className="container" style={{ padding:'32px 0 48px' }}>
       <ScrollReveal delay={0}>
-        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:20 }}>
-          <h2 style={{ fontSize:'1rem', fontWeight:300, letterSpacing:'.08em', textTransform:'uppercase', fontFamily:'DM Mono, monospace' }}>{t('secP')}</h2>
-          <span className="mono" style={{ fontSize:'.55rem', color:'var(--muted)', opacity:0.5 }}>{t('pCnt')}</span>
+        <hr style={{ border:'none', borderTop:'1px solid var(--rule)', marginBottom:24, opacity:0.5 }} />
+        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:24 }}>
+          <h2 style={{ fontSize:'.85rem', fontWeight:400, letterSpacing:'.12em', textTransform:'uppercase', fontFamily:'DM Mono, monospace' }}>{t('secP')}</h2>
+          <span className="mono" style={{ fontSize:'.5rem', color:'var(--muted)', opacity:0.4 }}>{t('pCnt')}</span>
         </div>
       </ScrollReveal>
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))', gap:16 }}>
-        <ScrollReveal delay={80}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(260px, 1fr))', gap:16, alignItems:'stretch' }}>
+        <ScrollReveal delay={80} style={{ height: '100%' }}>
           <GlassCard href="/tracker/" label="01" accent="var(--green-t)">
             <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>Portfolio Tracker</h3>
             <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>{t('p1d')}</p>
@@ -27,7 +28,7 @@ export function ProjectCards({ t }: Props) {
           </GlassCard>
         </ScrollReveal>
 
-        <ScrollReveal delay={160}>
+        <ScrollReveal delay={160} style={{ height: '100%' }}>
           <GlassCard href="#/f1" label="02" accent="#e10600">
             <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>{t('p2t')}</h3>
             <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>{t('p2d')}</p>
@@ -41,7 +42,7 @@ export function ProjectCards({ t }: Props) {
           </GlassCard>
         </ScrollReveal>
 
-        <ScrollReveal delay={240}>
+        <ScrollReveal delay={240} style={{ height: '100%' }}>
           <GlassCard href="/tez/" label="03" accent="var(--accent)">
             <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>{t('p3t')}</h3>
             <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>{t('p3d')}</p>
@@ -118,7 +119,7 @@ function GlassCard({ children, href, disabled, label, accent }: { children: Reac
   }, [])
 
   const Tag = href ? 'a' : 'div'
-  const tagProps: any = href ? { href, style:{textDecoration:'none',color:'inherit',display:'block'} } : {}
+  const tagProps: any = href ? { href, style:{textDecoration:'none',color:'inherit',display:'block',height:'100%'} } : { style:{height:'100%'} }
 
   return (
     <Tag {...tagProps}>
