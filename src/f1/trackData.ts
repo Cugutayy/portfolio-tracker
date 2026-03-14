@@ -5,6 +5,35 @@
  */
 
 export const TRACK_COORDS: Record<string, number[][]> = {
+  // Shanghai International Circuit — 2026 Chinese GP
+  // 16 turns, 5.451 km, counter-clockwise, iconic "shang" character turns 1-4
+  'Shanghai': [
+    // Start/finish straight (bottom, right to left)
+    [6000,6000],[5500,6000],[5000,6000],[4500,6000],[4000,6000],[3500,6000],[3000,6000],
+    // T1-T2 sweep left into spiral
+    [2500,5900],[2100,5700],[1800,5400],[1600,5050],
+    // T3-T4 spiral tightens
+    [1550,4650],[1600,4250],[1750,3900],[2000,3650],[2300,3500],[2600,3450],
+    // T5-T6 exit spiral heading right
+    [2950,3500],[3300,3600],[3600,3750],[3800,3950],
+    // T7-T8 double apex
+    [3900,4200],[3900,4500],[3750,4750],[3500,4900],
+    // Short straight to T9
+    [3150,4950],[2800,4900],[2500,4750],
+    // T9-T10 chicane
+    [2300,4500],[2250,4200],[2350,3950],[2550,3750],
+    // T11 hairpin
+    [2750,3600],[3000,3500],[3250,3500],[3500,3600],[3650,3800],
+    // Back straight (long, heading right)
+    [3750,4000],[3950,4100],[4250,4100],[4600,4100],[5000,4100],[5400,4100],[5800,4100],[6200,4100],
+    // T12-T13 fast kink
+    [6500,4200],[6750,4400],[6900,4650],[6950,4950],
+    // T14 long left-hander
+    [6900,5250],[6750,5500],[6500,5700],
+    // T15-T16 final corners
+    [6300,5850],[6200,5920],[6100,5970],
+  ],
+
   // Albert Park, Melbourne — 2026 Australian GP
   'Albert Park': [
     [-1324,-1211],[-1753,-803],[-2248,-332],[-2651,50],[-3172,543],[-3547,944],[-3655,1161],[-3648,1478],
@@ -28,6 +57,8 @@ export const TRACK_COORDS: Record<string, number[][]> = {
 // Circuit name → session key mapping
 export const CIRCUIT_MAP: Record<number, string> = {
   11234: 'Albert Park',  // 2026 Australian GP
+  11245: 'Shanghai',     // 2026 Chinese GP Race
+  11240: 'Shanghai',     // 2026 Chinese GP Sprint
 }
 
 // Circuit → total laps mapping
