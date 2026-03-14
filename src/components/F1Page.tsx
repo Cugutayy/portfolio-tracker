@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { TEAMS, DRIVERS, DRIVER_NUMBER_MAP } from '../f1/data'
-import { AUSTRALIA_2026_QUALI, AUSTRALIA_2026_RACE_RESULT, computeBacktest } from '../f1/realdata'
+import { AUSTRALIA_2026_QUALI, AUSTRALIA_2026_RACE_RESULT, computeBacktest, type RealQualiResult } from '../f1/realdata'
 import { predictor } from '../f1/predictor'
 import { openF1 } from '../f1/api'
 import { TRACK_COORDS, CIRCUIT_MAP, getCircuitLaps } from '../f1/trackData'
 import { ALBERT_PARK_DRS } from '../f1/tracks'
 import type { PredictionResult } from '../f1/types'
 
-const SESSION_KEY = 11234
+const AUS_SESSION_KEY = 11234
+const CHINA_RACE_KEY = 11245
+const CHINA_QUALI_KEY = 11241
 
 // ═══════════════════════════════════════════════════
 // CSS
@@ -115,14 +117,18 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
   const [drivers, setDrivers] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [races, setRaces] = useState<{ key: number, name: string, circuit: string, date: string, hasData: boolean }[]>([])
-  const [selectedRace, setSelectedRace] = useState(SESSION_KEY)
+  const [selectedRace, setSelectedRace] = useState(CHINA_RACE_KEY)
   const [carPositions, setCarPositions] = useState<Map<number, { x: number, y: number }>>(new Map())
   const [allLocationData, setAllLocationData] = useState<any[]>([])
   const [livePreds, setLivePreds] = useState<PredictionResult[] | null>(null)
   const [liveActive, setLiveActive] = useState(false)
-  const [totalLaps, setTotalLaps] = useState(() => getCircuitLaps(SESSION_KEY))
+  const [totalLaps, setTotalLaps] = useState(() => getCircuitLaps(CHINA_RACE_KEY))
+  // Dynamic qualifying grid — fetched from API or hardcoded fallback
+  const [qualiGrid, setQualiGrid] = useState<RealQualiResult[]>([])
+  const [qualiPoleTime, setQualiPoleTime] = useState(0)
+  const [qualiFetching, setQualiFetching] = useState(false)
   // Telemetry
-  const [selectedDrivers, setSelectedDrivers] = useState<number[]>([63, 1, 44])
+  const [selectedDrivers, setSelectedDrivers] = useState<number[]>([12, 63, 44])
   const [allCarData, setAllCarData] = useState<any[]>([])
   const [carTelemetry, setCarTelemetry] = useState<Map<number, {
     speed: number; gear: number; drs: number; throttle: number; brake: number
@@ -137,26 +143,94 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
   const lastPredLapRef = useRef(-1)
   const fetchedDriversRef = useRef(new Set<number>())
 
-  // === INIT: races + pre-race prediction ===
+  // === Helper: fetch qualifying data for a race session key ===
+  const fetchQualiForRace = useCallback(async (raceKey: number) => {
+    setQualiFetching(true)
+    try {
+      // For Australia, use hardcoded data
+      if (raceKey === AUS_SESSION_KEY) {
+        setQualiGrid(AUSTRALIA_2026_QUALI)
+        setQualiPoleTime(78.518)
+        const grid = AUSTRALIA_2026_QUALI.map(q => ({
+          code: q.driverCode, name: q.driverName, team: q.team, teamColor: TEAMS[q.team]?.color || '#888', position: q.position,
+          qualiDelta: (q.q3Time ? pT(q.q3Time) : q.q2Time ? pT(q.q2Time) : q.q1Time ? pT(q.q1Time) : 83) - 78.518
+        }))
+        setPreds(predictor.predictFromGrid(grid))
+        setQualiFetching(false)
+        return
+      }
+      // Find qualifying session near this race
+      const allS = await openF1.getSessions({ year: 2026 })
+      const raceS = allS.find((s: any) => s.session_key === raceKey)
+      if (!raceS) { setQualiFetching(false); return }
+      const raceDate = new Date(raceS.date_start || '')
+      // Find the Qualifying session (not Sprint Qualifying) closest to race
+      const qualiSession = allS
+        .filter((s: any) => s.session_type === 'Qualifying' && s.session_name === 'Qualifying')
+        .find((s: any) => Math.abs(new Date(s.date_start || '').getTime() - raceDate.getTime()) < 3 * 86400000)
+      if (!qualiSession) { setQualiFetching(false); return }
+      // Fetch lap data & drivers from qualifying session
+      const [laps, drvs] = await Promise.all([openF1.getLaps(qualiSession.session_key), openF1.getDrivers(qualiSession.session_key)])
+      // Build best time per driver
+      const best = new Map<number, number>()
+      for (const l of laps) if (l.lap_duration && l.lap_duration > 0) { const c = best.get(l.driver_number) || Infinity; if (l.lap_duration < c) best.set(l.driver_number, l.lap_duration) }
+      if (best.size === 0) { setQualiFetching(false); return }
+      const pole = Math.min(...best.values())
+      setQualiPoleTime(pole)
+      // Sort by best time → qualifying grid
+      const sorted = [...best.entries()].sort((a, b) => a[1] - b[1])
+      const qualiResults: RealQualiResult[] = sorted.map(([dn, t], i) => {
+        const d = drvs.find((x: any) => x.driver_number === dn)
+        const code = d?.name_acronym || DRIVER_NUMBER_MAP[dn] || '?'
+        const name = d?.full_name || DRIVERS.find(dr => dr.code === code)?.name || '?'
+        const team = d?.team_name || DRIVERS.find(dr => dr.code === code)?.team || '?'
+        const mins = Math.floor(t / 60)
+        const secs = (t % 60).toFixed(3)
+        return {
+          position: i + 1, driverCode: code, driverName: name, team,
+          q3Time: i < 10 ? `${mins}:${secs.padStart(6, '0')}` : null,
+          q2Time: i >= 10 && i < 16 ? `${mins}:${secs.padStart(6, '0')}` : null,
+          q1Time: i >= 16 ? `${mins}:${secs.padStart(6, '0')}` : null,
+          gap: i === 0 ? null : `+${(t - pole).toFixed(3)}`,
+          note: null,
+        }
+      })
+      setQualiGrid(qualiResults)
+      // Run prediction
+      const grid = qualiResults.map(q => ({
+        code: q.driverCode, name: q.driverName, team: q.team,
+        teamColor: TEAMS[q.team]?.color || '#' + (drvs.find((x: any) => x.name_acronym === q.driverCode)?.team_colour || '888'),
+        position: q.position,
+        qualiDelta: (q.q3Time ? pT(q.q3Time) : q.q2Time ? pT(q.q2Time) : q.q1Time ? pT(q.q1Time) : pole + 5) - pole
+      }))
+      if (grid.length > 0) setPreds(predictor.predictFromGrid(grid))
+    } catch (e) { console.error('[F1] Quali fetch error:', e) }
+    setQualiFetching(false)
+  }, [])
+
+  // === INIT: races + auto-fetch qualifying for current race ===
   useEffect(() => {
     (async () => {
       try {
         const sessions = await openF1.getSessions({ year: 2026, session_type: 'Race' })
-        setRaces(sessions.map((s: any) => ({ key: s.session_key, name: s.country_name, circuit: s.circuit_short_name || s.country_name, date: s.date_start?.slice(0, 10) || '', hasData: new Date(s.date_start) <= new Date() })))
+        // Filter: only main races (not sprints) — sprint session_name includes 'Sprint'
+        const mainRaces = sessions.filter((s: any) => !s.session_name?.includes('Sprint'))
+        setRaces(mainRaces.map((s: any) => ({ key: s.session_key, name: s.country_name, circuit: s.circuit_short_name || s.country_name, date: s.date_start?.slice(0, 10) || '', hasData: new Date(s.date_start) <= new Date() || Math.abs(new Date(s.date_start).getTime() - Date.now()) < 2 * 86400000 })))
       } catch { }
     })()
-    setPreds(predictor.predictFromGrid(AUSTRALIA_2026_QUALI.map(q => ({
-      code: q.driverCode, name: q.driverName, team: q.team, teamColor: TEAMS[q.team]?.color || '#888', position: q.position,
-      qualiDelta: (q.q3Time ? pT(q.q3Time) : q.q2Time ? pT(q.q2Time) : q.q1Time ? pT(q.q1Time) : 83) - 78.518
-    }))))
-  }, [])
+    // Auto-fetch qualifying for default race
+    fetchQualiForRace(selectedRace)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // === PRELOAD replay data in background (2.5s after mount) ===
+  // === PRELOAD replay data in background (2.5s after mount) — only for past races ===
   useEffect(() => {
     const timer = setTimeout(() => {
       if (preloadedRef.current) return
       preloadedRef.current = true
       const sk = selectedRace
+      // Only preload if race has already happened
+      const race = races.find(r => r.key === sk)
+      if (race && new Date(race.date) > new Date()) return // future race, no replay data
       ;(async () => {
         try {
           const [drv, laps, pos, intv, st, rc, w] = await Promise.all([openF1.getDrivers(sk), openF1.getLaps(sk), openF1.getPositions(sk), openF1.getIntervals(sk), openF1.getStints(sk), openF1.getRaceControl(sk), openF1.getWeather(sk)])
@@ -166,14 +240,14 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
           const ll: any = [...laps].reverse().find((l: any) => l.driver_number === 63 && l.lap_duration > 0)
           if (fl?.date_start) { const s = new Date(fl.date_start).getTime(), e = ll?.date_start ? new Date(ll.date_start).getTime() + 90000 : s + 5400000; setRaceStartTime(s); setRaceEndTime(e); setReplayTime(s) }
           // Preload location data
-          const top = [63, 12, 16, 44, 4, 1, 87, 30, 5, 10]
+          const top = [63, 12, 16, 44, 1, 3, 87, 30, 5, 10]
           const locResults = await Promise.all(top.map(dn => openF1.getLocations(sk, dn).catch(() => [])))
           setAllLocationData(locResults.flat())
         } catch { }
       })()
     }, 2500)
     return () => clearTimeout(timer)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [races]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update totalLaps when race changes + reset refs for new race
   useEffect(() => {
@@ -186,28 +260,19 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
 
   // Race change -> auto qualifying fetch
   useEffect(() => {
-    if (selectedRace === SESSION_KEY) return
-    ;(async () => {
-      try {
-        const race = races.find(r => r.key === selectedRace); if (!race?.hasData) return
-        const allS = await openF1.getSessions({ year: 2026 })
-        const qS = allS.find((s: any) => s.session_type === 'Qualifying' && Math.abs(new Date(s.date_start || '').getTime() - new Date(race.date).getTime()) < 3 * 86400000)
-        if (!qS) return
-        const [laps, drvs] = await Promise.all([openF1.getLaps(qS.session_key), openF1.getDrivers(qS.session_key)])
-        const best = new Map<number, number>()
-        for (const l of laps) if (l.lap_duration && l.lap_duration > 0) { const c = best.get(l.driver_number) || Infinity; if (l.lap_duration < c) best.set(l.driver_number, l.lap_duration) }
-        const pole = Math.min(...best.values())
-        const grid = [...best.entries()].sort((a, b) => a[1] - b[1]).map(([dn, t], i) => { const d = drvs.find((x: any) => x.driver_number === dn); return { code: d?.name_acronym || '?', name: d?.full_name || '?', team: d?.team_name || '?', teamColor: '#' + (d?.team_colour || '888'), position: i + 1, qualiDelta: t - pole } })
-        if (grid.length > 0) setPreds(predictor.predictFromGrid(grid))
-      } catch { }
-    })()
-  }, [selectedRace, races])
+    fetchQualiForRace(selectedRace)
+    // Reset replay state for new race
+    preloadedRef.current = false
+    setLapData([]); setPosData([]); setIntervalData([]); setStintData([]); setRaceCtrl([])
+    setAllLocationData([]); setAllCarData([]); setCarPositions(new Map())
+    setMode('predict')
+  }, [selectedRace, fetchQualiForRace])
 
   // === LOAD REPLAY ===
   const loadReplay = useCallback(async () => {
     const sk = selectedRace
     // If preloaded data exists for this race, skip fetching core data
-    if (preloadedRef.current && lapData.length > 0 && sk === SESSION_KEY) {
+    if (preloadedRef.current && lapData.length > 0) {
       // Just need to compute flags and switch mode
       const rc = raceCtrl
       const flags = new Map<number, string>()
@@ -498,18 +563,19 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
             <WeatherCard data={weatherData} />
 
             {mode === 'predict' ? (
-              // Predict: Qualifying grid
+              // Predict: Qualifying grid (dynamic — fetched from OpenF1 API)
               <div className="f1p" style={{ flex: 1 }}>
-                <div className="f1t">QUALIFYING GRID</div>
+                <div className="f1t">{qualiFetching ? 'LOADING...' : 'QUALIFYING GRID'}</div>
                 <div style={{ maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
-                  {AUSTRALIA_2026_QUALI.map((q, i) => {
+                  {qualiGrid.length === 0 && qualiFetching && <div style={{ fontSize: 9, color: '#555', padding: 8, textAlign: 'center' }}>Sıralama verisi çekiliyor...</div>}
+                  {qualiGrid.map((q, i) => {
                     const pr = preds?.find(p => p.driverCode === q.driverCode)
                     return <div key={q.driverCode} className="f1r">
                       <span style={{ width: 14, fontFamily: "'Outfit'", fontWeight: 800, color: i < 3 ? '#d4a843' : '#555', fontSize: 10 }}>{q.position}</span>
                       <div style={{ width: 2, height: 14, borderRadius: 1, background: TEAMS[q.team]?.color || '#444' }} />
-                      <span style={{ flex: 1, fontSize: 9, color: i < 10 ? '#ddd' : '#555' }}>{q.driverCode}</span>
-                      <span style={{ fontSize: 8, color: '#444' }}>{q.q3Time || q.q2Time || '--'}</span>
-                      <span style={{ fontSize: 8, fontWeight: 700, color: pr && pr.predictedPosition <= 3 ? '#d4a843' : '#444' }}>P{pr?.predictedPosition || '--'}</span>
+                      <span style={{ flex: 1, fontSize: 9, color: i < 10 ? (isDark ? '#ddd' : '#222') : (isDark ? '#555' : '#999') }}>{q.driverCode}</span>
+                      <span style={{ fontSize: 8, color: isDark ? '#444' : '#aaa' }}>{q.q3Time || q.q2Time || q.q1Time || '--'}</span>
+                      <span style={{ fontSize: 8, fontWeight: 700, color: pr && pr.predictedPosition <= 3 ? '#d4a843' : (isDark ? '#444' : '#aaa') }}>P{pr?.predictedPosition || '--'}</span>
                     </div>
                   })}
                 </div>
@@ -545,7 +611,8 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
           {/* ═══ RIGHT PANEL ═══ */}
           <div className="f1-side" style={{ width: 280, minWidth: 230, padding: '10px 8px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, background: sideBg, borderLeft: sideBorder }}>
             {mode === 'predict' ? (
-              // Predict: Results vs predictions
+              selectedRace === AUS_SESSION_KEY ? (
+              // Australia: Results vs predictions (backtest)
               <div className="f1p" style={{ flex: 1 }}>
                 <div className="f1t" style={{ display: 'flex', justifyContent: 'space-between' }}>
                   SONUC vs TAHMIN
@@ -560,13 +627,37 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
                     return <div key={r.code} className="f1r" style={{ opacity: dead ? .25 : 1 }}>
                       <span style={{ width: 28, fontFamily: "'Outfit'", fontWeight: 800, color: dead ? '#ef4444' : i < 3 ? '#d4a843' : '#888', fontSize: 10 }}>{dead ? r.status.toUpperCase() : 'P' + r.pos}</span>
                       <div style={{ width: 2, height: 14, borderRadius: 1, background: TEAMS[r.team]?.color || '#333' }} />
-                      <span style={{ flex: 1, fontSize: 9, color: dead ? '#333' : i < 10 ? '#ddd' : '#666' }}>{r.code}</span>
+                      <span style={{ flex: 1, fontSize: 9, color: dead ? (isDark ? '#333' : '#bbb') : i < 10 ? (isDark ? '#ddd' : '#222') : (isDark ? '#666' : '#999') }}>{r.code}</span>
                       <span style={{ fontSize: 8, fontWeight: 700, color: d && d.err === 0 ? '#4ade80' : d && d.err <= 2 ? '#fbbf24' : '#555' }}>{'P' + (d?.pred || '-')}</span>
                       <span style={{ fontSize: 8, fontWeight: 700, color: d && d.err === 0 ? '#4ade80' : d && d.err <= 2 ? '#fbbf24' : '#ef4444' }}>{d ? (d.err === 0 ? 'V' : '+' + d.err) : ''}</span>
                     </div>
                   })}
                 </div>
               </div>
+              ) : (
+              // Other races: Prediction results
+              <div className="f1p" style={{ flex: 1 }}>
+                <div className="f1t">YARIŞ TAHMİNİ</div>
+                <div style={{ maxHeight: 'calc(100vh - 160px)', overflowY: 'auto' }}>
+                  {qualiFetching && <div style={{ fontSize: 9, color: '#555', padding: 8, textAlign: 'center' }}>Tahmin hesaplanıyor...</div>}
+                  {preds?.map((p, i) => {
+                    const gridPos = qualiGrid.find(q => q.driverCode === p.driverCode)?.position || 0
+                    const diff = gridPos - p.predictedPosition
+                    return <div key={p.driverCode} className="f1r">
+                      <span style={{ width: 20, fontFamily: "'Outfit'", fontWeight: 800, color: i < 3 ? '#d4a843' : (isDark ? '#888' : '#666'), fontSize: 11 }}>P{p.predictedPosition}</span>
+                      <div style={{ width: 3, height: 16, borderRadius: 2, background: p.teamColor, boxShadow: i < 3 ? `0 0 6px ${p.teamColor}40` : 'none' }} />
+                      <span style={{ flex: 1, fontFamily: "'Outfit'", fontWeight: i < 3 ? 700 : 400, color: i < 3 ? (isDark ? '#ddd' : '#222') : (isDark ? '#777' : '#666'), fontSize: 10 }}>{p.driverCode}</span>
+                      {/* Win probability */}
+                      {p.winProbability > 0 && <span style={{ fontSize: 7, color: '#997a2e', fontWeight: 700, background: 'rgba(153,122,46,.1)', padding: '1px 4px', borderRadius: 3 }}>{p.winProbability}%</span>}
+                      {/* Grid change */}
+                      <span style={{ fontSize: 8, fontWeight: 700, width: 32, textAlign: 'right', color: diff > 0 ? '#4ade80' : diff < 0 ? '#ef4444' : (isDark ? '#555' : '#aaa') }}>
+                        {diff > 0 ? `↑${diff}` : diff < 0 ? `↓${Math.abs(diff)}` : '—'}
+                      </span>
+                    </div>
+                  })}
+                </div>
+              </div>
+              )
             ) : (
               // Replay: Leaderboard + AI + Events
               <>

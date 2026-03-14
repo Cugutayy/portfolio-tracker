@@ -58,37 +58,38 @@ const PRETRAINED = {
   gbBase: 10.5,
   gbLr: 0.12,
   
-  // ELO ratings (2025 sonu tahmini)
+  // ELO ratings (post-Australia 2026 GP — Round 1 results incorporated)
+  // AUS results: RUS P1, ANT P2, LEC P3, HAM P4, NOR P5, VER P6, BEA P7, LIN P8, BOR P9, GAS P10
   driverELO: {
-    VER: 1820, NOR: 1780, PIA: 1720, LEC: 1740, RUS: 1710, HAM: 1700,
-    SAI: 1680, ALO: 1650, GAS: 1600, OCO: 1590, ALB: 1580, STR: 1560,
-    HUL: 1570, LAW: 1550, HAD: 1520, ANT: 1510, BEA: 1500, COL: 1490,
-    BOR: 1480, BOT: 1530, PER: 1540, TSU: 1570, LIN: 1460,
+    VER: 1810, NOR: 1775, PIA: 1710, LEC: 1750, RUS: 1740, HAM: 1710,
+    SAI: 1670, ALO: 1640, GAS: 1605, OCO: 1590, ALB: 1580, STR: 1545,
+    HUL: 1560, LAW: 1550, HAD: 1505, ANT: 1545, BEA: 1520, COL: 1495,
+    BOR: 1500, BOT: 1510, PER: 1535, LIN: 1490,
   } as Record<string, number>,
-  
+
   teamELO: {
-    'McLaren': 1800, 'Red Bull': 1780, 'Ferrari': 1750, 'Mercedes': 1740,
-    'Aston Martin': 1620, 'Williams': 1580, 'Alpine': 1570, 'Haas': 1560,
-    'Racing Bulls': 1570, 'Audi': 1530, 'Cadillac': 1480,
+    'McLaren': 1790, 'Red Bull': 1760, 'Ferrari': 1760, 'Mercedes': 1780,
+    'Aston Martin': 1600, 'Williams': 1570, 'Alpine': 1575, 'Haas': 1575,
+    'Racing Bulls': 1565, 'Audi': 1545, 'Cadillac': 1480,
   } as Record<string, number>,
-  
-  // 2025 son form verileri (son 5 yarış bitiş pozisyonları)
+
+  // Son form verileri (2025 son 4 yarış + Avustralya 2026 GP sonucu)
   driverForm: {
-    VER: [1,2,1,3,1], NOR: [1,1,2,1,2], PIA: [3,4,3,2,4], LEC: [2,3,5,4,3],
-    RUS: [4,5,4,6,5], HAM: [5,6,7,5,6], SAI: [6,7,6,8,7], ALO: [8,9,10,7,9],
-    GAS: [10,11,9,12,10], OCO: [12,10,11,13,11], ALB: [9,12,13,11,12],
-    STR: [14,13,15,14,13], HUL: [11,14,12,15,14], LAW: [13,8,14,10,8],
-    HAD: [7,15,8,9,15], ANT: [15,16,16,16,16], BEA: [16,17,17,17,17],
-    COL: [17,18,18,18,18], BOR: [18,19,19,19,19], BOT: [19,20,20,20,20],
-    PER: [20,20,20,20,20], LIN: [0,0,0,0,0],
+    VER: [2,1,3,1,6], NOR: [1,2,1,2,5], PIA: [4,3,2,4,0], LEC: [3,5,4,3,3],
+    RUS: [5,4,6,5,1], HAM: [6,7,5,6,4], SAI: [7,6,8,7,15], ALO: [9,10,7,9,0],
+    GAS: [11,9,12,10,10], OCO: [10,11,13,11,11], ALB: [12,13,11,12,12],
+    STR: [13,15,14,13,0], HUL: [14,12,15,14,0], LAW: [8,14,10,8,13],
+    HAD: [15,8,9,15,0], ANT: [16,16,16,16,2], BEA: [17,17,17,17,7],
+    COL: [18,18,18,18,14], BOR: [19,19,19,19,9], BOT: [20,20,20,20,0],
+    PER: [20,20,20,20,16], LIN: [0,0,0,0,8],
   } as Record<string, number[]>,
-  
+
   teamForm: {
-    'McLaren': [2,2,2,1,3], 'Red Bull': [4,8,4,6,8], 'Ferrari': [3,4,6,4,5],
-    'Mercedes': [9,10,10,11,10], 'Aston Martin': [11,11,12,10,11],
-    'Williams': [7,9,9,9,9], 'Alpine': [13,14,13,15,14],
-    'Haas': [14,13,14,14,13], 'Racing Bulls': [8,8,11,8,8],
-    'Audi': [15,16,16,16,16], 'Cadillac': [19,20,20,20,20],
+    'McLaren': [2,2,1,3,5], 'Red Bull': [8,4,6,8,6], 'Ferrari': [4,6,4,5,3],
+    'Mercedes': [10,10,11,10,1], 'Aston Martin': [11,12,10,11,0],
+    'Williams': [9,9,9,9,12], 'Alpine': [14,13,15,14,10],
+    'Haas': [13,14,14,13,7], 'Racing Bulls': [8,11,8,8,8],
+    'Audi': [16,16,16,16,9], 'Cadillac': [20,20,20,20,16],
   } as Record<string, number[]>,
 }
 

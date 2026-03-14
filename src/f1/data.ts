@@ -5,9 +5,9 @@
 import type { Driver, Team } from './types'
 
 export const DRIVERS: Driver[] = [
-  { code:'VER', name:'Max Verstappen',    team:'Red Bull',     teamColor:'#3671C6', number:1 },
-  { code:'HAD', name:'Isack Hadjar',      team:'Red Bull',     teamColor:'#3671C6', number:20 },
-  { code:'NOR', name:'Lando Norris',      team:'McLaren',      teamColor:'#FF8000', number:4 },
+  { code:'VER', name:'Max Verstappen',    team:'Red Bull',     teamColor:'#3671C6', number:3 },
+  { code:'HAD', name:'Isack Hadjar',      team:'Red Bull',     teamColor:'#3671C6', number:6 },
+  { code:'NOR', name:'Lando Norris',      team:'McLaren',      teamColor:'#FF8000', number:1 },
   { code:'PIA', name:'Oscar Piastri',     team:'McLaren',      teamColor:'#FF8000', number:81 },
   { code:'RUS', name:'George Russell',    team:'Mercedes',     teamColor:'#27F4D2', number:63 },
   { code:'ANT', name:'Kimi Antonelli',    team:'Mercedes',     teamColor:'#27F4D2', number:12 },
@@ -24,7 +24,7 @@ export const DRIVERS: Driver[] = [
   { code:'HUL', name:'Nico Hulkenberg',   team:'Audi',         teamColor:'#00E701', number:27 },
   { code:'BOR', name:'Gabriel Bortoleto', team:'Audi',         teamColor:'#00E701', number:5 },
   { code:'LAW', name:'Liam Lawson',       team:'Racing Bulls', teamColor:'#6692FF', number:30 },
-  { code:'LIN', name:'Arvid Lindblad',    team:'Racing Bulls', teamColor:'#6692FF', number:40 },
+  { code:'LIN', name:'Arvid Lindblad',    team:'Racing Bulls', teamColor:'#6692FF', number:41 },
   { code:'PER', name:'Sergio Perez',      team:'Cadillac',     teamColor:'#1B3D2F', number:11 },
   { code:'BOT', name:'Valtteri Bottas',   team:'Cadillac',     teamColor:'#1B3D2F', number:77 },
 ]
