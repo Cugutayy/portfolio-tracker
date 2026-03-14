@@ -50,6 +50,7 @@ const GLOW_COLORS: Record<string, string> = {
 }
 
 const N = INITIAL_NODES.length
+const CANVAS_PAD = 100 // extra pixels around canvas so bubbles don't clip at edges
 
 interface Props { dark: boolean; t: (k: string) => string }
 
@@ -65,6 +66,7 @@ export function InteractiveGraph({ dark }: Props) {
     positions: INITIAL_NODES.map(n => ({ x: n.x, y: n.y })),
     cursor: 'default',
     raf: 0,
+    containerRect: null as DOMRect | null,
   })
 
   useEffect(() => {
@@ -80,10 +82,13 @@ export function InteractiveGraph({ dark }: Props) {
 
     const resize = () => {
       const rect = container.getBoundingClientRect()
-      canvas.width = rect.width * dpr
-      canvas.height = rect.height * dpr
-      canvas.style.width = `${rect.width}px`
-      canvas.style.height = `${rect.height}px`
+      S.containerRect = rect
+      const cw = rect.width + CANVAS_PAD * 2
+      const ch = rect.height + CANVAS_PAD * 2
+      canvas.width = cw * dpr
+      canvas.height = ch * dpr
+      canvas.style.width = `${cw}px`
+      canvas.style.height = `${ch}px`
     }
     resize()
     const ro = new ResizeObserver(resize)
@@ -112,21 +117,9 @@ export function InteractiveGraph({ dark }: Props) {
     // ---- Native event handlers (bypass React synthetic events) ----
     const onMouseMove = (e: MouseEvent) => {
       S.mx = e.clientX; S.my = e.clientY
+      if (S.drag) return // window-level handler manages drag
+
       const rect = container.getBoundingClientRect()
-
-      if (S.drag) {
-        const mxPct = ((e.clientX - rect.left) / rect.width) * 100
-        const myPct = ((e.clientY - rect.top) / rect.height) * 100
-        const dx = mxPct - S.drag.startX, dy = myPct - S.drag.startY
-        if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) S.drag.moved = true
-        S.positions[S.drag.idx] = {
-          x: S.drag.origX + dx,
-          y: S.drag.origY + dy,
-        }
-        setCursor('grabbing')
-        return
-      }
-
       const idx = hitTest(e.clientX, e.clientY, rect)
       S.hovered = idx >= 0 ? INITIAL_NODES[idx].id : null
       setCursor(idx >= 0 ? 'grab' : 'default')
@@ -145,10 +138,25 @@ export function InteractiveGraph({ dark }: Props) {
         origX: p.x, origY: p.y, moved: false,
       }
       setCursor('grabbing')
+      // Attach to window so drag works even outside the container
+      window.addEventListener('mousemove', onWindowDragMove, { passive: true })
+      window.addEventListener('mouseup', onWindowDragUp)
       e.preventDefault()
     }
 
-    const onMouseUp = () => {
+    // Window-level drag handlers — bubble follows cursor everywhere
+    const onWindowDragMove = (e: MouseEvent) => {
+      if (!S.drag) return
+      const rect = container.getBoundingClientRect()
+      const mxPct = ((e.clientX - rect.left) / rect.width) * 100
+      const myPct = ((e.clientY - rect.top) / rect.height) * 100
+      const dx = mxPct - S.drag.startX, dy = myPct - S.drag.startY
+      if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) S.drag.moved = true
+      S.positions[S.drag.idx] = { x: S.drag.origX + dx, y: S.drag.origY + dy }
+      S.mx = e.clientX; S.my = e.clientY
+    }
+
+    const onWindowDragUp = () => {
       if (!S.drag) return
       if (!S.drag.moved) {
         const node = INITIAL_NODES[S.drag.idx]
@@ -156,11 +164,22 @@ export function InteractiveGraph({ dark }: Props) {
       }
       S.drag = null
       setCursor('grab')
+      window.removeEventListener('mousemove', onWindowDragMove)
+      window.removeEventListener('mouseup', onWindowDragUp)
+    }
+
+    const onMouseUp = () => {
+      // Fallback for non-drag clicks
+      if (!S.drag) return
+      onWindowDragUp()
     }
 
     const onMouseLeave = () => {
-      S.mx = -1000; S.my = -1000; S.hovered = null; S.drag = null
-      setCursor('default')
+      // Don't cancel drag on leave — window handlers take over
+      if (!S.drag) {
+        S.mx = -1000; S.my = -1000; S.hovered = null
+        setCursor('default')
+      }
     }
 
     container.addEventListener('mousemove', onMouseMove, { passive: true })
@@ -172,16 +191,18 @@ export function InteractiveGraph({ dark }: Props) {
     const tick = (t: number) => {
       S.raf = requestAnimationFrame(tick)
 
-      const w = canvas.width / dpr
-      const h = canvas.height / dpr
-      if (w === 0 || h === 0) return
+      const cw = canvas.width / dpr   // canvas width (includes padding)
+      const ch = canvas.height / dpr
+      const w = cw - CANVAS_PAD * 2   // logical width (container width)
+      const h = ch - CANVAS_PAD * 2
+      if (w <= 0 || h <= 0) return
 
       const time = t / 1000
       const isDark = dark
       const { hovered, drag, positions } = S
       const rect = container.getBoundingClientRect()
 
-      // Compute positions
+      // Compute positions (offset by CANVAS_PAD so 0% maps to CANVAS_PAD px)
       const posX = new Float64Array(N)
       const posY = new Float64Array(N)
 
@@ -190,8 +211,8 @@ export function InteractiveGraph({ dark }: Props) {
         const pos = positions[i]
 
         if (drag && drag.idx === i) {
-          posX[i] = pos.x / 100 * w
-          posY[i] = pos.y / 100 * h
+          posX[i] = pos.x / 100 * w + CANVAS_PAD
+          posY[i] = pos.y / 100 * h + CANVAS_PAD
           smoothX[i] = 0; smoothY[i] = 0
           continue
         }
@@ -213,13 +234,13 @@ export function InteractiveGraph({ dark }: Props) {
 
         smoothX[i] += (dx - smoothX[i]) * 0.08
         smoothY[i] += (dy - smoothY[i]) * 0.08
-        posX[i] = (pos.x + smoothX[i]) / 100 * w
-        posY[i] = (pos.y + smoothY[i]) / 100 * h
+        posX[i] = (pos.x + smoothX[i]) / 100 * w + CANVAS_PAD
+        posY[i] = (pos.y + smoothY[i]) / 100 * h + CANVAS_PAD
       }
 
-      // Clear
+      // Clear (full canvas including padding)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.clearRect(0, 0, w, h)
+      ctx.clearRect(0, 0, cw, ch)
 
       // Draw edges — soft curved lines
       for (const [ai, bi] of EDGE_INDICES) {
@@ -255,7 +276,7 @@ export function InteractiveGraph({ dark }: Props) {
         const isCenter = node.type === 'center'
         const isProject = node.type === 'project'
         const isTech = node.type === 'tech'
-        const scale = isDragged ? 1.15 : isHovered ? 1.08 : 1
+        const scale = 1 // no size change on drag/hover
         const baseW = Math.min(w, 960)
         const rPx = node.r * 0.003 * baseW * scale
 
@@ -369,6 +390,8 @@ export function InteractiveGraph({ dark }: Props) {
       container.removeEventListener('mousedown', onMouseDown)
       container.removeEventListener('mouseup', onMouseUp)
       container.removeEventListener('mouseleave', onMouseLeave)
+      window.removeEventListener('mousemove', onWindowDragMove)
+      window.removeEventListener('mouseup', onWindowDragUp)
     }
   }, [dark])
 
@@ -380,11 +403,18 @@ export function InteractiveGraph({ dark }: Props) {
         height: 'clamp(340px, 45vh, 520px)',
         position: 'relative',
         userSelect: 'none',
+        overflow: 'visible',
       }}
     >
       <canvas
         ref={canvasRef}
-        style={{ width: '100%', height: '100%', display: 'block' }}
+        style={{
+          position: 'absolute',
+          top: -CANVAS_PAD,
+          left: -CANVAS_PAD,
+          display: 'block',
+          pointerEvents: 'none',
+        }}
       />
     </div>
   )
