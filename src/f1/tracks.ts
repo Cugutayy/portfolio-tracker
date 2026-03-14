@@ -82,6 +82,19 @@ export const ALBERT_PARK_PIT = {
   laneTime: 22, // saniye
 }
 
+// ═══════════════════════════════════════════
+// Dynamic circuit data lookup by name
+// ═══════════════════════════════════════════
+type DRSZone = { start: number; end: number; label: string }
+
+export function getDRSZones(circuitName: string): DRSZone[] {
+  const map: Record<string, DRSZone[]> = {
+    'Albert Park': ALBERT_PARK_DRS,
+    'Shanghai': SHANGHAI_DRS,
+  }
+  return map[circuitName] || []
+}
+
 /**
  * SVG path üzerinde belirli bir yüzde (0-1) noktasındaki x,y koordinatını hesapla
  * Bu fonksiyon ile arabaları pistin herhangi bir noktasına yerleştirebiliriz

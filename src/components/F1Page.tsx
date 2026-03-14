@@ -4,12 +4,10 @@ import { AUSTRALIA_2026_QUALI, AUSTRALIA_2026_RACE_RESULT, computeBacktest, type
 import { predictor } from '../f1/predictor'
 import { openF1 } from '../f1/api'
 import { TRACK_COORDS, CIRCUIT_MAP, getCircuitLaps } from '../f1/trackData'
-import { ALBERT_PARK_DRS } from '../f1/tracks'
+import { getDRSZones } from '../f1/tracks'
 import type { PredictionResult } from '../f1/types'
 
 const AUS_SESSION_KEY = 11234
-const CHINA_RACE_KEY = 11245
-const CHINA_QUALI_KEY = 11241
 
 // ═══════════════════════════════════════════════════
 // CSS
@@ -117,18 +115,18 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
   const [drivers, setDrivers] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [races, setRaces] = useState<{ key: number, name: string, circuit: string, date: string, hasData: boolean }[]>([])
-  const [selectedRace, setSelectedRace] = useState(CHINA_RACE_KEY)
+  const [selectedRace, setSelectedRace] = useState(0) // Auto-detected from API
   const [carPositions, setCarPositions] = useState<Map<number, { x: number, y: number }>>(new Map())
   const [allLocationData, setAllLocationData] = useState<any[]>([])
   const [livePreds, setLivePreds] = useState<PredictionResult[] | null>(null)
   const [liveActive, setLiveActive] = useState(false)
-  const [totalLaps, setTotalLaps] = useState(() => getCircuitLaps(CHINA_RACE_KEY))
+  const [totalLaps, setTotalLaps] = useState(56)
   // Dynamic qualifying grid — fetched from API or hardcoded fallback
   const [qualiGrid, setQualiGrid] = useState<RealQualiResult[]>([])
   const [qualiPoleTime, setQualiPoleTime] = useState(0)
   const [qualiFetching, setQualiFetching] = useState(false)
   // Telemetry
-  const [selectedDrivers, setSelectedDrivers] = useState<number[]>([12, 63, 44])
+  const [selectedDrivers, setSelectedDrivers] = useState<number[]>([63, 12, 44]) // RUS, ANT, HAM
   const [allCarData, setAllCarData] = useState<any[]>([])
   const [carTelemetry, setCarTelemetry] = useState<Map<number, {
     speed: number; gear: number; drs: number; throttle: number; brake: number
@@ -208,22 +206,39 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
     setQualiFetching(false)
   }, [])
 
-  // === INIT: races + auto-fetch qualifying for current race ===
+  // === INIT: races + auto-detect current/next race ===
   useEffect(() => {
     (async () => {
       try {
         const sessions = await openF1.getSessions({ year: 2026, session_type: 'Race' })
-        // Filter: only main races (not sprints) — sprint session_name includes 'Sprint'
         const mainRaces = sessions.filter((s: any) => !s.session_name?.includes('Sprint'))
-        setRaces(mainRaces.map((s: any) => ({ key: s.session_key, name: s.country_name, circuit: s.circuit_short_name || s.country_name, date: s.date_start?.slice(0, 10) || '', hasData: new Date(s.date_start) <= new Date() || Math.abs(new Date(s.date_start).getTime() - Date.now()) < 2 * 86400000 })))
+        const raceList = mainRaces.map((s: any) => {
+          const raceDate = new Date(s.date_start)
+          const now = new Date()
+          // hasData = past race OR within 3 days (qualifying available)
+          const hasData = raceDate <= now || Math.abs(raceDate.getTime() - now.getTime()) < 3 * 86400000
+          return { key: s.session_key, name: s.country_name, circuit: s.circuit_short_name || s.country_name, date: s.date_start?.slice(0, 10) || '', hasData }
+        })
+        setRaces(raceList)
+        // Auto-select: current/next race weekend (closest upcoming or most recent past race with data)
+        if (selectedRace === 0 && raceList.length > 0) {
+          const now = Date.now()
+          const closest = raceList
+            .filter(r => r.hasData)
+            .sort((a, b) => Math.abs(new Date(a.date).getTime() - now) - Math.abs(new Date(b.date).getTime() - now))
+          if (closest.length > 0) {
+            setSelectedRace(closest[0].key)
+          } else {
+            setSelectedRace(raceList[raceList.length - 1].key)
+          }
+        }
       } catch { }
     })()
-    // Auto-fetch qualifying for default race
-    fetchQualiForRace(selectedRace)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // === PRELOAD replay data in background (2.5s after mount) — only for past races ===
   useEffect(() => {
+    if (selectedRace === 0) return
     const timer = setTimeout(() => {
       if (preloadedRef.current) return
       preloadedRef.current = true
@@ -236,21 +251,24 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
           const [drv, laps, pos, intv, st, rc, w] = await Promise.all([openF1.getDrivers(sk), openF1.getLaps(sk), openF1.getPositions(sk), openF1.getIntervals(sk), openF1.getStints(sk), openF1.getRaceControl(sk), openF1.getWeather(sk)])
           setDrivers(drv); setLapData(laps); setPosData(pos); setIntervalData(intv); setStintData(st); setRaceCtrl(rc)
           if (w.length > 0) setWeatherData(w[w.length - 1])
-          const fl: any = laps.find((l: any) => l.driver_number === 63 && l.lap_number === 1)
-          const ll: any = [...laps].reverse().find((l: any) => l.driver_number === 63 && l.lap_duration > 0)
+          // Find first driver with lap data as reference (not hardcoded 63)
+          const refDrv = drv.length > 0 ? drv[0].driver_number : 63
+          const fl: any = laps.find((l: any) => l.lap_number === 1 && l.date_start)
+          const ll: any = [...laps].reverse().find((l: any) => l.lap_duration > 0)
           if (fl?.date_start) { const s = new Date(fl.date_start).getTime(), e = ll?.date_start ? new Date(ll.date_start).getTime() + 90000 : s + 5400000; setRaceStartTime(s); setRaceEndTime(e); setReplayTime(s) }
-          // Preload location data
-          const top = [63, 12, 16, 44, 1, 3, 87, 30, 5, 10]
-          const locResults = await Promise.all(top.map(dn => openF1.getLocations(sk, dn).catch(() => [])))
+          // Preload location data — use driver numbers from the session
+          const topDrivers = drv.slice(0, 10).map((d: any) => d.driver_number)
+          const locResults = await Promise.all(topDrivers.map((dn: number) => openF1.getLocations(sk, dn).catch(() => [])))
           setAllLocationData(locResults.flat())
         } catch { }
       })()
     }, 2500)
     return () => clearTimeout(timer)
-  }, [races]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [races, selectedRace]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update totalLaps when race changes + reset refs for new race
   useEffect(() => {
+    if (selectedRace === 0) return
     const laps = getCircuitLaps(selectedRace)
     setTotalLaps(laps)
     predictor.totalLaps = laps
@@ -258,14 +276,16 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
     lastPredLapRef.current = -1
   }, [selectedRace])
 
-  // Race change -> auto qualifying fetch
+  // Race change -> auto qualifying fetch + reset
   useEffect(() => {
+    if (selectedRace === 0) return // Not yet initialized
     fetchQualiForRace(selectedRace)
     // Reset replay state for new race
     preloadedRef.current = false
     setLapData([]); setPosData([]); setIntervalData([]); setStintData([]); setRaceCtrl([])
     setAllLocationData([]); setAllCarData([]); setCarPositions(new Map())
     setMode('predict')
+    setLivePreds(null)
   }, [selectedRace, fetchQualiForRace])
 
   // === LOAD REPLAY ===
@@ -308,18 +328,18 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
         else if (m.flag === 'YELLOW') flags.set(m.lap_number, 'yellow')
       }
       setLapFlags(flags)
-      // Location data + car data — all in parallel
+      // Location data + car data — all in parallel, using actual session drivers
       try {
-        const top = [63, 12, 16, 44, 4, 1, 87, 30, 5, 10]
+        const topDrivers = drv.slice(0, 10).map((d: any) => d.driver_number)
         const [locResults, cdResults] = await Promise.all([
-          Promise.all(top.map(dn => openF1.getLocations(sk, dn).catch(() => []))),
+          Promise.all(topDrivers.map((dn: number) => openF1.getLocations(sk, dn).catch(() => []))),
           Promise.all(selectedDrivers.map(dn => openF1.getCarData(sk, dn).catch(() => [])))
         ])
         setAllLocationData(locResults.flat())
         setAllCarData(cdResults.flat())
       } catch { }
-      const fl: any = laps.find((l: any) => l.driver_number === 63 && l.lap_number === 1)
-      const ll: any = [...laps].reverse().find((l: any) => l.driver_number === 63 && l.lap_duration > 0)
+      const fl: any = laps.find((l: any) => l.lap_number === 1 && l.date_start)
+      const ll: any = [...laps].reverse().find((l: any) => l.lap_duration > 0)
       if (fl?.date_start) { const s = new Date(fl.date_start).getTime(), e = ll?.date_start ? new Date(ll.date_start).getTime() + 90000 : s + 5400000; setRaceStartTime(s); setRaceEndTime(e); setReplayTime(s) }
       setMode('replay'); setReplayLap(1)
     } catch { }
@@ -335,8 +355,8 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
       try {
         const [drv, laps, pos, intv, st, rc, w] = await Promise.all([openF1.getDrivers(sk), openF1.getLaps(sk), openF1.getPositions(sk), openF1.getIntervals(sk), openF1.getStints(sk), openF1.getRaceControl(sk), openF1.getWeather(sk)])
         setDrivers(drv); setLapData(laps); setPosData(pos); setIntervalData(intv); setStintData(st); setRaceCtrl(rc); if (w.length > 0) setWeatherData(w[w.length - 1])
-        const ml = Math.max(0, ...laps.filter((l: any) => l.driver_number === 63).map((l: any) => l.lap_number)); setReplayLap(ml)
-        try { const locs = await Promise.all([63, 12, 16, 44, 4, 1].map(dn => openF1.getLocations(sk, dn).catch(() => []))); setAllLocationData(locs.flat()); setReplayTime(Date.now()) } catch { }
+        const ml = Math.max(0, ...laps.map((l: any) => l.lap_number || 0)); setReplayLap(ml)
+        try { const topDrvs = drv.slice(0, 6).map((d: any) => d.driver_number); const locs = await Promise.all(topDrvs.map((dn: number) => openF1.getLocations(sk, dn).catch(() => []))); setAllLocationData(locs.flat()); setReplayTime(Date.now()) } catch { }
         // Car telemetry for selected drivers (live)
         try { const cd = await Promise.all(selectedDrivers.map(dn => openF1.getCarData(sk, dn).catch(() => []))); setAllCarData(cd.flat()) } catch { }
       } catch { }
@@ -398,10 +418,10 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
           setCarPositions(m)
         }
         setReplayTime(newTime)
-        // Update lap from time
+        // Update lap from time — find any driver with laps as reference
         if (lapData.length) {
-          const rl = lapData.filter((l: any) => l.driver_number === 63 && l.date_start)
-          let c = 1; for (const l of rl) if (new Date(l.date_start).getTime() <= newTime) c = l.lap_number
+          const rl = lapData.filter((l: any) => l.date_start).sort((a: any, b: any) => a.lap_number - b.lap_number)
+          let c = 1; for (const l of rl) if (new Date(l.date_start).getTime() <= newTime) c = Math.max(c, l.lap_number)
           setReplayLap(c)
         }
       }
@@ -457,8 +477,9 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
   // === STANDINGS ===
   const standings = useMemo(() => {
     if (!posData.length || !lapData.length) return []
-    const rl = lapData.filter((l: any) => l.driver_number === 63 && l.lap_number <= replayLap)
-    const ref = rl.length > 0 ? new Date(rl[rl.length - 1].date_start || '').getTime() : 0
+    // Use any driver's lap data as time reference (not hardcoded to one driver)
+    const rl = lapData.filter((l: any) => l.lap_number <= replayLap && l.date_start)
+    const ref = rl.length > 0 ? Math.max(...rl.map((l: any) => new Date(l.date_start || '').getTime())) : 0
     const lP = new Map<number, number>(), lG = new Map<number, number>(), lL = new Map<number, number>()
     for (const p of posData) if (new Date(p.date || '').getTime() <= ref + 10000) lP.set(p.driver_number, p.position)
     for (const iv of intervalData) if (new Date(iv.date || '').getTime() <= ref + 10000) lG.set(iv.driver_number, iv.gap_to_leader ?? 0)
@@ -496,8 +517,15 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
   }, [stintData, raceCtrl, drivers])
 
   const backtest = useMemo(() => preds ? computeBacktest(preds) : null, [preds])
-  const trackPts = useMemo(() => { const n = CIRCUIT_MAP[selectedRace]; return n ? TRACK_COORDS[n] || [] : [] }, [selectedRace])
+  const circuitName = useMemo(() => CIRCUIT_MAP[selectedRace] || '', [selectedRace])
+  const trackPts = useMemo(() => circuitName ? TRACK_COORDS[circuitName] || [] : [], [circuitName])
+  const drsZonesData = useMemo(() => getDRSZones(circuitName), [circuitName])
   const fEvents = useMemo(() => events.filter(e => e.lap <= replayLap), [events, replayLap])
+  // Is this race in the past? (replay data available)
+  const isPastRace = useMemo(() => {
+    const race = races.find(r => r.key === selectedRace)
+    return race ? new Date(race.date) < new Date() : false
+  }, [races, selectedRace])
 
   const handleCarClick = useCallback((driverNumber: number) => {
     setSelectedDrivers(prev => {
@@ -539,11 +567,11 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
         </div>
         <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
           {weatherData && <span style={{ fontSize: 8, color: isDark ? '#555' : '#888', padding: '2px 8px', background: isDark ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.03)', borderRadius: 6 }}>{weatherData.air_temperature?.toFixed(0)}°C  T{weatherData.track_temperature?.toFixed(0)}°C</span>}
-          <button className="f1b" onClick={() => setMode('predict')} style={{ background: mode === 'predict' ? 'linear-gradient(135deg,#e10600,#b30500)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', boxShadow: mode === 'predict' ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8, color: mode === 'predict' ? '#fff' : headerText }}>TAHMIN</button>
-          <button className="f1b" onClick={loadReplay} style={{ background: mode === 'replay' && !liveActive ? 'linear-gradient(135deg,#e10600,#b30500)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', opacity: loading ? .5 : 1, boxShadow: mode === 'replay' && !liveActive ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8, color: mode === 'replay' && !liveActive ? '#fff' : headerText }}>{loading ? '...' : 'REPLAY'}</button>
-          <button className="f1b" onClick={toggleLive} style={{ background: liveActive ? 'linear-gradient(135deg,#dc2626,#b91c1c)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', animation: liveActive ? 'pulse 2s infinite' : '', boxShadow: liveActive ? '0 2px 12px rgba(220,38,38,.35)' : 'none', borderRadius: 8, color: liveActive ? '#fff' : headerText }}>
+          <button className="f1b" onClick={() => setMode('predict')} style={{ background: mode === 'predict' ? 'linear-gradient(135deg,#e10600,#b30500)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', boxShadow: mode === 'predict' ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8, color: mode === 'predict' ? '#fff' : headerText }}>TAHMİN</button>
+          {isPastRace && <button className="f1b" onClick={loadReplay} style={{ background: mode === 'replay' && !liveActive ? 'linear-gradient(135deg,#e10600,#b30500)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', opacity: loading ? .5 : 1, boxShadow: mode === 'replay' && !liveActive ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8, color: mode === 'replay' && !liveActive ? '#fff' : headerText }}>{loading ? '...' : 'REPLAY'}</button>}
+          {isPastRace && <button className="f1b" onClick={toggleLive} style={{ background: liveActive ? 'linear-gradient(135deg,#dc2626,#b91c1c)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', animation: liveActive ? 'pulse 2s infinite' : '', boxShadow: liveActive ? '0 2px 12px rgba(220,38,38,.35)' : 'none', borderRadius: 8, color: liveActive ? '#fff' : headerText }}>
             {liveActive && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block', marginRight: 5, boxShadow: '0 0 8px rgba(255,255,255,.5)' }} />}CANLI
-          </button>
+          </button>}
           {/* Dark/Light Toggle */}
           {setDark && <div onClick={() => setDark(!dark)} style={{ width: 36, height: 20, padding: 2, borderRadius: 99, cursor: 'pointer', border: `1px solid ${isDark ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.12)'}`, background: isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', transition: 'all .3s', marginLeft: 2, position: 'relative', display: 'flex', alignItems: 'center' }} title="Dark/Light">
             <div style={{ width: 14, height: 14, borderRadius: '50%', transition: 'all .3s cubic-bezier(.16,1,.3,1)', position: 'absolute', left: 2, transform: isDark ? 'translateX(16px)' : 'translateX(0)', background: isDark ? '#252420' : '#e8e4dc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -588,7 +616,7 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
                     isSelected={idx === 0} drivers={drivers}
                     onSwap={() => {
                       setSelectedDrivers(prev => {
-                        const next = [...prev]; next.splice(idx, 1); return next.concat([63, 1, 44, 12, 16, 4, 81, 87, 30].find(n => !next.includes(n)) || 63)
+                        const next = [...prev]; next.splice(idx, 1); return next.concat([63, 1, 44, 12, 16, 3, 81, 87, 30, 55].find(n => !next.includes(n)) || 63)
                       })
                     }} />
                 ))}
@@ -605,7 +633,7 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 8, position: 'relative', zIndex: 1, background: 'transparent' }}>
             <TrackSVG pts={trackPts} cars={carPositions} drivers={drivers} standings={standings}
               selectedDrivers={selectedDrivers} onCarClick={handleCarClick}
-              lapFlags={lapFlags} replayLap={replayLap} large />
+              lapFlags={lapFlags} replayLap={replayLap} drsZones={drsZonesData} large />
           </div>
 
           {/* ═══ RIGHT PANEL ═══ */}
@@ -855,10 +883,11 @@ function snapToTrack(x: number, y: number, trackPts: number[][]): { x: number, y
   return { x: bestX, y: bestY }
 }
 
-function TrackSVG({ pts, cars, drivers, standings, large, selectedDrivers, onCarClick, lapFlags, replayLap }: {
+function TrackSVG({ pts, cars, drivers, standings, large, selectedDrivers, onCarClick, lapFlags, replayLap, drsZones }: {
   pts: number[][], cars: Map<number, { x: number, y: number }>, drivers: any[], standings: any[],
   large?: boolean, selectedDrivers: number[], onCarClick: (dn: number) => void,
-  lapFlags: Map<number, string>, replayLap: number
+  lapFlags: Map<number, string>, replayLap: number,
+  drsZones?: { start: number; end: number; label: string }[]
 }) {
   if (!pts.length) return <div style={{ color: '#333', textAlign: 'center', padding: 20, fontSize: 10 }}>No track data</div>
   const xs = pts.map(p => p[0]), ys = pts.map(p => p[1])
@@ -869,8 +898,8 @@ function TrackSVG({ pts, cars, drivers, standings, large, selectedDrivers, onCar
   const path = pts.map((p, i) => (i === 0 ? 'M' : 'L') + tx(p[0]).toFixed(1) + ',' + ty(p[1]).toFixed(1)).join(' ')
   const sw = large ? 10 : 6
 
-  // DRS zone paths
-  const drsZones = ALBERT_PARK_DRS.map(zone => {
+  // DRS zone paths — dynamic per circuit
+  const drsPaths = (drsZones || []).map(zone => {
     const startIdx = Math.round(zone.start * (pts.length - 1))
     const endIdx = Math.round(zone.end * (pts.length - 1))
     const zonePts = pts.slice(startIdx, endIdx + 1)
@@ -895,7 +924,7 @@ function TrackSVG({ pts, cars, drivers, standings, large, selectedDrivers, onCar
     <path d={path} fill="none" stroke="rgba(40,40,60,.6)" strokeWidth={sw + 3} strokeLinecap="round" strokeLinejoin="round" />
     <path d={path} fill="none" stroke="rgba(70,70,100,.35)" strokeWidth={sw - 1} strokeLinecap="round" strokeLinejoin="round" filter="url(#trackGlow)" />
     {/* DRS zones (green overlay) */}
-    {drsZones.map((zp, i) => zp && <g key={`drs-${i}`}>
+    {drsPaths.map((zp, i) => zp && <g key={`drs-${i}`}>
       <path d={zp} fill="none" stroke="#22c55e" strokeWidth={sw + 4} strokeLinecap="round" strokeLinejoin="round" opacity=".15" />
       <path d={zp} fill="none" stroke="#22c55e" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" opacity=".35" />
     </g>)}
