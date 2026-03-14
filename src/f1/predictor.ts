@@ -164,6 +164,8 @@ export class F1Predictor {
   get currentLap() { return this._currentLap }
   set totalLaps(n: number) { this._totalLaps = n }
   get totalLaps() { return this._totalLaps }
+  /** Hava durumu bilgisini dışarıdan güncelle */
+  setWeather(rainfall: boolean, trackTemp: number) { this._rainfall = rainfall; this._trackTemp = trackTemp }
   
   private log(m: string) { this._logs.push(m); console.log(`[ML] ${m}`) }
   
@@ -360,6 +362,8 @@ export class F1Predictor {
   
   /**
    * OpenF1 API'den canlı veri çek ve tahmin güncelle
+   * NOT: F1Page kendi poll loop'unda veri çekip updateFromLiveData() kullanır.
+   * Bu method bağımsız kullanım (test/debug) için mevcuttur.
    */
   async fetchAndPredict(sessionKey: number): Promise<{ predictions: PredictionResult[]; lap: number; weather: any; raceControl: any[]; stints: any[]; laps: any[] } | null> {
     try {

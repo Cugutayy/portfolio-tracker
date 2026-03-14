@@ -128,6 +128,8 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
   // Telemetry
   const [selectedDrivers, setSelectedDrivers] = useState<number[]>([63, 12, 44]) // RUS, ANT, HAM
   const [allCarData, setAllCarData] = useState<any[]>([])
+  const [pollError, setPollError] = useState<string | null>(null)
+  const pollErrorCountRef = useRef(0)
   const [carTelemetry, setCarTelemetry] = useState<Map<number, {
     speed: number; gear: number; drs: number; throttle: number; brake: number
     aheadCode: string | null; aheadGap: number; behindCode: string | null; behindGap: number
@@ -231,6 +233,11 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
           } else {
             setSelectedRace(raceList[raceList.length - 1].key)
           }
+        }
+        // Auto-learn ELO/form from all past races (background, idempotent)
+        const pastRaces = raceList.filter(r => new Date(r.date) < new Date())
+        for (const r of pastRaces) {
+          predictor.learnFromRaceResults(r.key).catch(() => {})
         }
       } catch { }
     })()
@@ -348,21 +355,57 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
 
   // === LIVE MODE ===
   const toggleLive = useCallback(() => {
-    if (liveActive) { if (liveRef.current) clearInterval(liveRef.current); setLiveActive(false); return }
-    setLiveActive(true); setMode('replay')
+    if (liveActive) {
+      if (liveRef.current) clearInterval(liveRef.current)
+      setLiveActive(false)
+      setPollError(null)
+      pollErrorCountRef.current = 0
+      // Yarış bittiyse ELO/form öğren
+      const currentMax = Math.max(0, ...lapData.map((l: any) => l.lap_number || 0))
+      if (currentMax >= totalLaps - 2) {
+        predictor.learnFromRaceResults(selectedRace).then(ok => {
+          if (ok) console.log('[F1] ✅ ELO/form updated from race results')
+        })
+      }
+      return
+    }
+    setLiveActive(true); setMode('replay'); setPollError(null); pollErrorCountRef.current = 0
     const sk = selectedRace
     const poll = async () => {
       try {
         const [drv, laps, pos, intv, st, rc, w] = await Promise.all([openF1.getDrivers(sk), openF1.getLaps(sk), openF1.getPositions(sk), openF1.getIntervals(sk), openF1.getStints(sk), openF1.getRaceControl(sk), openF1.getWeather(sk)])
         setDrivers(drv); setLapData(laps); setPosData(pos); setIntervalData(intv); setStintData(st); setRaceCtrl(rc); if (w.length > 0) setWeatherData(w[w.length - 1])
+        // Hava durumu bilgisini predictor'a da aktar
+        if (w.length > 0) { const latest = w[w.length - 1]; predictor.setWeather(!!latest.rainfall, latest.track_temperature || 30) }
         const ml = Math.max(0, ...laps.map((l: any) => l.lap_number || 0)); setReplayLap(ml)
         try { const topDrvs = drv.slice(0, 6).map((d: any) => d.driver_number); const locs = await Promise.all(topDrvs.map((dn: number) => openF1.getLocations(sk, dn).catch(() => []))); setAllLocationData(locs.flat()); setReplayTime(Date.now()) } catch { }
-        // Car telemetry for selected drivers (live)
         try { const cd = await Promise.all(selectedDrivers.map(dn => openF1.getCarData(sk, dn).catch(() => []))); setAllCarData(cd.flat()) } catch { }
-      } catch { }
+        // Başarılı poll — hata sayacını sıfırla
+        pollErrorCountRef.current = 0; setPollError(null)
+        // Yarış bittiyse otomatik öğren ve durdur
+        if (ml >= totalLaps) {
+          predictor.learnFromRaceResults(sk).then(ok => {
+            if (ok) console.log('[F1] ✅ Race finished — ELO/form auto-updated')
+          })
+          if (liveRef.current) clearInterval(liveRef.current)
+          setLiveActive(false)
+        }
+      } catch (err: any) {
+        pollErrorCountRef.current++
+        const count = pollErrorCountRef.current
+        if (count >= 3) {
+          setPollError(`API bağlantı hatası (${count}x)`)
+        }
+        // 10 ardışık hata → polling'i durdur
+        if (count >= 10) {
+          if (liveRef.current) clearInterval(liveRef.current)
+          setLiveActive(false)
+          setPollError('API bağlantısı kesildi — CANLI durduruldu')
+        }
+      }
     }
     poll(); liveRef.current = window.setInterval(poll, 5000)
-  }, [liveActive, selectedRace, selectedDrivers])
+  }, [liveActive, selectedRace, selectedDrivers, lapData, totalLaps])
   useEffect(() => () => { if (liveRef.current) clearInterval(liveRef.current) }, [])
 
   // === REPLAY TIMER (requestAnimationFrame, throttled state updates) ===
@@ -521,10 +564,14 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
   const trackPts = useMemo(() => circuitName ? TRACK_COORDS[circuitName] || [] : [], [circuitName])
   const drsZonesData = useMemo(() => getDRSZones(circuitName), [circuitName])
   const fEvents = useMemo(() => events.filter(e => e.lap <= replayLap), [events, replayLap])
-  // Is this race in the past? (replay data available)
-  const isPastRace = useMemo(() => {
+  // Is this race started or past? (replay/live data available)
+  // Shows REPLAY/CANLI if race start time has passed OR within 2 hours before (warmup)
+  const isRaceAvailable = useMemo(() => {
     const race = races.find(r => r.key === selectedRace)
-    return race ? new Date(race.date) < new Date() : false
+    if (!race) return false
+    const raceTime = new Date(race.date).getTime()
+    const now = Date.now()
+    return now >= raceTime - 2 * 3600000 // 2 saat öncesinden itibaren göster
   }, [races, selectedRace])
 
   const handleCarClick = useCallback((driverNumber: number) => {
@@ -568,10 +615,11 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
         <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
           {weatherData && <span style={{ fontSize: 8, color: isDark ? '#555' : '#888', padding: '2px 8px', background: isDark ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.03)', borderRadius: 6 }}>{weatherData.air_temperature?.toFixed(0)}°C  T{weatherData.track_temperature?.toFixed(0)}°C</span>}
           <button className="f1b" onClick={() => setMode('predict')} style={{ background: mode === 'predict' ? 'linear-gradient(135deg,#e10600,#b30500)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', boxShadow: mode === 'predict' ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8, color: mode === 'predict' ? '#fff' : headerText }}>TAHMİN</button>
-          {isPastRace && <button className="f1b" onClick={loadReplay} style={{ background: mode === 'replay' && !liveActive ? 'linear-gradient(135deg,#e10600,#b30500)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', opacity: loading ? .5 : 1, boxShadow: mode === 'replay' && !liveActive ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8, color: mode === 'replay' && !liveActive ? '#fff' : headerText }}>{loading ? '...' : 'REPLAY'}</button>}
-          {isPastRace && <button className="f1b" onClick={toggleLive} style={{ background: liveActive ? 'linear-gradient(135deg,#dc2626,#b91c1c)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', animation: liveActive ? 'pulse 2s infinite' : '', boxShadow: liveActive ? '0 2px 12px rgba(220,38,38,.35)' : 'none', borderRadius: 8, color: liveActive ? '#fff' : headerText }}>
+          {isRaceAvailable && <button className="f1b" onClick={loadReplay} style={{ background: mode === 'replay' && !liveActive ? 'linear-gradient(135deg,#e10600,#b30500)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', opacity: loading ? .5 : 1, boxShadow: mode === 'replay' && !liveActive ? '0 2px 12px rgba(225,6,0,.35)' : 'none', borderRadius: 8, color: mode === 'replay' && !liveActive ? '#fff' : headerText }}>{loading ? '...' : 'REPLAY'}</button>}
+          {isRaceAvailable && <button className="f1b" onClick={toggleLive} style={{ background: liveActive ? 'linear-gradient(135deg,#dc2626,#b91c1c)' : isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', animation: liveActive ? 'pulse 2s infinite' : '', boxShadow: liveActive ? '0 2px 12px rgba(220,38,38,.35)' : 'none', borderRadius: 8, color: liveActive ? '#fff' : headerText }}>
             {liveActive && <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block', marginRight: 5, boxShadow: '0 0 8px rgba(255,255,255,.5)' }} />}CANLI
           </button>}
+          {pollError && <span style={{ fontSize: 8, color: '#ef4444', padding: '2px 8px', background: 'rgba(239,68,68,.1)', borderRadius: 6, animation: 'pulse 2s infinite' }}>{pollError}</span>}
           {/* Dark/Light Toggle */}
           {setDark && <div onClick={() => setDark(!dark)} style={{ width: 36, height: 20, padding: 2, borderRadius: 99, cursor: 'pointer', border: `1px solid ${isDark ? 'rgba(255,255,255,.1)' : 'rgba(0,0,0,.12)'}`, background: isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.04)', transition: 'all .3s', marginLeft: 2, position: 'relative', display: 'flex', alignItems: 'center' }} title="Dark/Light">
             <div style={{ width: 14, height: 14, borderRadius: '50%', transition: 'all .3s cubic-bezier(.16,1,.3,1)', position: 'absolute', left: 2, transform: isDark ? 'translateX(16px)' : 'translateX(0)', background: isDark ? '#252420' : '#e8e4dc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
