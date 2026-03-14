@@ -5,11 +5,12 @@ import { InteractiveGraph } from './components/InteractiveGraph'
 import { ProjectCards } from './components/ProjectCards'
 import { Footer } from './components/Footer'
 import { F1Page } from './components/F1Page'
+import { AlbionPage } from './components/AlbionPage'
 
 const I18N: Record<string, Record<string, string>> = {
-  tr: { secP:'Projeler', pCnt:'3 proje', p1d:'Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi.', pf:'Portföy', ch:'Değişim', gd:'Altın', lv:'Canlı', tF:'Finans', tA:'Canlı API', p2t:'F1 Yarış Tahmini', p2d:'Ensemble ML (Ridge+GB+ELO) ile F1 yarış tahmini. Canlı telemetri, sektör analizi, lap-by-lap güncelleme.', drivers:'sürücü', p3t:'Tez Konusu', p3d:'BIST 2020–2025 halka arz düşük fiyatlaması, sürü davranışı ve SPK cezaları. 209 halka arz, 5 araştırma sorusu.', navP:'projeler', navC:'iletişim' },
-  en: { secP:'Projects', pCnt:'3 projects', p1d:'Portfolio tracking system for Responsible Investment course. 100K TL, 7 instruments, live prices, ESG analysis.', pf:'Portfolio', ch:'Change', gd:'Gold', lv:'Live', tF:'Finance', tA:'Live API', p2t:'F1 Race Predictor', p2d:'F1 race prediction with Ensemble ML. Live telemetry, sector analysis, lap-by-lap updates.', drivers:'drivers', p3t:'Thesis', p3d:'BIST 2020–2025 IPO underpricing, herding behavior & SPK penalties. 209 IPOs, 5 research questions.', navP:'projects', navC:'contact' },
-  zh: { secP:'项目', pCnt:'3个项目', p1d:'负责任投资课程的投资组合跟踪系统。', pf:'投资组合', ch:'变化', gd:'黄金', lv:'实时', tF:'金融', tA:'实时API', p2t:'F1比赛预测', p2d:'集成ML模型预测F1比赛。实时遥测、扇区分析。', drivers:'车手', p3t:'毕业论文', p3d:'BIST 2020-2025 IPO定价不足和羊群行为研究。209家IPO。', navP:'项目', navC:'联系' },
+  tr: { secP:'Projeler', pCnt:'4 proje', p1d:'Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi.', pf:'Portföy', ch:'Değişim', gd:'Altın', lv:'Canlı', tF:'Finans', tA:'Canlı API', p2t:'F1 Yarış Tahmini', p2d:'Ensemble ML (Ridge+GB+ELO) ile F1 yarış tahmini. Canlı telemetri, sektör analizi, lap-by-lap güncelleme.', drivers:'sürücü', p3t:'Tez Konusu', p3d:'BIST 2020–2025 halka arz düşük fiyatlaması, sürü davranışı ve SPK cezaları. 209 halka arz, 5 araştırma sorusu.', p4t:'Albion Piyasa Tarayıcı', p4d:'Albion Online piyasa arbitraj tarayıcı. Şehirler arası ve Kara Pazar fiyat farkı analizi.', navP:'projeler', navC:'iletişim' },
+  en: { secP:'Projects', pCnt:'4 projects', p1d:'Portfolio tracking system for Responsible Investment course. 100K TL, 7 instruments, live prices, ESG analysis.', pf:'Portfolio', ch:'Change', gd:'Gold', lv:'Live', tF:'Finance', tA:'Live API', p2t:'F1 Race Predictor', p2d:'F1 race prediction with Ensemble ML. Live telemetry, sector analysis, lap-by-lap updates.', drivers:'drivers', p3t:'Thesis', p3d:'BIST 2020–2025 IPO underpricing, herding behavior & SPK penalties. 209 IPOs, 5 research questions.', p4t:'Albion Market Scanner', p4d:'Albion Online market arbitrage scanner. City-to-city and Black Market price gap analysis.', navP:'projects', navC:'contact' },
+  zh: { secP:'项目', pCnt:'4个项目', p1d:'负责任投资课程的投资组合跟踪系统。', pf:'投资组合', ch:'变化', gd:'黄金', lv:'实时', tF:'金融', tA:'实时API', p2t:'F1比赛预测', p2d:'集成ML模型预测F1比赛。实时遥测、扇区分析。', drivers:'车手', p3t:'毕业论文', p3d:'BIST 2020-2025 IPO定价不足和羊群行为研究。209家IPO。', p4t:'Albion市场扫描器', p4d:'Albion Online市场套利扫描器。城市间和黑市价格差分析。', navP:'项目', navC:'联系' },
 }
 
 /* Pure CSS ambient orbs — zero JS, GPU composited */
@@ -59,7 +60,7 @@ function AmbientOrbs({ dark }: { dark: boolean }) {
 export default function App() {
   const [lang, setLang] = useState('tr')
   const [dark, setDark] = useState(true)
-  const [page, setPage] = useState<'hub' | 'f1'>('hub')
+  const [page, setPage] = useState<'hub' | 'f1' | 'albion'>('hub')
   const t = (key: string) => I18N[lang]?.[key] || key
 
   useEffect(() => { document.documentElement.lang = lang }, [lang])
@@ -69,6 +70,7 @@ export default function App() {
   useEffect(() => {
     const handleHash = () => {
       if (window.location.hash === '#/f1') setPage('f1')
+      else if (window.location.hash === '#/albion') setPage('albion')
       else setPage('hub')
     }
     handleHash()
@@ -78,6 +80,10 @@ export default function App() {
 
   if (page === 'f1') {
     return <F1Page dark={dark} setDark={setDark} />
+  }
+
+  if (page === 'albion') {
+    return <AlbionPage dark={dark} setDark={setDark} />
   }
 
   return (
