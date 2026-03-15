@@ -1,5 +1,7 @@
+"use client";
+
 import { Link } from "@/i18n/navigation";
-import { getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
 
 const pageLinks = [
   { key: "home" as const, href: "/" as const },
@@ -11,8 +13,8 @@ const pageLinks = [
   { key: "join" as const, href: "/join" as const },
 ];
 
-export default async function Footer() {
-  const t = await getTranslations("footer");
+export default function Footer() {
+  const t = useTranslations("footer");
 
   return (
     <footer className="relative bg-[#111] border-t border-[#1a1a1a]">

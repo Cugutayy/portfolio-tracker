@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 interface MemberProfile {
   id: string;
@@ -788,7 +789,7 @@ function DashboardContent() {
           >
             ALSANCAK<span className="text-[#E6FF00]">.</span>RUNNERS
           </Link>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-4 md:gap-6">
             <Link
               href="/"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
@@ -807,6 +808,9 @@ function DashboardContent() {
             >
               {tNav("community")}
             </Link>
+            <div className="hidden md:block pl-2 border-l border-[#333]">
+              <LanguageSwitcher />
+            </div>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] border border-[#333] px-4 py-2 hover:border-red-500/50 hover:text-red-400 transition-colors"
@@ -828,15 +832,11 @@ function DashboardContent() {
             className="mb-10"
           >
             <div className="flex items-start justify-between mb-6">
-              <div>
-                <h1
-                  className="text-4xl md:text-5xl font-bold text-white leading-tight mb-3"
-                  style={{ fontFamily: "var(--font-heading, inherit)" }}
-                >
-                  {t("welcome")}
-                  <span className="text-[#E6FF00]">.</span>
+              <div className="overflow-hidden">
+                <h1 className="text-2xl md:text-3xl font-bold text-white tracking-[-0.02em] mb-2">
+                  {t("welcome")}<span className="text-[#E6FF00]">.</span>
                 </h1>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <p className="text-lg text-white/80">{profile.name}</p>
                   <span className="text-[10px] tracking-[0.15em] uppercase px-2 py-0.5 border border-[#333] text-[#666]">
                     {profile.role}

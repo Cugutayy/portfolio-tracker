@@ -14,6 +14,19 @@ function isPathMatch(pathname: string, paths: string[]): boolean {
   return paths.some((p) => strippedPath.startsWith(p));
 }
 
+/**
+ * Check if user has an auth session by inspecting JWT cookies.
+ * This avoids importing the full auth module (which pulls in Node.js crypto)
+ * into the Edge Runtime middleware.
+ */
+function hasSessionCookie(req: NextRequest): boolean {
+  // Auth.js v5 uses these cookie names for JWT sessions
+  return !!(
+    req.cookies.get("authjs.session-token")?.value ||
+    req.cookies.get("__Secure-authjs.session-token")?.value
+  );
+}
+
 export default async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -33,36 +46,24 @@ export default async function middleware(req: NextRequest) {
     return intlResponse;
   }
 
-  try {
-    const { auth } = await import("@/lib/auth");
-    const session = await auth();
-    const isLoggedIn = !!session?.user;
+  // Get the locale from the URL
+  const localeMatch = pathname.match(/^\/(tr|en)/);
+  const locale = localeMatch ? localeMatch[1] : 'tr';
 
-    // Get the locale from the URL
-    const localeMatch = pathname.match(/^\/(tr|en)/);
-    const locale = localeMatch ? localeMatch[1] : 'tr';
+  const isLoggedIn = hasSessionCookie(req);
 
-    if (isLoggedIn && isAuthPage) {
-      return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
-    }
-
-    if (!isLoggedIn && needsAuth) {
-      const callbackUrl = encodeURIComponent(pathname);
-      return NextResponse.redirect(
-        new URL(`/${locale}/join?callbackUrl=${callbackUrl}`, req.url),
-      );
-    }
-
-    return intlResponse;
-  } catch (error) {
-    console.error("Middleware auth error:", error);
-    const localeMatch = pathname.match(/^\/(tr|en)/);
-    const locale = localeMatch ? localeMatch[1] : 'tr';
-    if (needsAuth) {
-      return NextResponse.redirect(new URL(`/${locale}/join`, req.url));
-    }
-    return intlResponse;
+  if (isLoggedIn && isAuthPage) {
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
   }
+
+  if (!isLoggedIn && needsAuth) {
+    const callbackUrl = encodeURIComponent(pathname);
+    return NextResponse.redirect(
+      new URL(`/${locale}/join?callbackUrl=${callbackUrl}`, req.url),
+    );
+  }
+
+  return intlResponse;
 }
 
 export const config = {
