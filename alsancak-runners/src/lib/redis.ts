@@ -4,13 +4,21 @@ const globalForRedis = globalThis as unknown as {
   redis: Redis | undefined;
 };
 
-export const redis =
-  globalForRedis.redis ??
-  new Redis(process.env.REDIS_URL!, {
+function createRedis(): Redis {
+  const url = process.env.REDIS_URL;
+  if (!url) {
+    throw new Error(
+      "REDIS_URL is not set. Check your .env.local or Vercel environment variables.",
+    );
+  }
+  return new Redis(url, {
     maxRetriesPerRequest: null, // required for BullMQ
     enableReadyCheck: false,
     lazyConnect: true,
   });
+}
+
+export const redis = globalForRedis.redis ?? createRedis();
 
 if (process.env.NODE_ENV !== "production") {
   globalForRedis.redis = redis;
