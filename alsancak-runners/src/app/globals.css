@@ -1,0 +1,191 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #0A0A0A;
+  --color-foreground: #FFFFFF;
+  --color-accent: #E6FF00;
+  --color-surface: #111111;
+  --color-elevated: #1A1A1A;
+  --color-muted: #888888;
+  --font-sans: var(--font-space-grotesk);
+}
+
+/* ── BASE ── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: #0A0A0A;
+  color: #f0f0f0;
+  scroll-behavior: auto; /* Lenis handles smooth scroll */
+}
+
+body {
+  background: #0A0A0A;
+  color: #f0f0f0;
+  font-family: var(--font-space-grotesk, 'Space Grotesk', sans-serif);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── LENIS SMOOTH SCROLL ── */
+html.lenis, html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ── FILM GRAIN OVERLAY ── */
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+}
+
+.grain-overlay {
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
+  width: 200%;
+  height: 200%;
+  pointer-events: none;
+  z-index: 150;
+  opacity: 0.03;
+  animation: grain 8s steps(10) infinite;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+}
+
+/* ── SPACING SYSTEM ── */
+:root {
+  --section-py: clamp(4rem, 8vw, 6rem);
+  --section-py-lg: clamp(6rem, 10vw, 12rem);
+  --section-px: clamp(1.5rem, 4vw, 4rem);
+  --container-max: 1600px;
+}
+
+/* ── EDITORIAL TYPOGRAPHY ── */
+/* Note: text-transform removed — all headline text should be written in UPPERCASE
+   in source to avoid Turkish İ/ı issues with <html lang="tr"> */
+.headline-xl {
+  font-size: clamp(2.5rem, 10vw, 10rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  padding-top: 0.05em;
+}
+
+.headline-lg {
+  font-size: clamp(2rem, 6vw, 6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  padding-top: 0.05em;
+}
+
+.headline-md {
+  font-size: clamp(1.5rem, 4vw, 4rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  padding-top: 0.05em;
+}
+
+.body-text {
+  font-size: clamp(0.9rem, 1.2vw, 1.2rem);
+  line-height: 1.7;
+  color: #aaa;
+}
+
+.label-text {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #777;
+}
+
+/* ── HORIZONTAL SCROLL ── */
+.horizontal-scroll-container {
+  display: flex;
+  gap: 2rem;
+  padding: 0 4rem;
+}
+
+/* ── CUSTOM SCROLLBAR ── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #0A0A0A;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E6FF00;
+}
+
+/* ── TEXT REVEAL WRAPPER FIX (Turkish İ, Ğ, Ş diacritics) ── */
+.text-reveal-wrap {
+  overflow: hidden;
+  padding-top: 0.15em;
+  margin-top: -0.15em;
+}
+
+/* ── CUSTOM CURSOR ── */
+.custom-cursor-active,
+.custom-cursor-active * {
+  cursor: none !important;
+}
+
+/* ── SELECTION ── */
+::selection {
+  background: #E6FF00;
+  color: #000;
+}
+
+/* ── IMAGE STYLES ── */
+.editorial-image {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+}
+
+/* ── MARQUEE ── */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* ── PAGE TRANSITION ── */
+.page-transition-overlay {
+  position: fixed;
+  inset: 0;
+  background: #0A0A0A;
+  z-index: 10000;
+  pointer-events: none;
+}
