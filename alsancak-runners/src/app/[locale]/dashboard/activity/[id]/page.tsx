@@ -2,7 +2,8 @@
 
 import { useEffect, useState, use } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 
 const ActivityMap = dynamic(
@@ -95,6 +96,8 @@ export default function ActivityDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const t = useTranslations("activity");
+  const tNav = useTranslations("nav");
   const [activity, setActivity] = useState<ActivityDetail | null>(null);
   const [splits, setSplits] = useState<Split[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,12 +129,12 @@ export default function ActivityDetailPage({
     return (
       <main className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-[#666] mb-4">Activity not found</p>
+          <p className="text-[#666] mb-4">{t("activityNotFound")}</p>
           <Link
             href="/dashboard"
             className="text-[11px] tracking-[0.15em] uppercase text-[#E6FF00] border border-[#E6FF00] px-6 py-3 hover:bg-[#E6FF00] hover:text-black transition-colors"
           >
-            BACK TO DASHBOARD
+            {t("backToDashboard")}
           </Link>
         </div>
       </main>
@@ -155,7 +158,7 @@ export default function ActivityDetailPage({
             href="/dashboard"
             className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors flex items-center gap-2"
           >
-            <span>&#x2190;</span> DASHBOARD
+            <span>&#x2190;</span> {tNav("dashboard")}
           </Link>
         </div>
       </nav>
@@ -218,18 +221,18 @@ export default function ActivityDetailPage({
           {/* Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-12">
             <StatCard
-              label="DISTANCE"
+              label={t("distance")}
               value={formatDistance(activity.distanceM)}
               unit="km"
               delay={0}
             />
             <StatCard
-              label="TIME"
+              label={t("time")}
               value={formatDuration(activity.movingTimeSec)}
               delay={0.05}
             />
             <StatCard
-              label="PACE"
+              label={t("pace")}
               value={
                 activity.avgPaceSecKm
                   ? formatPace(activity.avgPaceSecKm)
@@ -239,7 +242,7 @@ export default function ActivityDetailPage({
               delay={0.1}
             />
             <StatCard
-              label="ELEVATION"
+              label={t("elevation")}
               value={
                 activity.elevationGainM
                   ? `${Math.round(activity.elevationGainM)}`
@@ -249,7 +252,7 @@ export default function ActivityDetailPage({
               delay={0.15}
             />
             <StatCard
-              label="AVG HR"
+              label={t("avgHr")}
               value={
                 activity.avgHeartrate
                   ? `${Math.round(activity.avgHeartrate)}`
@@ -259,7 +262,7 @@ export default function ActivityDetailPage({
               delay={0.2}
             />
             <StatCard
-              label="MAX HR"
+              label={t("maxHr")}
               value={
                 activity.maxHeartrate
                   ? `${Math.round(activity.maxHeartrate)}`
@@ -269,13 +272,13 @@ export default function ActivityDetailPage({
               delay={0.25}
             />
             <StatCard
-              label="CALORIES"
+              label={t("calories")}
               value={activity.calories ? `${Math.round(activity.calories)}` : "\u2014"}
               unit={activity.calories ? "kcal" : ""}
               delay={0.3}
             />
             <StatCard
-              label="CADENCE"
+              label={t("cadence")}
               value={
                 activity.avgCadence
                   ? `${Math.round(activity.avgCadence)}`
@@ -294,25 +297,25 @@ export default function ActivityDetailPage({
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <h2 className="text-[11px] tracking-[0.15em] uppercase text-[#666] mb-6">
-                SPLIT DETAILS
+                {t("splitDetails")}
               </h2>
               <div className="border border-[#222] overflow-x-auto">
                 {/* Header */}
                 <div className="grid grid-cols-5 gap-2 px-5 py-3 border-b border-[#222] bg-[#111] min-w-[400px]">
                   <p className="text-[10px] tracking-wider text-[#555] uppercase">
-                    KM
+                    {t("splitHeaders.km")}
                   </p>
                   <p className="text-[10px] tracking-wider text-[#555] uppercase">
-                    PACE
+                    {t("splitHeaders.pace")}
                   </p>
                   <p className="text-[10px] tracking-wider text-[#555] uppercase">
-                    TIME
+                    {t("splitHeaders.time")}
                   </p>
                   <p className="text-[10px] tracking-wider text-[#555] uppercase">
-                    ELEV
+                    {t("splitHeaders.elev")}
                   </p>
                   <p className="text-[10px] tracking-wider text-[#555] uppercase">
-                    HR
+                    {t("splitHeaders.hr")}
                   </p>
                 </div>
                 {/* Rows */}

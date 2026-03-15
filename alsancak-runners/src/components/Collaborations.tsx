@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 const collabs = [
   {
@@ -32,6 +33,7 @@ const collabs = [
 ];
 
 export default function Collaborations() {
+  const t = useTranslations("home.collaborations");
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
@@ -45,10 +47,10 @@ export default function Collaborations() {
           transition={{ duration: 0.8 }}
           className="mb-20"
         >
-          <p className="label-text text-white/60 mb-4">COLLABORATIONS</p>
+          <p className="label-text text-white/60 mb-4">{t("label")}</p>
           <h2 className="headline-lg">
-            CULTURE<br />
-            <span className="text-[#666]">MEETS RUNNING</span>
+            {t("title").split("\n")[0]}<br />
+            <span className="text-[#666]">{t("title").split("\n")[1]}</span>
           </h2>
         </motion.div>
 

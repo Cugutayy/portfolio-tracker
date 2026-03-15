@@ -2,20 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 const navLinks = [
-  { label: "ANA SAYFA", href: "/" },
-  { label: "ETKİNLİKLER", href: "/etkinlikler" },
-  { label: "TOPLULUK", href: "/topluluk" },
-  { label: "ROTALAR", href: "/routes" },
-  { label: "GALERİ", href: "/gallery" },
-  { label: "HAKKIMIZDA", href: "/about" },
-  { label: "KATIL", href: "/join" },
+  { key: "home" as const, href: "/" as const },
+  { key: "events" as const, href: "/etkinlikler" as const },
+  { key: "community" as const, href: "/topluluk" as const },
+  { key: "routes" as const, href: "/routes" as const },
+  { key: "gallery" as const, href: "/gallery" as const },
+  { key: "about" as const, href: "/about" as const },
+  { key: "join" as const, href: "/join" as const },
 ];
 
 export default function Navbar() {
+  const t = useTranslations("nav");
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
@@ -63,7 +65,7 @@ export default function Navbar() {
               const isActive = pathname === link.href;
               return (
                 <Link
-                  key={link.label}
+                  key={link.key}
                   href={link.href}
                   className="relative group"
                 >
@@ -72,7 +74,7 @@ export default function Navbar() {
                       isActive ? "text-white" : "text-[#999] group-hover:text-white"
                     }`}
                   >
-                    {link.label}
+                    {t(link.key)}
                   </span>
                   {/* Active indicator */}
                   {isActive && (
@@ -89,6 +91,9 @@ export default function Navbar() {
                 </Link>
               );
             })}
+            <div className="ml-2 pl-4 border-l border-[#333]">
+              <LanguageSwitcher />
+            </div>
           </div>
 
           {/* Mobile burger */}
@@ -125,7 +130,7 @@ export default function Navbar() {
           >
             {navLinks.map((link, i) => (
               <motion.div
-                key={link.label}
+                key={link.key}
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -140,10 +145,19 @@ export default function Navbar() {
                       : "text-white hover:text-[#E6FF00]"
                   }`}
                 >
-                  {link.label}
+                  {t(link.key)}
                 </Link>
               </motion.div>
             ))}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ delay: navLinks.length * 0.08, duration: 0.5 }}
+              className="mt-8 pt-6 border-t border-[#222]"
+            >
+              <LanguageSwitcher className="text-base" />
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

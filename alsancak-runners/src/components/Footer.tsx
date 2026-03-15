@@ -1,6 +1,19 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { getTranslations } from "next-intl/server";
 
-export default function Footer() {
+const pageLinks = [
+  { key: "home" as const, href: "/" as const },
+  { key: "events" as const, href: "/etkinlikler" as const },
+  { key: "community" as const, href: "/topluluk" as const },
+  { key: "routes" as const, href: "/routes" as const },
+  { key: "gallery" as const, href: "/gallery" as const },
+  { key: "about" as const, href: "/about" as const },
+  { key: "join" as const, href: "/join" as const },
+];
+
+export default async function Footer() {
+  const t = await getTranslations("footer");
+
   return (
     <footer className="relative bg-[#111] border-t border-[#1a1a1a]">
       <div className="max-w-[1600px] mx-auto px-[clamp(1.5rem,4vw,4rem)] py-16 md:py-24">
@@ -11,29 +24,21 @@ export default function Footer() {
               ALSANCAK<span className="text-[#E6FF00]">.</span>RUNNERS
             </h3>
             <p className="body-text mt-4 max-w-sm">
-              İzmir merkezli bir koşu topluluğu. Koşu, insanı şehre bağlar.
+              {t("tagline")}
             </p>
           </div>
 
           {/* Links */}
           <div>
-            <p className="label-text text-white/60 mb-6">SAYFALAR</p>
+            <p className="label-text text-white/60 mb-6">{t("pages")}</p>
             <div className="space-y-3">
-              {[
-                { label: "Ana Sayfa", href: "/" },
-                { label: "Etkinlikler", href: "/etkinlikler" },
-                { label: "Topluluk", href: "/topluluk" },
-                { label: "Rotalar", href: "/routes" },
-                { label: "Galeri", href: "/gallery" },
-                { label: "Hakkımızda", href: "/about" },
-                { label: "Katıl", href: "/join" },
-              ].map((link) => (
+              {pageLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
                   className="block text-sm text-[#666] hover:text-white transition-colors"
                 >
-                  {link.label}
+                  {t(`pageLinks.${link.key}`)}
                 </Link>
               ))}
             </div>
@@ -41,7 +46,7 @@ export default function Footer() {
 
           {/* Social */}
           <div>
-            <p className="label-text text-white/60 mb-6">TAKİP ET</p>
+            <p className="label-text text-white/60 mb-6">{t("followUs")}</p>
             <div className="space-y-3">
               <a
                 href="https://www.instagram.com/alsancakrunners/"
@@ -58,10 +63,10 @@ export default function Footer() {
         {/* Bottom */}
         <div className="mt-16 pt-8 border-t border-[#1a1a1a] flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-[#444] tracking-wider">
-            &copy; 2026 ALSANCAK RUNNERS. TÜM HAKLARI SAKLIDIR.
+            &copy; {t("copyright")}
           </p>
           <p className="text-[11px] text-[#444] tracking-wider">
-            İZMİR, TÜRKİYE — EST. 2025
+            {t("location")}
           </p>
         </div>
       </div>
@@ -69,8 +74,7 @@ export default function Footer() {
       {/* Large bottom text */}
       <div className="overflow-hidden border-t border-[#1a1a1a]">
         <p className="whitespace-nowrap text-[8vw] font-bold text-[#191919] py-4 tracking-tighter animate-marquee">
-          ALSANCAK RUNNERS — ŞEHRİ KOŞ — ALSANCAK RUNNERS — ŞEHRİ KOŞ —
-          ALSANCAK RUNNERS — ŞEHRİ KOŞ — ALSANCAK RUNNERS — ŞEHRİ KOŞ —
+          {t("marquee").repeat(4)}
         </p>
       </div>
     </footer>

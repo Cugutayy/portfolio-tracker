@@ -1,0 +1,436 @@
+{
+  "metadata": {
+    "title": "ALSANCAK RUNNERS — Şehri Koş",
+    "description": "Alsancak Runners, İzmir merkezli bir kentsel koşu kolektifidir. Koşu, insanı şehre bağlar.",
+    "ogTitle": "ALSANCAK RUNNERS",
+    "ogDescription": "Kentsel koşu kolektifi — İzmir, Türkiye"
+  },
+  "nav": {
+    "home": "ANA SAYFA",
+    "events": "ETKİNLİKLER",
+    "community": "TOPLULUK",
+    "routes": "ROTALAR",
+    "gallery": "GALERİ",
+    "about": "HAKKIMIZDA",
+    "join": "KATIL",
+    "signOut": "ÇIKIŞ YAP",
+    "dashboard": "PANEL"
+  },
+  "footer": {
+    "tagline": "İzmir merkezli bir koşu topluluğu. Koşu, insanı şehre bağlar.",
+    "pages": "SAYFALAR",
+    "pageLinks": {
+      "home": "Ana Sayfa",
+      "events": "Etkinlikler",
+      "community": "Topluluk",
+      "routes": "Rotalar",
+      "gallery": "Galeri",
+      "about": "Hakkımızda",
+      "join": "Katıl"
+    },
+    "followUs": "TAKİP ET",
+    "copyright": "2026 ALSANCAK RUNNERS. TÜM HAKLARI SAKLIDIR.",
+    "location": "İZMİR, TÜRKİYE — EST. 2025",
+    "marquee": "ALSANCAK RUNNERS — ŞEHRİ KOŞ — "
+  },
+  "home": {
+    "runTheCity": "ŞEHRİ KOŞ",
+    "scrollToRun": "KEŞFETMEK İÇİN KAYDIR",
+    "est": "EST. 2025 — İZMİR, TÜRKİYE",
+    "heroSubtitle": "ŞEHRİ KOŞ",
+    "sceneLabel": "SAHNE II",
+    "weRunTogether": "BİRLİKTE\nKOŞARIZ",
+    "everyStride": "Her adım, her nefes, her an — paylaşılan.",
+    "manifesto": {
+      "label": "MANİFESTOMUZ",
+      "lines": [
+        "ŞEHRİ KOŞUYORUZ.",
+        "Alsancak Runners, İzmir merkezli bir kentsel koşu kolektifidir.",
+        "Koşu, insanı şehre bağlar.",
+        "Her sokak bir rota. Her koşu bir hikaye.",
+        "Sadece koşmuyoruz — kültürü ileri taşıyoruz."
+      ],
+      "photoCaption": "Alsancak, İzmir — 2026"
+    },
+    "upcomingRuns": {
+      "label": "YAKLAŞAN",
+      "title": "SONRAKİ\nKOŞULAR",
+      "subtitle": "İzmir sokaklarında bize katıl. Her koşu herkese açık.",
+      "viewAll": "TÜMÜNÜ GÖR",
+      "viewAllMobile": "TÜM ETKİNLİKLER",
+      "loading": "Yaklaşan etkinlikler yükleniyor...",
+      "noEvents": "Şu anda yaklaşan etkinlik bulunmuyor",
+      "noEventsSubtitle": "Yeni etkinlikler eklendiğinde burada görünecek",
+      "participants": "katılımcı"
+    },
+    "map": {
+      "label": "ROTALARIMIZ",
+      "title": "KIYI BOYUNCA\nKOŞ",
+      "subtitle": "Her koşu İzmir Körfezi kıyısında. Güneyde Göztepe'den kuzeyde Karşıyaka'ya.",
+      "bayLabel": "İZMİR KÖRFEZİ",
+      "aegeanSea": "EGE DENİZİ",
+      "elevationProfile": "YÜKSELTİ PROFİLİ",
+      "stravaSync": "STRAVA İLE SENKRONİZE ET",
+      "stravaSyncSubtitle": "Gerçek koşu verilerini görüntüle",
+      "routes": {
+        "kordon": {
+          "name": "KORDON TURU",
+          "distance": "7 KM",
+          "elevation": "12m",
+          "pace": "5:30 /km",
+          "desc": "Alsancak sahili boyunca klasik Kordon koşusu"
+        },
+        "korfez": {
+          "name": "KÖRFEZİ TURU",
+          "distance": "18 KM",
+          "elevation": "45m",
+          "pace": "6:00 /km",
+          "desc": "Göztepe'den Karşıyaka'ya tam körfez turu"
+        },
+        "kulturpark": {
+          "name": "KÜLTÜRPARK",
+          "distance": "5 KM",
+          "elevation": "8m",
+          "pace": "5:00 /km",
+          "desc": "Park içi parkur — düz ve hızlı tempo koşusu"
+        }
+      }
+    },
+    "collaborations": {
+      "label": "İŞ BİRLİKLERİ",
+      "title": "KÜLTÜR\nKOŞUYLA BULUŞUYOR"
+    },
+    "gallery": {
+      "label": "GALERİ",
+      "title": "EDİTÖRYEL\nANLAR",
+      "filters": {
+        "all": "TÜMÜ",
+        "runs": "KOŞULAR",
+        "community": "TOPLULUK"
+      },
+      "close": "KAPAT"
+    },
+    "joinCommunity": {
+      "stats": {
+        "totalRuns": "TOPLAM KOŞU",
+        "activeMembers": "AKTİF ÜYE",
+        "totalDistance": "KAT EDİLEN MESAFE"
+      },
+      "title": "KOŞUYA\nKATIL",
+      "cta": "ARAMIZA KATIL",
+      "subtitle": "Her seviyeye açık. Ücretsiz. Sadece ayakkabılarını getir."
+    },
+    "founderPortrait": {
+      "label": "KURUCU ORTAK",
+      "title": "ALSANCAK\nSOKAKLARINDAN",
+      "text": "Koşmak sadece bir spor değil — şehirle ve içindeki insanlarla bağlantı kurmanın bir yolu. Her adım bir hikaye anlatıyor."
+    }
+  },
+  "join": {
+    "becomeAMember": "ÜYE OL",
+    "welcomeBack": "TEKRAR HOŞ GELDİN",
+    "joinTheRun": "KOŞUYA\nKATIL",
+    "signInTitle": "GİRİŞ\nYAP",
+    "joinSubtitle": "Her seviyeye açık. Ücretsiz. Sadece ayakkabılarını getir.",
+    "signInSubtitle": "Hesabına giriş yap ve koşmaya devam et.",
+    "signInWithStrava": "STRAVA İLE GİRİŞ YAP",
+    "orWithEmail": "veya e-posta ile",
+    "register": "KAYIT OL",
+    "signIn": "GİRİŞ YAP",
+    "name": "İSİM",
+    "namePlaceholder": "Adınız",
+    "email": "E-POSTA",
+    "emailPlaceholder": "eposta@adresiniz.com",
+    "password": "ŞİFRE",
+    "passwordMinChars": "ŞİFRE (MİN. 8 KARAKTER)",
+    "instagram": "INSTAGRAM",
+    "instagramPlaceholder": "@kullaniciadi",
+    "runningPace": "KOŞU TEMPOSU",
+    "paceOptions": {
+      "selectPace": "Temponuzu seçin",
+      "beginner": "Başlangıç (>7:00 dk/km)",
+      "casual": "Rahat (6:00-7:00 dk/km)",
+      "intermediate": "Orta (5:00-6:00 dk/km)",
+      "advanced": "İleri (<5:00 dk/km)"
+    },
+    "joinButton": "ALSANCAK RUNNERS'A KATIL",
+    "signInButton": "GİRİŞ YAP",
+    "welcomeMessage": "HOŞ GELDİN.",
+    "accountCreated": "Hesap oluşturuldu! Panele yönlendiriliyor...",
+    "errors": {
+      "accessDenied": "Erişim reddedildi. Lütfen tekrar deneyin veya farklı bir hesap kullanın.",
+      "configuration": "Sunucu yapılandırma hatası. Lütfen daha sonra tekrar deneyin.",
+      "oauthSignin": "Giriş akışı başlatılamadı. Lütfen tekrar deneyin.",
+      "oauthCallback": "Giriş geri dönüş hatası. Lütfen tekrar deneyin.",
+      "oauthAccountNotLinked": "Bu e-posta zaten başka bir hesaba bağlı.",
+      "credentialsSignin": "Geçersiz e-posta veya şifre.",
+      "default": "Giriş sırasında bir hata oluştu. Lütfen tekrar deneyin.",
+      "somethingWentWrong": "Bir şeyler ters gitti",
+      "somethingWentWrongRetry": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+      "stravaSignInFailed": "Strava girişi başarısız. Lütfen tekrar deneyin.",
+      "invalidCredentials": "Geçersiz e-posta veya şifre"
+    }
+  },
+  "dashboard": {
+    "welcome": "HOŞ GELDİN",
+    "overview": "GENEL BAKIŞ",
+    "activities": "AKTİVİTELER",
+    "profile": "PROFİL",
+    "runs": "KOŞULAR",
+    "km": "KM",
+    "time": "SÜRE",
+    "events": "ETKİNLİKLER",
+    "stravaConnected": "STRAVA BAĞLI",
+    "stravaConnection": "STRAVA BAĞLANTISI",
+    "runsSyncingAutomatically": "Koşularınız otomatik olarak senkronize ediliyor",
+    "connectStravaDesc": "Koşularınızı otomatik olarak senkronize etmek için Strava hesabınızı bağlayın.",
+    "syncStrava": "STRAVA SENKRONİZE ET",
+    "syncing": "SENKRONİZE EDİLİYOR...",
+    "sync": "SENKRONİZE ET",
+    "disconnect": "BAĞLANTIYI KES",
+    "connectStrava": "STRAVA'YA BAĞLAN",
+    "connectWithStrava": "STRAVA İLE BAĞLAN",
+    "recentActivities": "SON AKTİVİTELER",
+    "noActivitiesYet": "Henüz aktivite yok",
+    "activitiesWillAppear": "Strava bağlandığında koşularınız burada görünecek",
+    "upcomingEvents": "YAKLAŞAN ETKİNLİKLER",
+    "noUpcomingEvents": "Yaklaşan etkinlik yok",
+    "newEventsWillAppear": "Yeni koşu etkinlikleri planlandığında burada görünecek",
+    "viewAll": "TÜMÜNÜ GÖR",
+    "home": "ANA SAYFA",
+    "community": "TOPLULUK",
+    "signOut": "ÇIKIŞ YAP",
+    "couldNotLoadProfile": "Profil yüklenemedi.",
+    "updateProfile": "Profil bilgilerinizi güncelleyin.",
+    "confirmDisconnectStrava": "Strava bağlantısını kesmek istediğinizden emin misiniz?",
+    "activitiesCount": "{count} aktivite",
+    "strava": {
+      "connected": "Strava bağlandı! Aktiviteler senkronize ediliyor...",
+      "denied": "Strava bağlantısı reddedildi",
+      "alreadyLinked": "Bu Strava hesabı başka bir üyeye bağlı",
+      "error": "Strava bağlantısında bir hata oluştu",
+      "newSynced": "{count} yeni aktivite senkronize edildi!",
+      "upToDate": "Tüm aktiviteler güncel",
+      "syncError": "Senkronizasyon hatası: {error}",
+      "connectionError": "Strava bağlantı hatası. Lütfen tekrar deneyin."
+    },
+    "profileEditor": {
+      "name": "İSİM",
+      "email": "E-POSTA",
+      "instagram": "INSTAGRAM",
+      "paceGroup": "TEMPO GRUBU",
+      "about": "HAKKINDA",
+      "aboutPlaceholder": "Kendiniz hakkında birkaç söz...",
+      "privacy": "GİZLİLİK",
+      "privacyOptions": {
+        "private": "Özel",
+        "members": "Üyeler",
+        "public": "Herkese Açık"
+      },
+      "notSelected": "Seçilmedi",
+      "save": "KAYDET",
+      "saving": "KAYDEDİLİYOR...",
+      "saved": "Kaydedildi",
+      "saveFailed": "Kaydetme başarısız"
+    },
+    "paceLabels": {
+      "beginner": "Başlangıç",
+      "casual": "Rahat",
+      "intermediate": "Orta",
+      "advanced": "İleri"
+    },
+    "eventTypes": {
+      "group_run": "GRUP",
+      "tempo_run": "TEMPO",
+      "long_run": "UZUN",
+      "race": "YARIŞ",
+      "social": "SOSYAL"
+    }
+  },
+  "activity": {
+    "distance": "MESAFE",
+    "time": "SÜRE",
+    "pace": "TEMPO",
+    "elevation": "YÜKSELTİ",
+    "avgHr": "ORT. KAH",
+    "maxHr": "MAKS. KAH",
+    "calories": "KALORİ",
+    "cadence": "KADANS",
+    "splits": "ETAPLAR",
+    "splitDetails": "ETAP DETAYLARI",
+    "splitHeaders": {
+      "km": "KM",
+      "pace": "TEMPO",
+      "time": "SÜRE",
+      "elev": "YÜK.",
+      "hr": "KAH"
+    },
+    "backToDashboard": "PANELE DÖN",
+    "activityNotFound": "Aktivite bulunamadı"
+  },
+  "events": {
+    "title": "ETKİNLİKLER",
+    "upcoming": "YAKLAŞAN KOŞULAR",
+    "subtitle": "Topluluk etkinlikleri ve koşu buluşmaları. Herkese açık, her seviyeye uygun.",
+    "noEvents": "Şu anda yaklaşan etkinlik yok",
+    "noEventsSubtitle": "Yeni etkinlikler eklendiğinde burada görünecek",
+    "people": "kişi",
+    "types": {
+      "group_run": "GRUP KOŞUSU",
+      "tempo_run": "TEMPO KOŞUSU",
+      "long_run": "UZUN KOŞU",
+      "race": "YARIŞ",
+      "social": "SOSYAL"
+    },
+    "navRoutes": "ROTALAR",
+    "navDashboard": "PANEL",
+    "navJoin": "KATIL",
+    "detail": {
+      "notFound": "Etkinlik bulunamadı",
+      "backToEvents": "ETKİNLİKLERE DÖN",
+      "date": "TARİH",
+      "time": "SAAT",
+      "distance": "MESAFE",
+      "participants": "KATILIMCI",
+      "meetingPoint": "BULUŞMA NOKTASI",
+      "viewOnMap": "HARİTADA GÖR",
+      "paceGroups": "TEMPO GRUPLARI",
+      "capacityFull": "KONTENJAN DOLU",
+      "joining": "KATILIYORUM",
+      "attendees": "KATILIMCILAR",
+      "approaching": "YAKINLAŞIYOR"
+    }
+  },
+  "community": {
+    "title": "TOPLULUK",
+    "leaderboard": "LİDER TABLOSU",
+    "noData": "Bu dönem için veri yok",
+    "noDataSubtitle": "Strava bağlantısı olan üyeler aktivite kaydettiğinde burada görünecek",
+    "periods": {
+      "week": "BU HAFTA",
+      "month": "BU AY",
+      "year": "BU YIL",
+      "allTime": "TÜM ZAMANLAR"
+    },
+    "stats": {
+      "members": "ÜYE",
+      "totalRuns": "TOPLAM KOŞU",
+      "totalKm": "TOPLAM KM",
+      "upcomingEvents": "YAKLAŞAN ETKİNLİK"
+    },
+    "table": {
+      "runner": "KOŞUCU",
+      "distance": "MESAFE",
+      "runs": "KOŞU",
+      "time": "SÜRE",
+      "avgPace": "ORT. TEMPO"
+    },
+    "navEvents": "ETKİNLİKLER",
+    "navRoutes": "ROTALAR",
+    "navDashboard": "PANEL"
+  },
+  "about": {
+    "whoWeAre": "BİZ KİMİZ",
+    "title": "HAKKIMIZDA",
+    "subtitle": "İzmir'in hareket şeklini yeniden tanımlayan bir kentsel koşu kolektifi.",
+    "manifesto": "MANİFESTO",
+    "team": "EKİBİMİZ",
+    "ourCommunity": "TOPLULUĞUMUZ",
+    "theCrew": "EKİP",
+    "values": {
+      "weRunTheCity": {
+        "title": "ŞEHRİ KOŞUYORUZ",
+        "description": "Alsancak Runners basit bir fikirden doğdu: koşmak birlikte daha güzel. Kordon'da koşmaya başlayan küçük bir arkadaş grubu, İzmir'in en canlı kentsel koşu kolektifine dönüştü."
+      },
+      "everyStreetIsARoute": {
+        "title": "HER SOKAK BİR ROTA",
+        "description": "Biz daire çizmeyiz. Keşfe çıkarız. Alsancak'ın arnavut kaldırımlarından Kordon kıyısına, her koşu şehrin tarih, kültür ve enerji katmanlarında bir yolculuktur."
+      },
+      "openToAll": {
+        "title": "HERKESE AÇIK",
+        "description": "Tempo şartımız yok. Üyelik ücretimiz yok. Yargı yok. İster ilk kilometrenizi koşuyor olun ister binincisini, buraya aitsiniz."
+      },
+      "cultureInMotion": {
+        "title": "HAREKET EDEN KÜLTÜR",
+        "description": "Koşmak sadece fitness değildir. Şehirle, birbirimizle ve kendimizle bağlantı kurmamızın yoludur. Markalar, sanatçılar ve yerel işletmelerle iş birliği yaparak koşunun ötesine geçen deneyimler yaratıyoruz."
+      }
+    },
+    "teamMembers": {
+      "naz": {
+        "name": "NAZ KARAGÖZOĞLU",
+        "role": "KURUCU",
+        "bio": "Hayatındaki zorlu süreçte ona en iyi gelen şeyin koşmak olduğunu fark ettiğinde bu duyguyu başkalarıyla da paylaşmak ve koşmanın sadece performans ve rekabetten ibaret olmadığını göstermek için yeni koşu kültürünü İzmir\u2019in ritmi ile buluşturdu."
+      },
+      "hakan": {
+        "name": "HAKAN ÖZDİL",
+        "role": "KAPTAN",
+        "bio": "Uzun yıllar futbol oynadıktan sonra Ege Üniversitesi Beden Eğitimi ve Spor Yüksekokulu\u2019nu kazanıp antrenörlük yapmaya başlamıştır. 23 yıldır özellikle grup derslerindeki tecrübesi ile bugün yeni koşu kültürüne liderliği ile yön veriyor."
+      },
+      "izem": {
+        "name": "İZEM GÖKDEMİR",
+        "role": "PACER",
+        "bio": "Ege Üniversitesi Beden Eğitimi Öğretmenliği okurken basketbol oynamaya devam etmiş, yaşadığı sakatlık sonrasında İzmir\u2019e dönerek antrenörlük kariyerini sürdürürken aynı zamanda Alsancak Runners pacer\u2019ı olarak koşuculara ritim tutmaktadır."
+      }
+    }
+  },
+  "gallery": {
+    "label": "EDİTÖRYEL",
+    "title": "GALERİ",
+    "filters": {
+      "all": "TÜMÜ",
+      "runs": "KOŞULAR",
+      "community": "TOPLULUK",
+      "city": "ŞEHİR"
+    },
+    "close": "KAPAT"
+  },
+  "routes": {
+    "label": "ROTALAR",
+    "title": "KEŞFET.",
+    "titleHighlight": "KOŞULARI",
+    "subtitle": "İzmir'in en güzel koşu rotaları. Her seviyeye uygun parkurlar.",
+    "communityRoutes": "TOPLULUK ROTALARI",
+    "popularRoutes": "POPÜLER PARKURLAR",
+    "difficulty": {
+      "easy": "KOLAY",
+      "moderate": "ORTA",
+      "hard": "ZOR"
+    },
+    "surface": {
+      "road": "Asfalt",
+      "trail": "Patika",
+      "mixed": "Karışık",
+      "track": "Pist"
+    },
+    "loop": "DÖNGÜ",
+    "detail": {
+      "notFound": "Rota bulunamadı",
+      "backToRoutes": "ROTALARA DÖN",
+      "distance": "MESAFE",
+      "elevation": "TIRMANMA",
+      "surface": "ZEMİN",
+      "location": "KONUM",
+      "segments": "BÖLÜMLER",
+      "segment": "Bölüm"
+    }
+  },
+  "common": {
+    "loading": "Yükleniyor...",
+    "error": "Bir hata oluştu",
+    "retry": "Tekrar dene",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "edit": "Düzenle",
+    "delete": "Sil",
+    "min": "dk",
+    "hr": "sa",
+    "perKm": "/km",
+    "km": "km",
+    "bpm": "bpm",
+    "kcal": "kcal",
+    "spm": "spm",
+    "m": "m",
+    "close": "KAPAT",
+    "strava": "STRAVA"
+  }
+}

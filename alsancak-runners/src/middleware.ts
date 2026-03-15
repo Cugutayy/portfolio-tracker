@@ -1,45 +1,70 @@
+import createMiddleware from 'next-intl/middleware';
+import {routing} from './i18n/routing';
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+
+const intlMiddleware = createMiddleware(routing);
 
 const protectedPaths = ["/dashboard"];
 const authPaths = ["/join"];
 
-async function middleware(req: NextRequest) {
+function isPathMatch(pathname: string, paths: string[]): boolean {
+  // Strip locale prefix (e.g., /tr/dashboard → /dashboard)
+  const strippedPath = pathname.replace(/^\/(tr|en)/, '') || '/';
+  return paths.some((p) => strippedPath.startsWith(p));
+}
+
+export default async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Skip locale handling for API routes and internal Next.js routes
+  if (pathname.startsWith('/api') || pathname.startsWith('/_next')) {
+    return NextResponse.next();
+  }
+
+  // Run intl middleware first (handles locale redirect)
+  const intlResponse = intlMiddleware(req);
+
+  // Check if auth is needed for this path
+  const needsAuth = isPathMatch(pathname, protectedPaths);
+  const isAuthPage = isPathMatch(pathname, authPaths);
+
+  if (!needsAuth && !isAuthPage) {
+    return intlResponse;
+  }
+
   try {
-    // Dynamic import so a missing AUTH_SECRET doesn't crash the entire edge
     const { auth } = await import("@/lib/auth");
     const session = await auth();
-    const { pathname } = req.nextUrl;
     const isLoggedIn = !!session?.user;
 
-    // Redirect authenticated users away from auth pages
-    if (isLoggedIn && authPaths.some((p) => pathname.startsWith(p))) {
-      return NextResponse.redirect(new URL("/dashboard", req.url));
+    // Get the locale from the URL
+    const localeMatch = pathname.match(/^\/(tr|en)/);
+    const locale = localeMatch ? localeMatch[1] : 'tr';
+
+    if (isLoggedIn && isAuthPage) {
+      return NextResponse.redirect(new URL(`/${locale}/dashboard`, req.url));
     }
 
-    // Redirect unauthenticated users to join page
-    if (!isLoggedIn && protectedPaths.some((p) => pathname.startsWith(p))) {
+    if (!isLoggedIn && needsAuth) {
       const callbackUrl = encodeURIComponent(pathname);
       return NextResponse.redirect(
-        new URL(`/join?callbackUrl=${callbackUrl}`, req.url),
+        new URL(`/${locale}/join?callbackUrl=${callbackUrl}`, req.url),
       );
     }
 
-    return NextResponse.next();
+    return intlResponse;
   } catch (error) {
     console.error("Middleware auth error:", error);
-    // On auth failure, redirect to join page — fail-closed to prevent
-    // unauthenticated access to protected routes.
-    const { pathname } = req.nextUrl;
-    if (protectedPaths.some((p) => pathname.startsWith(p))) {
-      return NextResponse.redirect(new URL("/join", req.url));
+    const localeMatch = pathname.match(/^\/(tr|en)/);
+    const locale = localeMatch ? localeMatch[1] : 'tr';
+    if (needsAuth) {
+      return NextResponse.redirect(new URL(`/${locale}/join`, req.url));
     }
-    return NextResponse.next();
+    return intlResponse;
   }
 }
 
-export default middleware;
-
 export const config = {
-  matcher: ["/dashboard/:path*", "/join"],
+  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)', '/']
 };

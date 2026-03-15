@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 
 interface MemberProfile {
@@ -67,6 +68,7 @@ function ProfileEditor({
   profile: MemberProfile;
   onUpdate: (p: MemberProfile) => void;
 }) {
+  const t = useTranslations("dashboard");
   const [form, setForm] = useState({
     name: profile.name,
     instagram: profile.instagram || "",
@@ -94,7 +96,7 @@ function ProfileEditor({
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
-      setError("Save failed");
+      setError(t("profileEditor.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -105,7 +107,7 @@ function ProfileEditor({
       {/* Name */}
       <div>
         <label className="block text-[11px] tracking-[0.15em] uppercase text-[#666] mb-3">
-          NAME
+          {t("profileEditor.name")}
         </label>
         <input
           type="text"
@@ -118,7 +120,7 @@ function ProfileEditor({
       {/* Email (read-only) */}
       <div>
         <label className="block text-[11px] tracking-[0.15em] uppercase text-[#666] mb-3">
-          EMAIL
+          {t("profileEditor.email")}
         </label>
         <input
           type="email"
@@ -131,7 +133,7 @@ function ProfileEditor({
       {/* Instagram */}
       <div>
         <label className="block text-[11px] tracking-[0.15em] uppercase text-[#666] mb-3">
-          INSTAGRAM
+          {t("profileEditor.instagram")}
         </label>
         <input
           type="text"
@@ -145,30 +147,30 @@ function ProfileEditor({
       {/* Pace Group */}
       <div>
         <label className="block text-[11px] tracking-[0.15em] uppercase text-[#666] mb-3">
-          PACE GROUP
+          {t("profileEditor.paceGroup")}
         </label>
         <select
           value={form.paceGroup}
           onChange={(e) => setForm({ ...form, paceGroup: e.target.value })}
           className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors cursor-pointer [&>option]:bg-[#0A0A0A]"
         >
-          <option value="">Not selected</option>
-          <option value="beginner">Beginner (&gt;7:00 min/km)</option>
-          <option value="casual">Casual (6:00-7:00 min/km)</option>
-          <option value="intermediate">Intermediate (5:00-6:00 min/km)</option>
-          <option value="advanced">Advanced (&lt;5:00 min/km)</option>
+          <option value="">{t("profileEditor.notSelected")}</option>
+          <option value="beginner">{t("paceLabels.beginner")} (&gt;7:00 min/km)</option>
+          <option value="casual">{t("paceLabels.casual")} (6:00-7:00 min/km)</option>
+          <option value="intermediate">{t("paceLabels.intermediate")} (5:00-6:00 min/km)</option>
+          <option value="advanced">{t("paceLabels.advanced")} (&lt;5:00 min/km)</option>
         </select>
       </div>
 
       {/* Bio */}
       <div>
         <label className="block text-[11px] tracking-[0.15em] uppercase text-[#666] mb-3">
-          ABOUT
+          {t("profileEditor.about")}
         </label>
         <textarea
           value={form.bio}
           onChange={(e) => setForm({ ...form, bio: e.target.value })}
-          placeholder="A few words about yourself..."
+          placeholder={t("profileEditor.aboutPlaceholder")}
           rows={3}
           className="w-full bg-transparent border border-[#333] focus:border-[#E6FF00] text-white p-4 text-base outline-none transition-colors resize-none"
         />
@@ -177,7 +179,7 @@ function ProfileEditor({
       {/* Privacy */}
       <div>
         <label className="block text-[11px] tracking-[0.15em] uppercase text-[#666] mb-3">
-          PRIVACY
+          {t("profileEditor.privacy")}
         </label>
         <div className="flex gap-3">
           {(["private", "members", "public"] as const).map((opt) => (
@@ -190,11 +192,7 @@ function ProfileEditor({
                   : "border-[#333] text-[#666] hover:border-white/30 hover:text-white"
               }`}
             >
-              {opt === "private"
-                ? "Private"
-                : opt === "members"
-                  ? "Members"
-                  : "Public"}
+              {t(`profileEditor.privacyOptions.${opt}`)}
             </button>
           ))}
         </div>
@@ -207,7 +205,7 @@ function ProfileEditor({
           disabled={saving}
           className="bg-[#E6FF00] text-black py-3 px-8 text-sm font-bold tracking-[0.15em] uppercase hover:bg-white transition-colors disabled:opacity-50"
         >
-          {saving ? "SAVING..." : "SAVE"}
+          {saving ? t("profileEditor.saving") : t("profileEditor.save")}
         </button>
         {saved && (
           <motion.span
@@ -216,7 +214,7 @@ function ProfileEditor({
             exit={{ opacity: 0 }}
             className="text-[#E6FF00] text-sm"
           >
-            Saved
+            {t("profileEditor.saved")}
           </motion.span>
         )}
         {error && <span className="text-red-400 text-sm">{error}</span>}
@@ -233,10 +231,11 @@ function StravaConnectCard({
   connected: boolean;
   onDisconnect: () => void;
 }) {
+  const t = useTranslations("dashboard");
   const [disconnecting, setDisconnecting] = useState(false);
 
   const handleDisconnect = async () => {
-    if (!confirm("Are you sure you want to disconnect Strava?")) return;
+    if (!confirm(t("confirmDisconnectStrava"))) return;
     setDisconnecting(true);
     try {
       const res = await fetch("/api/strava/connection", { method: "DELETE" });
@@ -256,10 +255,10 @@ function StravaConnectCard({
       >
         <div>
           <p className="text-[11px] tracking-[0.15em] uppercase text-[#FC4C02] mb-1">
-            STRAVA CONNECTED
+            {t("stravaConnected")}
           </p>
           <p className="text-[13px] text-[#999]">
-            Your runs are syncing automatically
+            {t("runsSyncingAutomatically")}
           </p>
         </div>
         <button
@@ -267,7 +266,7 @@ function StravaConnectCard({
           disabled={disconnecting}
           className="text-[11px] tracking-[0.15em] uppercase text-[#666] border border-[#333] px-4 py-2 hover:border-red-500/50 hover:text-red-400 transition-colors disabled:opacity-50"
         >
-          {disconnecting ? "..." : "DISCONNECT"}
+          {disconnecting ? "..." : t("disconnect")}
         </button>
       </motion.div>
     );
@@ -281,16 +280,16 @@ function StravaConnectCard({
       className="border border-dashed border-[#333] p-8 text-center"
     >
       <p className="text-[11px] tracking-[0.15em] uppercase text-[#666] mb-4">
-        STRAVA CONNECTION
+        {t("stravaConnection")}
       </p>
       <p className="text-[15px] text-[#999] leading-relaxed mb-6">
-        Connect your Strava account to automatically sync your runs.
+        {t("connectStravaDesc")}
       </p>
       <a
         href="/api/strava/authorize"
         className="inline-block bg-[#FC4C02] text-white py-3 px-8 text-sm font-bold tracking-[0.15em] uppercase hover:bg-[#e04500] transition-colors"
       >
-        CONNECT WITH STRAVA
+        {t("connectWithStrava")}
       </a>
     </motion.div>
   );
@@ -298,13 +297,16 @@ function StravaConnectCard({
 
 /* ─── ACTIVITY LIST ─── */
 function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
+  const t = useTranslations("dashboard");
+  const tActivity = useTranslations("activity");
+  const tCommon = useTranslations("common");
   if (items.length === 0) {
     return (
       <div className="border border-[#222] p-12 text-center">
         <div className="text-4xl mb-4 opacity-30">&#x1F3C3;</div>
-        <p className="text-[15px] text-[#666] mb-2">No activities yet</p>
+        <p className="text-[15px] text-[#666] mb-2">{t("noActivitiesYet")}</p>
         <p className="text-[12px] text-[#444]">
-          Your runs will appear here once Strava is connected
+          {t("activitiesWillAppear")}
         </p>
       </div>
     );
@@ -313,7 +315,7 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
   return (
     <div className="space-y-2">
       {items.map((a, i) => (
-        <Link key={a.id} href={`/dashboard/activity/${a.id}`}>
+        <Link key={a.id} href={{pathname: '/dashboard/activity/[id]', params: {id: a.id}}}>
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -335,14 +337,14 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
             </div>
             {a.source === "strava" && (
               <span className="text-[9px] tracking-wider uppercase text-[#FC4C02] border border-[#FC4C02]/30 px-2 py-0.5">
-                STRAVA
+                {tCommon("strava")}
               </span>
             )}
           </div>
           <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
             <div>
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
-                DISTANCE
+                {tActivity("distance")}
               </p>
               <p className="text-white text-lg font-semibold">
                 {formatDistance(a.distanceM)}
@@ -351,7 +353,7 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
             </div>
             <div>
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
-                TIME
+                {tActivity("time")}
               </p>
               <p className="text-white text-lg font-semibold">
                 {formatDuration(a.movingTimeSec)}
@@ -359,7 +361,7 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
             </div>
             <div>
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
-                PACE
+                {tActivity("pace")}
               </p>
               <p className="text-white text-lg font-semibold">
                 {a.avgPaceSecKm ? formatPace(a.avgPaceSecKm) : "\u2014"}
@@ -367,7 +369,7 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
             </div>
             <div className="hidden md:block">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
-                ELEVATION
+                {tActivity("elevation")}
               </p>
               <p className="text-white text-lg font-semibold">
                 {a.elevationGainM ? `${Math.round(a.elevationGainM)}m` : "\u2014"}
@@ -375,7 +377,7 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
             </div>
             <div className="hidden md:block">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
-                HEART RATE
+                {tActivity("avgHr")}
               </p>
               <p className="text-white text-lg font-semibold">
                 {a.avgHeartrate ? `${Math.round(a.avgHeartrate)}` : "\u2014"}
@@ -401,14 +403,6 @@ interface UpcomingEventItem {
   rsvpCount: number;
 }
 
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  group_run: "GROUP",
-  tempo_run: "TEMPO",
-  long_run: "LONG",
-  race: "RACE",
-  social: "SOCIAL",
-};
-
 /* ─── OVERVIEW TAB ─── */
 function OverviewTab({
   profile,
@@ -427,6 +421,7 @@ function OverviewTab({
   onViewAllActivities: () => void;
   upcomingEvents: UpcomingEventItem[];
 }) {
+  const t = useTranslations("dashboard");
   return (
     <div className="space-y-12">
       {/* Stats Grid */}
@@ -438,25 +433,25 @@ function OverviewTab({
       >
         {[
           {
-            label: "RUNS",
+            label: t("runs"),
             value: profile.stats.totalRuns || activityItems.length,
           },
           {
-            label: "KM",
+            label: t("km"),
             value: formatDistance(
               profile.stats.totalDistanceM ||
                 activityItems.reduce((s, a) => s + a.distanceM, 0),
             ),
           },
           {
-            label: "TIME",
+            label: t("time"),
             value: formatDuration(
               profile.stats.totalTimeSec ||
                 activityItems.reduce((s, a) => s + a.movingTimeSec, 0),
             ),
           },
           {
-            label: "EVENTS",
+            label: t("events"),
             value: profile.stats.eventsAttended,
           },
         ].map((stat, i) => (
@@ -489,7 +484,7 @@ function OverviewTab({
             disabled={syncing}
             className="text-[11px] tracking-[0.15em] uppercase border border-[#333] px-5 py-2.5 text-[#999] hover:border-[#E6FF00]/50 hover:text-[#E6FF00] transition-colors disabled:opacity-50"
           >
-            {syncing ? "SYNCING..." : "SYNC STRAVA"}
+            {syncing ? t("syncing") : t("syncStrava")}
           </button>
           {syncing && (
             <div className="w-4 h-4 border-2 border-[#E6FF00] border-t-transparent rounded-full animate-spin" />
@@ -505,14 +500,14 @@ function OverviewTab({
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[11px] tracking-[0.15em] uppercase text-[#666]">
-            RECENT ACTIVITIES
+            {t("recentActivities")}
           </h2>
           {activityItems.length > 5 && (
             <button
               onClick={onViewAllActivities}
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-[#E6FF00] transition-colors"
             >
-              VIEW ALL
+              {t("viewAll")}
             </button>
           )}
         </div>
@@ -527,23 +522,23 @@ function OverviewTab({
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[11px] tracking-[0.15em] uppercase text-[#666]">
-            UPCOMING EVENTS
+            {t("upcomingEvents")}
           </h2>
           <Link
             href="/etkinlikler"
             className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-[#E6FF00] transition-colors"
           >
-            VIEW ALL
+            {t("viewAll")}
           </Link>
         </div>
         {upcomingEvents.length === 0 ? (
           <div className="border border-[#222] p-12 text-center">
             <div className="text-4xl mb-4 opacity-30">&#x1F4C5;</div>
             <p className="text-[15px] text-[#666] mb-2">
-              No upcoming events
+              {t("noUpcomingEvents")}
             </p>
             <p className="text-[12px] text-[#444]">
-              New running events will appear here when scheduled
+              {t("newEventsWillAppear")}
             </p>
           </div>
         ) : (
@@ -555,7 +550,7 @@ function OverviewTab({
                 minute: "2-digit",
               });
               return (
-                <Link key={ev.id} href={`/etkinlikler/${ev.slug}`}>
+                <Link key={ev.id} href={{pathname: '/etkinlikler/[slug]', params: {slug: ev.slug}}}>
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -587,7 +582,7 @@ function OverviewTab({
                           <span className="text-[#666] text-xs ml-0.5">km</span>
                         </p>
                         <span className="text-[9px] tracking-wider uppercase text-[#E6FF00]/50">
-                          {EVENT_TYPE_LABELS[ev.eventType] || ev.eventType}
+                          {t(`eventTypes.${ev.eventType}` as never) || ev.eventType}
                         </span>
                       </div>
                     </div>
@@ -609,13 +604,14 @@ function ActivitiesTab({ activities: items, syncing, onSync, stravaConnected }: 
   onSync: () => void;
   stravaConnected: boolean;
 }) {
+  const t = useTranslations("dashboard");
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <p className="text-[15px] text-[#666]">
           {items.length > 0
-            ? `${items.length} activities`
-            : "No activities yet"}
+            ? t("activitiesCount", { count: items.length })
+            : t("noActivitiesYet")}
         </p>
         {stravaConnected && (
           <button
@@ -623,7 +619,7 @@ function ActivitiesTab({ activities: items, syncing, onSync, stravaConnected }: 
             disabled={syncing}
             className="text-[11px] tracking-[0.15em] uppercase border border-[#333] px-5 py-2.5 text-[#999] hover:border-[#E6FF00]/50 hover:text-[#E6FF00] transition-colors disabled:opacity-50"
           >
-            {syncing ? "SYNCING..." : "SYNC"}
+            {syncing ? t("syncing") : t("sync")}
           </button>
         )}
       </div>
@@ -656,6 +652,9 @@ function DashboardContent() {
   const [syncing, setSyncing] = useState(false);
   const [stravaMsg, setStravaMsg] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const t = useTranslations("dashboard");
+  const tNav = useTranslations("nav");
+  const tJoin = useTranslations("join");
 
   const loadProfile = useCallback(() => {
     fetch("/api/members/me")
@@ -685,24 +684,24 @@ function DashboardContent() {
       const data = await res.json();
       if (res.ok) {
         if (data.synced > 0) {
-          setStravaMsg(`${data.synced} new activities synced!`);
+          setStravaMsg(t("strava.newSynced", { count: data.synced }));
           loadActivities();
           loadProfile();
         } else {
-          setStravaMsg("All activities are up to date");
+          setStravaMsg(t("strava.upToDate"));
         }
       } else {
-        setStravaMsg(`Sync error: ${data.error || "Unknown error"}`);
+        setStravaMsg(t("strava.syncError", { error: data.error || "Unknown error" }));
       }
       setTimeout(() => setStravaMsg(null), 5000);
     } catch (err) {
       console.error("Sync error:", err);
-      setStravaMsg("Strava connection error. Please try again.");
+      setStravaMsg(t("strava.connectionError"));
       setTimeout(() => setStravaMsg(null), 5000);
     } finally {
       setSyncing(false);
     }
-  }, [loadActivities, loadProfile]);
+  }, [loadActivities, loadProfile, t]);
 
   const handleStravaDisconnect = useCallback(() => {
     setProfile((p) => p ? { ...p, stravaConnected: false } : p);
@@ -728,22 +727,22 @@ function DashboardContent() {
   useEffect(() => {
     const stravaStatus = searchParams.get("strava");
     if (stravaStatus === "connected") {
-      setStravaMsg("Strava connected! Syncing activities...");
+      setStravaMsg(t("strava.connected"));
       loadProfile();
       // Auto-sync after connection
       setTimeout(() => handleSync(), 500);
       setTimeout(() => setStravaMsg(null), 5000);
     } else if (stravaStatus === "denied") {
-      setStravaMsg("Strava connection was denied");
+      setStravaMsg(t("strava.denied"));
       setTimeout(() => setStravaMsg(null), 4000);
     } else if (stravaStatus === "already_linked") {
-      setStravaMsg("This Strava account is linked to another member");
+      setStravaMsg(t("strava.alreadyLinked"));
       setTimeout(() => setStravaMsg(null), 4000);
     } else if (stravaStatus === "error") {
-      setStravaMsg("An error occurred with Strava connection");
+      setStravaMsg(t("strava.error"));
       setTimeout(() => setStravaMsg(null), 4000);
     }
-  }, [searchParams, loadProfile, handleSync]);
+  }, [searchParams, loadProfile, handleSync, t]);
 
   if (loading) {
     return (
@@ -758,13 +757,13 @@ function DashboardContent() {
       <main className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-6">
         <div className="text-center">
           <p className="text-[15px] text-[#666] mb-6">
-            Could not load profile.
+            {t("couldNotLoadProfile")}
           </p>
           <Link
             href="/join"
             className="text-[11px] tracking-[0.15em] uppercase text-[#E6FF00] border border-[#E6FF00] px-6 py-3 hover:bg-[#E6FF00] hover:text-black transition-colors"
           >
-            SIGN IN
+            {tJoin("signIn")}
           </Link>
         </div>
       </main>
@@ -772,10 +771,10 @@ function DashboardContent() {
   }
 
   const paceLabels: Record<string, string> = {
-    beginner: "Beginner",
-    casual: "Casual",
-    intermediate: "Intermediate",
-    advanced: "Advanced",
+    beginner: t("paceLabels.beginner"),
+    casual: t("paceLabels.casual"),
+    intermediate: t("paceLabels.intermediate"),
+    advanced: t("paceLabels.advanced"),
   };
 
   return (
@@ -794,25 +793,25 @@ function DashboardContent() {
               href="/"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              HOME
+              {tNav("home")}
             </Link>
             <Link
               href="/etkinlikler"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              EVENTS
+              {tNav("events")}
             </Link>
             <Link
               href="/topluluk"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              COMMUNITY
+              {tNav("community")}
             </Link>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] border border-[#333] px-4 py-2 hover:border-red-500/50 hover:text-red-400 transition-colors"
             >
-              SIGN OUT
+              {tNav("signOut")}
             </button>
           </div>
         </div>
@@ -834,7 +833,7 @@ function DashboardContent() {
                   className="text-4xl md:text-5xl font-bold text-white leading-tight mb-3"
                   style={{ fontFamily: "var(--font-heading, inherit)" }}
                 >
-                  WELCOME
+                  {t("welcome")}
                   <span className="text-[#E6FF00]">.</span>
                 </h1>
                 <div className="flex items-center gap-3">
@@ -867,10 +866,10 @@ function DashboardContent() {
             <div className="flex gap-6 border-b border-[#1a1a1a]">
               {(
                 [
-                  { key: "overview", label: "OVERVIEW" },
-                  { key: "activities", label: "ACTIVITIES" },
-                  { key: "profile", label: "PROFILE" },
-                ] as const
+                  { key: "overview" as Tab, label: t("overview") },
+                  { key: "activities" as Tab, label: t("activities") },
+                  { key: "profile" as Tab, label: t("profile") },
+                ]
               ).map(({ key, label }) => (
                 <button
                   key={key}
@@ -924,7 +923,7 @@ function DashboardContent() {
               {tab === "profile" && (
                 <div className="max-w-[600px]">
                   <p className="text-[15px] text-[#666] mb-8">
-                    Update your profile information.
+                    {t("updateProfile")}
                   </p>
                   <ProfileEditor
                     profile={profile}
