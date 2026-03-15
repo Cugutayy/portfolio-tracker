@@ -1,0 +1,14 @@
+{
+  "name": "albion-nats-relay",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "NATS → WebSocket bridge for Albion Online real-time market data",
+  "scripts": {
+    "start": "node relay.mjs"
+  },
+  "dependencies": {
+    "nats": "^2.28.0",
+    "ws": "^8.18.0"
+  }
+}
