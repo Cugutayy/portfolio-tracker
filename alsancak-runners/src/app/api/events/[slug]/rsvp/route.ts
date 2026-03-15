@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { events, eventRsvps } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 
 // POST /api/events/[slug]/rsvp — RSVP to an event
 export async function POST(
@@ -13,6 +14,13 @@ export async function POST(
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+
+  // Rate limit: 10 RSVPs per minute per user
+  const rateLimited = await checkRateLimit(
+    `rsvp:${session.user.id}`,
+    RATE_LIMITS.eventRsvp
+  );
+  if (rateLimited) return rateLimited;
 
   const { slug } = await params;
 

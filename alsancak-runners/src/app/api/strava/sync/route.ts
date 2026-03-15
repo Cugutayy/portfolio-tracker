@@ -5,6 +5,8 @@ import { stravaConnections, activities } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { refreshAccessToken, stravaGet, speedToPace } from "@/lib/strava";
 import type { StravaActivity } from "@/lib/strava";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
+import { cacheInvalidate, CACHE_KEYS } from "@/lib/cache";
 
 const PAGE_SIZE = 30;
 const MAX_PAGES = 5; // 150 activities max per request
@@ -14,6 +16,13 @@ export async function POST() {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+
+  // Rate limit: 5 syncs per minute per user
+  const rateLimited = await checkRateLimit(
+    `sync:${session.user.id}`,
+    RATE_LIMITS.stravaSync
+  );
+  if (rateLimited) return rateLimited;
 
   const [conn] = await db
     .select()
@@ -128,6 +137,14 @@ export async function POST() {
           updatedAt: new Date(),
         })
         .where(eq(stravaConnections.id, conn.id));
+    }
+
+    // Invalidate cached community data after sync
+    if (synced > 0) {
+      await Promise.all([
+        cacheInvalidate(CACHE_KEYS.communityStats),
+        cacheInvalidate("leaderboard:*", true),
+      ]);
     }
 
     return NextResponse.json({

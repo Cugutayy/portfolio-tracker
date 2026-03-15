@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { stravaWebhookEvents } from "@/db/schema";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 
 /**
  * GET: Strava webhook verification handshake.
@@ -26,6 +27,13 @@ export async function GET(request: NextRequest) {
  * Processing happens asynchronously (via sync endpoint for now, BullMQ later).
  */
 export async function POST(request: NextRequest) {
+  // Rate limit: 100 webhook events per minute
+  const rateLimited = await checkRateLimit(
+    "webhook:strava",
+    RATE_LIMITS.stravaWebhook
+  );
+  if (rateLimited) return rateLimited;
+
   try {
     const payload = await request.json();
 
