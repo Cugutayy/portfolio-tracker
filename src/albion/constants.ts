@@ -132,6 +132,23 @@ const ROUTE_OVERRIDES: Partial<Record<RouteKey, RouteInfo>> = {
   'Caerleon->Caerleon': { deathRisk: 0, transportMinutes: 1, riskLevel: 'safe', description: 'Same city (BM is in Caerleon)' },
 }
 
+/** NATS Location ID → City name mapping (used by realtime module) */
+export const LOCATION_ID_MAP: Record<number, City> = {
+  7: 'Thetford',
+  1002: 'Lymhurst',
+  2004: 'Bridgewatch',
+  3005: 'Martlock',
+  4002: 'Fort Sterling',
+  3008: 'Caerleon',
+  3003: 'Black Market',
+}
+
+/** WebSocket URL for local NATS relay */
+export const RELAY_WS_URL = 'ws://localhost:9876'
+
+/** Debounce interval for real-time arbitrage recalculation */
+export const REALTIME_DEBOUNCE_MS = 2500
+
 export const DEFAULT_FILTERS: FilterState = {
   minProfit: 5000,
   minProfitPercent: 8,

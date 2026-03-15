@@ -7,7 +7,14 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "relay": "node tools/albion-relay/relay.mjs",
+    "relay:debug": "node tools/albion-relay/relay.mjs --debug",
+    "relay:install": "cd tools/albion-relay && npm install",
+    "sniffer": "node tools/albion-sniffer/sniffer.mjs",
+    "sniffer:debug": "node tools/albion-sniffer/sniffer.mjs --debug",
+    "sniffer:list": "node tools/albion-sniffer/sniffer.mjs --list",
+    "sniffer:install": "cd tools/albion-sniffer && npm install"
   },
   "dependencies": {
     "@paper-design/shaders-react": "^0.0.71",

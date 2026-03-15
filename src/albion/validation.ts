@@ -13,7 +13,7 @@ function isValidDate(d: string): boolean {
   return !!d && !d.startsWith(NULL_DATE)
 }
 
-function getFreshness(date: Date): Freshness {
+export function getFreshness(date: Date): Freshness {
   const age = Date.now() - date.getTime()
   if (age < FRESH_MS) return 'fresh'
   if (age < STALE_MS) return 'recent'

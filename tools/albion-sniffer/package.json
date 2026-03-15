@@ -1,0 +1,15 @@
+{
+  "name": "albion-sniffer",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Albion Online market sniffer - Go exe + HTTP ingest + WebSocket",
+  "scripts": {
+    "start": "node sniffer.mjs",
+    "debug": "node sniffer.mjs --debug"
+  },
+  "dependencies": {
+    "ao-network": "^2.0.1",
+    "nats": "^2.29.3",
+    "ws": "^8.18.0"
+  }
+}

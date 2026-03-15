@@ -5,9 +5,17 @@ import { validatePrices } from '../albion/validation'
 import { findOpportunities } from '../albion/arbitrage'
 import {
   BM_LOCATIONS, CITY_COLORS, CATEGORY_LABELS,
-  DEFAULT_FILTERS, BM_REFRESH_INTERVAL,
+  DEFAULT_FILTERS, BM_REFRESH_INTERVAL, REALTIME_DEBOUNCE_MS,
   QUALITY_NAMES, QUALITY_COLORS, QUALITY_SHORT,
 } from '../albion/constants'
+import {
+  albionRealtime, mergeWithRealtime, realtimeToValidated, getBmBuyRadar,
+  type RealtimeStatus, type RealtimeStats, type RealtimeOrder, type DataMode, type BmBuyOrder,
+} from '../albion/realtime'
+import {
+  snifferClient,
+  type SnifferStatus, type SnifferState, type SnifferOpportunity, type OrderBatch,
+} from '../albion/sniffer'
 import type {
   ScanState, FilterState, ArbitrageOpportunity, ValidatedPrice,
   TaxMode, City, SortField, AlbionItem, TradeStrategy, VolumeData,
@@ -86,6 +94,13 @@ const CSS = `
 .ao-guide-tag{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:4px;font-size:8px;font-weight:600;letter-spacing:.05em}
 .ao.ao-light .ao-guide-card{background:rgba(212,168,67,.06);border-color:rgba(212,168,67,.15)}
 .ao.ao-light .ao-guide-card:hover{background:rgba(212,168,67,.1)}
+@keyframes aoLivePulse{0%,100%{opacity:1;box-shadow:0 0 4px #4caf50}50%{opacity:.6;box-shadow:0 0 12px #4caf50,0 0 4px #4caf50}}
+.ao-live-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
+.ao-live-feed{max-height:200px;overflow-y:auto;font-size:10px;border-top:1px solid rgba(255,255,255,.04)}
+.ao-live-feed::-webkit-scrollbar{width:4px}.ao-live-feed::-webkit-scrollbar-thumb{background:rgba(212,168,67,.3);border-radius:2px}
+.ao-mode-btn{border:none;border-radius:6px;padding:4px 10px;font-size:9px;cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;transition:all .2s;letter-spacing:.03em}
+.ao-mode-btn:disabled{opacity:.3;cursor:not-allowed}
+.ao-canli-badge{display:inline-flex;align-items:center;gap:3px;padding:1px 5px;border-radius:3px;font-size:7px;font-weight:700;color:#4caf50;background:rgba(76,175,80,.1);border:1px solid rgba(76,175,80,.15);letter-spacing:.06em}
 @media(max-width:800px){.ao-filters{flex-direction:column!important}.ao-table-wrap{overflow-x:auto}}
 `
 
@@ -96,6 +111,36 @@ function fmtSilver(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
   return String(n)
+}
+
+// BM category from item ID — helps user find the right tab in Black Market
+function bmCategory(itemId: string): string {
+  const id = itemId.replace(/@\d+$/, '').toUpperCase()
+  if (id.includes('_HEAD_')) return 'Kafa'
+  if (id.includes('_ARMOR_')) return 'Zırh'
+  if (id.includes('_SHOES_')) return 'Ayak'
+  if (id.includes('_CAPE') || id.includes('CAPEITEM')) return 'Pelerin'
+  if (id.includes('_BAG')) return 'Çanta'
+  if (id.includes('_MAIN_') || id.includes('_2H_') || id.includes('SWORD') || id.includes('AXE') || id.includes('MACE') || id.includes('HAMMER') || id.includes('SPEAR') || id.includes('HALBERD') || id.includes('STAFF') || id.includes('BOW') || id.includes('CROSSBOW') || id.includes('DAGGER') || id.includes('QUARTERSTAFF') || id.includes('CURSE') || id.includes('FIRE') || id.includes('FROST') || id.includes('ARCANE') || id.includes('HOLY') || id.includes('NATURE')) return 'Silah'
+  if (id.includes('_OFF_')) return 'Off-hand'
+  if (id.includes('_MOUNT_')) return 'Binek'
+  if (id.includes('_MEAL_') || id.includes('_POTION_')) return 'Tüketim'
+  return ''
+}
+
+/** Clipboard copy that works on HTTP (non-HTTPS) too */
+function copyText(text: string): void {
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.position = 'fixed'
+    ta.style.left = '-9999px'
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+  } catch { /* ignore */ }
+  navigator.clipboard?.writeText(text).catch(() => {})
 }
 
 function CityBadge({ city }: { city: string }) {
@@ -152,12 +197,90 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
   const [fullScanCount, setFullScanCount] = useState(0)
   const isDark = dark !== false
 
+  // ── Real-time NATS state ──
+  const [dataMode, setDataMode] = useState<DataMode>('api-only')
+  const [rtStatus, setRtStatus] = useState<RealtimeStatus>('disconnected')
+  const [rtStats, setRtStats] = useState<RealtimeStats>({
+    ordersReceived: 0, lastOrderTime: null, connectedSince: null,
+    natsConnected: false, priceEntries: 0, relayUptime: 0, ordersTotal: 0, ordersRelevant: 0,
+  })
+  const [recentOrders, setRecentOrders] = useState<RealtimeOrder[]>([])
+  const [showLiveFeed, setShowLiveFeed] = useState(false)
+  const [bmRadar, setBmRadar] = useState<BmBuyOrder[]>([])
+  const [bmRadarSort, setBmRadarSort] = useState<'price' | 'profit' | 'age'>('price')
+
+  // ── Sniffer state ──
+  const [snifferStatus, setSnifferStatus] = useState<SnifferStatus>('disconnected')
+  const [snifferState, setSnifferState] = useState<SnifferState | null>(null)
+  const [snifferFeed, setSnifferFeed] = useState<{ time: number; type: string; location: string; count: number }[]>([])
+  const [showSnifferFeed, setShowSnifferFeed] = useState(true)
+  const [snifferMinProfit, setSnifferMinProfit] = useState(0)
+  const [snifferMinPct, setSnifferMinPct] = useState(0)
+  const [snifferSearch, setSnifferSearch] = useState('')
+
   // Live clock for data freshness display
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  // ── Real-time connection lifecycle ──
+  useEffect(() => {
+    const unsub1 = albionRealtime.onStatusChange((status) => {
+      setRtStatus(status)
+      if (status === 'connected') setDataMode(prev => prev === 'api-only' ? 'hybrid' : prev)
+      if (status === 'disconnected' || status === 'error') setDataMode('api-only')
+    })
+    const unsub2 = albionRealtime.onOrder((order) => {
+      setRecentOrders(prev => [order, ...prev].slice(0, 50))
+    })
+    const unsub3 = albionRealtime.onStatsChange((s) => {
+      setRtStats(s)
+      // Update BM radar on stats changes too (fires every 10s)
+      const rtPrices = albionRealtime.getPrices()
+      if (rtPrices.size > 0) setBmRadar(getBmBuyRadar(rtPrices))
+    })
+    albionRealtime.connect()
+    return () => { unsub1(); unsub2(); unsub3(); albionRealtime.disconnect() }
+  }, [])
+
+  // ── Sniffer connection lifecycle ──
+  useEffect(() => {
+    const unsub1 = snifferClient.onStatusChange((s) => setSnifferStatus(s))
+    const unsub2 = snifferClient.onStateChange((s) => setSnifferState(s ? { ...s } : null))
+    const unsub3 = snifferClient.onOrders((batch) => {
+      setSnifferFeed(prev => [{ time: Date.now(), type: batch.orderType, location: batch.locationName, count: batch.count }, ...prev].slice(0, 30))
+    })
+    snifferClient.connect()
+    return () => { unsub1(); unsub2(); unsub3(); snifferClient.disconnect() }
+  }, [])
+
+  // ── Real-time debounced recalculation ──
+  useEffect(() => {
+    if (dataMode === 'api-only') return
+    if (!items.length) return
+
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const unsub = albionRealtime.onPriceUpdate(() => {
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => {
+        const rtPrices = albionRealtime.getPrices()
+        // Update BM radar from NATS data
+        setBmRadar(getBmBuyRadar(rtPrices))
+        let merged
+        if (dataMode === 'hybrid' && validatedPricesRef.current.length) {
+          merged = mergeWithRealtime(validatedPricesRef.current, rtPrices)
+        } else {
+          merged = [...rtPrices.values()].map(realtimeToValidated)
+        }
+        if (merged.length === 0) return
+        const opps = findOpportunities(merged, items, taxMode)
+        setScan(s => ({ ...s, opportunities: opps, lastScanTime: new Date(), status: s.status === 'idle' ? 'complete' : s.status }))
+      }, REALTIME_DEBOUNCE_MS)
+    })
+    return () => { unsub(); if (timer) clearTimeout(timer) }
+  }, [dataMode, items, taxMode])
 
   // ── Scan logic ──
   const runScan = useCallback(async () => {
@@ -617,9 +740,15 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
     return Math.round(filtered.reduce((s, o) => s + o.profitPercent, 0) / filtered.length * 10) / 10
   }, [filtered])
 
-  // Data freshness tracking
-  const dataAge = scan.lastScanTime ? now - scan.lastScanTime.getTime() : null
-  const dataStatus: 'live' | 'aging' | 'stale' | 'none' = dataAge === null ? 'none'
+  // Data freshness tracking — include NATS last order time
+  const lastUpdate = Math.max(
+    scan.lastScanTime?.getTime() || 0,
+    rtStats.lastOrderTime || 0,
+  )
+  const dataAge = lastUpdate ? now - lastUpdate : null
+  const isRealtimeActive = rtStatus === 'connected' && rtStats.natsConnected && dataMode !== 'api-only'
+  const dataStatus: 'live' | 'aging' | 'stale' | 'none' = isRealtimeActive ? 'live'
+    : dataAge === null ? 'none'
     : dataAge < 120_000 ? 'live' : dataAge < 300_000 ? 'aging' : 'stale'
   const dataStatusColor = dataStatus === 'live' ? '#4caf50' : dataStatus === 'aging' ? '#ff9800' : dataStatus === 'stale' ? '#f44336' : '#666'
 
@@ -708,6 +837,34 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
               style={{ background: taxMode === 'premium' ? 'rgba(212,168,67,.15)' : 'rgba(255,255,255,.06)', fontSize: 10, color: taxMode === 'premium' ? GOLD : isDark ? '#aaa' : '#666' }}>
               {taxMode === 'premium' ? '★ Premium' : '☆ Normal'} ({taxMode === 'premium' ? '4%' : '6.5%'})
             </button>
+            {/* ── Sniffer connection indicator ── */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 8, background: snifferStatus === 'connected' ? 'rgba(76,175,80,.12)' : snifferStatus === 'connecting' ? 'rgba(255,152,0,.08)' : 'rgba(255,255,255,.04)', border: `1px solid ${snifferStatus === 'connected' ? 'rgba(76,175,80,.25)' : 'rgba(255,255,255,.06)'}` }}>
+              <div className="ao-live-dot" style={{
+                background: snifferStatus === 'connected' ? '#4caf50' : snifferStatus === 'connecting' ? '#ff9800' : '#666',
+                animation: snifferStatus === 'connected' ? 'aoLivePulse 2s ease infinite' : 'none',
+              }} />
+              <span style={{ fontSize: 9, fontWeight: 700, fontFamily: 'Outfit,sans-serif', letterSpacing: '.06em',
+                color: snifferStatus === 'connected' ? '#4caf50' : snifferStatus === 'connecting' ? '#ff9800' : '#666',
+              }}>
+                {snifferStatus === 'connected' ? '🎯 SNIFFER' : snifferStatus === 'connecting' ? '...' : 'OFFLINE'}
+              </span>
+            </div>
+
+            {/* ── Data mode toggle ── */}
+            <div style={{ display: 'flex', gap: 2, background: 'rgba(255,255,255,.04)', borderRadius: 6, padding: 2 }}>
+              {(['api-only', 'hybrid', 'realtime-only'] as DataMode[]).map(mode => (
+                <button key={mode} className="ao-mode-btn"
+                  disabled={mode !== 'api-only' && rtStatus !== 'connected'}
+                  onClick={() => setDataMode(mode)}
+                  style={{
+                    background: dataMode === mode ? (mode === 'realtime-only' ? 'rgba(76,175,80,.25)' : mode === 'hybrid' ? 'rgba(212,168,67,.2)' : 'rgba(255,255,255,.08)') : 'transparent',
+                    color: dataMode === mode ? (mode === 'realtime-only' ? '#4caf50' : mode === 'hybrid' ? GOLD : isDark ? '#ccc' : '#444') : '#666',
+                  }}>
+                  {mode === 'api-only' ? 'API' : mode === 'hybrid' ? 'Hibrit' : 'CANLI'}
+                </button>
+              ))}
+            </div>
+
             <button className="aob" onClick={() => setDark?.(!dark)}
               style={{ background: 'rgba(255,255,255,.06)', fontSize: 10, color: isDark ? '#aaa' : '#666', padding: '5px 10px' }}>
               {isDark ? '☀' : '☾'}
@@ -744,6 +901,23 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
             <StatBox label="Total Profit" value={filtered.length ? fmtSilver(totalProfit) : '—'} />
             <StatBox label="Avg Profit %" value={filtered.length ? `${avgPercent}%` : '—'} />
             <StatBox label="API Calls" value={String(albionApi.requestCount)} />
+            {snifferStatus === 'connected' && snifferState && (
+              <>
+                <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,.06)' }} />
+                <StatBox label="Caerleon Sell" value={String(snifferState.caerleonSellOrders)} color="#f44336" />
+                <StatBox label="BM Buy" value={String(snifferState.bmBuyOrders)} color="#4caf50" />
+                <StatBox label="Sniffer Fırsatlar" value={String(snifferState.opportunities.length)} color={GOLD} />
+                <StatBox label="Sayfa" value={String(snifferState.scanPages)} />
+              </>
+            )}
+            {rtStatus === 'connected' && snifferStatus !== 'connected' && (
+              <>
+                <div style={{ width: 1, height: 24, background: 'rgba(255,255,255,.06)' }} />
+                <StatBox label="NATS Orders" value={rtStats.ordersRelevant ? `${fmtSilver(rtStats.ordersRelevant)}` : '—'} color="#4caf50" />
+                <StatBox label="Live Prices" value={String(rtStats.priceEntries)} color="#4caf50" />
+                <StatBox label="Last Order" value={rtStats.lastOrderTime ? timeAgo(new Date(rtStats.lastOrderTime)) : '—'} />
+              </>
+            )}
           </div>
 
           {/* ── Data Status Bar ── */}
@@ -815,134 +989,335 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
             </div>
           </div>
 
-          {/* ── BM FOCUS — Dedicated Black Market Section ── */}
-          {scan.status === 'complete' && bmFocus.totalBuying > 0 && (
-            <div className="aop" style={{ marginBottom: 12, borderColor: 'rgba(212,168,67,.25)', borderWidth: 1 }}>
+          {/* ══════ SNIFFER PANEL ══════ */}
+          {snifferStatus === 'connected' && (
+            <div className="aop" style={{ marginBottom: 12, borderColor: 'rgba(76,175,80,.3)', borderWidth: 1 }}>
               <div className="aot" style={{ gap: 8 }}>
-                <span style={{ color: GOLD }}>🏴</span> CAERLEON → BM — Instant Flip Arbitrage
-                <span style={{ fontSize: 8, color: '#4caf50', fontWeight: 700, padding: '1px 6px', background: 'rgba(76,175,80,.1)', borderRadius: 4, border: '1px solid rgba(76,175,80,.15)' }}>INSTANT SELL</span>
+                <span style={{ color: '#4caf50', fontSize: 12 }}>🎯</span> SNIFFER — Kendi Market Verilerin
+                <span style={{ fontSize: 8, color: '#4caf50', fontWeight: 700, padding: '1px 6px', background: 'rgba(76,175,80,.1)', borderRadius: 4, border: '1px solid rgba(76,175,80,.15)' }}>
+                  CANLI
+                </span>
                 <span style={{ marginLeft: 'auto', fontSize: 9, color: '#888', fontFamily: 'Outfit,sans-serif' }}>
-                  <strong style={{ color: GOLD }}>{bmFocus.totalBuying}</strong> items with active BM buy orders
+                  {snifferState?.locationName && <><span style={{ color: GOLD }}>📍 {snifferState.locationName}</span> · </>}
+                  Sell: <strong style={{ color: '#f44336' }}>{snifferState?.caerleonSellOrders ?? 0}</strong> · Buy: <strong style={{ color: '#4caf50' }}>{snifferState?.bmBuyOrders ?? 0}</strong> · Sayfa: <strong>{snifferState?.scanPages ?? 0}</strong>
                 </span>
               </div>
 
-              {/* Freshness filter toggle + warning */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
-                <button className="aob" onClick={() => setBmFreshOnly(!bmFreshOnly)}
-                  style={{
-                    background: bmFreshOnly ? 'rgba(76,175,80,.2)' : 'rgba(255,152,0,.15)',
-                    fontSize: 9, padding: '3px 10px',
-                    color: bmFreshOnly ? '#4caf50' : '#ff9800',
-                    border: `1px solid ${bmFreshOnly ? 'rgba(76,175,80,.3)' : 'rgba(255,152,0,.3)'}`,
-                  }}>
-                  {bmFreshOnly ? '✓ Fresh Only (≤10m)' : '⚠ All Data (incl. stale)'}
-                </button>
-                <span style={{ fontSize: 8, color: '#888', fontFamily: 'Outfit,sans-serif' }}>
-                  {bmFreshOnly
-                    ? <>Showing <strong style={{ color: '#4caf50' }}>{bmFocus.totalBuying}</strong> items with data {'<'} 10min old — <span style={{ color: '#666' }}>{bmFocus.totalAll - bmFocus.freshCount} older hidden</span></>
-                    : <>⚠ Showing ALL {bmFocus.totalBuying} items — <strong style={{ color: '#f44336' }}>stale data may show sold items!</strong></>
+              {/* How-to guide (collapsible) */}
+              {(!snifferState || snifferState.scanPages === 0) && (
+                <div style={{ fontSize: 9, color: '#888', marginBottom: 8, fontFamily: 'Outfit,sans-serif', lineHeight: 1.6, padding: '8px 10px', background: isDark ? 'rgba(76,175,80,.04)' : 'rgba(76,175,80,.06)', borderRadius: 5, border: '1px solid rgba(76,175,80,.1)' }}>
+                  <strong style={{ color: '#4caf50' }}>Sniffer aktif!</strong> Şimdi oyuna git ve market'i aç:
+                  <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span>1️⃣ Caerleon marketi aç → item sayfalarını gez (sell order yakalanır)</span>
+                    <span>2️⃣ Black Market'e git → item sayfalarını gez (buy order yakalanır)</span>
+                    <span>3️⃣ Arbitrage fırsatları otomatik hesaplanır</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Sniffer Feed */}
+              <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, marginBottom: showSnifferFeed ? 6 : 0 }} onClick={() => setShowSnifferFeed(!showSnifferFeed)}>
+                <div className="ao-live-dot" style={{ background: '#4caf50', animation: snifferFeed.length ? 'aoLivePulse 1.5s ease infinite' : 'none' }} />
+                <span style={{ fontSize: 9, fontWeight: 600, color: '#4caf50' }}>Yakalanan Veriler</span>
+                <span style={{ fontSize: 8, color: '#888' }}>{snifferFeed.length} paket</span>
+                <span style={{ marginLeft: 'auto', fontSize: 9, color: '#666' }}>{showSnifferFeed ? '▲' : '▼'}</span>
+              </div>
+              {showSnifferFeed && snifferFeed.length > 0 && (
+                <div style={{ maxHeight: 140, overflowY: 'auto', background: isDark ? 'rgba(0,0,0,.2)' : 'rgba(0,0,0,.03)', borderRadius: 6, padding: 4, marginBottom: 8 }}>
+                  {snifferFeed.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 8px', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.02)'}`, fontSize: 10 }}>
+                      <span style={{ fontSize: 8, color: '#555', fontVariantNumeric: 'tabular-nums', minWidth: 50 }}>
+                        {new Date(f.time).toLocaleTimeString()}
+                      </span>
+                      <span style={{ fontSize: 8, fontWeight: 700, minWidth: 32, textAlign: 'center', color: f.type === 'sell' ? '#f44336' : '#4caf50', background: f.type === 'sell' ? 'rgba(244,67,54,.08)' : 'rgba(76,175,80,.08)', padding: '1px 4px', borderRadius: 3 }}>
+                        {f.type === 'sell' ? 'SELL' : 'BUY'}
+                      </span>
+                      <span style={{ color: CITY_COLORS[f.location] || '#888', fontSize: 9, fontWeight: 600 }}>{f.location}</span>
+                      <span style={{ color: '#888' }}>{f.count} order</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Sniffer Opportunities */}
+              {snifferState && snifferState.opportunities.length > 0 && (() => {
+                const allOpps = snifferState.opportunities
+                const filteredOpps = allOpps.filter(opp => {
+                  if (snifferMinProfit > 0 && opp.profit < snifferMinProfit) return false
+                  if (snifferMinPct > 0 && opp.profitPercent < snifferMinPct) return false
+                  if (snifferSearch) {
+                    const q = snifferSearch.toLowerCase()
+                    const name = (opp.itemName || opp.itemId || '').toLowerCase()
+                    if (!name.includes(q) && !opp.itemId.toLowerCase().includes(q)) return false
                   }
-                </span>
-                <span style={{ marginLeft: 'auto', fontSize: 9, color: GOLD, fontFamily: 'Outfit,sans-serif', fontWeight: 600 }}>
-                  Profit: {fmtSilver(bmFocus.totalProfit)}
-                </span>
-              </div>
-
-              <div style={{ fontSize: 8, color: '#888', marginBottom: 8, fontFamily: 'Outfit,sans-serif', lineHeight: 1.5, padding: '5px 8px', background: isDark ? 'rgba(255,152,0,.04)' : 'rgba(255,152,0,.06)', borderRadius: 5, border: '1px solid rgba(255,152,0,.1)' }}>
-                <strong style={{ color: '#ff9800' }}>⚠ Data comes from players with Albion Data Client</strong> — prices go stale when nobody checks.
-                Items {'>'} 10min old may already be sold. Fresh Only mode shows only {'<'} 10min data.
-                <br />
-                <span style={{ color: '#666' }}>
-                  ✓ Both sides verified: sell order in source + BM buy order confirmed.{' '}
-                  Quality shown as <span style={{ color: QUALITY_COLORS[1] }}>NQ</span>=Normal, <span style={{ color: QUALITY_COLORS[2] }}>GQ</span>=Good, <span style={{ color: QUALITY_COLORS[3] }}>OQ</span>=Outstanding, <span style={{ color: QUALITY_COLORS[4] }}>EQ</span>=Excellent, <span style={{ color: QUALITY_COLORS[5] }}>MQ</span>=Masterpiece.
-                </span>
-              </div>
-
-              {/* Caerleon → BM compact table */}
-              {bmFocus.caerleon.length > 0 && (
-                <>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: '#e53935', fontFamily: 'Outfit,sans-serif', margin: '8px 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    🏰 Caerleon → BM
-                    <span style={{ fontSize: 8, color: '#e53935', padding: '1px 5px', background: 'rgba(229,57,53,.08)', borderRadius: 3, fontWeight: 600 }}>0% RISK</span>
-                    <span style={{ fontSize: 8, color: '#888', fontWeight: 400 }}>— walk to BM, instant flip, no travel</span>
-                    <span style={{ marginLeft: 'auto', color: '#888', fontWeight: 400, fontSize: 8 }}>{bmFocus.caerleon.length} flips</span>
+                  return true
+                })
+                return (
+                <div style={{ marginTop: 4 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: GOLD, fontFamily: 'Outfit,sans-serif', letterSpacing: '.06em' }}>
+                      ★ {filteredOpps.length}{filteredOpps.length !== allOpps.length ? `/${allOpps.length}` : ''} ARBITRAGE FIRSATI
+                    </span>
+                    <label style={{ fontSize: 8, color: '#888', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      Min Kâr
+                      <input className="ao-input" type="number" value={snifferMinProfit || ''} placeholder="0" onChange={e => setSnifferMinProfit(Number(e.target.value) || 0)} style={{ width: 60 }} />
+                    </label>
+                    <label style={{ fontSize: 8, color: '#888', display: 'flex', alignItems: 'center', gap: 3 }}>
+                      Min %
+                      <input className="ao-input" type="number" value={snifferMinPct || ''} placeholder="0" onChange={e => setSnifferMinPct(Number(e.target.value) || 0)} style={{ width: 45 }} />
+                    </label>
+                    <input className="ao-input" placeholder="Item ara..." value={snifferSearch} onChange={e => setSnifferSearch(e.target.value)} style={{ width: 110, fontSize: 8 }} />
                   </div>
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
                       <thead>
                         <tr style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.08)'}` }}>
-                          <th style={{ textAlign: 'left', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>ITEM</th>
-                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>Q</th>
-                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>BUY @ CAERLEON</th>
-                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>SELL @ BM</th>
-                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>PROFIT</th>
-                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>%</th>
-                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>SELL AGE</th>
-                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>BM AGE</th>
-                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>MATCH</th>
+                          <th style={{ textAlign: 'left', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600 }}>ITEM</th>
+                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600 }}>KAL</th>
+                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#f44336', fontWeight: 700 }}>CAERLEON AL</th>
+                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#4caf50', fontWeight: 700 }}>BM NET</th>
+                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: GOLD, fontWeight: 700 }}>NET KÂR</th>
+                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#888', fontWeight: 600 }}>%</th>
+                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#888', fontWeight: 600 }}>ADET</th>
+                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#888', fontWeight: 600 }}>TOPLAM</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {(showAllBm ? bmFocus.caerleon : bmFocus.caerleon.slice(0, 15)).map((o, i) => (
-                          <tr key={`bmf-c-${i}`} className="ao-row" style={{ fontSize: 10, borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.03)'}` }}>
-                            <td style={{ padding: '4px 6px', fontWeight: 500, maxWidth: 220 }}>
+                        {filteredOpps.slice(0, 50).map((opp, i) => {
+                          const netBm = opp.bmPrice - opp.taxAmount
+                          return (
+                          <tr key={`sopp-${i}`} className="ao-row" style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.03)'}` }}>
+                            <td style={{ padding: '5px 6px', fontWeight: 500, maxWidth: 260 }}>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {o.displayName} <span style={{ color: '#666', fontSize: 8 }}>T{o.tier}{o.enchantment ? `.${o.enchantment}` : ''}</span>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  {displayName(opp.itemId)} <span style={{ color: '#666', fontSize: 8 }}>{opp.itemId.match(/^T(\d)/)?.[1] ? `T${opp.itemId.match(/^T(\d)/)?.[1]}` : ''}{opp.itemId.match(/@(\d)$/)?.[1] ? `.${opp.itemId.match(/@(\d)$/)?.[1]}` : ''}</span>
+                                  {bmCategory(opp.itemId) && <span style={{ fontSize: 7, color: '#888', background: 'rgba(255,255,255,.05)', padding: '1px 4px', borderRadius: 3, border: '1px solid rgba(255,255,255,.06)' }}>{bmCategory(opp.itemId)}</span>}
                                 </span>
-                                <span
-                                  title="Click to copy — search this in Albion marketplace"
-                                  onClick={() => { navigator.clipboard.writeText(gameSearchName(o.itemId)) }}
-                                  style={{ fontSize: 8, color: GOLD, cursor: 'pointer', opacity: 0.7, fontFamily: 'Outfit,sans-serif', letterSpacing: '.02em' }}
-                                >
-                                  🔍 {gameSearchName(o.itemId)}
+                                <span title="Tıkla → item adını kopyala" onClick={(e) => {
+                                  const name = gameSearchName(opp.itemId)
+                                  const el = e.currentTarget
+                                  copyText(name)
+                                  el.textContent = '✓ Kopyalandı!'
+                                  el.style.color = '#4caf50'
+                                  setTimeout(() => { el.textContent = '📋 ' + name; el.style.color = GOLD }, 1500)
+                                }} style={{ fontSize: 9, color: GOLD, cursor: 'pointer', opacity: 0.85, fontFamily: 'Outfit,sans-serif', padding: '1px 4px', borderRadius: 3, background: 'rgba(212,168,67,.08)', border: '1px solid rgba(212,168,67,.15)', userSelect: 'all' }}>
+                                  📋 {gameSearchName(opp.itemId)}
                                 </span>
                               </div>
                             </td>
-                            <td style={{ padding: '4px 6px', textAlign: 'center' }}><QualityBadge q={o.quality} /></td>
-                            <td style={{ padding: '4px 6px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtSilver(o.sourcePrice)}</td>
-                            <td style={{ padding: '4px 6px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
-                              <span style={{ color: '#4caf50' }}>{fmtSilver(o.destPrice)}</span>
+                            <td style={{ padding: '5px 6px', textAlign: 'center' }}><QualityBadge q={opp.qualityLevel} /></td>
+                            <td style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 700, color: '#f44336', fontVariantNumeric: 'tabular-nums' }}>
+                              {fmtSilver(opp.caerleonPrice)}
+                              <span style={{ fontSize: 7, color: '#888', marginLeft: 3 }}>x{opp.caerleonAmount}</span>
+                              {(opp as any).caerleonSource === 'api' && <span style={{ fontSize: 7, color: '#ff9800', marginLeft: 3, padding: '0 3px', borderRadius: 2, background: 'rgba(255,152,0,.12)', border: '1px solid rgba(255,152,0,.2)' }} title="Caerleon fiyatı API'den — eski olabilir!">API</span>}
                             </td>
-                            <td style={{ padding: '4px 6px', textAlign: 'right', fontWeight: 700, color: GOLD, fontVariantNumeric: 'tabular-nums' }}>{fmtSilver(o.netProfit)}</td>
-                            <td style={{ padding: '4px 6px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: o.profitPercent >= 30 ? '#4caf50' : o.profitPercent >= 15 ? GOLD : isDark ? '#aaa' : '#666' }}>{o.profitPercent}%</td>
-                            <td style={{ padding: '4px 6px', textAlign: 'center' }}>
-                              <span style={{ fontSize: 8, color: getTimestampColor(o.sourceDate), fontWeight: 600 }}>{timeAgo(o.sourceDate)}</span>
+                            <td style={{ padding: '5px 6px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                              <span style={{ fontWeight: 700, color: '#4caf50' }}>{fmtSilver(netBm)}</span>
+                              <span style={{ fontSize: 7, color: '#888', marginLeft: 3 }}>x{opp.bmAmount}</span>
+                              <br />
+                              <span style={{ fontSize: 7, color: '#666', fontWeight: 400 }} title={`Brüt: ${opp.bmPrice.toLocaleString()} - Vergi: ${opp.taxAmount.toLocaleString()} = Net: ${netBm.toLocaleString()}`}>
+                                {fmtSilver(opp.bmPrice)} - {fmtSilver(opp.taxAmount)} vergi
+                              </span>
                             </td>
-                            <td style={{ padding: '4px 6px', textAlign: 'center' }}>
-                              <span style={{ fontSize: 8, color: getTimestampColor(o.destDate), fontWeight: 600 }}>{timeAgo(o.destDate)}</span>
+                            <td style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 700, color: GOLD, fontVariantNumeric: 'tabular-nums', fontSize: 11 }}>
+                              +{fmtSilver(opp.profit)}
                             </td>
-                            <td style={{ padding: '4px 6px', textAlign: 'center' }}>
-                              {(() => {
-                                const srcAge = now - o.sourceDate.getTime()
-                                const dstAge = now - o.destDate.getTime()
-                                const bothFresh = srcAge < 3600_000 && dstAge < 3600_000
-                                const bothRecent = srcAge < 86400_000 && dstAge < 86400_000
-                                return bothFresh
-                                  ? <span style={{ color: '#4caf50', fontSize: 8, fontWeight: 700 }}>✓✓ PAIRED</span>
-                                  : bothRecent
-                                  ? <span style={{ color: '#ff9800', fontSize: 8, fontWeight: 700 }}>✓~ CHECK</span>
-                                  : <span style={{ color: '#f44336', fontSize: 8, fontWeight: 700 }}>⚠ STALE</span>
-                              })()}
+                            <td style={{ padding: '5px 6px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: opp.profitPercent >= 20 ? '#4caf50' : opp.profitPercent >= 10 ? '#ff9800' : '#888' }}>
+                              {opp.profitPercent.toFixed(1)}%
+                            </td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: '#888' }}>
+                              {opp.maxAmount}
+                            </td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: GOLD }}>
+                              {fmtSilver(opp.totalProfit)}
                             </td>
                           </tr>
-                        ))}
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>
-                  {bmFocus.caerleon.length > 15 && (
-                    <button className="aob" onClick={() => setShowAllBm(!showAllBm)}
-                      style={{ background: 'rgba(212,168,67,.1)', fontSize: 9, padding: '3px 12px', marginTop: 6, color: GOLD }}>
-                      {showAllBm ? `Show Top 15 ▲` : `Show All ${bmFocus.caerleon.length} ▼`}
-                    </button>
-                  )}
-                </>
+                </div>
+                )
+              })()}
+
+              {/* No opportunities yet */}
+              {snifferState && snifferState.opportunities.length === 0 && snifferState.scanPages > 0 && (
+                <div style={{ padding: 12, textAlign: 'center', fontSize: 10, color: '#888', fontFamily: 'Outfit,sans-serif' }}>
+                  {snifferState.caerleonSellOrders > 0 && snifferState.bmBuyOrders > 0
+                    ? 'Caerleon ve BM verileri var ama kârlı fırsat bulunamadı. Daha fazla item gez.'
+                    : snifferState.caerleonSellOrders > 0
+                    ? 'Caerleon verileri yakalandı. Şimdi Black Market\'e git ve item\'ları gez.'
+                    : snifferState.bmBuyOrders > 0
+                    ? 'BM verileri yakalandı. Şimdi Caerleon\'a git ve item\'ları gez.'
+                    : 'Henüz market verisi yakalanmadı. Oyunda marketi aç ve item\'ları gez.'}
+                </div>
               )}
 
-              {bmFocus.caerleon.length === 0 && (
-                <div style={{ padding: 16, textAlign: 'center', fontSize: 10, color: '#888' }}>
-                  No profitable BM buy orders found right now. BM orders may be filled. Try scanning again in a few minutes.
+              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                <button className="aob" onClick={() => snifferClient.requestClear()}
+                  style={{ background: 'rgba(244,67,54,.1)', fontSize: 8, padding: '2px 8px', color: '#f44336' }}>
+                  🗑 Temizle
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Sniffer offline notice */}
+          {snifferStatus !== 'connected' && (
+            <div className="aop" style={{ marginBottom: 12, borderColor: 'rgba(255,152,0,.2)', padding: '10px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div className="ao-live-dot" style={{ background: snifferStatus === 'connecting' ? '#ff9800' : '#666', animation: snifferStatus === 'connecting' ? 'aoLivePulse 2s ease infinite' : 'none' }} />
+                <span style={{ fontSize: 10, fontWeight: 600, color: snifferStatus === 'connecting' ? '#ff9800' : '#888', fontFamily: 'Outfit,sans-serif' }}>
+                  {snifferStatus === 'connecting' ? 'Sniffer bağlanıyor...' : 'Sniffer çalışmıyor'}
+                </span>
+                <span style={{ fontSize: 9, color: '#666', fontFamily: 'Outfit,sans-serif' }}>
+                  Başlatmak için: <code style={{ fontSize: 8, background: 'rgba(255,255,255,.06)', padding: '1px 4px', borderRadius: 3 }}>cd tools/albion-sniffer && node sniffer.mjs</code>
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* ── Live Order Feed ── */}
+          {rtStatus === 'connected' && (
+            <div className="aop" style={{ marginBottom: 12, padding: showLiveFeed ? '14px 16px' : '8px 16px', transition: 'padding .2s' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => setShowLiveFeed(!showLiveFeed)}>
+                <div className="ao-live-dot" style={{
+                  background: rtStats.natsConnected ? '#4caf50' : '#ff9800',
+                  animation: rtStats.natsConnected && recentOrders.length > 0 ? 'aoLivePulse 1.5s ease infinite' : 'none',
+                }} />
+                <span style={{ fontSize: 10, fontWeight: 700, fontFamily: 'Outfit,sans-serif', color: '#4caf50', letterSpacing: '.04em' }}>
+                  Live Feed
+                </span>
+                <span style={{ fontSize: 9, color: '#888', fontFamily: 'Outfit,sans-serif' }}>
+                  {rtStats.ordersReceived > 0 ? `${rtStats.ordersReceived} orders received` : 'Waiting for orders...'}
+                  {dataMode !== 'api-only' && <span className="ao-canli-badge" style={{ marginLeft: 6 }}>CANLI</span>}
+                </span>
+                <span style={{ marginLeft: 'auto', fontSize: 9, color: '#666' }}>{showLiveFeed ? '▲' : '▼'}</span>
+              </div>
+              {showLiveFeed && (
+                <div className="ao-live-feed" style={{ marginTop: 8, background: isDark ? 'rgba(0,0,0,.2)' : 'rgba(0,0,0,.03)', borderRadius: 6, padding: 4 }}>
+                  {recentOrders.length === 0 && (
+                    <div style={{ padding: 12, textAlign: 'center', fontSize: 10, color: '#666' }}>
+                      Waiting for Caerleon/BM orders from NATS stream...
+                    </div>
+                  )}
+                  {recentOrders.slice(0, 20).map((o, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 8px', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.02)'}`, fontSize: 10 }}>
+                      <span style={{ fontSize: 8, color: '#555', fontVariantNumeric: 'tabular-nums', minWidth: 50 }}>
+                        {new Date(o.timestamp).toLocaleTimeString()}
+                      </span>
+                      <span style={{
+                        fontSize: 8, fontWeight: 700, minWidth: 32, textAlign: 'center',
+                        color: o.side === 'sell' ? '#f44336' : '#4caf50',
+                        background: o.side === 'sell' ? 'rgba(244,67,54,.08)' : 'rgba(76,175,80,.08)',
+                        padding: '1px 4px', borderRadius: 3,
+                      }}>
+                        {o.side === 'sell' ? 'SELL' : 'BUY'}
+                      </span>
+                      <CityBadge city={o.city} />
+                      <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 10 }}>
+                        {displayName(o.itemId)}
+                      </span>
+                      <span style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: GOLD }}>
+                        {fmtSilver(o.price)}
+                      </span>
+                      {o.amount && <span style={{ fontSize: 8, color: '#666' }}>x{o.amount}</span>}
+                    </div>
+                  ))}
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* ── BM BUY RADAR — What BM is currently buying ── */}
+          {bmRadar.length > 0 && (
+            <div className="aop" style={{ marginBottom: 12, borderColor: 'rgba(229,57,53,.25)', borderWidth: 1 }}>
+              <div className="aot" style={{ gap: 8 }}>
+                <span style={{ color: '#e53935' }}>📡</span> BM ALIŞ RADARI — Black Market Şu An Ne Alıyor?
+                <span style={{ fontSize: 8, color: '#e53935', fontWeight: 700, padding: '1px 6px', background: 'rgba(229,57,53,.1)', borderRadius: 4, border: '1px solid rgba(229,57,53,.15)' }}>CANLI NATS</span>
+                <span style={{ marginLeft: 'auto', fontSize: 9, color: '#888', fontFamily: 'Outfit,sans-serif' }}>
+                  <strong style={{ color: '#e53935' }}>{bmRadar.length}</strong> aktif buy order
+                </span>
+              </div>
+
+              <div style={{ fontSize: 8, color: '#888', marginBottom: 8, fontFamily: 'Outfit,sans-serif', lineHeight: 1.6, padding: '6px 10px', background: isDark ? 'rgba(229,57,53,.04)' : 'rgba(229,57,53,.06)', borderRadius: 5, border: '1px solid rgba(229,57,53,.1)' }}>
+                <strong style={{ color: '#4caf50' }}>BM bu itemleri satın almak istiyor.</strong>{' '}
+                Caerleon markette bu fiyatın altına bulursan kâr edersin.
+                <br />
+                <span style={{ color: '#666' }}>
+                  📋 Item ismini tıklayarak kopyala → oyun içi markette yapıştır → fiyatı kontrol et.
+                </span>
+              </div>
+
+              {/* Sort buttons */}
+              <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+                {([['price', 'En Pahalı'], ['age', 'En Yeni']] as [typeof bmRadarSort, string][]).map(([key, label]) => (
+                  <button key={key} className="aob" onClick={() => setBmRadarSort(key)}
+                    style={{ background: bmRadarSort === key ? 'rgba(229,57,53,.15)' : 'rgba(255,255,255,.04)', fontSize: 8, padding: '2px 8px', color: bmRadarSort === key ? '#e53935' : '#666' }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.08)'}` }}>
+                      <th style={{ textAlign: 'left', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>ITEM</th>
+                      <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>KALİTE</th>
+                      <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#4caf50', fontWeight: 700, letterSpacing: '.08em' }}>BM ALIŞ FİYATI</th>
+                      <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>ADET</th>
+                      <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>GÖRÜLDÜ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const sorted = [...bmRadar]
+                      if (bmRadarSort === 'age') sorted.sort((a, b) => b.bmBuyDate - a.bmBuyDate)
+                      // default 'price' is already sorted by price desc
+                      return (showAllBm ? sorted : sorted.slice(0, 30)).map((o, i) => {
+                        const bmAge = now - o.bmBuyDate
+                        return (
+                          <tr key={`bmr-${i}`} className="ao-row" style={{ fontSize: 10, borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.03)'}`, opacity: bmAge > 30 * 60 * 1000 ? 0.4 : 1 }}>
+                            <td style={{ padding: '5px 6px', fontWeight: 500, maxWidth: 260 }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {displayName(o.itemId)} <span style={{ color: '#666', fontSize: 8 }}>{o.itemId.match(/^T(\d)/)?.[1] ? `T${o.itemId.match(/^T(\d)/)?.[1]}` : ''}{o.itemId.match(/@(\d)$/)?.[1] ? `.${o.itemId.match(/@(\d)$/)?.[1]}` : ''}</span>
+                                </span>
+                                <span
+                                  title="Kopyala — Albion markette ara"
+                                  onClick={(e) => { copyText(gameSearchName(o.itemId)); const el = e.currentTarget; el.textContent = '✓ Kopyalandı!'; el.style.color = '#4caf50'; setTimeout(() => { el.textContent = '📋 ' + gameSearchName(o.itemId); el.style.color = GOLD }, 1200) }}
+                                  style={{ fontSize: 8, color: GOLD, cursor: 'pointer', opacity: 0.7, fontFamily: 'Outfit,sans-serif', letterSpacing: '.02em' }}
+                                >
+                                  📋 {gameSearchName(o.itemId)}
+                                </span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center' }}><QualityBadge q={o.quality} /></td>
+                            <td style={{ padding: '5px 6px', textAlign: 'right', fontWeight: 700, color: '#4caf50', fontVariantNumeric: 'tabular-nums', fontSize: 11 }}>
+                              {fmtSilver(o.bmBuyPrice)}
+                            </td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: '#888' }}>
+                              {o.bmBuyAmount || '—'}
+                            </td>
+                            <td style={{ padding: '5px 6px', textAlign: 'center' }}>
+                              <span style={{ fontSize: 8, color: bmAge < 300_000 ? '#4caf50' : bmAge < 1800_000 ? '#ff9800' : '#f44336', fontWeight: 600 }}>
+                                {bmAge < 60_000 ? `${Math.round(bmAge / 1000)}s` : bmAge < 3600_000 ? `${Math.round(bmAge / 60_000)}dk` : `${Math.round(bmAge / 3600_000)}sa`}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+              {bmRadar.length > 30 && (
+                <button className="aob" onClick={() => setShowAllBm(!showAllBm)}
+                  style={{ background: 'rgba(229,57,53,.1)', fontSize: 9, padding: '3px 12px', marginTop: 6, color: '#e53935' }}>
+                  {showAllBm ? `Top 30 Göster ▲` : `Tümünü Göster (${bmRadar.length}) ▼`}
+                </button>
               )}
             </div>
           )}
@@ -1130,7 +1505,7 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
                           </span>
                           <span
                             title="Kopyalamak için tıkla — Albion marketinde bunu ara"
-                            onClick={() => { navigator.clipboard.writeText(gameSearchName(o.itemId)) }}
+                            onClick={(e) => { copyText(gameSearchName(o.itemId)); const el = e.currentTarget; el.textContent = '✓ Kopyalandı!'; el.style.color = '#4caf50'; setTimeout(() => { el.textContent = '🔍 ' + gameSearchName(o.itemId); el.style.color = GOLD }, 1200) }}
                             style={{ fontSize: 8, color: GOLD, cursor: 'pointer', opacity: 0.7, fontFamily: 'Outfit,sans-serif' }}
                           >
                             🔍 {gameSearchName(o.itemId)}
@@ -1251,7 +1626,7 @@ function TradeCard({ t, i, isDark, taxMode, now }: { t: ArbitrageOpportunity; i:
           <QualityBadge q={t.quality} />
           <span
             title="Click to copy — search this in Albion marketplace"
-            onClick={() => { navigator.clipboard.writeText(gameSearchName(t.itemId)) }}
+            onClick={(e) => { copyText(gameSearchName(t.itemId)); const el = e.currentTarget; el.textContent = '✓ Kopyalandı!'; el.style.color = '#4caf50'; setTimeout(() => { el.textContent = '🔍 ' + gameSearchName(t.itemId); el.style.color = GOLD }, 1200) }}
             style={{ fontSize: 8, color: GOLD, cursor: 'pointer', opacity: 0.65, fontFamily: 'Outfit,sans-serif', background: 'rgba(212,168,67,.08)', padding: '1px 5px', borderRadius: 3, border: '1px solid rgba(212,168,67,.15)' }}
           >
             🔍 {gameSearchName(t.itemId)}
