@@ -64,57 +64,76 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       : []),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       // Strava OAuth: look up or create member + encrypted strava_connection
       if (account?.provider === "strava" && account.access_token) {
-        const athleteId = Number(user.id);
+        try {
+          // Get athlete ID from multiple sources (provider may vary)
+          const rawId =
+            account.providerAccountId ||
+            (profile as Record<string, unknown>)?.id ||
+            user.id;
+          const athleteId = Number(rawId);
 
-        const encrypted = encryptTokenPair(
-          account.access_token,
-          account.refresh_token!,
-        );
+          if (isNaN(athleteId)) {
+            console.error("[auth] Strava sign-in: could not resolve athlete ID", {
+              providerAccountId: account.providerAccountId,
+              profileId: (profile as Record<string, unknown>)?.id,
+              userId: user.id,
+            });
+            return false;
+          }
 
-        // Check if this Strava athlete is already linked
-        const [existingConn] = await db
-          .select({ memberId: stravaConnections.memberId })
-          .from(stravaConnections)
-          .where(eq(stravaConnections.stravaAthleteId, athleteId))
-          .limit(1);
+          const encrypted = encryptTokenPair(
+            account.access_token,
+            account.refresh_token!,
+          );
 
-        if (existingConn) {
-          // Returning user — update tokens, reuse member
-          await db
-            .update(stravaConnections)
-            .set({
+          // Check if this Strava athlete is already linked
+          const [existingConn] = await db
+            .select({ memberId: stravaConnections.memberId })
+            .from(stravaConnections)
+            .where(eq(stravaConnections.stravaAthleteId, athleteId))
+            .limit(1);
+
+          if (existingConn) {
+            // Returning user — update tokens, reuse member
+            await db
+              .update(stravaConnections)
+              .set({
+                ...encrypted,
+                tokenExpiresAt: account.expires_at!,
+                updatedAt: new Date(),
+              })
+              .where(eq(stravaConnections.stravaAthleteId, athleteId));
+            user.id = existingConn.memberId;
+          } else {
+            // New user via Strava — create member + connection
+            const [newMember] = await db
+              .insert(members)
+              .values({
+                name: user.name || "Runner",
+                // Strava doesn't expose email — use placeholder
+                email: `strava_${athleteId}@placeholder.local`,
+                image: user.image,
+                role: "member",
+                privacy: "private",
+              })
+              .returning({ id: members.id });
+
+            await db.insert(stravaConnections).values({
+              memberId: newMember.id,
+              stravaAthleteId: athleteId,
               ...encrypted,
               tokenExpiresAt: account.expires_at!,
-              updatedAt: new Date(),
-            })
-            .where(eq(stravaConnections.stravaAthleteId, athleteId));
-          user.id = existingConn.memberId;
-        } else {
-          // New user via Strava — create member + connection
-          const [newMember] = await db
-            .insert(members)
-            .values({
-              name: user.name || "Runner",
-              // Strava doesn't expose email — use placeholder
-              email: `strava_${athleteId}@placeholder.local`,
-              image: user.image,
-              role: "member",
-              privacy: "private",
-            })
-            .returning({ id: members.id });
+              scopes: "read,activity:read_all",
+            });
 
-          await db.insert(stravaConnections).values({
-            memberId: newMember.id,
-            stravaAthleteId: athleteId,
-            ...encrypted,
-            tokenExpiresAt: account.expires_at!,
-            scopes: "read,activity:read_all",
-          });
-
-          user.id = newMember.id;
+            user.id = newMember.id;
+          }
+        } catch (err) {
+          console.error("[auth] Strava sign-in callback error:", err);
+          return false;
         }
       }
       return true;
