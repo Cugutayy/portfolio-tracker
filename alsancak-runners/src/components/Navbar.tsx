@@ -6,12 +6,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navLinks = [
-  { label: "HOME", href: "/" },
-  { label: "RUNS", href: "/runs" },
-  { label: "COLLABS", href: "/collaborations" },
-  { label: "GALLERY", href: "/gallery" },
-  { label: "ABOUT", href: "/about" },
-  { label: "JOIN", href: "/join" },
+  { label: "ANA SAYFA", href: "/" },
+  { label: "ETKİNLİKLER", href: "/etkinlikler" },
+  { label: "TOPLULUK", href: "/topluluk" },
+  { label: "ROTALAR", href: "/routes" },
+  { label: "GALERİ", href: "/gallery" },
+  { label: "HAKKIMIZDA", href: "/about" },
+  { label: "KATIL", href: "/join" },
 ];
 
 export default function Navbar() {

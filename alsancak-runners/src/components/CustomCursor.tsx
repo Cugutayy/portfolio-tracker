@@ -83,13 +83,25 @@ export default function CustomCursor() {
 
     const handleLeave = () => {
       hidden = true;
+      hovering = false;
       if (dotRef.current) dotRef.current.style.opacity = "0";
-      if (ringRef.current) ringRef.current.style.opacity = "0";
+      if (ringRef.current) {
+        ringRef.current.style.opacity = "0";
+        ringRef.current.style.width = "0px";
+        ringRef.current.style.height = "0px";
+      }
     };
 
-    const handleEnter = () => {
+    const handleEnter = (e: MouseEvent) => {
+      // Use the mouse event coordinates to properly reinitialize position
+      if (dotRef.current) {
+        dotRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+        dotRef.current.style.opacity = "1";
+      }
+      if (ringRef.current) {
+        ringRef.current.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+      }
       hidden = false;
-      if (dotRef.current) dotRef.current.style.opacity = hovering ? "0" : "1";
     };
 
     window.addEventListener("mousemove", moveCursor, { passive: true });

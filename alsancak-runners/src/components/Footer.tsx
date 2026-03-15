@@ -11,32 +11,37 @@ export default function Footer() {
               ALSANCAK<span className="text-[#E6FF00]">.</span>RUNNERS
             </h3>
             <p className="body-text mt-4 max-w-sm">
-              An urban running collective based in Izmir, Turkey. Running
-              connects people to the city.
+              İzmir merkezli bir koşu topluluğu. Koşu, insanı şehre bağlar.
             </p>
           </div>
 
           {/* Links */}
           <div>
-            <p className="label-text text-white/60 mb-6">PAGES</p>
+            <p className="label-text text-white/60 mb-6">SAYFALAR</p>
             <div className="space-y-3">
-              {["Home", "Runs", "Collaborations", "Gallery", "About", "Join"].map(
-                (link) => (
-                  <Link
-                    key={link}
-                    href={link === "Home" ? "/" : `/${link.toLowerCase()}`}
-                    className="block text-sm text-[#666] hover:text-white transition-colors"
-                  >
-                    {link}
-                  </Link>
-                )
-              )}
+              {[
+                { label: "Ana Sayfa", href: "/" },
+                { label: "Etkinlikler", href: "/etkinlikler" },
+                { label: "Topluluk", href: "/topluluk" },
+                { label: "Rotalar", href: "/routes" },
+                { label: "Galeri", href: "/gallery" },
+                { label: "Hakkımızda", href: "/about" },
+                { label: "Katıl", href: "/join" },
+              ].map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="block text-sm text-[#666] hover:text-white transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
             </div>
           </div>
 
           {/* Social */}
           <div>
-            <p className="label-text text-white/60 mb-6">FOLLOW</p>
+            <p className="label-text text-white/60 mb-6">TAKİP ET</p>
             <div className="space-y-3">
               <a
                 href="https://www.instagram.com/alsancakrunners/"
@@ -53,10 +58,10 @@ export default function Footer() {
         {/* Bottom */}
         <div className="mt-16 pt-8 border-t border-[#1a1a1a] flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-[11px] text-[#444] tracking-wider">
-            &copy; 2026 ALSANCAK RUNNERS. ALL RIGHTS RESERVED.
+            &copy; 2026 ALSANCAK RUNNERS. TÜM HAKLARI SAKLIDIR.
           </p>
           <p className="text-[11px] text-[#444] tracking-wider">
-            IZMIR, TURKEY — EST. 2025
+            İZMİR, TÜRKİYE — EST. 2025
           </p>
         </div>
       </div>
@@ -64,8 +69,8 @@ export default function Footer() {
       {/* Large bottom text */}
       <div className="overflow-hidden border-t border-[#1a1a1a]">
         <p className="whitespace-nowrap text-[8vw] font-bold text-[#191919] py-4 tracking-tighter animate-marquee">
-          ALSANCAK RUNNERS — RUN THE CITY — ALSANCAK RUNNERS — RUN THE CITY —
-          ALSANCAK RUNNERS — RUN THE CITY — ALSANCAK RUNNERS — RUN THE CITY —
+          ALSANCAK RUNNERS — ŞEHRİ KOŞ — ALSANCAK RUNNERS — ŞEHRİ KOŞ —
+          ALSANCAK RUNNERS — ŞEHRİ KOŞ — ALSANCAK RUNNERS — ŞEHRİ KOŞ —
         </p>
       </div>
     </footer>
