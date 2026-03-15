@@ -23,6 +23,7 @@ const envSchema = z.object({
   // Optional services
   REDIS_URL: z.string().optional(),
   NEXT_PUBLIC_MAPBOX_TOKEN: z.string().optional(),
+  CRON_SECRET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

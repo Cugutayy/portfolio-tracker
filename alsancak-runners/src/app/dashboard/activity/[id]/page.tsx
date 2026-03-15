@@ -296,9 +296,9 @@ export default function ActivityDetailPage({
               <h2 className="text-[11px] tracking-[0.15em] uppercase text-[#666] mb-6">
                 KİLOMETRE AYRINTILARI
               </h2>
-              <div className="border border-[#222] overflow-hidden">
+              <div className="border border-[#222] overflow-x-auto">
                 {/* Header */}
-                <div className="grid grid-cols-5 gap-2 px-5 py-3 border-b border-[#222] bg-[#111]">
+                <div className="grid grid-cols-5 gap-2 px-5 py-3 border-b border-[#222] bg-[#111] min-w-[400px]">
                   <p className="text-[10px] tracking-wider text-[#555] uppercase">
                     KM
                   </p>
@@ -328,7 +328,7 @@ export default function ActivityDetailPage({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.3 + i * 0.02 }}
-                      className={`grid grid-cols-5 gap-2 px-5 py-3 border-b border-[#1a1a1a] last:border-b-0 ${
+                      className={`grid grid-cols-5 gap-2 px-5 py-3 border-b border-[#1a1a1a] last:border-b-0 min-w-[400px] ${
                         isBest ? "bg-[#E6FF00]/5" : "hover:bg-[#111]"
                       } transition-colors`}
                     >
