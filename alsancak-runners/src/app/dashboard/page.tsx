@@ -389,6 +389,26 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
   );
 }
 
+/* ─── UPCOMING EVENT ITEM ─── */
+interface UpcomingEventItem {
+  id: string;
+  title: string;
+  slug: string;
+  eventType: string;
+  date: string;
+  meetingPoint: string;
+  distanceM: number;
+  rsvpCount: number;
+}
+
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  group_run: "GRUP",
+  tempo_run: "TEMPO",
+  long_run: "UZUN",
+  race: "YARIŞ",
+  social: "SOSYAL",
+};
+
 /* ─── OVERVIEW TAB ─── */
 function OverviewTab({
   profile,
@@ -396,12 +416,14 @@ function OverviewTab({
   syncing,
   onSync,
   onStravaDisconnect,
+  upcomingEvents,
 }: {
   profile: MemberProfile;
   activities: ActivityItem[];
   syncing: boolean;
   onSync: () => void;
   onStravaDisconnect: () => void;
+  upcomingEvents: UpcomingEventItem[];
 }) {
   return (
     <div className="space-y-12">
@@ -506,21 +528,77 @@ function OverviewTab({
             YAKLAŞAN ETKİNLİKLER
           </h2>
           <Link
-            href="/runs"
+            href="/etkinlikler"
             className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-[#E6FF00] transition-colors"
           >
             TÜMÜNÜ GÖR
           </Link>
         </div>
-        <div className="border border-[#222] p-12 text-center">
-          <div className="text-4xl mb-4 opacity-30">&#x1F4C5;</div>
-          <p className="text-[15px] text-[#666] mb-2">
-            Yaklaşan etkinlik yok
-          </p>
-          <p className="text-[12px] text-[#444]">
-            Yeni koşu etkinlikleri eklendiğinde burada görünecek
-          </p>
-        </div>
+        {upcomingEvents.length === 0 ? (
+          <div className="border border-[#222] p-12 text-center">
+            <div className="text-4xl mb-4 opacity-30">&#x1F4C5;</div>
+            <p className="text-[15px] text-[#666] mb-2">
+              Yaklaşan etkinlik yok
+            </p>
+            <p className="text-[12px] text-[#444]">
+              Yeni koşu etkinlikleri eklendiğinde burada görünecek
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {upcomingEvents.slice(0, 3).map((ev, i) => {
+              const date = new Date(ev.date);
+              const dateStr = date.toLocaleDateString("tr-TR", {
+                day: "numeric",
+                month: "short",
+              });
+              const timeStr = date.toLocaleTimeString("tr-TR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              });
+              return (
+                <Link key={ev.id} href={`/etkinlikler/${ev.slug}`}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: i * 0.03 }}
+                    className="border border-[#222] hover:border-[#E6FF00]/20 p-4 md:p-5 transition-colors group cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="text-center w-12">
+                          <p className="text-lg font-bold text-white leading-none">
+                            {date.getDate()}
+                          </p>
+                          <p className="text-[9px] tracking-wider uppercase text-[#666]">
+                            {date.toLocaleDateString("tr-TR", { month: "short" }).toUpperCase()}
+                          </p>
+                        </div>
+                        <div>
+                          <h3 className="text-white text-base font-medium group-hover:text-[#E6FF00] transition-colors">
+                            {ev.title}
+                          </h3>
+                          <p className="text-[12px] text-[#666] mt-0.5">
+                            {timeStr} · {ev.meetingPoint}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-white font-semibold">
+                          {(ev.distanceM / 1000).toFixed(0)}
+                          <span className="text-[#666] text-xs ml-0.5">km</span>
+                        </p>
+                        <span className="text-[9px] tracking-wider uppercase text-[#E6FF00]/50">
+                          {EVENT_TYPE_LABELS[ev.eventType] || ev.eventType}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </motion.div>
     </div>
   );
@@ -574,6 +652,7 @@ export default function DashboardPage() {
 function DashboardContent() {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
   const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEventItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("overview");
   const [syncing, setSyncing] = useState(false);
@@ -621,10 +700,20 @@ function DashboardContent() {
     setActivityItems([]);
   }, []);
 
+  const loadEvents = useCallback(() => {
+    fetch("/api/events?limit=5")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.events) setUpcomingEvents(data.events);
+      })
+      .catch(console.error);
+  }, []);
+
   useEffect(() => {
     loadProfile();
     loadActivities();
-  }, [loadProfile, loadActivities]);
+    loadEvents();
+  }, [loadProfile, loadActivities, loadEvents]);
 
   // Handle Strava callback URL params
   useEffect(() => {
@@ -699,10 +788,16 @@ function DashboardContent() {
               ANA SAYFA
             </Link>
             <Link
-              href="/runs"
+              href="/etkinlikler"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              KOŞULAR
+              ETKİNLİKLER
+            </Link>
+            <Link
+              href="/topluluk"
+              className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
+            >
+              TOPLULUK
             </Link>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
@@ -805,6 +900,7 @@ function DashboardContent() {
                   syncing={syncing}
                   onSync={handleSync}
                   onStravaDisconnect={handleStravaDisconnect}
+                  upcomingEvents={upcomingEvents}
                 />
               )}
               {tab === "activities" && (

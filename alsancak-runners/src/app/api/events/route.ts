@@ -1,0 +1,114 @@
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { events, eventRsvps, members } from "@/db/schema";
+import { eq, gte, asc, desc, sql, and } from "drizzle-orm";
+
+// GET /api/events — list upcoming events (public) or all for admin
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const status = searchParams.get("status") || "upcoming";
+  const limit = Math.min(50, parseInt(searchParams.get("limit") || "20"));
+
+  const now = new Date();
+
+  const results = await db
+    .select({
+      id: events.id,
+      title: events.title,
+      slug: events.slug,
+      description: events.description,
+      eventType: events.eventType,
+      date: events.date,
+      meetingPoint: events.meetingPoint,
+      meetingLat: events.meetingLat,
+      meetingLng: events.meetingLng,
+      distanceM: events.distanceM,
+      paceGroups: events.paceGroups,
+      maxParticipants: events.maxParticipants,
+      coverImageUrl: events.coverImageUrl,
+      status: events.status,
+      rsvpCount: sql<number>`(SELECT COUNT(*) FROM event_rsvps WHERE event_id = ${events.id} AND status = 'going')::int`,
+    })
+    .from(events)
+    .where(
+      status === "upcoming"
+        ? and(eq(events.status, "upcoming"), gte(events.date, now))
+        : eq(events.status, status)
+    )
+    .orderBy(status === "upcoming" ? asc(events.date) : desc(events.date))
+    .limit(limit);
+
+  return NextResponse.json({ events: results });
+}
+
+// POST /api/events — create event (admin/captain only)
+export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  // Check role
+  const [member] = await db
+    .select({ role: members.role })
+    .from(members)
+    .where(eq(members.id, session.user.id))
+    .limit(1);
+
+  if (!member || !["admin", "captain"].includes(member.role)) {
+    return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+  }
+
+  const body = await request.json();
+  const {
+    title,
+    description,
+    eventType = "group_run",
+    date,
+    meetingPoint,
+    meetingLat,
+    meetingLng,
+    distanceM,
+    paceGroups,
+    maxParticipants,
+    coverImageUrl,
+    routeId,
+  } = body;
+
+  if (!title || !date) {
+    return NextResponse.json(
+      { error: "Title and date are required" },
+      { status: 400 }
+    );
+  }
+
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim();
+
+  const [event] = await db
+    .insert(events)
+    .values({
+      title,
+      slug: `${slug}-${Date.now().toString(36)}`,
+      description,
+      eventType,
+      date: new Date(date),
+      meetingPoint,
+      meetingLat,
+      meetingLng,
+      distanceM,
+      paceGroups,
+      maxParticipants,
+      coverImageUrl,
+      routeId,
+      createdBy: session.user.id,
+    })
+    .returning();
+
+  return NextResponse.json(event, { status: 201 });
+}

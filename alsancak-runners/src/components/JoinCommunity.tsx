@@ -5,6 +5,12 @@ import { motion, useInView } from "framer-motion";
 import Link from "next/link";
 import MagneticButton from "./MagneticButton";
 
+interface CommunityStatsData {
+  totalMembers: number;
+  totalRuns: number;
+  totalDistanceKm: number;
+}
+
 function AnimatedCounter({
   target,
   suffix = "",
@@ -19,7 +25,7 @@ function AnimatedCounter({
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    if (!inView) return;
+    if (!inView || target === 0) return;
     const duration = 2000;
     let startTime: number | null = null;
     let rafId: number;
@@ -53,6 +59,26 @@ function AnimatedCounter({
 export default function JoinCommunity() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const [stats, setStats] = useState<CommunityStatsData>({
+    totalMembers: 0,
+    totalRuns: 0,
+    totalDistanceKm: 0,
+  });
+
+  useEffect(() => {
+    fetch("/api/community/stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) {
+          setStats({
+            totalMembers: data.members || 0,
+            totalRuns: data.totalRuns || 0,
+            totalDistanceKm: data.totalDistanceKm || 0,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <section ref={sectionRef} className="relative py-32 md:py-48 bg-[#0A0A0A]">
@@ -65,20 +91,20 @@ export default function JoinCommunity() {
           className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-32 border border-[#222] p-8 md:p-16"
         >
           <AnimatedCounter
-            target={248}
-            label="TOTAL RUNS"
+            target={stats.totalRuns}
+            label="TOPLAM KOŞU"
             inView={isInView}
           />
           <AnimatedCounter
-            target={1200}
+            target={stats.totalMembers}
             suffix="+"
-            label="ACTIVE MEMBERS"
+            label="AKTİF ÜYE"
             inView={isInView}
           />
           <AnimatedCounter
-            target={18500}
+            target={stats.totalDistanceKm}
             suffix=" KM"
-            label="DISTANCE RUN"
+            label="KAT EDİLEN MESAFE"
             inView={isInView}
           />
         </motion.div>
