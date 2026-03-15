@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { exchangeCode } from "@/lib/strava";
 import { encryptTokenPair } from "@/lib/crypto";
 import { db } from "@/lib/db";
-import { stravaConnections, oauthStates } from "@/db/schema";
+import { stravaConnections, oauthStates, members } from "@/db/schema";
 import { eq, and, lt } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -103,6 +103,36 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (existing && existing.memberId !== session.user.id) {
+      // Check if the existing connection belongs to a placeholder account
+      // (created by Auth.js Strava sign-in flow). If so, reassign it.
+      const [existingMember] = await db
+        .select({ email: members.email })
+        .from(members)
+        .where(eq(members.id, existing.memberId))
+        .limit(1);
+
+      const isPlaceholder = existingMember?.email?.endsWith("@placeholder.local");
+
+      if (isPlaceholder) {
+        // Reassign the connection to the current user
+        await db
+          .update(stravaConnections)
+          .set({
+            memberId: session.user.id,
+            ...encrypted,
+            tokenExpiresAt: tokenData.expires_at,
+            updatedAt: new Date(),
+          })
+          .where(eq(stravaConnections.id, existing.id));
+
+        // Delete the orphaned placeholder member
+        await db.delete(members).where(eq(members.id, existing.memberId));
+
+        return NextResponse.redirect(
+          new URL("/dashboard?strava=connected", request.url),
+        );
+      }
+
       return NextResponse.redirect(
         new URL("/dashboard?strava=already_linked", request.url),
       );
