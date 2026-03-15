@@ -69,6 +69,20 @@ export function ProjectCards({ t }: Props) {
             <Tags items={['Arbitrage','AO Data API','React']} />
           </GlassCard>
         </ScrollReveal>
+
+        <ScrollReveal delay={400} style={{ height: '100%' }}>
+          <GlassCard href="https://alsancak-runners.vercel.app" label="05" accent="#D6FF00">
+            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>{t('p5t')}</h3>
+            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>{t('p5d')}</p>
+            <RunRouteMini />
+            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
+              <Stat label={t('pf')} value="İzmir" />
+              <Stat label="Routes" value="3" />
+              <Stat label="Members" value="—" />
+            </div>
+            <Tags items={['Next.js 16','Strava','Drizzle','Auth.js']} />
+          </GlassCard>
+        </ScrollReveal>
       </div>
     </section>
   )
@@ -258,6 +272,27 @@ function ArbitrageMini() {
           </g>
         )
       })}
+    </svg>
+  )
+}
+
+// ═══════════════════════════════════════════
+// RUN ROUTE MINI (Alsancak Runners) — animated runner on route
+// ═══════════════════════════════════════════
+const RUN_ROUTE = "M20,60 C20,30 60,15 100,20 C140,25 160,45 200,40 C240,35 270,15 310,25 C350,35 340,55 300,60 C260,65 220,55 180,60 C140,65 100,70 60,65 C30,62 20,60 20,60 Z"
+
+function RunRouteMini() {
+  return (
+    <svg style={{width:'100%',height:50}} viewBox="0 0 360 80" preserveAspectRatio="xMidYMid meet">
+      <path d={RUN_ROUTE} fill="none" stroke="var(--rule)" strokeWidth="6" strokeLinecap="round" opacity=".2"/>
+      <path d={RUN_ROUTE} fill="none" stroke="#D6FF00" strokeWidth="1.5" strokeDasharray="8,6" opacity=".4"/>
+      {[{c:'#D6FF00',d:4,b:0},{c:'#ffffff',d:4.5,b:1.2},{c:'#D6FF00',d:5,b:2.4}].map((r,i) => (
+        <g key={i} opacity={1-i*.2}>
+          <animateMotion dur={`${r.d}s`} repeatCount="indefinite" path={RUN_ROUTE} begin={`${r.b}s`} rotate="auto"/>
+          <circle r="3" fill={r.c} opacity=".9"/>
+          <circle r="6" fill={r.c} opacity=".15"/>
+        </g>
+      ))}
     </svg>
   )
 }
