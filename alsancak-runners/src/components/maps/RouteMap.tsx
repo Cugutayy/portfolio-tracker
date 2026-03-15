@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import mapboxgl from "mapbox-gl";
 
@@ -26,28 +26,26 @@ export default function RouteMap({
   showMarkers = true,
   isLoop = false,
 }: RouteMapProps) {
-  const coords = geojson.coordinates;
+  // Derive bounds and center from geojson (stable across renders)
+  const mapData = useMemo(() => {
+    const coords = geojson.coordinates;
+    if (!coords || coords.length === 0) return null;
 
-  if (!coords || coords.length === 0) {
-    return (
-      <div
-        className={`${className} bg-[#0A0A0A] border border-[#222] flex items-center justify-center`}
-      >
-        <p className="text-[12px] text-[#444]">Rota verisi yok</p>
-      </div>
+    const lngs = coords.map((c) => c[0]);
+    const lats = coords.map((c) => c[1]);
+    const bounds = new mapboxgl.LngLatBounds(
+      [Math.min(...lngs), Math.min(...lats)],
+      [Math.max(...lngs), Math.max(...lats)],
     );
-  }
+    const center = bounds.getCenter().toArray() as [number, number];
 
-  const lngs = coords.map((c) => c[0]);
-  const lats = coords.map((c) => c[1]);
-  const bounds = new mapboxgl.LngLatBounds(
-    [Math.min(...lngs), Math.min(...lats)],
-    [Math.max(...lngs), Math.max(...lats)]
-  );
-  const center = bounds.getCenter().toArray() as [number, number];
+    return { coords, center, bounds };
+  }, [geojson]);
 
   const handleMapReady = useCallback(
     (map: mapboxgl.Map) => {
+      if (!mapData) return;
+
       map.addSource("route", {
         type: "geojson",
         data: {
@@ -91,7 +89,7 @@ export default function RouteMap({
         const startEl = document.createElement("div");
         startEl.style.cssText = `width:14px;height:14px;background:${color};border-radius:50%;border:3px solid #0A0A0A;box-shadow:0 0 10px ${color}66`;
         new mapboxgl.Marker({ element: startEl })
-          .setLngLat(coords[0])
+          .setLngLat(mapData.coords[0])
           .addTo(map);
 
         // End marker (only if not loop)
@@ -100,24 +98,33 @@ export default function RouteMap({
           endEl.style.cssText =
             "width:14px;height:14px;background:#FC4C02;border-radius:50%;border:3px solid #0A0A0A;box-shadow:0 0 10px rgba(252,76,2,0.4)";
           new mapboxgl.Marker({ element: endEl })
-            .setLngLat(coords[coords.length - 1])
+            .setLngLat(mapData.coords[mapData.coords.length - 1])
             .addTo(map);
         }
       }
 
-      map.fitBounds(bounds, {
+      map.fitBounds(mapData.bounds, {
         padding: { top: 50, bottom: 50, left: 50, right: 50 },
         maxZoom: 15,
         duration: 0,
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [JSON.stringify(geojson)]
+    [mapData, geojson, color, showMarkers, isLoop],
   );
+
+  if (!mapData) {
+    return (
+      <div
+        className={`${className} bg-[#0A0A0A] border border-[#222] flex items-center justify-center`}
+      >
+        <p className="text-[12px] text-[#444]">Rota verisi yok</p>
+      </div>
+    );
+  }
 
   return (
     <MapboxMap
-      center={center}
+      center={mapData.center}
       zoom={13}
       className={className}
       onMapReady={handleMapReady}

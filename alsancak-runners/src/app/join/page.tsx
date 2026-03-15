@@ -83,6 +83,10 @@ export default function JoinPage() {
     }
   };
 
+  const handleStravaSignIn = () => {
+    signIn("strava", { callbackUrl: "/dashboard" });
+  };
+
   return (
     <SmoothScroll>
       <Navbar />
@@ -96,13 +100,13 @@ export default function JoinPage() {
             className="mb-16"
           >
             <p className="label-text text-white/60 mb-4">
-              {mode === "join" ? "BECOME A MEMBER" : "WELCOME BACK"}
+              {mode === "join" ? "ÜYE OL" : "HOŞ GELDİN"}
             </p>
             <h1 className="headline-xl mb-6">
               {mode === "join" ? (
                 <>
-                  JOIN<br />
-                  <span className="text-[#E6FF00]">THE RUN</span>
+                  KOŞUYA<br />
+                  <span className="text-[#E6FF00]">KATIL</span>
                 </>
               ) : (
                 <>
@@ -113,15 +117,49 @@ export default function JoinPage() {
             </h1>
             <p className="body-text">
               {mode === "join"
-                ? "Open to all levels. Free to join. Just bring your shoes."
+                ? "Her seviyeye açık. Katılım ücretsiz. Sadece ayakkabılarını getir."
                 : "Hesabına giriş yap ve koşmaya devam et."}
             </p>
+          </motion.div>
+
+          {/* Strava Sign-In */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.1 }}
+            className="mb-10"
+          >
+            <button
+              onClick={handleStravaSignIn}
+              className="w-full flex items-center justify-center gap-3 bg-[#FC4C02] hover:bg-[#E34402] text-white py-4 text-sm font-bold tracking-[0.1em] uppercase transition-colors duration-300"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
+              </svg>
+              STRAVA İLE GİRİŞ YAP
+            </button>
+
+            <div className="flex items-center gap-4 mt-8">
+              <div className="flex-1 h-px bg-[#222]" />
+              <span className="text-[10px] tracking-[0.2em] text-[#555] uppercase">
+                veya email ile
+              </span>
+              <div className="flex-1 h-px bg-[#222]" />
+            </div>
           </motion.div>
 
           {/* Toggle between join/login */}
           <div className="flex gap-4 mb-12">
             <button
-              onClick={() => { setMode("join"); setError(""); }}
+              onClick={() => {
+                setMode("join");
+                setError("");
+              }}
               className={`text-[11px] tracking-[0.15em] uppercase pb-1 border-b transition-all duration-300 ${
                 mode === "join"
                   ? "text-[#E6FF00] border-[#E6FF00]"
@@ -131,7 +169,10 @@ export default function JoinPage() {
               KAYIT OL
             </button>
             <button
-              onClick={() => { setMode("login"); setError(""); }}
+              onClick={() => {
+                setMode("login");
+                setError("");
+              }}
               className={`text-[11px] tracking-[0.15em] uppercase pb-1 border-b transition-all duration-300 ${
                 mode === "login"
                   ? "text-[#E6FF00] border-[#E6FF00]"
@@ -160,8 +201,11 @@ export default function JoinPage() {
               {/* Name — only for join */}
               {mode === "join" && (
                 <div>
-                  <label htmlFor="join-name" className="label-text block mb-3">
-                    NAME
+                  <label
+                    htmlFor="join-name"
+                    className="label-text block mb-3"
+                  >
+                    İSİM
                   </label>
                   <input
                     id="join-name"
@@ -172,14 +216,17 @@ export default function JoinPage() {
                     }
                     required
                     className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors"
-                    placeholder="Your name"
+                    placeholder="Adınız"
                   />
                 </div>
               )}
 
               {/* Email */}
               <div>
-                <label htmlFor="join-email" className="label-text block mb-3">
+                <label
+                  htmlFor="join-email"
+                  className="label-text block mb-3"
+                >
                   EMAIL
                 </label>
                 <input
@@ -197,8 +244,11 @@ export default function JoinPage() {
 
               {/* Password */}
               <div>
-                <label htmlFor="join-password" className="label-text block mb-3">
-                  {mode === "join" ? "PASSWORD (MIN. 8 KARAKTER)" : "PASSWORD"}
+                <label
+                  htmlFor="join-password"
+                  className="label-text block mb-3"
+                >
+                  {mode === "join" ? "ŞİFRE (MİN. 8 KARAKTER)" : "ŞİFRE"}
                 </label>
                 <input
                   id="join-password"
@@ -217,7 +267,10 @@ export default function JoinPage() {
               {/* Instagram — only for join */}
               {mode === "join" && (
                 <div>
-                  <label htmlFor="join-instagram" className="label-text block mb-3">
+                  <label
+                    htmlFor="join-instagram"
+                    className="label-text block mb-3"
+                  >
                     INSTAGRAM
                   </label>
                   <input
@@ -228,7 +281,7 @@ export default function JoinPage() {
                       setFormData({ ...formData, instagram: e.target.value })
                     }
                     className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors"
-                    placeholder="@yourusername"
+                    placeholder="@kullaniciadi"
                   />
                 </div>
               )}
@@ -236,8 +289,11 @@ export default function JoinPage() {
               {/* Running pace — only for join */}
               {mode === "join" && (
                 <div>
-                  <label htmlFor="join-pace" className="label-text block mb-3">
-                    RUNNING PACE
+                  <label
+                    htmlFor="join-pace"
+                    className="label-text block mb-3"
+                  >
+                    KOŞU TEMPOSU
                   </label>
                   <select
                     id="join-pace"
@@ -247,11 +303,17 @@ export default function JoinPage() {
                     }
                     className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors cursor-pointer [&>option]:bg-black"
                   >
-                    <option value="">Select your pace</option>
-                    <option value="beginner">Beginner (&gt;7:00 min/km)</option>
-                    <option value="casual">Casual (6:00-7:00 min/km)</option>
-                    <option value="intermediate">Intermediate (5:00-6:00 min/km)</option>
-                    <option value="advanced">Advanced (&lt;5:00 min/km)</option>
+                    <option value="">Temponuzu seçin</option>
+                    <option value="beginner">
+                      Başlangıç (&gt;7:00 min/km)
+                    </option>
+                    <option value="casual">Rahat (6:00-7:00 min/km)</option>
+                    <option value="intermediate">
+                      Orta (5:00-6:00 min/km)
+                    </option>
+                    <option value="advanced">
+                      İleri (&lt;5:00 min/km)
+                    </option>
                   </select>
                 </div>
               )}
@@ -267,7 +329,7 @@ export default function JoinPage() {
                 {loading
                   ? "..."
                   : mode === "join"
-                    ? "JOIN ALSANCAK RUNNERS"
+                    ? "ALSANCAK RUNNERS'A KATIL"
                     : "GİRİŞ YAP"}
               </motion.button>
             </motion.form>
@@ -294,7 +356,7 @@ export default function JoinPage() {
                 </svg>
               </div>
               <h2 className="headline-md mb-4">
-                WELCOME<span className="text-[#E6FF00]">.</span>
+                HOŞ GELDİN<span className="text-[#E6FF00]">.</span>
               </h2>
               <p className="body-text">
                 Hesabın oluşturuldu! Dashboard&apos;a yönlendiriliyorsun...

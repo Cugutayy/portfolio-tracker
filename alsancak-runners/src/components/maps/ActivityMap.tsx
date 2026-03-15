@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import mapboxgl from "mapbox-gl";
 import polyline from "@mapbox/polyline";
@@ -18,35 +18,29 @@ export default function ActivityMap({
   className = "w-full h-[400px]",
   interactive = true,
 }: ActivityMapProps) {
-  const decoded = polyline.decode(polylineEncoded);
+  // Derive all map geometry from the encoded polyline (stable across renders)
+  const mapData = useMemo(() => {
+    const decoded = polyline.decode(polylineEncoded);
+    if (decoded.length === 0) return null;
 
-  if (decoded.length === 0) {
-    return (
-      <div
-        className={`${className} bg-[#0A0A0A] border border-[#222] flex items-center justify-center`}
-      >
-        <p className="text-[12px] text-[#444]">Rota verisi yok</p>
-      </div>
+    const coordinates = decoded.map(
+      ([lat, lng]) => [lng, lat] as [number, number],
     );
-  }
+    const lngs = coordinates.map((c) => c[0]);
+    const lats = coordinates.map((c) => c[1]);
+    const bounds = new mapboxgl.LngLatBounds(
+      [Math.min(...lngs), Math.min(...lats)],
+      [Math.max(...lngs), Math.max(...lats)],
+    );
+    const center = bounds.getCenter().toArray() as [number, number];
 
-  // Convert [lat, lng] to [lng, lat] for GeoJSON
-  const coordinates = decoded.map(
-    ([lat, lng]) => [lng, lat] as [number, number]
-  );
-
-  // Calculate bounds
-  const lngs = coordinates.map((c) => c[0]);
-  const lats = coordinates.map((c) => c[1]);
-  const bounds = new mapboxgl.LngLatBounds(
-    [Math.min(...lngs), Math.min(...lats)],
-    [Math.max(...lngs), Math.max(...lats)]
-  );
-
-  const center = bounds.getCenter().toArray() as [number, number];
+    return { coordinates, center, bounds };
+  }, [polylineEncoded]);
 
   const handleMapReady = useCallback(
     (map: mapboxgl.Map) => {
+      if (!mapData) return;
+
       // Add the route source
       map.addSource("activity-route", {
         type: "geojson",
@@ -55,7 +49,7 @@ export default function ActivityMap({
           properties: {},
           geometry: {
             type: "LineString",
-            coordinates,
+            coordinates: mapData.coordinates,
           },
         },
       });
@@ -95,7 +89,7 @@ export default function ActivityMap({
       startEl.style.cssText =
         "width:12px;height:12px;background:#E6FF00;border-radius:50%;border:2px solid #0A0A0A;box-shadow:0 0 8px rgba(230,255,0,0.4)";
       new mapboxgl.Marker({ element: startEl })
-        .setLngLat(coordinates[0])
+        .setLngLat(mapData.coordinates[0])
         .addTo(map);
 
       // End marker
@@ -104,23 +98,32 @@ export default function ActivityMap({
       endEl.style.cssText =
         "width:12px;height:12px;background:#FC4C02;border-radius:50%;border:2px solid #0A0A0A;box-shadow:0 0 8px rgba(252,76,2,0.4)";
       new mapboxgl.Marker({ element: endEl })
-        .setLngLat(coordinates[coordinates.length - 1])
+        .setLngLat(mapData.coordinates[mapData.coordinates.length - 1])
         .addTo(map);
 
       // Fit bounds with padding
-      map.fitBounds(bounds, {
+      map.fitBounds(mapData.bounds, {
         padding: { top: 40, bottom: 40, left: 40, right: 40 },
         maxZoom: 15,
         duration: 0,
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [polylineEncoded]
+    [mapData],
   );
+
+  if (!mapData) {
+    return (
+      <div
+        className={`${className} bg-[#0A0A0A] border border-[#222] flex items-center justify-center`}
+      >
+        <p className="text-[12px] text-[#444]">Rota verisi yok</p>
+      </div>
+    );
+  }
 
   return (
     <MapboxMap
-      center={center}
+      center={mapData.center}
       zoom={13}
       className={className}
       onMapReady={handleMapReady}

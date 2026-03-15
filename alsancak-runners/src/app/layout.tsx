@@ -17,13 +17,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "ALSANCAK RUNNERS — Run The City",
+  title: "ALSANCAK RUNNERS — Şehri Koş",
   description:
-    "Alsancak Runners is an urban running collective based in Izmir. Running connects people to the city.",
-  keywords: ["running", "Izmir", "Alsancak", "urban running", "collective", "koşu", "İzmir"],
+    "Alsancak Runners, İzmir merkezli bir şehir koşu topluluğudur. Koşmak insanları şehre bağlar.",
+  keywords: ["koşu", "İzmir", "Alsancak", "şehir koşusu", "topluluk", "running", "urban running"],
   openGraph: {
     title: "ALSANCAK RUNNERS",
-    description: "Urban running collective — Izmir, Turkey",
+    description: "Şehir koşu topluluğu — İzmir, Türkiye",
     type: "website",
     locale: "tr_TR",
   },

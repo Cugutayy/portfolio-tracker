@@ -2,8 +2,10 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
-import { members } from "@/db/schema";
+import { members, stravaConnections } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { encryptTokenPair } from "./crypto";
+import { isStravaConfigured } from "./env";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   // JWT-only sessions — no database adapter needed
@@ -44,14 +46,103 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       },
     }),
+    // Strava OAuth — only registered when env vars are configured
+    ...(isStravaConfigured()
+      ? [
+          {
+            id: "strava",
+            name: "Strava",
+            type: "oauth" as const,
+            authorization: {
+              url: "https://www.strava.com/oauth/authorize",
+              params: {
+                scope: "read,activity:read_all",
+                approval_prompt: "auto",
+              },
+            },
+            token: "https://www.strava.com/oauth/token",
+            userinfo: "https://www.strava.com/api/v3/athlete",
+            clientId: process.env.STRAVA_CLIENT_ID!,
+            clientSecret: process.env.STRAVA_CLIENT_SECRET!,
+            profile(profile: Record<string, unknown>) {
+              return {
+                id: String(profile.id),
+                name:
+                  `${profile.firstname || ""} ${profile.lastname || ""}`.trim() ||
+                  "Runner",
+                image: profile.profile as string | undefined,
+              };
+            },
+          },
+        ]
+      : []),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      // Strava OAuth: look up or create member + encrypted strava_connection
+      if (account?.provider === "strava" && account.access_token) {
+        const athleteId = Number(user.id);
+
+        const encrypted = encryptTokenPair(
+          account.access_token,
+          account.refresh_token!,
+        );
+
+        // Check if this Strava athlete is already linked
+        const [existingConn] = await db
+          .select({ memberId: stravaConnections.memberId })
+          .from(stravaConnections)
+          .where(eq(stravaConnections.stravaAthleteId, athleteId))
+          .limit(1);
+
+        if (existingConn) {
+          // Returning user — update tokens, reuse member
+          await db
+            .update(stravaConnections)
+            .set({
+              ...encrypted,
+              tokenExpiresAt: account.expires_at!,
+              updatedAt: new Date(),
+            })
+            .where(eq(stravaConnections.stravaAthleteId, athleteId));
+          user.id = existingConn.memberId;
+        } else {
+          // New user via Strava — create member + connection
+          const [newMember] = await db
+            .insert(members)
+            .values({
+              name: user.name || "Runner",
+              // Strava doesn't expose email — use placeholder
+              email: `strava_${athleteId}@placeholder.local`,
+              image: user.image,
+              role: "member",
+              privacy: "private",
+            })
+            .returning({ id: members.id });
+
+          await db.insert(stravaConnections).values({
+            memberId: newMember.id,
+            stravaAthleteId: athleteId,
+            ...encrypted,
+            tokenExpiresAt: account.expires_at!,
+            scopes: "read,activity:read_all",
+          });
+
+          user.id = newMember.id;
+        }
+      }
+      return true;
+    },
+
     async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
       }
       // Only query role on sign-in or explicit update — not every request
-      if (token.id && (!token.role || trigger === "signIn" || trigger === "update")) {
+      if (
+        token.id &&
+        (!token.role || trigger === "signIn" || trigger === "update")
+      ) {
         const [member] = await db
           .select({ role: members.role })
           .from(members)
@@ -63,6 +154,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return token;
     },
+
     async session({ session, token }) {
       if (session.user && token.id) {
         session.user.id = token.id as string;

@@ -99,6 +99,17 @@ export const verificationTokens = pgTable(
   ],
 );
 
+export const oauthStates = pgTable(
+  "oauth_states",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+    nonce: text("nonce").notNull().unique(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+);
+
 // ============================================================
 // DOMAIN 2: STRAVA INTEGRATION
 // ============================================================

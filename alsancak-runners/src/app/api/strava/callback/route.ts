@@ -3,8 +3,8 @@ import { auth } from "@/lib/auth";
 import { exchangeCode } from "@/lib/strava";
 import { encryptTokenPair } from "@/lib/crypto";
 import { db } from "@/lib/db";
-import { stravaConnections } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { stravaConnections, oauthStates } from "@/db/schema";
+import { eq, and, lt } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -30,13 +30,57 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Verify state starts with user ID
-  const [stateUserId] = state.split(":");
+  // Parse state = "userId:nonce"
+  const colonIdx = state.indexOf(":");
+  if (colonIdx === -1) {
+    return NextResponse.redirect(
+      new URL("/dashboard?strava=error", request.url),
+    );
+  }
+  const stateUserId = state.slice(0, colonIdx);
+  const stateNonce = state.slice(colonIdx + 1);
+
+  // Verify user ID matches session
   if (stateUserId !== session.user.id) {
     return NextResponse.redirect(
       new URL("/dashboard?strava=error", request.url),
     );
   }
+
+  // Verify nonce exists in DB and hasn't expired
+  const [storedState] = await db
+    .select()
+    .from(oauthStates)
+    .where(
+      and(
+        eq(oauthStates.memberId, session.user.id),
+        eq(oauthStates.nonce, stateNonce),
+      ),
+    )
+    .limit(1);
+
+  if (!storedState || storedState.expiresAt < new Date()) {
+    // Clean up expired state if it exists
+    if (storedState) {
+      await db.delete(oauthStates).where(eq(oauthStates.id, storedState.id));
+    }
+    return NextResponse.redirect(
+      new URL("/dashboard?strava=error", request.url),
+    );
+  }
+
+  // Delete the used nonce (one-time use)
+  await db.delete(oauthStates).where(eq(oauthStates.id, storedState.id));
+
+  // Clean up any expired states for this user (housekeeping)
+  await db
+    .delete(oauthStates)
+    .where(
+      and(
+        eq(oauthStates.memberId, session.user.id),
+        lt(oauthStates.expiresAt, new Date()),
+      ),
+    );
 
   try {
     // Exchange code for tokens
@@ -50,7 +94,10 @@ export async function GET(request: NextRequest) {
 
     // Check if this Strava athlete is already connected to another account
     const [existing] = await db
-      .select({ id: stravaConnections.id, memberId: stravaConnections.memberId })
+      .select({
+        id: stravaConnections.id,
+        memberId: stravaConnections.memberId,
+      })
       .from(stravaConnections)
       .where(eq(stravaConnections.stravaAthleteId, tokenData.athlete.id))
       .limit(1);

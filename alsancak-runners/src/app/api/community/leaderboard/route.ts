@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { activities, members } from "@/db/schema";
-import { sql, gte, eq } from "drizzle-orm";
+import { sql, gte, eq, inArray } from "drizzle-orm";
 
 // GET /api/community/leaderboard — period-based leaderboard
 export async function GET(request: NextRequest) {
@@ -49,7 +49,11 @@ export async function GET(request: NextRequest) {
     })
     .from(activities)
     .innerJoin(members, eq(activities.memberId, members.id))
-    .where(gte(activities.startTime, periodStart))
+    .where(
+      sql`${activities.startTime} >= ${periodStart}
+        AND ${members.privacy} IN ('public', 'members')
+        AND ${activities.source} = 'strava'`,
+    )
     .groupBy(activities.memberId, members.name, members.image)
     .orderBy(sql`SUM(${activities.distanceM}) DESC`)
     .limit(limit);
