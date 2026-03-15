@@ -35,6 +35,25 @@ export const CITY_COLORS: Record<string, string> = {
   'Black Market':  '#888',
 }
 
+/** Quality names matching in-game display */
+export const QUALITY_NAMES: Record<number, string> = {
+  1: 'Normal',
+  2: 'Good',
+  3: 'Outstanding',
+  4: 'Excellent',
+  5: 'Masterpiece',
+}
+export const QUALITY_COLORS: Record<number, string> = {
+  1: '#aaa',       // gray
+  2: '#4caf50',    // green
+  3: '#2196f3',    // blue
+  4: '#ab47bc',    // purple
+  5: '#f0c860',    // gold
+}
+export const QUALITY_SHORT: Record<number, string> = {
+  1: 'NQ', 2: 'GQ', 3: 'OQ', 4: 'EQ', 5: 'MQ',
+}
+
 export const CATEGORY_LABELS: Record<string, string> = {
   equipmentitem: 'Armor',
   weapon: 'Weapons',
