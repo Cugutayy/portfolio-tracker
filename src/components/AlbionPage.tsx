@@ -4,7 +4,7 @@ import { loadItems, displayName, gameSearchName } from '../albion/items'
 import { validatePrices } from '../albion/validation'
 import { findOpportunities } from '../albion/arbitrage'
 import {
-  ALL_LOCATIONS, CITIES, CITY_COLORS, CATEGORY_LABELS,
+  BM_LOCATIONS, CITY_COLORS, CATEGORY_LABELS,
   DEFAULT_FILTERS, BM_REFRESH_INTERVAL,
   QUALITY_NAMES, QUALITY_COLORS, QUALITY_SHORT,
 } from '../albion/constants'
@@ -174,8 +174,8 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
       const ids = itemList.map(i => i.uniqueName)
       setScan(s => ({ ...s, status: 'scanning', itemsTotal: ids.length }))
 
-      // 2. Fetch prices
-      const raw = await albionApi.fetchAllPrices(ids, ALL_LOCATIONS, [1], (done, total) => {
+      // 2. Fetch prices — focused on Caerleon + Black Market only (fastest, zero risk)
+      const raw = await albionApi.fetchAllPrices(ids, BM_LOCATIONS, [1], (done, total) => {
         setScan(s => ({ ...s, batchesDone: done, batchesTotal: total, progress: Math.round((done / total) * 90) }))
       })
 
@@ -226,8 +226,8 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
       const bmIds = [...bmItemIdsRef.current]
       // Clear cached API responses for these items so we get fresh data
       albionApi.clearItemCache(bmIds)
-      // Fetch only BM items across all cities (~3-5 batches)
-      const raw = await albionApi.fetchAllPrices(bmIds, ALL_LOCATIONS, [1])
+      // Fetch only BM items for Caerleon + Black Market (~1-2 batches)
+      const raw = await albionApi.fetchAllPrices(bmIds, BM_LOCATIONS, [1])
       const newValid = validatePrices(raw)
 
       // Merge: replace matching entries, keep everything else
@@ -373,7 +373,7 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
           if (cancelled) return
           const batch = uniqueItems.slice(i, i + 10)
           try {
-            const hist = await albionApi.fetchItemHistory(batch, ALL_LOCATIONS)
+            const hist = await albionApi.fetchItemHistory(batch, BM_LOCATIONS)
             for (const h of hist) {
               const key = h.item_id
               const points = h.data.filter(d => d.item_count > 0)
@@ -650,9 +650,8 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
       }
       return out
     }
-    const caerleon = dedupTop(filtered.filter(o => o.sourceCity === 'Caerleon'), 50)
-    const travel = dedupTop(filtered.filter(o => o.sourceCity !== 'Caerleon'), 50)
-    return { caerleon, travel, totalBuying, totalProfit, totalAll, freshCount }
+    const caerleon = dedupTop(filtered.filter(o => o.sourceCity === 'Caerleon'), 100)
+    return { caerleon, travel: [] as ArbitrageOpportunity[], totalBuying, totalProfit, totalAll, freshCount }
   }, [scan.status, scan.opportunities, bmFreshOnly])
 
   function fmtDataAge(ms: number | null): string {
@@ -677,7 +676,7 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
             <a href="#/" style={{ color: isDark ? '#888' : '#666', textDecoration: 'none', fontSize: 13, fontFamily: 'Outfit,sans-serif' }}>←</a>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: GOLD, boxShadow: `0 0 8px ${GOLD}55` }} />
-              <span style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: '.06em' }}>ALBION MARKET</span>
+              <span style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 13, letterSpacing: '.06em' }}>CAERLEON ↔ BM</span>
             </div>
             <div style={{ flex: 1 }} />
             <button className="aob" onClick={runScan} disabled={isScanning}
@@ -803,7 +802,7 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
           {scan.status === 'complete' && bmFocus.totalBuying > 0 && (
             <div className="aop" style={{ marginBottom: 12, borderColor: 'rgba(212,168,67,.25)', borderWidth: 1 }}>
               <div className="aot" style={{ gap: 8 }}>
-                <span style={{ color: GOLD }}>🏴</span> BM FOCUS — Black Market Arbitrage
+                <span style={{ color: GOLD }}>🏴</span> CAERLEON → BM — Instant Flip Arbitrage
                 <span style={{ fontSize: 8, color: '#4caf50', fontWeight: 700, padding: '1px 6px', background: 'rgba(76,175,80,.1)', borderRadius: 4, border: '1px solid rgba(76,175,80,.15)' }}>INSTANT SELL</span>
                 <span style={{ marginLeft: 'auto', fontSize: 9, color: '#888', fontFamily: 'Outfit,sans-serif' }}>
                   <strong style={{ color: GOLD }}>{bmFocus.totalBuying}</strong> items with active BM buy orders
@@ -923,94 +922,7 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
                 </>
               )}
 
-              {/* Travel → BM compact table */}
-              {bmFocus.travel.length > 0 && (
-                <>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: '#4caf50', fontFamily: 'Outfit,sans-serif', margin: '12px 0 4px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    ⚡ Other Cities → BM
-                    <span style={{ fontSize: 8, color: '#ff9800', padding: '1px 5px', background: 'rgba(255,152,0,.08)', borderRadius: 3, fontWeight: 600 }}>TRAVEL REQUIRED</span>
-                    <span style={{ fontSize: 8, color: '#888', fontWeight: 400 }}>— buy in city, ride to Caerleon BM</span>
-                    <span style={{ marginLeft: 'auto', color: '#888', fontWeight: 400, fontSize: 8 }}>{bmFocus.travel.length} flips</span>
-                  </div>
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
-                      <thead>
-                        <tr style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.08)'}` }}>
-                          <th style={{ textAlign: 'left', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>ITEM</th>
-                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>Q</th>
-                          <th style={{ textAlign: 'left', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>SOURCE</th>
-                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>BUY</th>
-                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>BM SELL</th>
-                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>PROFIT</th>
-                          <th style={{ textAlign: 'right', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>%</th>
-                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>RISK</th>
-                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>SELL AGE</th>
-                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>BM AGE</th>
-                          <th style={{ textAlign: 'center', padding: '4px 6px', fontSize: 8, color: '#666', fontWeight: 600, letterSpacing: '.08em' }}>MATCH</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(showAllBm ? bmFocus.travel : bmFocus.travel.slice(0, 15)).map((o, i) => (
-                          <tr key={`bmf-t-${i}`} className="ao-row" style={{ fontSize: 10, borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.03)'}` }}>
-                            <td style={{ padding: '4px 6px', fontWeight: 500, maxWidth: 220 }}>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  {o.displayName} <span style={{ color: '#666', fontSize: 8 }}>T{o.tier}{o.enchantment ? `.${o.enchantment}` : ''}</span>
-                                </span>
-                                <span
-                                  title="Click to copy — search this in Albion marketplace"
-                                  onClick={() => { navigator.clipboard.writeText(gameSearchName(o.itemId)) }}
-                                  style={{ fontSize: 8, color: GOLD, cursor: 'pointer', opacity: 0.7, fontFamily: 'Outfit,sans-serif', letterSpacing: '.02em' }}
-                                >
-                                  🔍 {gameSearchName(o.itemId)}
-                                </span>
-                              </div>
-                            </td>
-                            <td style={{ padding: '4px 6px', textAlign: 'center' }}><QualityBadge q={o.quality} /></td>
-                            <td style={{ padding: '4px 6px' }}><CityBadge city={o.sourceCity} /></td>
-                            <td style={{ padding: '4px 6px', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmtSilver(o.sourcePrice)}</td>
-                            <td style={{ padding: '4px 6px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
-                              <span style={{ color: '#4caf50' }}>{fmtSilver(o.destPrice)}</span>
-                            </td>
-                            <td style={{ padding: '4px 6px', textAlign: 'right', fontWeight: 700, color: GOLD, fontVariantNumeric: 'tabular-nums' }}>{fmtSilver(o.netProfit)}</td>
-                            <td style={{ padding: '4px 6px', textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: o.profitPercent >= 30 ? '#4caf50' : o.profitPercent >= 15 ? GOLD : isDark ? '#aaa' : '#666' }}>{o.profitPercent}%</td>
-                            <td style={{ padding: '4px 6px', textAlign: 'center' }}>
-                              <span className={`ao-risk-${o.riskLevel}`} style={{ fontSize: 9 }}>{Math.round(o.deathRisk * 100)}%</span>
-                            </td>
-                            <td style={{ padding: '4px 6px', textAlign: 'center' }}>
-                              <span style={{ fontSize: 8, color: getTimestampColor(o.sourceDate), fontWeight: 600 }}>{timeAgo(o.sourceDate)}</span>
-                            </td>
-                            <td style={{ padding: '4px 6px', textAlign: 'center' }}>
-                              <span style={{ fontSize: 8, color: getTimestampColor(o.destDate), fontWeight: 600 }}>{timeAgo(o.destDate)}</span>
-                            </td>
-                            <td style={{ padding: '4px 6px', textAlign: 'center' }}>
-                              {(() => {
-                                const srcAge = now - o.sourceDate.getTime()
-                                const dstAge = now - o.destDate.getTime()
-                                const bothFresh = srcAge < 3600_000 && dstAge < 3600_000
-                                const bothRecent = srcAge < 86400_000 && dstAge < 86400_000
-                                return bothFresh
-                                  ? <span style={{ color: '#4caf50', fontSize: 8, fontWeight: 700 }}>✓✓ PAIRED</span>
-                                  : bothRecent
-                                  ? <span style={{ color: '#ff9800', fontSize: 8, fontWeight: 700 }}>✓~ CHECK</span>
-                                  : <span style={{ color: '#f44336', fontSize: 8, fontWeight: 700 }}>⚠ STALE</span>
-                              })()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {bmFocus.travel.length > 15 && (
-                    <button className="aob" onClick={() => setShowAllBm(!showAllBm)}
-                      style={{ background: 'rgba(212,168,67,.1)', fontSize: 9, padding: '3px 12px', marginTop: 6, color: GOLD }}>
-                      {showAllBm ? `Show Top 15 ▲` : `Show All ${bmFocus.travel.length} ▼`}
-                    </button>
-                  )}
-                </>
-              )}
-
-              {bmFocus.caerleon.length === 0 && bmFocus.travel.length === 0 && (
+              {bmFocus.caerleon.length === 0 && (
                 <div style={{ padding: 16, textAlign: 'center', fontSize: 10, color: '#888' }}>
                   No profitable BM buy orders found right now. BM orders may be filled. Try scanning again in a few minutes.
                 </div>
@@ -1031,24 +943,20 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
               return srcAge < maxAge && dstAge < maxAge
             })
             const caerleonBmFlips = freshEnriched.filter(t => t.isBlackMarket && t.sourceCity === 'Caerleon')
-            const otherBmFlips = freshEnriched.filter(t => t.isBlackMarket && t.sourceCity !== 'Caerleon')
-            const cityTrades = freshEnriched.filter(t => !t.isBlackMarket)
 
-            const totalEV = [...caerleonBmFlips, ...otherBmFlips, ...cityTrades].reduce((s, t) => s + t.expectedValue, 0)
-            const verifiedCount = [...caerleonBmFlips, ...otherBmFlips, ...cityTrades].filter(t => {
+            const totalEV = caerleonBmFlips.reduce((s, t) => s + t.expectedValue, 0)
+            const verifiedCount = caerleonBmFlips.filter(t => {
               const v = t.volume
               return v && v.avgPriceSrc > 0 && v.avgPriceDst > 0
             }).length
-            const totalTrades = caerleonBmFlips.length + otherBmFlips.length + cityTrades.length
+            const totalTrades = caerleonBmFlips.length
 
             return <>
             {/* ── Trade Summary ── */}
             {!enriching && totalTrades > 0 && (
               <div className="aop" style={{ marginBottom: 12, display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center', padding: '10px 16px' }}>
                 <div style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: 9, fontFamily: 'Outfit,sans-serif' }}>
-                  <span style={{ color: '#e53935', fontWeight: 600 }}>🏰 Caerleon→BM: {caerleonBmFlips.length}</span>
-                  <span style={{ color: '#4caf50', fontWeight: 600 }}>⚡ Travel→BM: {otherBmFlips.length}</span>
-                  <span style={{ color: '#2196f3', fontWeight: 600 }}>📦 City: {cityTrades.length}</span>
+                  <span style={{ color: '#e53935', fontWeight: 600 }}>🏰 Caerleon → BM: <strong>{caerleonBmFlips.length}</strong> verified flips</span>
                 </div>
                 <div style={{ fontSize: 9, color: '#888', fontFamily: 'Outfit,sans-serif' }}>
                   Total EV: <strong style={{ color: GOLD }}>{fmtSilver(totalEV)}</strong>
@@ -1089,40 +997,12 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
               </div>
             )}
 
-            {/* ── BM Instant Flips (other cities → BM) ── */}
-            <div className="aop" style={{ marginBottom: 12, borderColor: 'rgba(76,175,80,.15)' }}>
-              <div className="aot" style={{ gap: 8 }}>
-                <span style={{ color: '#4caf50' }}>⚡</span> BM Instant Flips — Buy & Travel to BM
-              </div>
-              <div style={{ fontSize: 9, color: '#888', marginBottom: 8, fontFamily: 'Outfit,sans-serif' }}>
-                Buy from other cities → travel to Caerleon → instant-sell to Black Market. No tax, no waiting. Travel risk applies.
-              </div>
-              {otherBmFlips.length === 0 && !enriching && (
-                <div style={{ fontSize: 10, color: '#888', padding: 12, textAlign: 'center' }}>
-                  No profitable BM flips found from other cities. Try scanning again.
-                </div>
-              )}
-              {otherBmFlips.map((t, i) => <TradeCard key={`bm-${i}`} t={t} i={i} isDark={isDark} taxMode={taxMode} now={now} />)}
-            </div>
-
-            {/* ── City-to-City Trades ── */}
-            {cityTrades.length > 0 && (
-              <div className="aop" style={{ marginBottom: 12, borderColor: 'rgba(33,150,243,.15)' }}>
-                <div className="aot" style={{ gap: 8 }}>
-                  <span style={{ color: '#2196f3' }}>📦</span> City Trades — Sell Order Arbitrage
-                </div>
-                <div style={{ fontSize: 9, color: '#888', marginBottom: 8, fontFamily: 'Outfit,sans-serif' }}>
-                  Buy from one city → transport → list sell order in another city. Higher profit but requires waiting for buyer.
-                </div>
-                {cityTrades.map((t, i) => <TradeCard key={`city-${i}`} t={t} i={i} isDark={isDark} taxMode={taxMode} now={now} />)}
-              </div>
-            )}
             </>
           })()}
 
           {/* ── Filters ── */}
           <div className="aop" style={{ marginBottom: 12 }}>
-            <div className="aot">Filters</div>
+            <div className="aot">Filters — Caerleon → BM</div>
             <div className="ao-filters" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               <label style={{ fontSize: 9, color: '#888' }}>
                 Min Profit
@@ -1131,20 +1011,6 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
               <label style={{ fontSize: 9, color: '#888' }}>
                 Min %
                 <input className="ao-input" type="number" value={filters.minProfitPercent} onChange={e => updateFilter('minProfitPercent', Number(e.target.value))} style={{ width: 50, marginLeft: 4 }} />
-              </label>
-              <label style={{ fontSize: 9, color: '#888' }}>
-                Source
-                <select className="ao-select" value={filters.sourceCity} onChange={e => updateFilter('sourceCity', e.target.value as City | 'all')} style={{ marginLeft: 4 }}>
-                  <option value="all">All</option>
-                  {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </label>
-              <label style={{ fontSize: 9, color: '#888' }}>
-                Dest
-                <select className="ao-select" value={filters.destCity} onChange={e => updateFilter('destCity', e.target.value as City | 'all')} style={{ marginLeft: 4 }}>
-                  <option value="all">All</option>
-                  {ALL_LOCATIONS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
               </label>
               <label style={{ fontSize: 9, color: '#888' }}>
                 Category
@@ -1163,18 +1029,6 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
                   {[4, 5, 6, 7, 8].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </label>
-              <label style={{ fontSize: 9, color: '#888' }}>
-                Strategy
-                <select className="ao-select" value={strategyFilter} onChange={e => { setStrategyFilter(e.target.value as TradeStrategy | 'all'); setPage(1) }} style={{ marginLeft: 4 }}>
-                  <option value="all">All</option>
-                  <option value="instant-sell">Instant Sell</option>
-                  <option value="sell-order">Sell Order</option>
-                </select>
-              </label>
-              <label style={{ fontSize: 9, color: '#888', display: 'flex', alignItems: 'center', gap: 3 }}>
-                <input className="ao-check" type="checkbox" checked={filters.showBlackMarket} onChange={e => updateFilter('showBlackMarket', e.target.checked)} />
-                BM
-              </label>
               <label style={{ fontSize: 9, color: '#888', display: 'flex', alignItems: 'center', gap: 3 }}>
                 <input className="ao-check" type="checkbox" checked={filters.showStale} onChange={e => updateFilter('showStale', e.target.checked)} />
                 Stale
@@ -1183,43 +1037,39 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
             </div>
           </div>
 
-          {/* ── Results Table ── */}
+          {/* ── Results Table — All Caerleon → BM Opportunities ── */}
           <div className="aop" style={{ padding: 0, overflow: 'hidden' }}>
             <div className="ao-table-wrap" style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1000 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
                 <thead>
                   <tr style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.06)'}` }}>
                     <TH field="displayName" label="Item" {...{ filters, toggleSort }} />
                     <TH field="tier" label="Tier" {...{ filters, toggleSort }} />
                     <th className="ao-th" style={{ textAlign: 'center' }}>Q</th>
-                    <th className="ao-th" style={{ textAlign: 'center' }}>Type</th>
-                    <TH field="sourceCity" label="Buy City" {...{ filters, toggleSort }} />
-                    <TH field="sourcePrice" label="Buy Price" {...{ filters, toggleSort }} />
-                    <TH field="destCity" label="Sell City" {...{ filters, toggleSort }} />
-                    <th className="ao-th" style={{ textAlign: 'right' }}>Sell Price</th>
-                    <TH field="netProfit" label="Net Profit" {...{ filters, toggleSort }} />
+                    <TH field="sourcePrice" label="Buy @ Caerleon" {...{ filters, toggleSort }} />
+                    <th className="ao-th" style={{ textAlign: 'right' }}>Sell @ BM</th>
+                    <TH field="netProfit" label="Profit" {...{ filters, toggleSort }} />
                     <TH field="profitPercent" label="%" {...{ filters, toggleSort }} />
-                    <TH field="expectedValue" label="EV" {...{ filters, toggleSort }} />
-                    <TH field="profitPerHour" label="$/hr" {...{ filters, toggleSort }} />
-                    <TH field="freshness" label="Age" {...{ filters, toggleSort }} />
+                    <TH field="freshness" label="Sell Age" {...{ filters, toggleSort }} />
+                    <th className="ao-th" style={{ textAlign: 'center' }}>BM Age</th>
+                    <th className="ao-th" style={{ textAlign: 'center' }}>Match</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pageItems.length === 0 && (
                     <tr>
-                      <td colSpan={13} style={{ padding: 32, textAlign: 'center', color: '#666', fontSize: 12 }}>
-                        {scan.status === 'idle' ? 'Click "Scan" to start scanning the market.' :
+                      <td colSpan={10} style={{ padding: 32, textAlign: 'center', color: '#666', fontSize: 12 }}>
+                        {scan.status === 'idle' ? 'Click "Scan" to start scanning Caerleon ↔ Black Market.' :
                          scan.status === 'complete' ? 'No opportunities match your filters.' : ''}
                       </td>
                     </tr>
                   )}
                   {pageItems.map((o, i) => (
-                    <tr key={`${o.itemId}-${o.sourceCity}-${o.destCity}-${o.strategy}-${i}`} className="ao-row" style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.03)'}` }}>
+                    <tr key={`${o.itemId}-${o.quality}-${i}`} className="ao-row" style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.03)'}` }}>
                       <td style={{ padding: '6px 8px', maxWidth: 220 }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                           <span style={{ fontSize: 11, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {o.displayName}
-                            {o.isBlackMarket && <span style={{ marginLeft: 4, fontSize: 8, color: GOLD, fontWeight: 700 }}>BM</span>}
                           </span>
                           <span
                             title="Click to copy — search this in Albion marketplace"
@@ -1234,19 +1084,11 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
                         {o.tier}{o.enchantment ? `.${o.enchantment}` : ''}
                       </td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}><QualityBadge q={o.quality} /></td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                        <span className={`ao-strategy ${o.strategy === 'instant-sell' ? 'ao-strategy-instant' : 'ao-strategy-sell'}`}>
-                          {o.strategy === 'instant-sell' ? 'INSTANT' : 'ORDER'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '6px 8px' }}><CityBadge city={o.sourceCity} /></td>
                       <td style={{ padding: '6px 8px', fontSize: 11, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                         {fmtSilver(o.sourcePrice)}
                       </td>
-                      <td style={{ padding: '6px 8px' }}><CityBadge city={o.destCity} /></td>
-                      <td style={{ padding: '6px 8px', fontSize: 11, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                        {fmtSilver(o.destPrice)}
-                        {o.taxPaid > 0 && <span style={{ fontSize: 8, color: '#f44336', marginLeft: 2 }}>-{fmtSilver(o.taxPaid)}</span>}
+                      <td style={{ padding: '6px 8px', fontSize: 11, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
+                        <span style={{ color: '#4caf50' }}>{fmtSilver(o.destPrice)}</span>
                       </td>
                       <td style={{ padding: '6px 8px', fontSize: 11, textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums',
                         color: o.netProfit >= 50000 ? '#4caf50' : o.netProfit >= 15000 ? GOLD : isDark ? '#ccc' : '#444' }}>
@@ -1256,15 +1098,24 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
                         color: o.profitPercent >= 50 ? '#4caf50' : o.profitPercent >= 20 ? GOLD : isDark ? '#ccc' : '#444' }}>
                         {o.profitPercent}%
                       </td>
-                      <td style={{ padding: '6px 8px', fontSize: 10, textAlign: 'right', fontVariantNumeric: 'tabular-nums',
-                        color: o.expectedValue > 0 ? (o.riskLevel === 'safe' ? '#4caf50' : o.riskLevel === 'medium' ? '#ff9800' : '#f44336') : '#f44336' }}>
-                        {fmtSilver(o.expectedValue)}
-                      </td>
-                      <td style={{ padding: '6px 8px', fontSize: 10, textAlign: 'right', fontVariantNumeric: 'tabular-nums', color: isDark ? '#aaa' : '#666' }}>
-                        {fmtSilver(o.profitPerHour)}
+                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                        <span style={{ fontSize: 8, color: getTimestampColor(o.sourceDate), fontWeight: 600 }}>{timeAgo(o.sourceDate)}</span>
                       </td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                        <FreshBadge f={o.freshness} />
+                        <span style={{ fontSize: 8, color: getTimestampColor(o.destDate), fontWeight: 600 }}>{timeAgo(o.destDate)}</span>
+                      </td>
+                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>
+                        {(() => {
+                          const srcAge = now - o.sourceDate.getTime()
+                          const dstAge = now - o.destDate.getTime()
+                          const bothFresh = srcAge < 600_000 && dstAge < 600_000  // < 10min
+                          const bothRecent = srcAge < 3600_000 && dstAge < 3600_000  // < 1h
+                          return bothFresh
+                            ? <span style={{ color: '#4caf50', fontSize: 8, fontWeight: 700 }}>✓✓ FRESH</span>
+                            : bothRecent
+                            ? <span style={{ color: '#ff9800', fontSize: 8, fontWeight: 700 }}>✓~ CHECK</span>
+                            : <span style={{ color: '#f44336', fontSize: 8, fontWeight: 700 }}>⚠ STALE</span>
+                        })()}
                       </td>
                     </tr>
                   ))}
