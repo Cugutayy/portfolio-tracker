@@ -11,6 +11,8 @@ export const CITIES: City[] = [
   'Lymhurst', 'Thetford', 'Caerleon', 'Brecilien',
 ]
 export const ALL_LOCATIONS: City[] = [...CITIES, 'Black Market']
+/** Focused scan: only Caerleon + BM (fastest, zero risk arbitrage) */
+export const BM_LOCATIONS: City[] = ['Caerleon', 'Black Market']
 
 export const TAX_NORMAL = 0.065
 export const TAX_PREMIUM = 0.04
