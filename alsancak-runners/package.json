@@ -26,7 +26,8 @@
     "next-auth": "^5.0.0-beta.30",
     "next-sanity": "^12.1.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
