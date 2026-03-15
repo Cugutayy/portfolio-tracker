@@ -4,6 +4,7 @@ import type { City, FilterState, RiskLevel } from './types'
 
 export const API_BASE = 'https://europe.albion-online-data.com'
 export const ITEMS_URL = 'https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/items.json'
+export const ITEM_NAMES_URL = 'https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/formatted/items.txt'
 
 export const CITIES: City[] = [
   'Bridgewatch', 'Martlock', 'Fort Sterling',

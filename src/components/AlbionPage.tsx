@@ -620,8 +620,8 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
       .sort((a, b) => b.netProfit - a.netProfit)
     const totalAll = new Set(allBm.map(o => o.itemId)).size
 
-    // Apply freshness filter: require both sides < 2h old
-    const FRESH_THRESHOLD = 2 * 60 * 60 * 1000 // 2 hours
+    // Apply freshness filter: require both sides < 10min old for reliable BM data
+    const FRESH_THRESHOLD = 10 * 60 * 1000 // 10 minutes
     const nowMs = Date.now()
     const filtered = bmFreshOnly
       ? allBm.filter(o => {
@@ -819,11 +819,11 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
                     color: bmFreshOnly ? '#4caf50' : '#ff9800',
                     border: `1px solid ${bmFreshOnly ? 'rgba(76,175,80,.3)' : 'rgba(255,152,0,.3)'}`,
                   }}>
-                  {bmFreshOnly ? '✓ Fresh Only (≤2h)' : '⚠ All Data (incl. stale)'}
+                  {bmFreshOnly ? '✓ Fresh Only (≤10m)' : '⚠ All Data (incl. stale)'}
                 </button>
                 <span style={{ fontSize: 8, color: '#888', fontFamily: 'Outfit,sans-serif' }}>
                   {bmFreshOnly
-                    ? <>Showing <strong style={{ color: '#4caf50' }}>{bmFocus.totalBuying}</strong> items with data {'<'} 2h old — <span style={{ color: '#666' }}>{bmFocus.totalAll - bmFocus.freshCount} stale hidden</span></>
+                    ? <>Showing <strong style={{ color: '#4caf50' }}>{bmFocus.totalBuying}</strong> items with data {'<'} 10min old — <span style={{ color: '#666' }}>{bmFocus.totalAll - bmFocus.freshCount} older hidden</span></>
                     : <>⚠ Showing ALL {bmFocus.totalBuying} items — <strong style={{ color: '#f44336' }}>stale data may show sold items!</strong></>
                   }
                 </span>
@@ -834,7 +834,7 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
 
               <div style={{ fontSize: 8, color: '#888', marginBottom: 8, fontFamily: 'Outfit,sans-serif', lineHeight: 1.5, padding: '5px 8px', background: isDark ? 'rgba(255,152,0,.04)' : 'rgba(255,152,0,.06)', borderRadius: 5, border: '1px solid rgba(255,152,0,.1)' }}>
                 <strong style={{ color: '#ff9800' }}>⚠ Data comes from players with Albion Data Client</strong> — prices go stale when nobody checks.
-                Items {'>'} 2h old may already be sold. Always verify in-game before buying!
+                Items {'>'} 10min old may already be sold. Fresh Only mode shows only {'<'} 10min data.
                 <br />
                 <span style={{ color: '#666' }}>
                   ✓ Both sides verified: sell order in source + BM buy order confirmed.{' '}
@@ -1020,9 +1020,19 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
 
           {/* ── Top Trades — 3 Sections ── */}
           {(enrichedTrades.length > 0 || enriching) && (() => {
-            const caerleonBmFlips = enrichedTrades.filter(t => t.isBlackMarket && t.sourceCity === 'Caerleon')
-            const otherBmFlips = enrichedTrades.filter(t => t.isBlackMarket && t.sourceCity !== 'Caerleon')
-            const cityTrades = enrichedTrades.filter(t => !t.isBlackMarket)
+            // Filter out stale trades: BM flips need <30min data, city trades need <2h
+            const ENRICHED_BM_MAX = 30 * 60 * 1000  // 30 min for BM
+            const ENRICHED_CITY_MAX = 2 * 60 * 60 * 1000 // 2h for city trades
+            const nowMs = Date.now()
+            const freshEnriched = enrichedTrades.filter(t => {
+              const maxAge = t.isBlackMarket ? ENRICHED_BM_MAX : ENRICHED_CITY_MAX
+              const srcAge = nowMs - t.sourceDate.getTime()
+              const dstAge = nowMs - t.destDate.getTime()
+              return srcAge < maxAge && dstAge < maxAge
+            })
+            const caerleonBmFlips = freshEnriched.filter(t => t.isBlackMarket && t.sourceCity === 'Caerleon')
+            const otherBmFlips = freshEnriched.filter(t => t.isBlackMarket && t.sourceCity !== 'Caerleon')
+            const cityTrades = freshEnriched.filter(t => !t.isBlackMarket)
 
             const totalEV = [...caerleonBmFlips, ...otherBmFlips, ...cityTrades].reduce((s, t) => s + t.expectedValue, 0)
             const verifiedCount = [...caerleonBmFlips, ...otherBmFlips, ...cityTrades].filter(t => {
