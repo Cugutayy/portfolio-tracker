@@ -10,6 +10,11 @@ interface PageTransitionProps {
 export default function PageTransition({ children }: PageTransitionProps) {
   const pathname = usePathname();
 
+  // Skip cinematic transition on dashboard — it's an app shell, not editorial
+  if (pathname.startsWith("/dashboard")) {
+    return <>{children}</>;
+  }
+
   return (
     <AnimatePresence mode="wait">
       <motion.div

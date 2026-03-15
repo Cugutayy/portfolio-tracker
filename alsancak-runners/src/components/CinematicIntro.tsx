@@ -54,6 +54,7 @@ export default function CinematicIntro() {
             muted
             loop
             playsInline
+            preload="metadata"
             className="absolute inset-0 w-full h-full object-cover"
             poster="/images/ar-08.jpg"
           >

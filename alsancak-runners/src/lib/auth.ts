@@ -46,11 +46,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
       }
-      if (token.id) {
+      // Only query role on sign-in or explicit update — not every request
+      if (token.id && (!token.role || trigger === "signIn" || trigger === "update")) {
         const [member] = await db
           .select({ role: members.role })
           .from(members)

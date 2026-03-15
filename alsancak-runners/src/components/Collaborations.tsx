@@ -128,6 +128,7 @@ function CollabBlock({
               muted
               loop
               playsInline
+              preload="none"
               poster={collab.image}
               className="absolute inset-0 w-full h-full object-cover object-[center_25%] opacity-0 group-hover:opacity-100 transition-opacity duration-700"
             >
