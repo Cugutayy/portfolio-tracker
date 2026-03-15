@@ -2,20 +2,21 @@
 
 import { Suspense, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useTranslations } from "next-intl";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import SmoothScroll from "@/components/SmoothScroll";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const AUTH_ERROR_MESSAGES: Record<string, string> = {
-  AccessDenied: "Access denied. Please try again or use a different account.",
-  Configuration: "Server configuration error. Please try again later.",
-  OAuthSignin: "Could not start sign-in flow. Please try again.",
-  OAuthCallback: "Sign-in callback error. Please try again.",
-  OAuthAccountNotLinked: "This email is already linked to another account.",
-  CredentialsSignin: "Invalid email or password.",
-  Default: "An error occurred during sign-in. Please try again.",
+const AUTH_ERROR_KEYS: Record<string, string> = {
+  AccessDenied: "errors.accessDenied",
+  Configuration: "errors.configuration",
+  OAuthSignin: "errors.oauthSignin",
+  OAuthCallback: "errors.oauthCallback",
+  OAuthAccountNotLinked: "errors.oauthAccountNotLinked",
+  CredentialsSignin: "errors.credentialsSignin",
+  Default: "errors.default",
 };
 
 export default function JoinPage() {
@@ -34,6 +35,7 @@ export default function JoinPage() {
 
 function JoinContent() {
   const searchParams = useSearchParams();
+  const t = useTranslations("join");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -50,9 +52,10 @@ function JoinContent() {
   useEffect(() => {
     const authError = searchParams.get("error");
     if (authError) {
-      setError(AUTH_ERROR_MESSAGES[authError] || AUTH_ERROR_MESSAGES.Default);
+      const errorKey = AUTH_ERROR_KEYS[authError] || AUTH_ERROR_KEYS.Default;
+      setError(t(errorKey));
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +79,7 @@ function JoinContent() {
 
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error || "Something went wrong");
+          setError(data.error || t("errors.somethingWentWrong"));
           setLoading(false);
           return;
         }
@@ -107,11 +110,11 @@ function JoinContent() {
         if (result?.ok) {
           window.location.href = "/dashboard";
         } else {
-          setError("Invalid email or password");
+          setError(t("errors.invalidCredentials"));
         }
       }
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError(t("errors.somethingWentWrongRetry"));
     } finally {
       setLoading(false);
     }
@@ -123,7 +126,7 @@ function JoinContent() {
       setLoading(true);
       await signIn("strava", { callbackUrl: "/dashboard" });
     } catch {
-      setError("Strava sign-in failed. Please try again.");
+      setError(t("errors.stravaSignInFailed"));
       setLoading(false);
     }
   };
@@ -141,25 +144,26 @@ function JoinContent() {
             className="mb-16"
           >
             <p className="label-text text-white/60 mb-4">
-              {mode === "join" ? "BECOME A MEMBER" : "WELCOME BACK"}
+              {mode === "join" ? t("becomeAMember") : t("welcomeBack")}
             </p>
             <h1 className="headline-xl mb-6">
-              {mode === "join" ? (
-                <>
-                  JOIN<br />
-                  <span className="text-[#E6FF00]">THE RUN</span>
-                </>
-              ) : (
-                <>
-                  SIGN<br />
-                  <span className="text-[#E6FF00]">IN</span>
-                </>
-              )}
+              {(() => {
+                const title = mode === "join" ? t("joinTheRun") : t("signInTitle");
+                const lines = title.split("\n");
+                return lines.length > 1 ? (
+                  <>
+                    {lines[0]}<br />
+                    <span className="text-[#E6FF00]">{lines[1]}</span>
+                  </>
+                ) : (
+                  <span className="text-[#E6FF00]">{lines[0]}</span>
+                );
+              })()}
             </h1>
             <p className="body-text">
               {mode === "join"
-                ? "Open to all levels. Free to join. Just bring your shoes."
-                : "Sign in to your account and keep running."}
+                ? t("joinSubtitle")
+                : t("signInSubtitle")}
             </p>
           </motion.div>
 
@@ -183,13 +187,13 @@ function JoinContent() {
               >
                 <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
               </svg>
-              SIGN IN WITH STRAVA
+              {t("signInWithStrava")}
             </button>
 
             <div className="flex items-center gap-4 mt-8">
               <div className="flex-1 h-px bg-[#222]" />
               <span className="text-[10px] tracking-[0.2em] text-[#555] uppercase">
-                or with email
+                {t("orWithEmail")}
               </span>
               <div className="flex-1 h-px bg-[#222]" />
             </div>
@@ -208,7 +212,7 @@ function JoinContent() {
                   : "text-[#666] border-transparent hover:text-white"
               }`}
             >
-              REGISTER
+              {t("register")}
             </button>
             <button
               onClick={() => {
@@ -221,7 +225,7 @@ function JoinContent() {
                   : "text-[#666] border-transparent hover:text-white"
               }`}
             >
-              SIGN IN
+              {t("signIn")}
             </button>
           </div>
 
@@ -247,7 +251,7 @@ function JoinContent() {
                     htmlFor="join-name"
                     className="label-text block mb-3"
                   >
-                    NAME
+                    {t("name")}
                   </label>
                   <input
                     id="join-name"
@@ -258,7 +262,7 @@ function JoinContent() {
                     }
                     required
                     className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors"
-                    placeholder="Your name"
+                    placeholder={t("namePlaceholder")}
                   />
                 </div>
               )}
@@ -269,7 +273,7 @@ function JoinContent() {
                   htmlFor="join-email"
                   className="label-text block mb-3"
                 >
-                  EMAIL
+                  {t("email")}
                 </label>
                 <input
                   id="join-email"
@@ -280,7 +284,7 @@ function JoinContent() {
                   }
                   required
                   className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors"
-                  placeholder="your@email.com"
+                  placeholder={t("emailPlaceholder")}
                 />
               </div>
 
@@ -290,7 +294,7 @@ function JoinContent() {
                   htmlFor="join-password"
                   className="label-text block mb-3"
                 >
-                  {mode === "join" ? "PASSWORD (MIN. 8 CHARS)" : "PASSWORD"}
+                  {mode === "join" ? t("passwordMinChars") : t("password")}
                 </label>
                 <input
                   id="join-password"
@@ -313,7 +317,7 @@ function JoinContent() {
                     htmlFor="join-instagram"
                     className="label-text block mb-3"
                   >
-                    INSTAGRAM
+                    {t("instagram")}
                   </label>
                   <input
                     id="join-instagram"
@@ -323,7 +327,7 @@ function JoinContent() {
                       setFormData({ ...formData, instagram: e.target.value })
                     }
                     className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors"
-                    placeholder="@yourusername"
+                    placeholder={t("instagramPlaceholder")}
                   />
                 </div>
               )}
@@ -335,7 +339,7 @@ function JoinContent() {
                     htmlFor="join-pace"
                     className="label-text block mb-3"
                   >
-                    RUNNING PACE
+                    {t("runningPace")}
                   </label>
                   <select
                     id="join-pace"
@@ -345,16 +349,16 @@ function JoinContent() {
                     }
                     className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors cursor-pointer [&>option]:bg-black"
                   >
-                    <option value="">Select your pace</option>
+                    <option value="">{t("paceOptions.selectPace")}</option>
                     <option value="beginner">
-                      Beginner (&gt;7:00 min/km)
+                      {t("paceOptions.beginner")}
                     </option>
-                    <option value="casual">Casual (6:00-7:00 min/km)</option>
+                    <option value="casual">{t("paceOptions.casual")}</option>
                     <option value="intermediate">
-                      Intermediate (5:00-6:00 min/km)
+                      {t("paceOptions.intermediate")}
                     </option>
                     <option value="advanced">
-                      Advanced (&lt;5:00 min/km)
+                      {t("paceOptions.advanced")}
                     </option>
                   </select>
                 </div>
@@ -371,8 +375,8 @@ function JoinContent() {
                 {loading
                   ? "..."
                   : mode === "join"
-                    ? "JOIN ALSANCAK RUNNERS"
-                    : "SIGN IN"}
+                    ? t("joinButton")
+                    : t("signInButton")}
               </motion.button>
             </motion.form>
           ) : (
@@ -398,10 +402,10 @@ function JoinContent() {
                 </svg>
               </div>
               <h2 className="headline-md mb-4">
-                WELCOME<span className="text-[#E6FF00]">.</span>
+                {t("welcomeMessage").replace(".", "")}<span className="text-[#E6FF00]">.</span>
               </h2>
               <p className="body-text">
-                Account created! Redirecting to dashboard...
+                {t("accountCreated")}
               </p>
             </motion.div>
           )}

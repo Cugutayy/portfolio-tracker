@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import SmoothScroll from "@/components/SmoothScroll";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -26,10 +27,11 @@ const galleryImages = [
   { src: "/images/ar-04.jpg", category: "runs", size: "small" },
 ];
 
-const filters = ["ALL", "RUNS", "COMMUNITY", "CITY"];
+const filterKeys = ["all", "runs", "community", "city"] as const;
 
 export default function GalleryPage() {
-  const [activeFilter, setActiveFilter] = useState("ALL");
+  const t = useTranslations("gallery");
+  const [activeFilter, setActiveFilter] = useState("all");
   const [lightbox, setLightbox] = useState<string | null>(null);
 
   const closeLightbox = useCallback(() => setLightbox(null), []);
@@ -45,9 +47,9 @@ export default function GalleryPage() {
   }, [lightbox, closeLightbox]);
 
   const filtered =
-    activeFilter === "ALL"
+    activeFilter === "all"
       ? galleryImages
-      : galleryImages.filter((img) => img.category === activeFilter.toLowerCase());
+      : galleryImages.filter((img) => img.category === activeFilter);
 
   return (
     <SmoothScroll>
@@ -55,12 +57,12 @@ export default function GalleryPage() {
       <main>
         {/* Hero */}
         <section className="pt-32 pb-16 bg-[#0A0A0A] px-[clamp(1.5rem,4vw,4rem)]">
-          <p className="label-text text-white/60 mb-4">EDITORIAL</p>
-          <h1 className="headline-xl mb-8">GALLERY</h1>
+          <p className="label-text text-white/60 mb-4">{t("label")}</p>
+          <h1 className="headline-xl mb-8">{t("title")}</h1>
 
           {/* Filters */}
           <div className="flex gap-6 border-b border-[#222] pb-4">
-            {filters.map((filter) => (
+            {filterKeys.map((filter) => (
               <button
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
@@ -70,7 +72,7 @@ export default function GalleryPage() {
                     : "text-[#666] border-transparent hover:text-white"
                 }`}
               >
-                {filter}
+                {t(`filters.${filter}`)}
               </button>
             ))}
           </div>
@@ -134,7 +136,7 @@ export default function GalleryPage() {
               aria-label="Close lightbox"
               className="absolute top-8 right-8 text-white/60 hover:text-white text-sm tracking-widest"
             >
-              CLOSE
+              {t("close")}
             </button>
           </motion.div>
         )}

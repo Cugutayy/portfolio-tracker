@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 interface LeaderboardEntry {
   rank: number;
@@ -28,18 +29,18 @@ interface CommunityStats {
 
 type Period = "week" | "month" | "year" | "all_time";
 
-const PERIOD_LABELS: Record<Period, string> = {
-  week: "BU HAFTA",
-  month: "BU AY",
-  year: "BU YIL",
-  all_time: "TÜM ZAMANLAR",
+const PERIOD_KEYS: Record<Period, string> = {
+  week: "week",
+  month: "month",
+  year: "year",
+  all_time: "allTime",
 };
 
-function formatDuration(seconds: number): string {
+function formatDuration(seconds: number, minLabel: string, hrLabel: string): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  if (h === 0) return `${m}dk`;
-  return `${h}sa ${m}dk`;
+  if (h === 0) return `${m}${minLabel}`;
+  return `${h}${hrLabel} ${m}${minLabel}`;
 }
 
 function formatPace(secPerKm: number): string {
@@ -50,6 +51,9 @@ function formatPace(secPerKm: number): string {
 }
 
 export default function ToplulukPage() {
+  const t = useTranslations("community");
+  const tNav = useTranslations("nav");
+  const tCommon = useTranslations("common");
   const [period, setPeriod] = useState<Period>("month");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<CommunityStats | null>(null);
@@ -91,19 +95,19 @@ export default function ToplulukPage() {
               href="/etkinlikler"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              ETKİNLİKLER
+              {tNav("events")}
             </Link>
             <Link
               href="/routes"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              ROTALAR
+              {tNav("routes")}
             </Link>
             <Link
               href="/dashboard"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              PANEL
+              {tNav("dashboard")}
             </Link>
           </div>
         </div>
@@ -119,14 +123,14 @@ export default function ToplulukPage() {
             className="mb-16"
           >
             <p className="text-[11px] tracking-[0.15em] uppercase text-[#666] mb-4">
-              TOPLULUK
+              {t("title")}
             </p>
             <h1
               className="text-5xl md:text-7xl font-bold text-white leading-[0.9]"
               style={{ fontFamily: "var(--font-heading, inherit)" }}
             >
-              LİDER<br />
-              <span className="text-[#E6FF00]">TABLOSU</span>
+              {t("leaderboard").split(" ")[0]}<br />
+              <span className="text-[#E6FF00]">{t("leaderboard").split(" ").slice(1).join(" ")}</span>
             </h1>
           </motion.div>
 
@@ -139,13 +143,13 @@ export default function ToplulukPage() {
               className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"
             >
               {[
-                { label: "ÜYE", value: stats.members },
-                { label: "TOPLAM KOŞU", value: stats.totalRuns },
+                { label: t("stats.members"), value: stats.members },
+                { label: t("stats.totalRuns"), value: stats.totalRuns },
                 {
-                  label: "TOPLAM KM",
+                  label: t("stats.totalKm"),
                   value: stats.totalDistanceKm.toLocaleString(),
                 },
-                { label: "YAKLAŞAN ETKİNLİK", value: stats.upcomingEvents },
+                { label: t("stats.upcomingEvents"), value: stats.upcomingEvents },
               ].map((s, i) => (
                 <div key={s.label} className="border border-[#222] p-6">
                   <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">
@@ -164,7 +168,7 @@ export default function ToplulukPage() {
             transition={{ duration: 0.5, delay: 0.15 }}
             className="flex gap-2 mb-8"
           >
-            {(Object.keys(PERIOD_LABELS) as Period[]).map((p) => (
+            {(Object.keys(PERIOD_KEYS) as Period[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
@@ -174,7 +178,7 @@ export default function ToplulukPage() {
                     : "border-[#333] text-[#666] hover:border-white/30 hover:text-white"
                 }`}
               >
-                {PERIOD_LABELS[p]}
+                {t(`periods.${PERIOD_KEYS[p]}`)}
               </button>
             ))}
           </motion.div>
@@ -188,11 +192,10 @@ export default function ToplulukPage() {
             <div className="border border-[#222] p-16 text-center">
               <div className="text-5xl mb-4 opacity-20">🏃</div>
               <p className="text-[15px] text-[#666] mb-2">
-                Bu dönem için veri yok
+                {t("noData")}
               </p>
               <p className="text-[12px] text-[#444]">
-                Strava bağlantısı olan üyeler aktivite kaydettiğinde burada
-                görünecek
+                {t("noDataSubtitle")}
               </p>
             </div>
           ) : (
@@ -204,11 +207,11 @@ export default function ToplulukPage() {
               {/* Table Header */}
               <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-[10px] tracking-[0.15em] uppercase text-[#555] border-b border-[#222]">
                 <div className="col-span-1">#</div>
-                <div className="col-span-3">KOŞUCU</div>
-                <div className="col-span-2 text-right">MESAFE</div>
-                <div className="col-span-2 text-right">KOŞU</div>
-                <div className="col-span-2 text-right">SÜRE</div>
-                <div className="col-span-2 text-right">ORT. TEMPO</div>
+                <div className="col-span-3">{t("table.runner")}</div>
+                <div className="col-span-2 text-right">{t("table.distance")}</div>
+                <div className="col-span-2 text-right">{t("table.runs")}</div>
+                <div className="col-span-2 text-right">{t("table.time")}</div>
+                <div className="col-span-2 text-right">{t("table.avgPace")}</div>
               </div>
 
               {/* Rows */}
@@ -271,7 +274,7 @@ export default function ToplulukPage() {
                       {/* Time (hidden on mobile) */}
                       <div className="hidden md:flex col-span-2 items-center justify-end">
                         <span className="text-[#999]">
-                          {formatDuration(entry.totalTimeSec)}
+                          {formatDuration(entry.totalTimeSec, tCommon("min"), tCommon("hr"))}
                         </span>
                       </div>
 

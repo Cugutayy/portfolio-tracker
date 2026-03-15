@@ -4,8 +4,10 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import TextReveal from "./TextReveal";
+import { useTranslations } from "next-intl";
 
 export default function CommunityMoment() {
+  const t = useTranslations("home");
   const sectionRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -40,12 +42,12 @@ export default function CommunityMoment() {
       {/* Overlay text */}
       <div className="absolute inset-0 flex items-end pb-20 md:pb-32 px-6 md:px-16">
         <motion.div style={{ y: textY, opacity: textOpacity }}>
-          <p className="label-text text-white/60 mb-4">SCENE II</p>
+          <p className="label-text text-white/60 mb-4">{t("sceneLabel")}</p>
           <TextReveal as="h2" className="headline-lg max-w-3xl" mode="line">
-            {"WE RUN\nTOGETHER"}
+            {t("weRunTogether")}
           </TextReveal>
           <p className="body-text mt-6 max-w-md">
-            Every stride, every breath, every moment — shared.
+            {t("everyStride")}
           </p>
         </motion.div>
       </div>

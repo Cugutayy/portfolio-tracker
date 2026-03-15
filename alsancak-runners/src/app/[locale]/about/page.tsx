@@ -2,32 +2,22 @@
 
 import { useRef } from "react";
 import { motion, useInView, useScroll, useTransform } from "framer-motion";
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import SmoothScroll from "@/components/SmoothScroll";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const manifesto = [
-  {
-    title: "WE RUN THE CITY",
-    text: "Alsancak Runners was born from a simple idea: running is better together. What started as a small group of friends running along Kordon has grown into Izmir's most vibrant urban running collective.",
-  },
-  {
-    title: "EVERY STREET IS A ROUTE",
-    text: "We don't run in circles. We explore. From the cobblestones of Alsancak to the coastline of Kordon, every run is a journey through the city's layers of history, culture, and energy.",
-  },
-  {
-    title: "OPEN TO ALL",
-    text: "There's no pace requirement. No membership fee. No judgment. Whether you're running your first kilometer or your thousandth, you belong here.",
-  },
-  {
-    title: "CULTURE IN MOTION",
-    text: "Running is more than fitness. It's how we connect with the city, with each other, and with ourselves. We collaborate with brands, artists, and local businesses to create experiences that move beyond the run.",
-  },
-];
-
 export default function AboutPage() {
   const heroRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations("about");
+
+  const manifesto = [
+    { title: t("values.weRunTheCity.title"), text: t("values.weRunTheCity.description") },
+    { title: t("values.everyStreetIsARoute.title"), text: t("values.everyStreetIsARoute.description") },
+    { title: t("values.openToAll.title"), text: t("values.openToAll.description") },
+    { title: t("values.cultureInMotion.title"), text: t("values.cultureInMotion.description") },
+  ];
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
@@ -59,13 +49,19 @@ export default function AboutPage() {
             style={{ opacity: heroOpacity }}
             className="relative z-10 px-6 md:px-16 pb-16 md:pb-24 max-w-3xl"
           >
-            <p className="label-text text-white/60 mb-4">WHO WE ARE</p>
+            <p className="label-text text-white/60 mb-4">{t("whoWeAre")}</p>
             <h1 className="headline-xl mb-6">
-              ABOUT<br />
-              <span className="text-[#E6FF00]">US</span>
+              {t("title").split(" ").length > 1 ? (
+                <>
+                  {t("title").split(" ").slice(0, -1).join(" ")}<br />
+                  <span className="text-[#E6FF00]">{t("title").split(" ").slice(-1)[0]}</span>
+                </>
+              ) : (
+                <span className="text-[#E6FF00]">{t("title")}</span>
+              )}
             </h1>
             <p className="body-text text-lg">
-              An urban running collective redefining how Izmir moves.
+              {t("subtitle")}
             </p>
           </motion.div>
         </section>
@@ -99,8 +95,8 @@ export default function AboutPage() {
         {/* Community photo grid — bento layout for portrait photos */}
         <section className="py-32 bg-[#0A0A0A]">
           <div className="max-w-[1600px] mx-auto px-[clamp(1.5rem,4vw,4rem)]">
-            <p className="label-text text-white/60 mb-4">THE CREW</p>
-            <h2 className="headline-lg mb-16">OUR COMMUNITY</h2>
+            <p className="label-text text-white/60 mb-4">{t("theCrew")}</p>
+            <h2 className="headline-lg mb-16">{t("ourCommunity")}</h2>
 
             {/* Row 1: 3 portrait photos */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
@@ -157,33 +153,34 @@ export default function AboutPage() {
   );
 }
 
-const teamMembers = [
-  {
-    name: "NAZ KARAGÖZOĞLU",
-    role: "FOUNDER",
-    image: "/images/ar-18.jpg",
-    alt: "Naz Karagözoğlu — Founder of Alsancak Runners",
-    bio: "Hayatındaki zorlu süreçte ona en iyi gelen şeyin koşmak olduğunu fark ettiğinde bu duyguyu başkalarıyla da paylaşmak ve koşmanın sadece performans ve rekabetten ibaret olmadığını göstermek için yeni koşu kültürünü İzmir\u2019in ritmi ile buluşturdu.",
-  },
-  {
-    name: "HAKAN ÖZDİL",
-    role: "CAPTAIN",
-    image: "/images/ar-11.jpg",
-    alt: "Hakan Özdil — Captain of Alsancak Runners",
-    bio: "Uzun yıllar futbol oynadıktan sonra Ege Üniversitesi Beden Eğitimi ve Spor Yüksekokulu\u2019nu kazanıp antrenörlük yapmaya başlamıştır. 23 yıldır özellikle grup derslerindeki tecrübesi ile bugün yeni koşu kültürüne liderliği ile yön veriyor.",
-  },
-  {
-    name: "İZEM GÖKDEMİR",
-    role: "PACER",
-    image: "/images/ar-03.jpg",
-    alt: "İzem Gökdemir — Pacer of Alsancak Runners",
-    bio: "Ege Üniversitesi Beden Eğitimi Öğretmenliği okurken basketbol oynamaya devam etmiş, yaşadığı sakatlık sonrasında İzmir\u2019e dönerek antrenörlük kariyerini sürdürürken aynı zamanda Alsancak Runners pacer\u2019ı olarak koşuculara ritim tutmaktadır.",
-  },
-];
-
 function FounderSection() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const t = useTranslations("about");
+
+  const teamMembers = [
+    {
+      name: t("teamMembers.naz.name"),
+      role: t("teamMembers.naz.role"),
+      image: "/images/ar-18.jpg",
+      alt: "Naz Karagözoğlu — Alsancak Runners",
+      bio: t("teamMembers.naz.bio"),
+    },
+    {
+      name: t("teamMembers.hakan.name"),
+      role: t("teamMembers.hakan.role"),
+      image: "/images/ar-11.jpg",
+      alt: "Hakan Özdil — Alsancak Runners",
+      bio: t("teamMembers.hakan.bio"),
+    },
+    {
+      name: t("teamMembers.izem.name"),
+      role: t("teamMembers.izem.role"),
+      image: "/images/ar-03.jpg",
+      alt: "İzem Gökdemir — Alsancak Runners",
+      bio: t("teamMembers.izem.bio"),
+    },
+  ];
 
   return (
     <section ref={ref} className="py-32 md:py-48 bg-[#111]">
@@ -194,7 +191,7 @@ function FounderSection() {
           transition={{ duration: 0.6 }}
           className="label-text text-white/60 mb-16"
         >
-          EKİBİMİZ
+          {t("team")}
         </motion.p>
 
         <div className="space-y-32">
@@ -298,7 +295,7 @@ function ManifestoBlock({
   item,
   index,
 }: {
-  item: (typeof manifesto)[0];
+  item: { title: string; text: string };
   index: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);

@@ -1,16 +1,28 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { processWebhookEvents } from "@/lib/webhookProcessor";
+import { cacheInvalidate, CACHE_KEYS } from "@/lib/cache";
 
 /**
- * POST /api/strava/webhook/process
- * Triggers processing of pending webhook events.
- * Requires admin role (or can be called by cron/BullMQ worker).
+ * Verify cron secret from either header format:
+ * - `Authorization: Bearer <secret>` (Vercel Cron)
+ * - `x-cron-secret: <secret>` (manual/legacy)
  */
-export async function POST(request: Request) {
-  // Check for cron secret (for Vercel Cron Jobs)
-  const cronSecret = request.headers.get("x-cron-secret");
-  const isCron = cronSecret === process.env.CRON_SECRET;
+function isCronAuthorized(request: NextRequest): boolean {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) return false;
+
+  const authHeader = request.headers.get("authorization");
+  if (authHeader === `Bearer ${cronSecret}`) return true;
+
+  const xCronSecret = request.headers.get("x-cron-secret");
+  if (xCronSecret === cronSecret) return true;
+
+  return false;
+}
+
+async function handleProcess(request: NextRequest) {
+  const isCron = isCronAuthorized(request);
 
   if (!isCron) {
     // Require admin auth for manual triggering
@@ -24,6 +36,14 @@ export async function POST(request: Request) {
   try {
     const result = await processWebhookEvents();
 
+    // Invalidate caches if any events were processed
+    if (result.processed > 0) {
+      await Promise.all([
+        cacheInvalidate(CACHE_KEYS.communityStats),
+        cacheInvalidate("leaderboard:*", true),
+      ]);
+    }
+
     console.log("[webhook/process] Batch result:", result);
 
     return NextResponse.json(result);
@@ -34,4 +54,16 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+/**
+ * GET /api/strava/webhook/process — Vercel Cron trigger
+ * POST /api/strava/webhook/process — Manual trigger
+ */
+export async function GET(request: NextRequest) {
+  return handleProcess(request);
+}
+
+export async function POST(request: NextRequest) {
+  return handleProcess(request);
 }

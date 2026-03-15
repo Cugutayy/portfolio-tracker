@@ -3,9 +3,20 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { members } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 3 registrations per minute per IP
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "unknown";
+    const rateLimited = await checkRateLimit(
+      `register:${ip}`,
+      RATE_LIMITS.authRegister
+    );
+    if (rateLimited) return rateLimited;
+
     const body = await request.json();
     const { name, email, password, instagram, pace } = body;
 

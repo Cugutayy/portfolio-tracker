@@ -4,16 +4,11 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import TextReveal from "./TextReveal";
 import ImageReveal from "./ImageReveal";
-
-const manifestoLines = [
-  "WE RUN THE CITY.",
-  "Alsancak Runners is an urban running collective based in Izmir.",
-  "Running connects people to the city.",
-  "Every street is a route. Every run is a story.",
-  "We don't just run — we move culture forward.",
-];
+import { useTranslations } from "next-intl";
 
 export default function Manifesto() {
+  const t = useTranslations("home.manifesto");
+  const manifestoLines = t.raw("lines") as string[];
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const { scrollYProgress } = useScroll({
@@ -36,7 +31,7 @@ export default function Manifesto() {
           transition={{ duration: 0.6 }}
           className="label-text text-white/60 mb-16"
         >
-          OUR MANIFESTO
+          {t("label")}
         </motion.p>
 
         <div className="grid md:grid-cols-2 gap-16 md:gap-24 items-start">
@@ -96,7 +91,7 @@ export default function Manifesto() {
             {/* Photo caption */}
             <div className="absolute bottom-6 left-6 z-10">
               <p className="text-[10px] tracking-[0.2em] uppercase text-white/60">
-                Alsancak, Izmir — 2026
+                {t("photoCaption")}
               </p>
             </div>
           </motion.div>
