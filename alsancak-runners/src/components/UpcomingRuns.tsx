@@ -3,7 +3,8 @@
 import { useRef, useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 interface EventItem {
   id: string;
@@ -26,15 +27,9 @@ const EVENT_IMAGES: Record<string, string> = {
   race: "/images/ar-02.jpg",
 };
 
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  group_run: "GRUP KOŞUSU",
-  tempo_run: "TEMPO",
-  long_run: "UZUN KOŞU",
-  race: "YARIŞ",
-  social: "SOSYAL",
-};
-
 export default function UpcomingRuns() {
+  const t = useTranslations("home.upcomingRuns");
+  const tEvents = useTranslations("events");
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
@@ -60,20 +55,20 @@ export default function UpcomingRuns() {
         {/* Header */}
         <div className="flex items-end justify-between mb-16">
           <div>
-            <p className="label-text text-white/60 mb-4">YAKLAŞAN</p>
+            <p className="label-text text-white/60 mb-4">{t("label")}</p>
             <h2 className="headline-lg">
-              SONRAKİ<br />KOŞULAR
+              {t("title").split('\n')[0]}<br />{t("title").split('\n')[1]}
             </h2>
           </div>
           <div className="hidden md:flex flex-col items-end gap-4">
             <p className="body-text max-w-xs text-right">
-              İzmir sokaklarında bize katıl. Her koşu herkese açık.
+              {t("subtitle")}
             </p>
             <Link
               href="/etkinlikler"
               className="text-[11px] tracking-[0.15em] uppercase text-[#E6FF00] border border-[#E6FF00]/30 px-4 py-2 hover:bg-[#E6FF00] hover:text-black transition-colors"
             >
-              TÜMÜNÜ GÖR
+              {t("viewAll")}
             </Link>
           </div>
         </div>
@@ -84,17 +79,17 @@ export default function UpcomingRuns() {
             <div className="border border-[#222] p-12 text-center">
               <div className="w-6 h-6 border-2 border-[#E6FF00] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
               <p className="text-[15px] text-[#666]">
-                Yaklaşan etkinlikler yükleniyor...
+                {t("loading")}
               </p>
             </div>
           )}
           {!loading && events.length === 0 && (
             <div className="border border-[#222] p-12 text-center">
               <p className="text-[15px] text-[#666] mb-2">
-                Şu anda yaklaşan etkinlik bulunmuyor
+                {t("noEvents")}
               </p>
               <p className="text-[12px] text-[#444]">
-                Yeni etkinlikler eklendiğinde burada görünecek
+                {t("noEventsSubtitle")}
               </p>
             </div>
           )}
@@ -113,7 +108,7 @@ export default function UpcomingRuns() {
             const image = EVENT_IMAGES[ev.eventType] || "/images/ar-05.jpg";
 
             return (
-              <Link key={ev.id} href={`/etkinlikler/${ev.slug}`}>
+              <Link key={ev.id} href={{pathname: '/etkinlikler/[slug]', params: {slug: ev.slug}}}>
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}
                   animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -151,7 +146,7 @@ export default function UpcomingRuns() {
                         {ev.title}
                       </h3>
                       <span className="text-[9px] tracking-wider uppercase text-[#E6FF00]/60 mt-1 inline-block">
-                        {EVENT_TYPE_LABELS[ev.eventType] || ev.eventType}
+                        {tEvents(`types.${ev.eventType}`) || ev.eventType}
                       </span>
                     </div>
                     {/* Date + Time */}
@@ -168,7 +163,7 @@ export default function UpcomingRuns() {
                       <p className="font-bold text-lg">{distanceKm} KM</p>
                       {ev.rsvpCount > 0 && (
                         <p className="text-[10px] text-[#666]">
-                          {ev.rsvpCount}{ev.maxParticipants ? `/${ev.maxParticipants}` : ""} katılımcı
+                          {ev.rsvpCount}{ev.maxParticipants ? `/${ev.maxParticipants}` : ""} {t("participants")}
                         </p>
                       )}
                     </div>
@@ -185,7 +180,7 @@ export default function UpcomingRuns() {
             href="/etkinlikler"
             className="text-[11px] tracking-[0.15em] uppercase text-[#E6FF00] border border-[#E6FF00]/30 px-6 py-3 hover:bg-[#E6FF00] hover:text-black transition-colors inline-block"
           >
-            TÜM ETKİNLİKLER
+            {t("viewAllMobile")}
           </Link>
         </div>
       </div>

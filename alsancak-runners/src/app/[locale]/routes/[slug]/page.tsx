@@ -2,7 +2,8 @@
 
 import { useEffect, useState, use } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 
 const RouteMap = dynamic(() => import("@/components/maps/RouteMap"), {
@@ -38,17 +39,10 @@ interface Segment {
   surfaceType: string | null;
 }
 
-const difficultyLabels: Record<string, { label: string; color: string }> = {
-  easy: { label: "KOLAY", color: "#4ade80" },
-  moderate: { label: "ORTA", color: "#E6FF00" },
-  hard: { label: "ZOR", color: "#FC4C02" },
-};
-
-const surfaceLabels: Record<string, string> = {
-  road: "Asfalt",
-  trail: "Patika",
-  mixed: "Karışık",
-  track: "Pist",
+const difficultyColors: Record<string, string> = {
+  easy: "#4ade80",
+  moderate: "#E6FF00",
+  hard: "#FC4C02",
 };
 
 export default function RouteDetailPage({
@@ -57,6 +51,8 @@ export default function RouteDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
+  const t = useTranslations("routes");
+  const tNav = useTranslations("nav");
   const [route, setRoute] = useState<RouteDetail | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,19 +83,23 @@ export default function RouteDetailPage({
     return (
       <main className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-[#666] mb-4">Rota bulunamadı</p>
+          <p className="text-[#666] mb-4">{t("detail.notFound")}</p>
           <Link
             href="/routes"
             className="text-[11px] tracking-[0.15em] uppercase text-[#E6FF00] border border-[#E6FF00] px-6 py-3 hover:bg-[#E6FF00] hover:text-black transition-colors"
           >
-            ROTALARA DÖN
+            {t("detail.backToRoutes")}
           </Link>
         </div>
       </main>
     );
   }
 
-  const diff = difficultyLabels[route.difficulty || "moderate"];
+  const diffKey = route.difficulty || "moderate";
+  const diff = {
+    label: t(`difficulty.${diffKey}`),
+    color: difficultyColors[diffKey] || "#E6FF00",
+  };
 
   return (
     <main className="min-h-screen bg-[#0A0A0A]">
@@ -116,7 +116,7 @@ export default function RouteDetailPage({
             href="/routes"
             className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors flex items-center gap-2"
           >
-            <span>&#x2190;</span> ROTALAR
+            <span>&#x2190;</span> {tNav("routes")}
           </Link>
         </div>
       </nav>
@@ -157,12 +157,12 @@ export default function RouteDetailPage({
               </span>
               {route.surfaceType && (
                 <span className="text-[10px] tracking-wider uppercase text-[#555] px-2 py-0.5 border border-[#222]">
-                  {surfaceLabels[route.surfaceType] || route.surfaceType}
+                  {t(`surface.${route.surfaceType}`)}
                 </span>
               )}
               {route.isLoop && (
                 <span className="text-[10px] tracking-wider uppercase text-[#E6FF00] px-2 py-0.5 border border-[#E6FF00]/20">
-                  DÖNGÜ
+                  {t("loop")}
                 </span>
               )}
             </div>
@@ -186,7 +186,7 @@ export default function RouteDetailPage({
           >
             <div className="border border-[#222] p-5">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">
-                MESAFE
+                {t("detail.distance")}
               </p>
               <p className="text-2xl font-bold text-white">
                 {(route.distanceM / 1000).toFixed(1)}
@@ -195,7 +195,7 @@ export default function RouteDetailPage({
             </div>
             <div className="border border-[#222] p-5">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">
-                TIRMANMA
+                {t("detail.elevation")}
               </p>
               <p className="text-2xl font-bold text-white">
                 {route.elevationGainM
@@ -206,15 +206,15 @@ export default function RouteDetailPage({
             </div>
             <div className="border border-[#222] p-5">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">
-                ZEMİN
+                {t("detail.surface")}
               </p>
               <p className="text-2xl font-bold text-white">
-                {surfaceLabels[route.surfaceType || ""] || route.surfaceType || "—"}
+                {route.surfaceType ? t(`surface.${route.surfaceType}`) : "—"}
               </p>
             </div>
             <div className="border border-[#222] p-5">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">
-                KONUM
+                {t("detail.location")}
               </p>
               <p className="text-2xl font-bold text-white">
                 {route.city || "—"}
@@ -230,7 +230,7 @@ export default function RouteDetailPage({
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <h2 className="text-[11px] tracking-[0.15em] uppercase text-[#666] mb-6">
-                BÖLÜMLER
+                {t("detail.segments")}
               </h2>
               <div className="border border-[#222] overflow-hidden">
                 {segments.map((seg, i) => (
@@ -244,11 +244,11 @@ export default function RouteDetailPage({
                       </span>
                       <div>
                         <p className="text-white text-sm font-medium">
-                          {seg.name || `Bölüm ${i + 1}`}
+                          {seg.name || `${t("detail.segment")} ${i + 1}`}
                         </p>
                         {seg.surfaceType && (
                           <p className="text-[11px] text-[#555]">
-                            {surfaceLabels[seg.surfaceType] || seg.surfaceType}
+                            {t(`surface.${seg.surfaceType}`)}
                           </p>
                         )}
                       </div>

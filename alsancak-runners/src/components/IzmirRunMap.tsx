@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { motion, useScroll, useTransform, useInView, useMotionValue } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 // ── IZMIR BAY ACCURATE GEOGRAPHY ──────────────────────────────────
 //
@@ -132,11 +133,6 @@ const LANDMARKS: Landmark[] = [
 
 interface RouteInfo {
   id: string;
-  name: string;
-  distance: string;
-  elevation: string;
-  pace: string;
-  desc: string;
   path: string;
   elevationData: number[];
   accent: boolean;
@@ -145,33 +141,18 @@ interface RouteInfo {
 const ROUTES: RouteInfo[] = [
   {
     id: "kordon",
-    name: "KORDON TURU",
-    distance: "7 KM",
-    elevation: "12m",
-    pace: "5:30 /km",
-    desc: "Alsancak sahili boyunca klasik Kordon koşusu",
     path: KORDON_ROUTE,
     elevationData: KORDON_ELEVATION,
     accent: true,
   },
   {
     id: "korfez",
-    name: "KÖRFEZİ TURU",
-    distance: "18 KM",
-    elevation: "45m",
-    pace: "6:00 /km",
-    desc: "Göztepe'den Karşıyaka'ya tam körfez turu",
     path: FULL_CIRCUIT,
     elevationData: CIRCUIT_ELEVATION,
     accent: false,
   },
   {
     id: "kulturpark",
-    name: "KÜLTÜRPARK",
-    distance: "5 KM",
-    elevation: "8m",
-    pace: "5:00 /km",
-    desc: "Park içi parkur — düz ve hızlı tempo koşusu",
     path: KULTURPARK_ROUTE,
     elevationData: KULTURPARK_ELEVATION,
     accent: true,
@@ -238,6 +219,7 @@ function getDistanceMarkers(routeId: string): Array<{ x: number; y: number; km: 
 // ── COMPONENT ────────────────────────────────────────────────────
 
 export default function IzmirRunMap() {
+  const t = useTranslations("home.map");
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const [activeRoute, setActiveRoute] = useState<RouteInfo>(ROUTES[0]);
@@ -281,14 +263,14 @@ export default function IzmirRunMap() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-16">
           <div>
-            <p className="label-text text-white/60 mb-4">OUR ROUTES</p>
+            <p className="label-text text-white/60 mb-4">{t("label")}</p>
             <h2 className="headline-lg">
-              RUN THE<br />
-              <span className="text-[#666]">COASTLINE</span>
+              {t("title").split("\n")[0]}<br />
+              <span className="text-[#666]">{t("title").split("\n")[1]}</span>
             </h2>
           </div>
           <p className="body-text max-w-xs mt-4 md:mt-0 md:text-right">
-            Her koşu İzmir Körfezi kıyısında. Güneyde Göztepe&#39;den kuzeyde Karşıyaka&#39;ya.
+            {t("subtitle")}
           </p>
         </div>
 
@@ -381,7 +363,7 @@ export default function IzmirRunMap() {
                 letterSpacing="0.6em"
                 fontWeight="700"
               >
-                İZMİR KÖRFEZİ
+                {t("bayLabel")}
               </text>
 
               {/* Coastlines */}
@@ -683,7 +665,7 @@ export default function IzmirRunMap() {
                 letterSpacing="0.25em"
                 transform="rotate(-90, 18, 280)"
               >
-                EGE DENIZI
+                {t("aegeanSea")}
               </text>
 
               {/* ── SCALE BAR ── */}
@@ -699,11 +681,11 @@ export default function IzmirRunMap() {
             <div className="absolute bottom-4 left-4 flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <div className="w-6 h-[2px] bg-[#E6FF00]" />
-                <span className="text-[9px] text-[#666] tracking-[0.15em]">KORDON (7 KM)</span>
+                <span className="text-[9px] text-[#666] tracking-[0.15em]">{t("routes.kordon.name")} ({t("routes.kordon.distance")})</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-6 h-[1px] border-t border-dashed border-white/30" />
-                <span className="text-[9px] text-[#666] tracking-[0.15em]">KÖRFEZİ TURU (18 KM)</span>
+                <span className="text-[9px] text-[#666] tracking-[0.15em]">{t("routes.korfez.name")} ({t("routes.korfez.distance")})</span>
               </div>
             </div>
 
@@ -715,8 +697,8 @@ export default function IzmirRunMap() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
               >
-                <p className="text-[10px] tracking-[0.2em] text-[#555] font-mono">{activeRoute.name}</p>
-                <p className="text-[9px] text-[#444] font-mono mt-0.5">{activeRoute.distance} &middot; {activeRoute.elevation} elev.</p>
+                <p className="text-[10px] tracking-[0.2em] text-[#555] font-mono">{t(`routes.${activeRoute.id}.name`)}</p>
+                <p className="text-[9px] text-[#444] font-mono mt-0.5">{t(`routes.${activeRoute.id}.distance`)} &middot; {t(`routes.${activeRoute.id}.elevation`)} elev.</p>
               </motion.div>
             </div>
           </div>
@@ -739,18 +721,18 @@ export default function IzmirRunMap() {
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold tracking-wider">{route.name}</span>
+                  <span className="text-xs font-bold tracking-wider">{t(`routes.${route.id}.name`)}</span>
                   <span
                     className="text-lg font-bold"
                     style={{ color: route.accent ? "#E6FF00" : "#ffffff" }}
                   >
-                    {route.distance}
+                    {t(`routes.${route.id}.distance`)}
                   </span>
                 </div>
-                <p className="text-[11px] text-[#666] mb-3">{route.desc}</p>
+                <p className="text-[11px] text-[#666] mb-3">{t(`routes.${route.id}.desc`)}</p>
                 <div className="flex gap-4 text-[10px] tracking-wider text-[#555]">
-                  <span>ELEV. {route.elevation}</span>
-                  <span>PACE {route.pace}</span>
+                  <span>ELEV. {t(`routes.${route.id}.elevation`)}</span>
+                  <span>PACE {t(`routes.${route.id}.pace`)}</span>
                 </div>
               </motion.button>
             ))}
@@ -764,7 +746,7 @@ export default function IzmirRunMap() {
               className="border border-[#1a1a1a] p-4"
             >
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[10px] tracking-[0.15em] text-[#555]">ELEVATION PROFILE</span>
+                <span className="text-[10px] tracking-[0.15em] text-[#555]">{t("elevationProfile")}</span>
                 <span className="text-[10px] text-[#444] font-mono">
                   {Math.max(...activeRoute.elevationData)}m max
                 </span>
@@ -800,17 +782,17 @@ export default function IzmirRunMap() {
               </svg>
               <div className="flex justify-between mt-1">
                 <span className="text-[8px] text-[#444] font-mono">0 km</span>
-                <span className="text-[8px] text-[#444] font-mono">{activeRoute.distance}</span>
+                <span className="text-[8px] text-[#444] font-mono">{t(`routes.${activeRoute.id}.distance`)}</span>
               </div>
             </motion.div>
 
             {/* Strava connect hint */}
             <div className="p-4 border border-dashed border-[#222] text-center">
               <p className="text-[10px] tracking-[0.15em] text-[#555]">
-                STRAVA İLE SENKRONİZE ET
+                {t("stravaSync")}
               </p>
               <p className="text-[10px] text-[#444] mt-1">
-                Gerçek koşu verilerini görüntüle
+                {t("stravaSyncSubtitle")}
               </p>
             </div>
           </div>

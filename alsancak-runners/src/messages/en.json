@@ -1,0 +1,436 @@
+{
+  "metadata": {
+    "title": "ALSANCAK RUNNERS — Run The City",
+    "description": "Alsancak Runners is an urban running collective based in Izmir. Running connects people to the city.",
+    "ogTitle": "ALSANCAK RUNNERS",
+    "ogDescription": "Urban running collective — Izmir, Turkey"
+  },
+  "nav": {
+    "home": "HOME",
+    "events": "EVENTS",
+    "community": "COMMUNITY",
+    "routes": "ROUTES",
+    "gallery": "GALLERY",
+    "about": "ABOUT",
+    "join": "JOIN",
+    "signOut": "SIGN OUT",
+    "dashboard": "DASHBOARD"
+  },
+  "footer": {
+    "tagline": "An Izmir-based running community. Running connects people to the city.",
+    "pages": "PAGES",
+    "pageLinks": {
+      "home": "Home",
+      "events": "Events",
+      "community": "Community",
+      "routes": "Routes",
+      "gallery": "Gallery",
+      "about": "About",
+      "join": "Join"
+    },
+    "followUs": "FOLLOW US",
+    "copyright": "2026 ALSANCAK RUNNERS. ALL RIGHTS RESERVED.",
+    "location": "IZMIR, TURKEY — EST. 2025",
+    "marquee": "ALSANCAK RUNNERS — RUN THE CITY — "
+  },
+  "home": {
+    "runTheCity": "RUN THE CITY",
+    "scrollToRun": "SCROLL TO RUN",
+    "est": "EST. 2025 — IZMIR, TURKEY",
+    "heroSubtitle": "RUN THE CITY",
+    "sceneLabel": "SCENE II",
+    "weRunTogether": "WE RUN\nTOGETHER",
+    "everyStride": "Every stride, every breath, every moment — shared.",
+    "manifesto": {
+      "label": "OUR MANIFESTO",
+      "lines": [
+        "WE RUN THE CITY.",
+        "Alsancak Runners is an urban running collective based in Izmir.",
+        "Running connects people to the city.",
+        "Every street is a route. Every run is a story.",
+        "We don't just run — we move culture forward."
+      ],
+      "photoCaption": "Alsancak, Izmir — 2026"
+    },
+    "upcomingRuns": {
+      "label": "UPCOMING",
+      "title": "NEXT\nRUNS",
+      "subtitle": "Join us on the streets of Izmir. Every run is open to everyone.",
+      "viewAll": "VIEW ALL",
+      "viewAllMobile": "ALL EVENTS",
+      "loading": "Loading upcoming events...",
+      "noEvents": "No upcoming events at the moment",
+      "noEventsSubtitle": "New events will appear here when added",
+      "participants": "participants"
+    },
+    "map": {
+      "label": "OUR ROUTES",
+      "title": "RUN THE\nCOASTLINE",
+      "subtitle": "Every run along the Izmir Bay coastline. From Goztepe in the south to Karsiyaka in the north.",
+      "bayLabel": "IZMIR BAY",
+      "aegeanSea": "AEGEAN SEA",
+      "elevationProfile": "ELEVATION PROFILE",
+      "stravaSync": "SYNC WITH STRAVA",
+      "stravaSyncSubtitle": "View real running data",
+      "routes": {
+        "kordon": {
+          "name": "KORDON LOOP",
+          "distance": "7 KM",
+          "elevation": "12m",
+          "pace": "5:30 /km",
+          "desc": "Classic Kordon run along the Alsancak waterfront"
+        },
+        "korfez": {
+          "name": "BAY CIRCUIT",
+          "distance": "18 KM",
+          "elevation": "45m",
+          "pace": "6:00 /km",
+          "desc": "Full bay circuit from Goztepe to Karsiyaka"
+        },
+        "kulturpark": {
+          "name": "KULTURPARK",
+          "distance": "5 KM",
+          "elevation": "8m",
+          "pace": "5:00 /km",
+          "desc": "Park loop — flat and fast tempo run"
+        }
+      }
+    },
+    "collaborations": {
+      "label": "COLLABORATIONS",
+      "title": "CULTURE\nMEETS RUNNING"
+    },
+    "gallery": {
+      "label": "GALLERY",
+      "title": "EDITORIAL\nMOMENTS",
+      "filters": {
+        "all": "ALL",
+        "runs": "RUNS",
+        "community": "COMMUNITY"
+      },
+      "close": "CLOSE"
+    },
+    "joinCommunity": {
+      "stats": {
+        "totalRuns": "TOTAL RUNS",
+        "activeMembers": "ACTIVE MEMBERS",
+        "totalDistance": "TOTAL DISTANCE"
+      },
+      "title": "JOIN\nTHE RUN",
+      "cta": "JOIN US",
+      "subtitle": "Open to all levels. Free to join. Just bring your shoes."
+    },
+    "founderPortrait": {
+      "label": "CO-FOUNDER",
+      "title": "FROM THE\nSTREETS OF\nALSANCAK",
+      "text": "Running isn't just a sport — it's a way of connecting with the city and the people in it. Every stride tells a story."
+    }
+  },
+  "join": {
+    "becomeAMember": "BECOME A MEMBER",
+    "welcomeBack": "WELCOME BACK",
+    "joinTheRun": "JOIN\nTHE RUN",
+    "signInTitle": "SIGN\nIN",
+    "joinSubtitle": "Open to all levels. Free to join. Just bring your shoes.",
+    "signInSubtitle": "Sign in to your account and keep running.",
+    "signInWithStrava": "SIGN IN WITH STRAVA",
+    "orWithEmail": "or with email",
+    "register": "REGISTER",
+    "signIn": "SIGN IN",
+    "name": "NAME",
+    "namePlaceholder": "Your name",
+    "email": "EMAIL",
+    "emailPlaceholder": "your@email.com",
+    "password": "PASSWORD",
+    "passwordMinChars": "PASSWORD (MIN. 8 CHARS)",
+    "instagram": "INSTAGRAM",
+    "instagramPlaceholder": "@yourusername",
+    "runningPace": "RUNNING PACE",
+    "paceOptions": {
+      "selectPace": "Select your pace",
+      "beginner": "Beginner (>7:00 min/km)",
+      "casual": "Casual (6:00-7:00 min/km)",
+      "intermediate": "Intermediate (5:00-6:00 min/km)",
+      "advanced": "Advanced (<5:00 min/km)"
+    },
+    "joinButton": "JOIN ALSANCAK RUNNERS",
+    "signInButton": "SIGN IN",
+    "welcomeMessage": "WELCOME.",
+    "accountCreated": "Account created! Redirecting to dashboard...",
+    "errors": {
+      "accessDenied": "Access denied. Please try again or use a different account.",
+      "configuration": "Server configuration error. Please try again later.",
+      "oauthSignin": "Could not start sign-in flow. Please try again.",
+      "oauthCallback": "Sign-in callback error. Please try again.",
+      "oauthAccountNotLinked": "This email is already linked to another account.",
+      "credentialsSignin": "Invalid email or password.",
+      "default": "An error occurred during sign-in. Please try again.",
+      "somethingWentWrong": "Something went wrong",
+      "somethingWentWrongRetry": "Something went wrong. Please try again.",
+      "stravaSignInFailed": "Strava sign-in failed. Please try again.",
+      "invalidCredentials": "Invalid email or password"
+    }
+  },
+  "dashboard": {
+    "welcome": "WELCOME",
+    "overview": "OVERVIEW",
+    "activities": "ACTIVITIES",
+    "profile": "PROFILE",
+    "runs": "RUNS",
+    "km": "KM",
+    "time": "TIME",
+    "events": "EVENTS",
+    "stravaConnected": "STRAVA CONNECTED",
+    "stravaConnection": "STRAVA CONNECTION",
+    "runsSyncingAutomatically": "Your runs are syncing automatically",
+    "connectStravaDesc": "Connect your Strava account to automatically sync your runs.",
+    "syncStrava": "SYNC STRAVA",
+    "syncing": "SYNCING...",
+    "sync": "SYNC",
+    "disconnect": "DISCONNECT",
+    "connectStrava": "Connect Strava",
+    "connectWithStrava": "CONNECT WITH STRAVA",
+    "recentActivities": "RECENT ACTIVITIES",
+    "noActivitiesYet": "No activities yet",
+    "activitiesWillAppear": "Your runs will appear here once Strava is connected",
+    "upcomingEvents": "UPCOMING EVENTS",
+    "noUpcomingEvents": "No upcoming events",
+    "newEventsWillAppear": "New running events will appear here when scheduled",
+    "viewAll": "VIEW ALL",
+    "home": "HOME",
+    "community": "COMMUNITY",
+    "signOut": "SIGN OUT",
+    "couldNotLoadProfile": "Could not load profile.",
+    "updateProfile": "Update your profile information.",
+    "confirmDisconnectStrava": "Are you sure you want to disconnect Strava?",
+    "activitiesCount": "{count} activities",
+    "strava": {
+      "connected": "Strava connected! Syncing activities...",
+      "denied": "Strava connection was denied",
+      "alreadyLinked": "This Strava account is linked to another member",
+      "error": "An error occurred with Strava connection",
+      "newSynced": "{count} new activities synced!",
+      "upToDate": "All activities are up to date",
+      "syncError": "Sync error: {error}",
+      "connectionError": "Strava connection error. Please try again."
+    },
+    "profileEditor": {
+      "name": "NAME",
+      "email": "EMAIL",
+      "instagram": "INSTAGRAM",
+      "paceGroup": "PACE GROUP",
+      "about": "ABOUT",
+      "aboutPlaceholder": "A few words about yourself...",
+      "privacy": "PRIVACY",
+      "privacyOptions": {
+        "private": "Private",
+        "members": "Members",
+        "public": "Public"
+      },
+      "notSelected": "Not selected",
+      "save": "SAVE",
+      "saving": "SAVING...",
+      "saved": "Saved",
+      "saveFailed": "Save failed"
+    },
+    "paceLabels": {
+      "beginner": "Beginner",
+      "casual": "Casual",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "eventTypes": {
+      "group_run": "GROUP",
+      "tempo_run": "TEMPO",
+      "long_run": "LONG",
+      "race": "RACE",
+      "social": "SOCIAL"
+    }
+  },
+  "activity": {
+    "distance": "DISTANCE",
+    "time": "TIME",
+    "pace": "PACE",
+    "elevation": "ELEVATION",
+    "avgHr": "AVG HR",
+    "maxHr": "MAX HR",
+    "calories": "CALORIES",
+    "cadence": "CADENCE",
+    "splits": "SPLITS",
+    "splitDetails": "SPLIT DETAILS",
+    "splitHeaders": {
+      "km": "KM",
+      "pace": "PACE",
+      "time": "TIME",
+      "elev": "ELEV",
+      "hr": "HR"
+    },
+    "backToDashboard": "BACK TO DASHBOARD",
+    "activityNotFound": "Activity not found"
+  },
+  "events": {
+    "title": "EVENTS",
+    "upcoming": "UPCOMING RUNS",
+    "subtitle": "Community events and group runs. Open to all, suitable for every level.",
+    "noEvents": "No upcoming events at the moment",
+    "noEventsSubtitle": "New events will appear here when added",
+    "people": "people",
+    "types": {
+      "group_run": "GROUP RUN",
+      "tempo_run": "TEMPO RUN",
+      "long_run": "LONG RUN",
+      "race": "RACE",
+      "social": "SOCIAL"
+    },
+    "navRoutes": "ROUTES",
+    "navDashboard": "DASHBOARD",
+    "navJoin": "JOIN",
+    "detail": {
+      "notFound": "Event not found",
+      "backToEvents": "BACK TO EVENTS",
+      "date": "DATE",
+      "time": "TIME",
+      "distance": "DISTANCE",
+      "participants": "PARTICIPANTS",
+      "meetingPoint": "MEETING POINT",
+      "viewOnMap": "VIEW ON MAP",
+      "paceGroups": "PACE GROUPS",
+      "capacityFull": "CAPACITY FULL",
+      "joining": "I'M JOINING",
+      "attendees": "ATTENDEES",
+      "approaching": "APPROACHING"
+    }
+  },
+  "community": {
+    "title": "COMMUNITY",
+    "leaderboard": "LEADERBOARD",
+    "noData": "No data for this period",
+    "noDataSubtitle": "Members with Strava connections will appear here once they log activities",
+    "periods": {
+      "week": "THIS WEEK",
+      "month": "THIS MONTH",
+      "year": "THIS YEAR",
+      "allTime": "ALL TIME"
+    },
+    "stats": {
+      "members": "MEMBERS",
+      "totalRuns": "TOTAL RUNS",
+      "totalKm": "TOTAL KM",
+      "upcomingEvents": "UPCOMING EVENTS"
+    },
+    "table": {
+      "runner": "RUNNER",
+      "distance": "DISTANCE",
+      "runs": "RUNS",
+      "time": "TIME",
+      "avgPace": "AVG PACE"
+    },
+    "navEvents": "EVENTS",
+    "navRoutes": "ROUTES",
+    "navDashboard": "DASHBOARD"
+  },
+  "about": {
+    "whoWeAre": "WHO WE ARE",
+    "title": "ABOUT US",
+    "subtitle": "An urban running collective redefining how Izmir moves.",
+    "manifesto": "MANIFESTO",
+    "team": "OUR TEAM",
+    "ourCommunity": "OUR COMMUNITY",
+    "theCrew": "THE CREW",
+    "values": {
+      "weRunTheCity": {
+        "title": "WE RUN THE CITY",
+        "description": "Alsancak Runners was born from a simple idea: running is better together. What started as a small group of friends running along Kordon has grown into Izmir's most vibrant urban running collective."
+      },
+      "everyStreetIsARoute": {
+        "title": "EVERY STREET IS A ROUTE",
+        "description": "We don't run in circles. We explore. From the cobblestones of Alsancak to the coastline of Kordon, every run is a journey through the city's layers of history, culture, and energy."
+      },
+      "openToAll": {
+        "title": "OPEN TO ALL",
+        "description": "There's no pace requirement. No membership fee. No judgment. Whether you're running your first kilometer or your thousandth, you belong here."
+      },
+      "cultureInMotion": {
+        "title": "CULTURE IN MOTION",
+        "description": "Running is more than fitness. It's how we connect with the city, with each other, and with ourselves. We collaborate with brands, artists, and local businesses to create experiences that move beyond the run."
+      }
+    },
+    "teamMembers": {
+      "naz": {
+        "name": "NAZ KARAGOZOGLU",
+        "role": "FOUNDER",
+        "bio": "When she realized that running was the best thing for her during a difficult period in her life, she wanted to share that feeling with others and show that running is not just about performance and competition, bringing the new running culture together with the rhythm of Izmir."
+      },
+      "hakan": {
+        "name": "HAKAN OZDIL",
+        "role": "CAPTAIN",
+        "bio": "After playing football for many years, he earned a place at Ege University's School of Physical Education and Sports, where he began coaching. With 23 years of experience, especially in group classes, he now leads the new running culture with his guidance."
+      },
+      "izem": {
+        "name": "IZEM GOKDEMIR",
+        "role": "PACER",
+        "bio": "While studying Physical Education Teaching at Ege University, she continued playing basketball. After an injury, she returned to Izmir to continue her coaching career while also keeping pace for runners as an Alsancak Runners pacer."
+      }
+    }
+  },
+  "gallery": {
+    "label": "EDITORIAL",
+    "title": "GALLERY",
+    "filters": {
+      "all": "ALL",
+      "runs": "RUNS",
+      "community": "COMMUNITY",
+      "city": "CITY"
+    },
+    "close": "CLOSE"
+  },
+  "routes": {
+    "label": "ROUTES",
+    "title": "EXPLORE.",
+    "titleHighlight": "THE RUNS",
+    "subtitle": "The most beautiful running routes in Izmir. Courses suitable for every level.",
+    "communityRoutes": "COMMUNITY ROUTES",
+    "popularRoutes": "POPULAR COURSES",
+    "difficulty": {
+      "easy": "EASY",
+      "moderate": "MODERATE",
+      "hard": "HARD"
+    },
+    "surface": {
+      "road": "Road",
+      "trail": "Trail",
+      "mixed": "Mixed",
+      "track": "Track"
+    },
+    "loop": "LOOP",
+    "detail": {
+      "notFound": "Route not found",
+      "backToRoutes": "BACK TO ROUTES",
+      "distance": "DISTANCE",
+      "elevation": "ELEVATION",
+      "surface": "SURFACE",
+      "location": "LOCATION",
+      "segments": "SEGMENTS",
+      "segment": "Segment"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Try again",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "min": "min",
+    "hr": "hr",
+    "perKm": "/km",
+    "km": "km",
+    "bpm": "bpm",
+    "kcal": "kcal",
+    "spm": "spm",
+    "m": "m",
+    "close": "CLOSE",
+    "strava": "STRAVA"
+  }
+}

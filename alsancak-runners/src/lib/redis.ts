@@ -4,12 +4,13 @@ const globalForRedis = globalThis as unknown as {
   redis: Redis | undefined;
 };
 
-function createRedis(): Redis {
+function createRedis(): Redis | null {
   const url = process.env.REDIS_URL;
   if (!url) {
-    throw new Error(
-      "REDIS_URL is not set. Check your .env.local or Vercel environment variables.",
+    console.warn(
+      "REDIS_URL is not set. Redis features (cache, rate limiting) will be disabled.",
     );
+    return null;
   }
   return new Redis(url, {
     maxRetriesPerRequest: null, // required for BullMQ
@@ -18,11 +19,17 @@ function createRedis(): Redis {
   });
 }
 
-export const redis = globalForRedis.redis ?? createRedis();
+const _redis = globalForRedis.redis ?? createRedis();
 
-if (process.env.NODE_ENV !== "production") {
-  globalForRedis.redis = redis;
+if (process.env.NODE_ENV !== "production" && _redis) {
+  globalForRedis.redis = _redis;
 }
+
+/**
+ * Redis client — may be null if REDIS_URL is not configured.
+ * All consumers (cache, rate limiter) handle null gracefully.
+ */
+export const redis = _redis;
 
 // BullMQ connection options (separate from the cache client)
 export const bullmqConnection = {

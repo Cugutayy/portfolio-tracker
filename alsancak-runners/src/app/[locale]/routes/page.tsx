@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import SmoothScroll from "@/components/SmoothScroll";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -21,20 +22,14 @@ interface Route {
   city: string | null;
 }
 
-const difficultyLabels: Record<string, { label: string; color: string }> = {
-  easy: { label: "KOLAY", color: "#4ade80" },
-  moderate: { label: "ORTA", color: "#E6FF00" },
-  hard: { label: "ZOR", color: "#FC4C02" },
-};
-
-const surfaceLabels: Record<string, string> = {
-  road: "Asfalt",
-  trail: "Patika",
-  mixed: "Karışık",
-  track: "Pist",
+const difficultyColors: Record<string, string> = {
+  easy: "#4ade80",
+  moderate: "#E6FF00",
+  hard: "#FC4C02",
 };
 
 export default function RoutesPage() {
+  const t = useTranslations("routes");
   const [dbRoutes, setDbRoutes] = useState<Route[]>([]);
   const [loadingRoutes, setLoadingRoutes] = useState(true);
 
@@ -54,14 +49,14 @@ export default function RoutesPage() {
         <section className="relative h-[60vh] flex items-end overflow-hidden bg-[#0A0A0A]">
           <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/80 to-transparent" />
           <div className="relative z-10 px-6 md:px-16 pb-16">
-            <p className="label-text text-white/60 mb-4">ROTALAR</p>
+            <p className="label-text text-white/60 mb-4">{t("label")}</p>
             <h1 className="headline-xl">
-              KEŞFET<span className="text-[#E6FF00]">.</span>
+              {t("title").replace(".", "")}<span className="text-[#E6FF00]">.</span>
               <br />
-              <span className="text-[#E6FF00]">KOŞULARI</span>
+              <span className="text-[#E6FF00]">{t("titleHighlight")}</span>
             </h1>
             <p className="body-text mt-4 max-w-md">
-              {`İzmir'in en güzel koşu rotaları. Her seviyeye uygun parkurlar.`}
+              {t("subtitle")}
             </p>
           </div>
         </section>
@@ -75,13 +70,13 @@ export default function RoutesPage() {
             <div className="max-w-[1400px] mx-auto px-[clamp(1.5rem,4vw,4rem)]">
               <div className="mb-12">
                 <p className="text-[11px] tracking-[0.15em] uppercase text-[#666] mb-3">
-                  TOPLULUK ROTALARI
+                  {t("communityRoutes")}
                 </p>
                 <h2
                   className="text-3xl md:text-4xl font-bold text-white"
                   style={{ fontFamily: "var(--font-heading, inherit)" }}
                 >
-                  POPÜLER PARKURLAR
+                  {t("popularRoutes")}
                 </h2>
               </div>
 
@@ -107,9 +102,14 @@ export default function RoutesPage() {
 }
 
 function RouteCard({ route, index }: { route: Route; index: number }) {
+  const t = useTranslations("routes");
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-30px" });
-  const diff = difficultyLabels[route.difficulty || "moderate"];
+  const diffKey = route.difficulty || "moderate";
+  const diff = {
+    label: t(`difficulty.${diffKey}`),
+    color: difficultyColors[diffKey] || "#E6FF00",
+  };
 
   return (
     <motion.div
@@ -119,7 +119,7 @@ function RouteCard({ route, index }: { route: Route; index: number }) {
       transition={{ duration: 0.6, delay: index * 0.1 }}
     >
       <Link
-        href={`/routes/${route.slug}`}
+        href={{pathname: '/routes/[slug]', params: {slug: route.slug}}}
         className="block border border-[#222] hover:border-[#333] transition-all duration-300 group"
       >
         {/* Mini map placeholder */}
@@ -136,7 +136,7 @@ function RouteCard({ route, index }: { route: Route; index: number }) {
           {/* Loop badge */}
           {route.isLoop && (
             <div className="absolute top-4 right-4 border border-[#E6FF00]/30 bg-[#0A0A0A]/80 text-[#E6FF00] px-2 py-0.5">
-              <p className="text-[9px] tracking-wider uppercase">DÖNGÜ</p>
+              <p className="text-[9px] tracking-wider uppercase">{t("loop")}</p>
             </div>
           )}
         </div>
@@ -154,7 +154,7 @@ function RouteCard({ route, index }: { route: Route; index: number }) {
             </span>
             {route.surfaceType && (
               <span className="text-[9px] tracking-wider uppercase text-[#555] px-2 py-0.5 border border-[#222]">
-                {surfaceLabels[route.surfaceType] || route.surfaceType}
+                {t(`surface.${route.surfaceType}`)}
               </span>
             )}
           </div>

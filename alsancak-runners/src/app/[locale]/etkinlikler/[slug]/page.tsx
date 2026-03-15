@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 interface EventDetail {
   id: string;
@@ -30,15 +31,9 @@ interface RsvpItem {
   status: string;
 }
 
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  group_run: "GRUP KOŞUSU",
-  tempo_run: "TEMPO KOŞUSU",
-  long_run: "UZUN KOŞU",
-  race: "YARIŞ",
-  social: "SOSYAL",
-};
-
 export default function EventDetailPage() {
+  const t = useTranslations("events");
+  const tNav = useTranslations("nav");
   const params = useParams();
   const slug = params.slug as string;
   const [event, setEvent] = useState<EventDetail | null>(null);
@@ -57,7 +52,7 @@ export default function EventDetailPage() {
         setEvent(data.event);
         setRsvps(data.rsvps || []);
       })
-      .catch(() => setError("Etkinlik bulunamadı"))
+      .catch(() => setError(t("detail.notFound")))
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -94,12 +89,12 @@ export default function EventDetailPage() {
     return (
       <main className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-6">
         <div className="text-center">
-          <p className="text-[15px] text-[#666] mb-6">{error || "Etkinlik bulunamadı"}</p>
+          <p className="text-[15px] text-[#666] mb-6">{error || t("detail.notFound")}</p>
           <Link
             href="/etkinlikler"
             className="text-[11px] tracking-[0.15em] uppercase text-[#E6FF00] border border-[#E6FF00] px-6 py-3 hover:bg-[#E6FF00] hover:text-black transition-colors"
           >
-            ETKİNLİKLERE DÖN
+            {t("detail.backToEvents")}
           </Link>
         </div>
       </main>
@@ -139,7 +134,7 @@ export default function EventDetailPage() {
               href="/etkinlikler"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors"
             >
-              ← ETKİNLİKLER
+              ← {tNav("events")}
             </Link>
           </div>
         </div>
@@ -156,11 +151,11 @@ export default function EventDetailPage() {
           >
             <div className="flex items-center gap-3 mb-4">
               <span className="text-[9px] tracking-wider uppercase text-[#E6FF00] border border-[#E6FF00]/30 px-2 py-0.5">
-                {EVENT_TYPE_LABELS[event.eventType] || event.eventType}
+                {t(`types.${event.eventType}`)}
               </span>
               {event.status === "upcoming" && (
                 <span className="text-[9px] tracking-wider uppercase text-[#4ade80] border border-[#4ade80]/30 px-2 py-0.5">
-                  YAKINLAŞIYOR
+                  {t("detail.approaching")}
                 </span>
               )}
             </div>
@@ -186,7 +181,7 @@ export default function EventDetailPage() {
           >
             <div className="border border-[#222] p-5">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">
-                TARİH
+                {t("detail.date")}
               </p>
               <p className="text-white text-lg font-semibold capitalize">
                 {dateStr}
@@ -194,13 +189,13 @@ export default function EventDetailPage() {
             </div>
             <div className="border border-[#222] p-5">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">
-                SAAT
+                {t("detail.time")}
               </p>
               <p className="text-white text-lg font-semibold">{timeStr}</p>
             </div>
             <div className="border border-[#222] p-5">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">
-                MESAFE
+                {t("detail.distance")}
               </p>
               <p className="text-white text-lg font-semibold">
                 {distanceKm}
@@ -209,7 +204,7 @@ export default function EventDetailPage() {
             </div>
             <div className="border border-[#222] p-5">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-2">
-                KATILIMCI
+                {t("detail.participants")}
               </p>
               <p className="text-white text-lg font-semibold">
                 {goingRsvps.length}
@@ -230,7 +225,7 @@ export default function EventDetailPage() {
             className="border border-[#222] p-6 mb-8"
           >
             <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-3">
-              BULUŞMA NOKTASI
+              {t("detail.meetingPoint")}
             </p>
             <p className="text-white text-lg">{event.meetingPoint}</p>
             {event.meetingLat && event.meetingLng && (
@@ -240,7 +235,7 @@ export default function EventDetailPage() {
                 rel="noopener noreferrer"
                 className="inline-block mt-3 text-[11px] tracking-[0.15em] uppercase text-[#E6FF00]/70 hover:text-[#E6FF00] transition-colors"
               >
-                HARİTADA GÖR →
+                {t("detail.viewOnMap")} →
               </a>
             )}
           </motion.div>
@@ -254,7 +249,7 @@ export default function EventDetailPage() {
               className="mb-8"
             >
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-4">
-                TEMPO GRUPLARI
+                {t("detail.paceGroups")}
               </p>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {event.paceGroups.map((pg) => (
@@ -295,8 +290,8 @@ export default function EventDetailPage() {
               {rsvpLoading
                 ? "..."
                 : isFull
-                  ? "KONTENJAN DOLU"
-                  : "KATILIYORUM"}
+                  ? t("detail.capacityFull")
+                  : t("detail.joining")}
             </button>
           </motion.div>
 
@@ -308,7 +303,7 @@ export default function EventDetailPage() {
               transition={{ duration: 0.5, delay: 0.3 }}
             >
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555] mb-4">
-                KATILIMCILAR ({goingRsvps.length})
+                {t("detail.attendees")} ({goingRsvps.length})
               </p>
               <div className="flex flex-wrap gap-3">
                 {goingRsvps.map((r) => (

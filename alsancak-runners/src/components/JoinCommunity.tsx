@@ -2,7 +2,8 @@
 
 import { useRef, useEffect, useState } from "react";
 import { motion, useInView } from "framer-motion";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import MagneticButton from "./MagneticButton";
 
 interface CommunityStatsData {
@@ -59,6 +60,7 @@ function AnimatedCounter({
 export default function JoinCommunity() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+  const t = useTranslations("home.joinCommunity");
   const [stats, setStats] = useState<CommunityStatsData>({
     totalMembers: 0,
     totalRuns: 0,
@@ -95,19 +97,19 @@ export default function JoinCommunity() {
         >
           <AnimatedCounter
             target={stats.totalRuns}
-            label="TOPLAM KOŞU"
+            label={t("stats.totalRuns")}
             inView={isInView}
           />
           <AnimatedCounter
             target={stats.totalMembers}
             suffix="+"
-            label="AKTİF ÜYE"
+            label={t("stats.activeMembers")}
             inView={isInView}
           />
           <AnimatedCounter
             target={stats.totalDistanceKm}
             suffix=" KM"
-            label="KAT EDİLEN MESAFE"
+            label={t("stats.totalDistance")}
             inView={isInView}
           />
         </motion.div>
@@ -125,8 +127,8 @@ export default function JoinCommunity() {
               }}
               className="headline-xl mb-12"
             >
-              KOŞUYA<br />
-              <span className="text-[#E6FF00]">KATIL</span>
+              {t("title").split('\n')[0]}<br />
+              <span className="text-[#E6FF00]">{t("title").split('\n')[1]}</span>
             </motion.h2>
           </div>
 
@@ -140,7 +142,7 @@ export default function JoinCommunity() {
                 href="/join"
                 className="inline-block bg-[#E6FF00] text-black px-12 py-5 text-sm font-bold tracking-[0.15em] uppercase hover:bg-white transition-colors duration-300"
               >
-                ARAMIZA KATIL
+                {t("cta")}
               </Link>
             </MagneticButton>
           </motion.div>
@@ -151,7 +153,7 @@ export default function JoinCommunity() {
             transition={{ delay: 1.2 }}
             className="body-text mt-8 max-w-md mx-auto"
           >
-            Her seviyeye açık. Ücretsiz. Sadece ayakkabılarını getir.
+            {t("subtitle")}
           </motion.p>
         </div>
       </div>

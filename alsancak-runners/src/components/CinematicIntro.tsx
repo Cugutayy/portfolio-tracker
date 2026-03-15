@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
+import { useTranslations } from "next-intl";
 
 export default function CinematicIntro() {
+  const t = useTranslations("home");
   const [phase, setPhase] = useState(0); // 0=black, 1=video, 2=title, 3=subtitle, 4=done
   const videoRef = useRef<HTMLVideoElement>(null);
   const sectionRef = useRef<HTMLElement>(null);
@@ -99,7 +101,7 @@ export default function CinematicIntro() {
             transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
             className="text-sm md:text-base tracking-[0.3em] uppercase text-[#999]"
           >
-            RUN THE CITY
+            {t("runTheCity")}
           </motion.p>
         </div>
 
@@ -124,7 +126,7 @@ export default function CinematicIntro() {
           transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
         >
           <p className="text-[10px] tracking-[0.3em] uppercase text-[#666] mb-3">
-            SCROLL TO RUN
+            {t("scrollToRun")}
           </p>
           <svg
             width="20"
@@ -153,7 +155,7 @@ export default function CinematicIntro() {
           className="text-[10px] tracking-[0.3em] uppercase text-[#444] origin-center"
           style={{ writingMode: "vertical-rl" }}
         >
-          EST. 2025 — IZMIR, TURKEY
+          {t("est")}
         </p>
       </motion.div>
     </section>

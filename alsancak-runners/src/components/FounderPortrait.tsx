@@ -4,8 +4,10 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import TextReveal from "./TextReveal";
+import { useTranslations } from "next-intl";
 
 export default function FounderPortrait() {
+  const t = useTranslations("home.founderPortrait");
   const sectionRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -49,7 +51,7 @@ export default function FounderPortrait() {
           className="relative px-6 md:px-16 py-16 md:py-0"
         >
           <p className="label-text text-white/60 mb-6 tracking-[0.3em]">
-            CO-FOUNDER
+            {t("label")}
           </p>
           <TextReveal
             as="h2"
@@ -57,11 +59,10 @@ export default function FounderPortrait() {
             mode="line"
             delay={0.2}
           >
-            {"FROM THE\nSTREETS OF\nALSANCAK"}
+            {t("title")}
           </TextReveal>
           <p className="body-text text-lg leading-relaxed max-w-md mb-8">
-            Running isn&apos;t just a sport — it&apos;s a way of connecting with
-            the city and the people in it. Every stride tells a story.
+            {t("text")}
           </p>
           <motion.div
             style={{ scaleX: lineScale }}

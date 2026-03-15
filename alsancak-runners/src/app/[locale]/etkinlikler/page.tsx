@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 
 interface EventItem {
   id: string;
@@ -19,14 +20,6 @@ interface EventItem {
   status: string;
 }
 
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  group_run: "GRUP KOŞUSU",
-  tempo_run: "TEMPO KOŞUSU",
-  long_run: "UZUN KOŞU",
-  race: "YARIŞ",
-  social: "SOSYAL",
-};
-
 const EVENT_TYPE_COLORS: Record<string, string> = {
   group_run: "#E6FF00",
   tempo_run: "#FC4C02",
@@ -36,6 +29,8 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
 };
 
 export default function EtkinliklerPage() {
+  const t = useTranslations("events");
+  const tNav = useTranslations("nav");
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,19 +60,19 @@ export default function EtkinliklerPage() {
               href="/routes"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              ROTALAR
+              {tNav("routes")}
             </Link>
             <Link
               href="/dashboard"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              PANEL
+              {tNav("dashboard")}
             </Link>
             <Link
               href="/join"
               className="text-[11px] tracking-[0.15em] uppercase text-[#E6FF00] border border-[#E6FF00]/30 px-4 py-2 hover:bg-[#E6FF00] hover:text-black transition-colors"
             >
-              KATIL
+              {tNav("join")}
             </Link>
           </div>
         </div>
@@ -93,18 +88,17 @@ export default function EtkinliklerPage() {
             className="mb-16"
           >
             <p className="text-[11px] tracking-[0.15em] uppercase text-[#666] mb-4">
-              ETKİNLİKLER
+              {t("title")}
             </p>
             <h1
               className="text-5xl md:text-7xl font-bold text-white leading-[0.9]"
               style={{ fontFamily: "var(--font-heading, inherit)" }}
             >
-              YAKLAŞAN<br />
-              <span className="text-[#E6FF00]">KOŞULAR</span>
+              {t("upcoming").split(" ")[0]}<br />
+              <span className="text-[#E6FF00]">{t("upcoming").split(" ").slice(1).join(" ")}</span>
             </h1>
             <p className="text-[15px] text-[#666] mt-6 max-w-lg">
-              Topluluk etkinlikleri ve koşu buluşmaları. Herkese açık, her
-              seviyeye uygun.
+              {t("subtitle")}
             </p>
           </motion.div>
 
@@ -117,10 +111,10 @@ export default function EtkinliklerPage() {
             <div className="border border-[#222] p-16 text-center">
               <div className="text-5xl mb-4 opacity-20">📅</div>
               <p className="text-[15px] text-[#666] mb-2">
-                Şu anda yaklaşan etkinlik yok
+                {t("noEvents")}
               </p>
               <p className="text-[12px] text-[#444]">
-                Yeni etkinlikler eklendiğinde burada görünecek
+                {t("noEventsSubtitle")}
               </p>
             </div>
           ) : (
@@ -143,7 +137,7 @@ export default function EtkinliklerPage() {
                   EVENT_TYPE_COLORS[ev.eventType] || "#E6FF00";
 
                 return (
-                  <Link key={ev.id} href={`/etkinlikler/${ev.slug}`}>
+                  <Link key={ev.id} href={{pathname: '/etkinlikler/[slug]', params: {slug: ev.slug}}}>
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -179,7 +173,7 @@ export default function EtkinliklerPage() {
                                     borderColor: `${typeColor}40`,
                                   }}
                                 >
-                                  {EVENT_TYPE_LABELS[ev.eventType] ||
+                                  {t(`types.${ev.eventType}`) ||
                                     ev.eventType}
                                 </span>
                                 <span className="text-[12px] text-[#666]">
@@ -230,7 +224,7 @@ export default function EtkinliklerPage() {
                                   {ev.maxParticipants
                                     ? `/${ev.maxParticipants}`
                                     : ""}{" "}
-                                  kişi
+                                  {t("people")}
                                 </span>
                               )}
                             </div>

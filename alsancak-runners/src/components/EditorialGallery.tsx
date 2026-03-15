@@ -4,6 +4,7 @@ import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import CursorTilt from "./CursorTilt";
+import { useTranslations } from "next-intl";
 
 const galleryImages = [
   { src: "/images/ar-08.jpg", size: "large", category: "runs" },
@@ -17,20 +18,21 @@ const galleryImages = [
   { src: "/images/ar-06.jpg", size: "small", category: "runs" },
 ];
 
-const filters = ["ALL", "RUNS", "COMMUNITY"];
+const filterKeys = ["all", "runs", "community"] as const;
 
 export default function EditorialGallery() {
+  const t = useTranslations("home.gallery");
   const sectionRef = useRef<HTMLDivElement>(null);
   useInView(sectionRef, { once: true, margin: "-100px" });
-  const [activeFilter, setActiveFilter] = useState("ALL");
+  const [activeFilter, setActiveFilter] = useState("all");
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const filtered = useMemo(
     () =>
-      activeFilter === "ALL"
+      activeFilter === "all"
         ? galleryImages
         : galleryImages.filter(
-            (img) => img.category === activeFilter.toLowerCase()
+            (img) => img.category === activeFilter
           ),
     [activeFilter]
   );
@@ -73,26 +75,26 @@ export default function EditorialGallery() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12">
           <div>
-            <p className="label-text text-white/60 mb-4">GALLERY</p>
+            <p className="label-text text-white/60 mb-4">{t("label")}</p>
             <h2 className="headline-lg">
-              EDITORIAL<br />
-              <span className="text-[#666]">MOMENTS</span>
+              {t("title").split("\n")[0]}<br />
+              <span className="text-[#666]">{t("title").split("\n")[1]}</span>
             </h2>
           </div>
 
           {/* Filters */}
           <div className="flex gap-4 mt-8 md:mt-0">
-            {filters.map((filter) => (
+            {filterKeys.map((key) => (
               <button
-                key={filter}
-                onClick={() => setActiveFilter(filter)}
+                key={key}
+                onClick={() => setActiveFilter(key)}
                 className={`text-[11px] tracking-[0.15em] uppercase transition-all duration-300 pb-1 border-b ${
-                  activeFilter === filter
+                  activeFilter === key
                     ? "text-[#E6FF00] border-[#E6FF00]"
                     : "text-[#666] border-transparent hover:text-white"
                 }`}
               >
-                {filter}
+                {t(`filters.${key}`)}
               </button>
             ))}
           </div>
@@ -201,7 +203,7 @@ export default function EditorialGallery() {
               aria-label="Close lightbox"
               className="absolute top-8 right-8 text-white/40 hover:text-white text-sm tracking-[0.15em] uppercase transition-colors"
             >
-              CLOSE
+              {t("close")}
             </motion.button>
 
             {/* Image counter */}

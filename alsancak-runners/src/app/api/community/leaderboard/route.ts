@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { activities, members } from "@/db/schema";
-import { sql, gte, eq, inArray } from "drizzle-orm";
+import { sql, eq } from "drizzle-orm";
+import { cacheGet, cacheSet, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 
 // GET /api/community/leaderboard — period-based leaderboard
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const period = searchParams.get("period") || "month"; // week, month, year, all_time
   const limit = Math.min(50, parseInt(searchParams.get("limit") || "20"));
+
+  // Try cache first (keyed by period)
+  const cacheKey = CACHE_KEYS.leaderboard(period);
+  const cached = await cacheGet<Record<string, unknown>>(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached, {
+      headers: { "X-Cache": "HIT" },
+    });
+  }
 
   // Calculate period start
   const now = new Date();
@@ -58,7 +68,7 @@ export async function GET(request: NextRequest) {
     .orderBy(sql`SUM(${activities.distanceM}) DESC`)
     .limit(limit);
 
-  return NextResponse.json({
+  const result = {
     period,
     periodStart: periodStart.toISOString(),
     leaderboard: leaderboard.map((entry, i) => ({
@@ -66,5 +76,12 @@ export async function GET(request: NextRequest) {
       ...entry,
       totalDistanceKm: Math.round((entry.totalDistanceM / 1000) * 10) / 10,
     })),
+  };
+
+  // Cache the result
+  await cacheSet(cacheKey, result, CACHE_TTL.leaderboard);
+
+  return NextResponse.json(result, {
+    headers: { "X-Cache": "MISS" },
   });
 }
