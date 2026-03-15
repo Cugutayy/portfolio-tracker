@@ -313,16 +313,16 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
   return (
     <div className="space-y-2">
       {items.map((a, i) => (
+        <Link key={a.id} href={`/dashboard/activity/${a.id}`}>
         <motion.div
-          key={a.id}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: i * 0.03 }}
-          className="border border-[#222] hover:border-[#333] p-4 md:p-5 transition-colors group"
+          className="border border-[#222] hover:border-[#E6FF00]/20 p-4 md:p-5 transition-colors group cursor-pointer"
         >
           <div className="flex items-start justify-between mb-3">
             <div>
-              <h3 className="text-white text-base font-medium">{a.title}</h3>
+              <h3 className="text-white text-base font-medium group-hover:text-[#E6FF00] transition-colors">{a.title}</h3>
               <p className="text-[12px] text-[#666] mt-1">
                 {new Date(a.startTime).toLocaleDateString("tr-TR", {
                   day: "numeric",
@@ -383,6 +383,7 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
             </div>
           </div>
         </motion.div>
+        </Link>
       ))}
     </div>
   );
