@@ -143,6 +143,7 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
   const [strategyFilter, setStrategyFilter] = useState<TradeStrategy | 'all'>('all')
   const [showAllBm, setShowAllBm] = useState(false)
   const [bmFreshOnly, setBmFreshOnly] = useState(true) // Only show fresh BM data by default
+  const [maxDataAge, setMaxDataAge] = useState<number>(30) // Max data age in minutes for main table (0=show all)
   const autoRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const scanningRef = useRef(false)
   const validatedPricesRef = useRef<ValidatedPrice[]>([])
@@ -280,17 +281,21 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
 
   // ── Filter + Sort + Paginate ──
   const filtered = useMemo(() => {
+    const nowMs = Date.now()
+    const maxAgeMs = maxDataAge > 0 ? maxDataAge * 60 * 1000 : Infinity
     let arr = scan.opportunities.filter(o => {
       if (o.netProfit < filters.minProfit) return false
       if (o.profitPercent < filters.minProfitPercent) return false
-      if (filters.sourceCity !== 'all' && o.sourceCity !== filters.sourceCity) return false
-      if (filters.destCity !== 'all' && o.destCity !== filters.destCity) return false
       if (filters.category !== 'all' && o.category !== filters.category) return false
       if (o.tier < filters.minTier || o.tier > filters.maxTier) return false
-      if (!filters.showBlackMarket && o.isBlackMarket) return false
       if (!filters.showStale && o.freshness === 'stale') return false
-      if (strategyFilter !== 'all' && o.strategy !== strategyFilter) return false
       if (filters.search && !o.displayName.toLowerCase().includes(filters.search.toLowerCase()) && !o.itemId.toLowerCase().includes(filters.search.toLowerCase())) return false
+      // Data age filter: BOTH sides must be fresher than maxDataAge
+      if (maxAgeMs < Infinity) {
+        const srcAge = nowMs - o.sourceDate.getTime()
+        const dstAge = nowMs - o.destDate.getTime()
+        if (srcAge > maxAgeMs || dstAge > maxAgeMs) return false
+      }
       return true
     })
 
@@ -313,7 +318,19 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
       return 0
     })
     return arr
-  }, [scan.opportunities, filters, strategyFilter])
+  }, [scan.opportunities, filters, strategyFilter, maxDataAge, now])
+
+  // Total including stale (for showing hidden count)
+  const totalOppsBeforeAge = useMemo(() => {
+    return scan.opportunities.filter(o => {
+      if (o.netProfit < filters.minProfit) return false
+      if (o.profitPercent < filters.minProfitPercent) return false
+      if (filters.category !== 'all' && o.category !== filters.category) return false
+      if (o.tier < filters.minTier || o.tier > filters.maxTier) return false
+      if (filters.search && !o.displayName.toLowerCase().includes(filters.search.toLowerCase()) && !o.itemId.toLowerCase().includes(filters.search.toLowerCase())) return false
+      return true
+    }).length
+  }, [scan.opportunities, filters])
 
   // Top trades candidates — use ALL opportunities (not filtered), deduplicated
   const topCandidates = useMemo(() => {
@@ -1004,8 +1021,18 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
           <div className="aop" style={{ marginBottom: 12 }}>
             <div className="aot">Filters — Caerleon → BM</div>
             <div className="ao-filters" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <label style={{ fontSize: 9, color: '#888', fontWeight: 600 }}>
+                📡 Max Veri Yaşı
+                <select className="ao-select" value={maxDataAge} onChange={e => { setMaxDataAge(Number(e.target.value)); setPage(1) }} style={{ marginLeft: 4, borderColor: maxDataAge <= 10 ? 'rgba(76,175,80,.4)' : maxDataAge <= 30 ? 'rgba(255,152,0,.4)' : 'rgba(244,67,54,.4)' }}>
+                  <option value={5}>5 dk (en güncel)</option>
+                  <option value={10}>10 dk</option>
+                  <option value={30}>30 dk</option>
+                  <option value={60}>1 saat</option>
+                  <option value={0}>Hepsi (eski dahil)</option>
+                </select>
+              </label>
               <label style={{ fontSize: 9, color: '#888' }}>
-                Min Profit
+                Min Kâr
                 <input className="ao-input" type="number" value={filters.minProfit} onChange={e => updateFilter('minProfit', Number(e.target.value))} style={{ width: 70, marginLeft: 4 }} />
               </label>
               <label style={{ fontSize: 9, color: '#888' }}>
@@ -1013,9 +1040,9 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
                 <input className="ao-input" type="number" value={filters.minProfitPercent} onChange={e => updateFilter('minProfitPercent', Number(e.target.value))} style={{ width: 50, marginLeft: 4 }} />
               </label>
               <label style={{ fontSize: 9, color: '#888' }}>
-                Category
+                Kategori
                 <select className="ao-select" value={filters.category} onChange={e => updateFilter('category', e.target.value)} style={{ marginLeft: 4 }}>
-                  <option value="all">All</option>
+                  <option value="all">Hepsi</option>
                   {categories.map(c => <option key={c} value={c}>{CATEGORY_LABELS[c] || c}</option>)}
                 </select>
               </label>
@@ -1029,52 +1056,82 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
                   {[4, 5, 6, 7, 8].map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </label>
-              <label style={{ fontSize: 9, color: '#888', display: 'flex', alignItems: 'center', gap: 3 }}>
-                <input className="ao-check" type="checkbox" checked={filters.showStale} onChange={e => updateFilter('showStale', e.target.checked)} />
-                Stale
-              </label>
-              <input className="ao-input" placeholder="Search item..." value={filters.search} onChange={e => updateFilter('search', e.target.value)} style={{ width: 130 }} />
+              <input className="ao-input" placeholder="Item ara..." value={filters.search} onChange={e => updateFilter('search', e.target.value)} style={{ width: 130 }} />
             </div>
+            {maxDataAge > 0 && totalOppsBeforeAge > filtered.length && (
+              <div style={{ marginTop: 6, fontSize: 8, color: '#ff9800', fontFamily: 'Outfit,sans-serif' }}>
+                ⚠ {totalOppsBeforeAge - filtered.length} fırsat gizlendi (veri {'>'} {maxDataAge}dk eski).
+                <button onClick={() => setMaxDataAge(0)} style={{ background: 'none', border: 'none', color: GOLD, cursor: 'pointer', fontSize: 8, fontFamily: 'Outfit,sans-serif', textDecoration: 'underline', padding: '0 4px' }}>
+                  Hepsini göster
+                </button>
+              </div>
+            )}
           </div>
 
           {/* ── Results Table — All Caerleon → BM Opportunities ── */}
           <div className="aop" style={{ padding: 0, overflow: 'hidden' }}>
+            {/* Table explanation header */}
+            <div style={{ padding: '10px 14px 6px', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.03)' : 'rgba(0,0,0,.05)'}` }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: isDark ? '#ccc' : '#333', fontFamily: 'Outfit,sans-serif', marginBottom: 4 }}>
+                📋 Caerleon → BM Fırsatları — {filtered.length} aktif
+              </div>
+              <div style={{ fontSize: 8, color: '#888', fontFamily: 'Outfit,sans-serif', lineHeight: 1.6 }}>
+                <strong style={{ color: GOLD }}>Nasıl çalışır:</strong> Caerleon marketten item satın al → Black Market'e yürü → anında sat. Vergi yok, risk yok.
+                <br />
+                <strong style={{ color: '#4caf50' }}>Caerleon Satış:</strong> Son görülen satış fiyatı (sell order). <strong style={{ color: '#e53935' }}>BM Alım:</strong> BM'nin o itemi aldığı fiyat (buy order).
+                <br />
+                <span style={{ color: '#ff9800' }}>⚠ Veriler oyuncuların Albion Data Client'ından geliyor. "Caerleon Yaşı" = o fiyat en son ne zaman görüldü. Eski veri = satılmış olabilir!</span>
+              </div>
+            </div>
             <div className="ao-table-wrap" style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 800 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 850 }}>
                 <thead>
                   <tr style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.04)' : 'rgba(0,0,0,.06)'}` }}>
                     <TH field="displayName" label="Item" {...{ filters, toggleSort }} />
                     <TH field="tier" label="Tier" {...{ filters, toggleSort }} />
-                    <th className="ao-th" style={{ textAlign: 'center' }}>Q</th>
-                    <TH field="sourcePrice" label="Buy @ Caerleon" {...{ filters, toggleSort }} />
-                    <th className="ao-th" style={{ textAlign: 'right' }}>Sell @ BM</th>
-                    <TH field="netProfit" label="Profit" {...{ filters, toggleSort }} />
+                    <th className="ao-th" style={{ textAlign: 'center' }}>Kalite</th>
+                    <TH field="sourcePrice" label="Caerleon Satış" {...{ filters, toggleSort }} />
+                    <th className="ao-th" style={{ textAlign: 'right' }}>BM Alım</th>
+                    <TH field="netProfit" label="Kâr" {...{ filters, toggleSort }} />
                     <TH field="profitPercent" label="%" {...{ filters, toggleSort }} />
-                    <TH field="freshness" label="Sell Age" {...{ filters, toggleSort }} />
-                    <th className="ao-th" style={{ textAlign: 'center' }}>BM Age</th>
-                    <th className="ao-th" style={{ textAlign: 'center' }}>Match</th>
+                    <th className="ao-th" style={{ textAlign: 'center' }}>Caerleon Yaşı</th>
+                    <th className="ao-th" style={{ textAlign: 'center' }}>BM Yaşı</th>
+                    <th className="ao-th" style={{ textAlign: 'center' }}>Durum</th>
                   </tr>
                 </thead>
                 <tbody>
                   {pageItems.length === 0 && (
                     <tr>
-                      <td colSpan={10} style={{ padding: 32, textAlign: 'center', color: '#666', fontSize: 12 }}>
-                        {scan.status === 'idle' ? 'Click "Scan" to start scanning Caerleon ↔ Black Market.' :
-                         scan.status === 'complete' ? 'No opportunities match your filters.' : ''}
+                      <td colSpan={10} style={{ padding: 32, textAlign: 'center', color: '#666', fontSize: 11 }}>
+                        {scan.status === 'idle' ? '⟳ "Scan" butonuna basarak Caerleon ↔ BM taramasını başlat.' :
+                         scan.status === 'complete'
+                          ? maxDataAge > 0
+                            ? `Son ${maxDataAge} dakika içinde güncel veri bulunamadı. Daha fazla sonuç için "Hepsini göster"e tıklayın veya yeniden tarayın.`
+                            : 'Filtrelere uyan fırsat bulunamadı.'
+                          : ''}
                       </td>
                     </tr>
                   )}
-                  {pageItems.map((o, i) => (
-                    <tr key={`${o.itemId}-${o.quality}-${i}`} className="ao-row" style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.03)'}` }}>
-                      <td style={{ padding: '6px 8px', maxWidth: 220 }}>
+                  {pageItems.map((o, i) => {
+                    const srcAge = now - o.sourceDate.getTime()
+                    const dstAge = now - o.destDate.getTime()
+                    const worstAge = Math.max(srcAge, dstAge)
+                    const bothUnder10m = srcAge < 600_000 && dstAge < 600_000
+                    const bothUnder30m = srcAge < 1800_000 && dstAge < 1800_000
+                    const bothUnder1h = srcAge < 3600_000 && dstAge < 3600_000
+                    // Row opacity: dim stale rows
+                    const rowOpacity = bothUnder10m ? 1 : bothUnder30m ? 0.9 : bothUnder1h ? 0.75 : 0.55
+                    return (
+                    <tr key={`${o.itemId}-${o.quality}-${i}`} className="ao-row" style={{ borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,.02)' : 'rgba(0,0,0,.03)'}`, opacity: rowOpacity }}>
+                      <td style={{ padding: '6px 8px', maxWidth: 240 }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                           <span style={{ fontSize: 11, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {o.displayName}
                           </span>
                           <span
-                            title="Click to copy — search this in Albion marketplace"
+                            title="Kopyalamak için tıkla — Albion marketinde bunu ara"
                             onClick={() => { navigator.clipboard.writeText(gameSearchName(o.itemId)) }}
-                            style={{ fontSize: 8, color: GOLD, cursor: 'pointer', opacity: 0.6, fontFamily: 'Outfit,sans-serif' }}
+                            style={{ fontSize: 8, color: GOLD, cursor: 'pointer', opacity: 0.7, fontFamily: 'Outfit,sans-serif' }}
                           >
                             🔍 {gameSearchName(o.itemId)}
                           </span>
@@ -1084,13 +1141,19 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
                         {o.tier}{o.enchantment ? `.${o.enchantment}` : ''}
                       </td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}><QualityBadge q={o.quality} /></td>
-                      <td style={{ padding: '6px 8px', fontSize: 11, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                        {fmtSilver(o.sourcePrice)}
+                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>
+                        <div style={{ fontVariantNumeric: 'tabular-nums', fontSize: 11 }}>{fmtSilver(o.sourcePrice)}</div>
+                        <div style={{ fontSize: 7, color: getTimestampColor(o.sourceDate), fontWeight: 600, fontFamily: 'Outfit,sans-serif' }}>
+                          {srcAge < 60_000 ? 'AZ ÖNCE' : timeAgo(o.sourceDate)}
+                        </div>
                       </td>
-                      <td style={{ padding: '6px 8px', fontSize: 11, textAlign: 'right', fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
-                        <span style={{ color: '#4caf50' }}>{fmtSilver(o.destPrice)}</span>
+                      <td style={{ padding: '6px 8px', textAlign: 'right' }}>
+                        <div style={{ fontVariantNumeric: 'tabular-nums', fontSize: 11, fontWeight: 600, color: '#4caf50' }}>{fmtSilver(o.destPrice)}</div>
+                        <div style={{ fontSize: 7, color: getTimestampColor(o.destDate), fontWeight: 600, fontFamily: 'Outfit,sans-serif' }}>
+                          {dstAge < 60_000 ? 'AZ ÖNCE' : timeAgo(o.destDate)}
+                        </div>
                       </td>
-                      <td style={{ padding: '6px 8px', fontSize: 11, textAlign: 'right', fontWeight: 600, fontVariantNumeric: 'tabular-nums',
+                      <td style={{ padding: '6px 8px', fontSize: 12, textAlign: 'right', fontWeight: 700, fontVariantNumeric: 'tabular-nums',
                         color: o.netProfit >= 50000 ? '#4caf50' : o.netProfit >= 15000 ? GOLD : isDark ? '#ccc' : '#444' }}>
                         {fmtSilver(o.netProfit)}
                       </td>
@@ -1099,26 +1162,39 @@ export function AlbionPage({ dark = true, setDark }: { dark?: boolean; setDark?:
                         {o.profitPercent}%
                       </td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                        <span style={{ fontSize: 8, color: getTimestampColor(o.sourceDate), fontWeight: 600 }}>{timeAgo(o.sourceDate)}</span>
+                        <span style={{ fontSize: 9, color: getTimestampColor(o.sourceDate), fontWeight: 600 }}>
+                          {srcAge < 60_000 ? '🟢' : srcAge < 600_000 ? '🟢' : srcAge < 1800_000 ? '🟡' : '🔴'} {timeAgo(o.sourceDate)}
+                        </span>
                       </td>
                       <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                        <span style={{ fontSize: 8, color: getTimestampColor(o.destDate), fontWeight: 600 }}>{timeAgo(o.destDate)}</span>
+                        <span style={{ fontSize: 9, color: getTimestampColor(o.destDate), fontWeight: 600 }}>
+                          {dstAge < 60_000 ? '🟢' : dstAge < 600_000 ? '🟢' : dstAge < 1800_000 ? '🟡' : '🔴'} {timeAgo(o.destDate)}
+                        </span>
                       </td>
-                      <td style={{ padding: '6px 8px', textAlign: 'center' }}>
-                        {(() => {
-                          const srcAge = now - o.sourceDate.getTime()
-                          const dstAge = now - o.destDate.getTime()
-                          const bothFresh = srcAge < 600_000 && dstAge < 600_000  // < 10min
-                          const bothRecent = srcAge < 3600_000 && dstAge < 3600_000  // < 1h
-                          return bothFresh
-                            ? <span style={{ color: '#4caf50', fontSize: 8, fontWeight: 700 }}>✓✓ FRESH</span>
-                            : bothRecent
-                            ? <span style={{ color: '#ff9800', fontSize: 8, fontWeight: 700 }}>✓~ CHECK</span>
-                            : <span style={{ color: '#f44336', fontSize: 8, fontWeight: 700 }}>⚠ STALE</span>
-                        })()}
+                      <td style={{ padding: '4px 6px', textAlign: 'center' }}>
+                        {bothUnder10m
+                          ? <div>
+                              <div style={{ color: '#4caf50', fontSize: 9, fontWeight: 800 }}>✅ GÜNCEL</div>
+                              <div style={{ color: '#4caf50', fontSize: 7, fontFamily: 'Outfit,sans-serif' }}>Şu an aktif</div>
+                            </div>
+                          : bothUnder30m
+                          ? <div>
+                              <div style={{ color: '#ff9800', fontSize: 9, fontWeight: 800 }}>⚡ MUHTEMEL</div>
+                              <div style={{ color: '#ff9800', fontSize: 7, fontFamily: 'Outfit,sans-serif' }}>Kontrol et</div>
+                            </div>
+                          : bothUnder1h
+                          ? <div>
+                              <div style={{ color: '#ff9800', fontSize: 9, fontWeight: 700 }}>⚠ RİSKLİ</div>
+                              <div style={{ color: '#888', fontSize: 7, fontFamily: 'Outfit,sans-serif' }}>Satılmış olabilir</div>
+                            </div>
+                          : <div>
+                              <div style={{ color: '#f44336', fontSize: 9, fontWeight: 700 }}>❌ ESKİ</div>
+                              <div style={{ color: '#f44336', fontSize: 7, fontFamily: 'Outfit,sans-serif' }}>Büyük ihtimal yok</div>
+                            </div>
+                        }
                       </td>
                     </tr>
-                  ))}
+                  )})}
                 </tbody>
               </table>
             </div>
@@ -1303,7 +1379,7 @@ function timeAgo(d: Date): string {
 
 function getTimestampColor(d: Date): string {
   const age = Date.now() - d.getTime()
-  if (age < 3600_000) return '#4caf50'    // < 1h = green
-  if (age < 86400_000) return '#ff9800'   // < 24h = orange
-  return '#f44336'                         // > 24h = red
+  if (age < 600_000) return '#4caf50'      // < 10min = green (fresh for BM)
+  if (age < 1800_000) return '#ff9800'     // < 30min = orange (check)
+  return '#f44336'                          // > 30min = red (likely stale for BM)
 }
