@@ -10,11 +10,25 @@ import {
 const STRAVA_API = "https://www.strava.com/api/v3";
 const STRAVA_AUTH = "https://www.strava.com/oauth";
 
-export function getStravaAuthUrl(state: string): string {
+function getBaseUrl(): string {
+  // Production: use AUTH_URL if it's not localhost
+  if (process.env.AUTH_URL && !process.env.AUTH_URL.includes("localhost")) {
+    return process.env.AUTH_URL;
+  }
+  // Vercel: construct from VERCEL_URL (auto-set by Vercel)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  // Fallback to AUTH_URL or NEXTAUTH_URL for local dev
+  return process.env.AUTH_URL || process.env.NEXTAUTH_URL || "http://localhost:3000";
+}
+
+export function getStravaAuthUrl(state: string, origin?: string): string {
+  const baseUrl = origin || getBaseUrl();
   const params = new URLSearchParams({
     client_id: process.env.STRAVA_CLIENT_ID!,
     response_type: "code",
-    redirect_uri: `${process.env.NEXTAUTH_URL}/api/strava/callback`,
+    redirect_uri: `${baseUrl}/api/strava/callback`,
     scope: "read,activity:read_all",
     state,
     approval_prompt: "auto",
