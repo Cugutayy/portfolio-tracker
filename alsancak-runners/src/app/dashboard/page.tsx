@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 
@@ -81,15 +82,25 @@ export default function DashboardPage() {
             transition={{ duration: 0.6 }}
             className="mb-16"
           >
-            <p className="label-text text-white/60 mb-4">DASHBOARD</p>
-            <h1 className="headline-lg mb-2">
-              HOŞ GELDİN
-              <span className="text-[#E6FF00]">.</span>
-            </h1>
-            <p className="body-text text-lg">{profile.name}</p>
-            <p className="text-[11px] tracking-[0.15em] uppercase text-[#666] mt-1">
-              {profile.role}
-            </p>
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="label-text text-white/60 mb-4">DASHBOARD</p>
+                <h1 className="headline-lg mb-2">
+                  HOŞ GELDİN
+                  <span className="text-[#E6FF00]">.</span>
+                </h1>
+                <p className="body-text text-lg">{profile.name}</p>
+                <p className="text-[11px] tracking-[0.15em] uppercase text-[#666] mt-1">
+                  {profile.role}
+                </p>
+              </div>
+              <button
+                onClick={() => signOut({ callbackUrl: "/" })}
+                className="text-[11px] tracking-[0.15em] uppercase text-[#666] border border-[#333] px-4 py-2 hover:border-white/30 hover:text-white transition-colors"
+              >
+                ÇIKIŞ YAP
+              </button>
+            </div>
           </motion.div>
 
           {/* Stats Grid */}
