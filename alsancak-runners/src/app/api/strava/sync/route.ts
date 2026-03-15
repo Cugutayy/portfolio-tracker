@@ -66,47 +66,45 @@ export async function POST() {
           continue;
         }
 
-        // Check if already exists (idempotent)
-        const [existing] = await db
-          .select({ id: activities.id })
-          .from(activities)
-          .where(eq(activities.stravaActivityId, sa.id))
-          .limit(1);
-
-        if (existing) continue;
-
         // Insert from list data (no detail fetch — saves API quota)
+        // Uses ON CONFLICT DO NOTHING for race-condition safety
         const startTime = new Date(sa.start_date);
         const activityType =
           sa.type === "Run" || sa.type === "VirtualRun"
             ? "run"
             : sa.type.toLowerCase();
 
-        await db.insert(activities).values({
-          memberId: session.user.id,
-          stravaActivityId: sa.id,
-          source: "strava",
-          title: sa.name,
-          activityType,
-          startTime,
-          elapsedTimeSec: sa.elapsed_time,
-          movingTimeSec: sa.moving_time,
-          distanceM: sa.distance,
-          elevationGainM: sa.total_elevation_gain,
-          avgPaceSecKm: speedToPace(sa.average_speed),
-          maxPaceSecKm: speedToPace(sa.max_speed),
-          avgHeartrate: sa.average_heartrate ?? null,
-          maxHeartrate: sa.max_heartrate ?? null,
-          calories: sa.calories ?? null,
-          avgCadence: sa.average_cadence ?? null,
-          polylineEncoded: sa.map?.summary_polyline ?? null,
-          startLat: sa.start_latlng?.[0] ?? null,
-          startLng: sa.start_latlng?.[1] ?? null,
-          endLat: sa.end_latlng?.[0] ?? null,
-          endLng: sa.end_latlng?.[1] ?? null,
-          city: "Izmir",
-          privacy: "private",
-        });
+        const inserted = await db
+          .insert(activities)
+          .values({
+            memberId: session.user.id,
+            stravaActivityId: sa.id,
+            source: "strava",
+            title: sa.name,
+            activityType,
+            startTime,
+            elapsedTimeSec: sa.elapsed_time,
+            movingTimeSec: sa.moving_time,
+            distanceM: sa.distance,
+            elevationGainM: sa.total_elevation_gain,
+            avgPaceSecKm: speedToPace(sa.average_speed),
+            maxPaceSecKm: speedToPace(sa.max_speed),
+            avgHeartrate: sa.average_heartrate ?? null,
+            maxHeartrate: sa.max_heartrate ?? null,
+            calories: sa.calories ?? null,
+            avgCadence: sa.average_cadence ?? null,
+            polylineEncoded: sa.map?.summary_polyline ?? null,
+            startLat: sa.start_latlng?.[0] ?? null,
+            startLng: sa.start_latlng?.[1] ?? null,
+            endLat: sa.end_latlng?.[0] ?? null,
+            endLng: sa.end_latlng?.[1] ?? null,
+            city: sa.start_latlng ? null : null, // Derive from geocoding in future
+            privacy: "private",
+          })
+          .onConflictDoNothing({ target: activities.stravaActivityId })
+          .returning({ id: activities.id });
+
+        if (inserted.length === 0) continue; // Already existed
 
         const eventEpoch = Math.floor(startTime.getTime() / 1000);
         if (eventEpoch > latestTime) latestTime = eventEpoch;

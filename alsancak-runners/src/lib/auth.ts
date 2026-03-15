@@ -96,13 +96,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             .where(eq(stravaConnections.stravaAthleteId, athleteId))
             .limit(1);
 
+          // Resolve token expiry — default to 6 hours from now if missing
+          const tokenExpiresAt =
+            account.expires_at ?? Math.floor(Date.now() / 1000) + 21600;
+
           if (existingConn) {
             // Returning user — update tokens, reuse member
             await db
               .update(stravaConnections)
               .set({
                 ...encrypted,
-                tokenExpiresAt: account.expires_at!,
+                tokenExpiresAt,
                 updatedAt: new Date(),
               })
               .where(eq(stravaConnections.stravaAthleteId, athleteId));
@@ -125,7 +129,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               memberId: newMember.id,
               stravaAthleteId: athleteId,
               ...encrypted,
-              tokenExpiresAt: account.expires_at!,
+              tokenExpiresAt,
               scopes: "read,activity:read_all",
             });
 

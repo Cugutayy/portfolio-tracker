@@ -4,7 +4,7 @@ import {
   stravaConnections,
   activities,
 } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { refreshAccessToken, stravaGet, speedToPace } from "./strava";
 import type { StravaActivity } from "./strava";
 
@@ -133,15 +133,6 @@ async function handleActivityCreate(
     throw new Error(`No connection for athlete ${ownerAthleteId}`);
   }
 
-  // Check if activity already exists (idempotent)
-  const [existing] = await db
-    .select({ id: activities.id })
-    .from(activities)
-    .where(eq(activities.stravaActivityId, stravaActivityId))
-    .limit(1);
-
-  if (existing) return; // Already synced
-
   // Fetch activity from Strava
   const accessToken = await refreshAccessToken(conn.id);
   const sa = await stravaGet<StravaActivity>(
@@ -161,31 +152,35 @@ async function handleActivityCreate(
       ? "run"
       : sa.type.toLowerCase();
 
-  await db.insert(activities).values({
-    memberId: conn.memberId,
-    stravaActivityId: sa.id,
-    source: "strava",
-    title: sa.name,
-    activityType,
-    startTime,
-    elapsedTimeSec: sa.elapsed_time,
-    movingTimeSec: sa.moving_time,
-    distanceM: sa.distance,
-    elevationGainM: sa.total_elevation_gain,
-    avgPaceSecKm: speedToPace(sa.average_speed),
-    maxPaceSecKm: speedToPace(sa.max_speed),
-    avgHeartrate: sa.average_heartrate ?? null,
-    maxHeartrate: sa.max_heartrate ?? null,
-    calories: sa.calories ?? null,
-    avgCadence: sa.average_cadence ?? null,
-    polylineEncoded: sa.map?.summary_polyline ?? null,
-    startLat: sa.start_latlng?.[0] ?? null,
-    startLng: sa.start_latlng?.[1] ?? null,
-    endLat: sa.end_latlng?.[0] ?? null,
-    endLng: sa.end_latlng?.[1] ?? null,
-    city: "Izmir",
-    privacy: "private",
-  });
+  // Uses ON CONFLICT DO NOTHING for race-condition safety (idempotent)
+  await db
+    .insert(activities)
+    .values({
+      memberId: conn.memberId,
+      stravaActivityId: sa.id,
+      source: "strava",
+      title: sa.name,
+      activityType,
+      startTime,
+      elapsedTimeSec: sa.elapsed_time,
+      movingTimeSec: sa.moving_time,
+      distanceM: sa.distance,
+      elevationGainM: sa.total_elevation_gain,
+      avgPaceSecKm: speedToPace(sa.average_speed),
+      maxPaceSecKm: speedToPace(sa.max_speed),
+      avgHeartrate: sa.average_heartrate ?? null,
+      maxHeartrate: sa.max_heartrate ?? null,
+      calories: sa.calories ?? null,
+      avgCadence: sa.average_cadence ?? null,
+      polylineEncoded: sa.map?.summary_polyline ?? null,
+      startLat: sa.start_latlng?.[0] ?? null,
+      startLng: sa.start_latlng?.[1] ?? null,
+      endLat: sa.end_latlng?.[0] ?? null,
+      endLng: sa.end_latlng?.[1] ?? null,
+      city: null,
+      privacy: "private",
+    })
+    .onConflictDoNothing({ target: activities.stravaActivityId });
 }
 
 /**
