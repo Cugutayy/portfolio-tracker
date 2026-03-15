@@ -22,6 +22,7 @@ export const MAX_SPREAD_RATIO = 3
 export const PRICE_CACHE_TTL = 90_000           // 90s
 export const ITEMS_CACHE_TTL = 24 * 60 * 60 * 1000
 export const SCAN_INTERVAL = 2 * 60 * 1000     // 2min
+export const BM_REFRESH_INTERVAL = 30 * 1000   // 30s — BM quick refresh
 
 export const CITY_COLORS: Record<string, string> = {
   'Bridgewatch':   '#e2a44f',

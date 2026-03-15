@@ -1,7 +1,8 @@
 /**
  * Albion Online Data Project API Client
  * ======================================
- * - Rate limiting (3 req/s, 30 req/min)
+ * - Rate limiting (5 req/s, 100 req/min) with lock for concurrent safety
+ * - Concurrent batch fetching (2 at a time)
  * - In-memory cache with TTL
  * - Retry with exponential backoff
  * - URL-length-aware batching
@@ -26,6 +27,14 @@ class ApiCache {
   set<T>(key: string, data: T, ttl: number) {
     this.store.set(key, { data, timestamp: Date.now(), ttl })
   }
+  /** Remove all cache entries whose key contains any of the given substrings */
+  clearMatching(substrings: string[]) {
+    for (const key of [...this.store.keys()]) {
+      for (const sub of substrings) {
+        if (key.includes(sub)) { this.store.delete(key); break }
+      }
+    }
+  }
   clear() { this.store.clear() }
 }
 
@@ -34,22 +43,30 @@ class ApiCache {
 // ═══════════════════════════════════════════
 class RateLimiter {
   private ts: number[] = []
-  private readonly perSec = 3
-  private readonly perMin = 30
+  private readonly perSec = 5
+  private readonly perMin = 100
+  private lock: Promise<void> = Promise.resolve()
 
   async wait(): Promise<void> {
+    // Serialize access — safe for concurrent callers
+    const prev = this.lock
+    let release: () => void
+    this.lock = new Promise(r => { release = r })
+    await prev
+
     const now = Date.now()
     this.ts = this.ts.filter(t => now - t < 60000)
     const lastSec = this.ts.filter(t => now - t < 1000).length
     if (lastSec >= this.perSec) {
       const w = 1000 - (now - this.ts[this.ts.length - this.perSec])
-      await new Promise(r => setTimeout(r, w + 50))
+      await new Promise(r => setTimeout(r, Math.max(0, w + 30)))
     }
     if (this.ts.length >= this.perMin) {
       const w = 60000 - (now - this.ts[0])
-      await new Promise(r => setTimeout(r, w + 100))
+      await new Promise(r => setTimeout(r, Math.max(0, w + 50)))
     }
     this.ts.push(Date.now())
+    release!()
   }
 }
 
@@ -78,7 +95,7 @@ class AlbionDataClient {
         this.requestCount++
         const res = await fetch(url, {
           headers: { Accept: 'application/json' },
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(25000),
         })
         if (!res.ok) {
           if (res.status === 429 || res.status >= 500) {
@@ -129,11 +146,18 @@ class AlbionDataClient {
     }
     if (current.length) batches.push(current)
 
+    // Fetch batches with concurrency (2 at a time)
+    const CONCURRENCY = 2
     const results: AlbionPriceEntry[] = []
-    for (let i = 0; i < batches.length; i++) {
-      const data = await this.fetchBatch(batches[i], locStr, qualStr)
-      results.push(...data)
-      onProgress?.(i + 1, batches.length)
+    let completed = 0
+    for (let i = 0; i < batches.length; i += CONCURRENCY) {
+      const chunk = batches.slice(i, Math.min(i + CONCURRENCY, batches.length))
+      const chunkResults = await Promise.all(
+        chunk.map(batch => this.fetchBatch(batch, locStr, qualStr))
+      )
+      for (const data of chunkResults) results.push(...data)
+      completed += chunk.length
+      onProgress?.(completed, batches.length)
     }
     return results
   }
@@ -166,6 +190,11 @@ class AlbionDataClient {
     const data: AlbionHistoryResponse[] = await res.json()
     this.cache.set(url, data, PRICE_CACHE_TTL * 2) // cache longer
     return data
+  }
+
+  /** Invalidate cache entries containing any of the given item IDs */
+  clearItemCache(itemIds: string[]) {
+    this.cache.clearMatching(itemIds)
   }
 
   clearCache() { this.cache.clear() }
