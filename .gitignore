@@ -8,3 +8,6 @@ index_old.html
 # Eski Netlify dosyaları (Cloudflare Pages'a geçildi)
 netlify/
 netlify.toml
+
+# Claude Code
+.claude/
