@@ -109,3 +109,27 @@ export function displayName(uniqueName: string): string {
   ).join(' ')
   return `${tierPart} ${rest}${ench}`.trim()
 }
+
+/**
+ * Convert uniqueName to the name you search in Albion's in-game marketplace.
+ * T6_HEAD_PLATE_ROYAL@4 → "Royal Helmet"
+ * T4_2H_CROSSBOW@1     → "Crossbow"
+ * T7_MAIN_AXE           → "Battleaxe"
+ *
+ * The marketplace search in Albion uses the item's English display name
+ * (not the internal ID). This provides a best-effort mapping.
+ * Strip the tier prefix, "2H_"/"MAIN_"/"OFF_"/"HEAD_"/"ARMOR_"/"SHOES_" prefixes,
+ * and convert to readable English.
+ */
+export function gameSearchName(uniqueName: string): string {
+  let name = uniqueName
+  // Strip enchantment
+  const atIdx = name.indexOf('@')
+  if (atIdx !== -1) name = name.slice(0, atIdx)
+  // Strip tier prefix (T4_, T5_, etc.)
+  name = name.replace(/^T\d+_/, '')
+  // The remaining part is the item type, e.g. "HEAD_PLATE_ROYAL", "2H_CROSSBOW", "MAIN_AXE"
+  // Convert underscores to spaces and title case
+  const words = name.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+  return words.join(' ')
+}
