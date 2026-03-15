@@ -161,6 +161,10 @@ class OpenF1Client {
             await new Promise(r => setTimeout(r, wait))
             continue
           }
+          if (response.status === 401) {
+            // OpenF1 locks API during live sessions — throw immediately, don't retry
+            throw new ApiError('OpenF1 API locked (live session in progress)', 401, false)
+          }
           if (response.status >= 500) {
             // Server error — retry
             const wait = Math.pow(2, attempt) * 1000

@@ -9,6 +9,34 @@ import type { PredictionResult } from '../f1/types'
 
 const AUS_SESSION_KEY = 11234
 
+// Fallback race calendar when OpenF1 API is locked (during live sessions)
+const FALLBACK_RACES_2026 = [
+  { key: 11234, name: 'Australia', circuit: 'Melbourne', date: '2026-03-08', hasData: true },
+  { key: 11245, name: 'China', circuit: 'Shanghai', date: '2026-03-15', hasData: true },
+  { key: 11253, name: 'Japan', circuit: 'Suzuka', date: '2026-03-29', hasData: true },
+  { key: 11261, name: 'Bahrain', circuit: 'Sakhir', date: '2026-04-12', hasData: false },
+  { key: 11269, name: 'Saudi Arabia', circuit: 'Jeddah', date: '2026-04-19', hasData: false },
+  { key: 11280, name: 'United States', circuit: 'Miami', date: '2026-05-03', hasData: false },
+  { key: 11291, name: 'Canada', circuit: 'Montreal', date: '2026-05-24', hasData: false },
+  { key: 11299, name: 'Monaco', circuit: 'Monte Carlo', date: '2026-06-07', hasData: false },
+  { key: 11307, name: 'Spain', circuit: 'Catalunya', date: '2026-06-14', hasData: false },
+  { key: 11315, name: 'Austria', circuit: 'Spielberg', date: '2026-06-28', hasData: false },
+  { key: 11326, name: 'Great Britain', circuit: 'Silverstone', date: '2026-07-05', hasData: false },
+  { key: 11334, name: 'Belgium', circuit: 'Spa-Francorchamps', date: '2026-07-19', hasData: false },
+  { key: 11342, name: 'Hungary', circuit: 'Hungaroring', date: '2026-07-26', hasData: false },
+  { key: 11353, name: 'Netherlands', circuit: 'Zandvoort', date: '2026-08-23', hasData: false },
+  { key: 11361, name: 'Italy', circuit: 'Monza', date: '2026-09-06', hasData: false },
+  { key: 11369, name: 'Germany', circuit: 'Madring', date: '2026-09-13', hasData: false },
+  { key: 11377, name: 'Azerbaijan', circuit: 'Baku', date: '2026-09-26', hasData: false },
+  { key: 11388, name: 'Singapore', circuit: 'Singapore', date: '2026-10-11', hasData: false },
+  { key: 11396, name: 'United States', circuit: 'Austin', date: '2026-10-25', hasData: false },
+  { key: 11404, name: 'Mexico', circuit: 'Mexico City', date: '2026-11-01', hasData: false },
+  { key: 11412, name: 'Brazil', circuit: 'Interlagos', date: '2026-11-08', hasData: false },
+  { key: 11420, name: 'United States', circuit: 'Las Vegas', date: '2026-11-22', hasData: false },
+  { key: 11428, name: 'Qatar', circuit: 'Lusail', date: '2026-11-29', hasData: false },
+  { key: 11436, name: 'Abu Dhabi', circuit: 'Yas Marina Circuit', date: '2026-12-06', hasData: false },
+]
+
 // ═══════════════════════════════════════════════════
 // CSS
 // ═══════════════════════════════════════════════════
@@ -129,6 +157,7 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
   const [selectedDrivers, setSelectedDrivers] = useState<number[]>([63, 12, 44]) // RUS, ANT, HAM
   const [allCarData, setAllCarData] = useState<any[]>([])
   const [pollError, setPollError] = useState<string | null>(null)
+  const [apiLocked, setApiLocked] = useState(false)
   const pollErrorCountRef = useRef(0)
   const [carTelemetry, setCarTelemetry] = useState<Map<number, {
     speed: number; gear: number; drs: number; throttle: number; brake: number
@@ -154,6 +183,16 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
         const grid = AUSTRALIA_2026_QUALI.map(q => ({
           code: q.driverCode, name: q.driverName, team: q.team, teamColor: TEAMS[q.team]?.color || '#888', position: q.position,
           qualiDelta: (q.q3Time ? pT(q.q3Time) : q.q2Time ? pT(q.q2Time) : q.q1Time ? pT(q.q1Time) : 83) - 78.518
+        }))
+        setPreds(predictor.predictFromGrid(grid))
+        setQualiFetching(false)
+        return
+      }
+      // If API is locked, use grid-position-based prediction from DRIVERS data
+      if (apiLocked) {
+        const grid = DRIVERS.slice(0, 22).map((d, i) => ({
+          code: d.code, name: d.name, team: d.team, teamColor: TEAMS[d.team]?.color || '#888',
+          position: i + 1, qualiDelta: i * 0.15
         }))
         setPreds(predictor.predictFromGrid(grid))
         setQualiFetching(false)
@@ -206,7 +245,7 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
       if (grid.length > 0) setPreds(predictor.predictFromGrid(grid))
     } catch (e) { console.error('[F1] Quali fetch error:', e) }
     setQualiFetching(false)
-  }, [])
+  }, [apiLocked])
 
   // === INIT: races + auto-detect current/next race ===
   useEffect(() => {
@@ -235,11 +274,29 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
           }
         }
         // Auto-learn ELO/form from all past races (background, idempotent)
+        setApiLocked(false)
         const pastRaces = raceList.filter(r => new Date(r.date) < new Date())
         for (const r of pastRaces) {
           predictor.learnFromRaceResults(r.key).catch(() => {})
         }
-      } catch { }
+      } catch (err: any) {
+        // API locked during live session (401) — use fallback calendar
+        const is401 = err?.status === 401 || err?.message?.includes('401')
+        if (is401) setApiLocked(true)
+        console.warn('[F1] API unavailable, using fallback calendar:', err?.message)
+        const fallback = FALLBACK_RACES_2026.map(r => ({
+          ...r,
+          hasData: new Date(r.date) < new Date() || Math.abs(new Date(r.date).getTime() - Date.now()) < 3 * 86400000
+        }))
+        setRaces(fallback)
+        if (selectedRace === 0) {
+          const now = Date.now()
+          const closest = fallback
+            .filter(r => r.hasData)
+            .sort((a, b) => Math.abs(new Date(a.date).getTime() - now) - Math.abs(new Date(b.date).getTime() - now))
+          if (closest.length > 0) setSelectedRace(closest[0].key)
+        }
+      }
     })()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -629,8 +686,17 @@ export function F1Page({ dark = true, setDark }: { dark?: boolean; setDark?: (d:
         </div>
       </div>
 
+      {/* ═══ API LOCKED BANNER ═══ */}
+      {apiLocked && (
+        <div style={{ background: 'linear-gradient(90deg, rgba(234,179,8,.15), rgba(234,179,8,.05))', border: '1px solid rgba(234,179,8,.3)', borderRadius: 0, padding: '6px 20px', display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: '#eab308' }}>
+          <span style={{ fontSize: 14 }}>{'⚠'}</span>
+          <span><b>OpenF1 API kilitli</b> — Canlı F1 oturumu devam ediyor. Oturum bitince veriler otomatik güncellenecek. Şu an fallback takvim kullanılıyor.</span>
+          <button onClick={() => window.location.reload()} style={{ marginLeft: 'auto', background: 'rgba(234,179,8,.2)', border: '1px solid rgba(234,179,8,.4)', borderRadius: 6, color: '#eab308', padding: '2px 10px', fontSize: 10, cursor: 'pointer' }}>Tekrar Dene</button>
+        </div>
+      )}
+
       {/* ═══ 3-PANEL LAYOUT (both modes) ═══ */}
-      <div className="f1-layout" style={{ padding: 0, height: 'calc(100vh - 42px)', display: 'flex', flexDirection: 'column' }}>
+      <div className="f1-layout" style={{ padding: 0, height: apiLocked ? 'calc(100vh - 72px)' : 'calc(100vh - 42px)', display: 'flex', flexDirection: 'column' }}>
         <div className="f1-main" style={{ flex: 1, display: 'flex', overflow: 'hidden', gap: 4 }}>
 
           {/* ═══ LEFT PANEL ═══ */}
