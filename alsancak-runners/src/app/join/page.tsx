@@ -83,8 +83,15 @@ export default function JoinPage() {
     }
   };
 
-  const handleStravaSignIn = () => {
-    signIn("strava", { callbackUrl: "/dashboard" });
+  const handleStravaSignIn = async () => {
+    try {
+      setError("");
+      setLoading(true);
+      await signIn("strava", { callbackUrl: "/dashboard" });
+    } catch {
+      setError("Strava sign-in failed. Please try again.");
+      setLoading(false);
+    }
   };
 
   return (
