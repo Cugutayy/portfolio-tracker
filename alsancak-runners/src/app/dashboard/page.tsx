@@ -681,15 +681,26 @@ function DashboardContent() {
 
   const handleSync = useCallback(async () => {
     setSyncing(true);
+    setStravaMsg(null);
     try {
       const res = await fetch("/api/strava/sync", { method: "POST" });
       const data = await res.json();
-      if (res.ok && data.synced > 0) {
-        loadActivities();
-        loadProfile();
+      if (res.ok) {
+        if (data.synced > 0) {
+          setStravaMsg(`${data.synced} yeni aktivite senkronize edildi!`);
+          loadActivities();
+          loadProfile();
+        } else {
+          setStravaMsg("Tüm aktiviteler güncel — yeni aktivite bulunamadı");
+        }
+      } else {
+        setStravaMsg(`Senkronizasyon hatası: ${data.error || "Bilinmeyen hata"}`);
       }
+      setTimeout(() => setStravaMsg(null), 5000);
     } catch (err) {
       console.error("Sync error:", err);
+      setStravaMsg("Strava bağlantısında bir hata oluştu. Tekrar deneyin.");
+      setTimeout(() => setStravaMsg(null), 5000);
     } finally {
       setSyncing(false);
     }
@@ -822,7 +833,7 @@ function DashboardContent() {
             <div className="flex items-start justify-between mb-6">
               <div>
                 <h1
-                  className="text-4xl md:text-5xl font-bold text-white leading-none mb-3"
+                  className="text-4xl md:text-5xl font-bold text-white leading-tight mb-3"
                   style={{ fontFamily: "var(--font-heading, inherit)" }}
                 >
                   HOŞ GELDİN

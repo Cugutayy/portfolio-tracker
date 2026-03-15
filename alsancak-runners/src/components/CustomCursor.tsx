@@ -19,7 +19,7 @@ export default function CustomCursor() {
   }, []);
 
   useEffect(() => {
-    if (isTouch) return;
+    if (isTouch || isDashboard) return;
 
     document.body.classList.add("custom-cursor-active");
 
@@ -116,7 +116,7 @@ export default function CustomCursor() {
       document.removeEventListener("mouseleave", handleLeave);
       document.removeEventListener("mouseenter", handleEnter);
     };
-  }, [isTouch]);
+  }, [isTouch, isDashboard]);
 
   if (isTouch || isDashboard) return null;
 
