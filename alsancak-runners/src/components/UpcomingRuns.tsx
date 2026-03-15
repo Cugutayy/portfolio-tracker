@@ -39,6 +39,7 @@ export default function UpcomingRuns() {
   const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [events, setEvents] = useState<EventItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch("/api/events?limit=4")
@@ -46,7 +47,8 @@ export default function UpcomingRuns() {
       .then((data) => {
         if (data?.events) setEvents(data.events);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   return (
@@ -78,10 +80,21 @@ export default function UpcomingRuns() {
 
         {/* Event cards */}
         <div className="space-y-4">
-          {events.length === 0 && (
+          {loading && events.length === 0 && (
             <div className="border border-[#222] p-12 text-center">
+              <div className="w-6 h-6 border-2 border-[#E6FF00] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
               <p className="text-[15px] text-[#666]">
                 Yaklaşan etkinlikler yükleniyor...
+              </p>
+            </div>
+          )}
+          {!loading && events.length === 0 && (
+            <div className="border border-[#222] p-12 text-center">
+              <p className="text-[15px] text-[#666] mb-2">
+                Şu anda yaklaşan etkinlik bulunmuyor
+              </p>
+              <p className="text-[12px] text-[#444]">
+                Yeni etkinlikler eklendiğinde burada görünecek
               </p>
             </div>
           )}
