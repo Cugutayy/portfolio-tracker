@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 interface MemberProfile {
   id: string;
@@ -25,7 +26,21 @@ interface MemberProfile {
   };
 }
 
-type Tab = "overview" | "profile";
+interface ActivityItem {
+  id: string;
+  title: string;
+  activityType: string;
+  startTime: string;
+  distanceM: number;
+  movingTimeSec: number;
+  elapsedTimeSec: number;
+  elevationGainM: number | null;
+  avgPaceSecKm: number | null;
+  avgHeartrate: number | null;
+  source: string;
+}
+
+type Tab = "overview" | "profile" | "activities";
 
 function formatDistance(meters: number): string {
   return (meters / 1000).toFixed(1);
@@ -36,6 +51,12 @@ function formatDuration(seconds: number): string {
   const m = Math.floor((seconds % 3600) / 60);
   if (h === 0) return `${m}dk`;
   return `${h}sa ${m}dk`;
+}
+
+function formatPace(secPerKm: number): string {
+  const m = Math.floor(secPerKm / 60);
+  const s = Math.round(secPerKm % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 /* ─── PROFILE EDITOR ─── */
@@ -204,8 +225,183 @@ function ProfileEditor({
   );
 }
 
+/* ─── STRAVA CONNECT CTA ─── */
+function StravaConnectCard({
+  connected,
+  onDisconnect,
+}: {
+  connected: boolean;
+  onDisconnect: () => void;
+}) {
+  const [disconnecting, setDisconnecting] = useState(false);
+
+  const handleDisconnect = async () => {
+    if (!confirm("Strava bağlantısını kaldırmak istediğinden emin misin?")) return;
+    setDisconnecting(true);
+    try {
+      const res = await fetch("/api/strava/connection", { method: "DELETE" });
+      if (res.ok) onDisconnect();
+    } finally {
+      setDisconnecting(false);
+    }
+  };
+
+  if (connected) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="border border-[#FC4C02]/30 bg-[#FC4C02]/5 p-6 flex items-center justify-between"
+      >
+        <div>
+          <p className="text-[11px] tracking-[0.15em] uppercase text-[#FC4C02] mb-1">
+            STRAVA BAĞLI
+          </p>
+          <p className="text-[13px] text-[#999]">
+            Koşuların otomatik senkronize ediliyor
+          </p>
+        </div>
+        <button
+          onClick={handleDisconnect}
+          disabled={disconnecting}
+          className="text-[11px] tracking-[0.15em] uppercase text-[#666] border border-[#333] px-4 py-2 hover:border-red-500/50 hover:text-red-400 transition-colors disabled:opacity-50"
+        >
+          {disconnecting ? "..." : "BAĞLANTIYI KES"}
+        </button>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.1 }}
+      className="border border-dashed border-[#333] p-8 text-center"
+    >
+      <p className="text-[11px] tracking-[0.15em] uppercase text-[#666] mb-4">
+        STRAVA BAĞLANTISI
+      </p>
+      <p className="text-[15px] text-[#999] leading-relaxed mb-6">
+        Strava hesabını bağlayarak koşu verilerini otomatik senkronize et.
+      </p>
+      <a
+        href="/api/strava/authorize"
+        className="inline-block bg-[#FC4C02] text-white py-3 px-8 text-sm font-bold tracking-[0.15em] uppercase hover:bg-[#e04500] transition-colors"
+      >
+        STRAVA İLE BAĞLAN
+      </a>
+    </motion.div>
+  );
+}
+
+/* ─── ACTIVITY LIST ─── */
+function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
+  if (items.length === 0) {
+    return (
+      <div className="border border-[#222] p-12 text-center">
+        <div className="text-4xl mb-4 opacity-30">&#x1F3C3;</div>
+        <p className="text-[15px] text-[#666] mb-2">Henüz aktivite yok</p>
+        <p className="text-[12px] text-[#444]">
+          Strava bağlantısı kurulduğunda koşuların burada görünecek
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {items.map((a, i) => (
+        <motion.div
+          key={a.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: i * 0.03 }}
+          className="border border-[#222] hover:border-[#333] p-4 md:p-5 transition-colors group"
+        >
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <h3 className="text-white text-base font-medium">{a.title}</h3>
+              <p className="text-[12px] text-[#666] mt-1">
+                {new Date(a.startTime).toLocaleDateString("tr-TR", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
+            </div>
+            {a.source === "strava" && (
+              <span className="text-[9px] tracking-wider uppercase text-[#FC4C02] border border-[#FC4C02]/30 px-2 py-0.5">
+                STRAVA
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+            <div>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
+                MESAFE
+              </p>
+              <p className="text-white text-lg font-semibold">
+                {formatDistance(a.distanceM)}
+                <span className="text-[#666] text-xs ml-0.5">km</span>
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
+                SÜRE
+              </p>
+              <p className="text-white text-lg font-semibold">
+                {formatDuration(a.movingTimeSec)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
+                TEMPO
+              </p>
+              <p className="text-white text-lg font-semibold">
+                {a.avgPaceSecKm ? formatPace(a.avgPaceSecKm) : "—"}
+              </p>
+            </div>
+            <div className="hidden md:block">
+              <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
+                TIRMANMA
+              </p>
+              <p className="text-white text-lg font-semibold">
+                {a.elevationGainM ? `${Math.round(a.elevationGainM)}m` : "—"}
+              </p>
+            </div>
+            <div className="hidden md:block">
+              <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
+                NABIZ
+              </p>
+              <p className="text-white text-lg font-semibold">
+                {a.avgHeartrate ? `${Math.round(a.avgHeartrate)}` : "—"}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
 /* ─── OVERVIEW TAB ─── */
-function OverviewTab({ profile }: { profile: MemberProfile }) {
+function OverviewTab({
+  profile,
+  activities: activityItems,
+  syncing,
+  onSync,
+  onStravaDisconnect,
+}: {
+  profile: MemberProfile;
+  activities: ActivityItem[];
+  syncing: boolean;
+  onSync: () => void;
+  onStravaDisconnect: () => void;
+}) {
   return (
     <div className="space-y-12">
       {/* Stats Grid */}
@@ -218,23 +414,25 @@ function OverviewTab({ profile }: { profile: MemberProfile }) {
         {[
           {
             label: "KOŞU",
-            value: profile.stats.totalRuns,
-            icon: "🏃",
+            value: profile.stats.totalRuns || activityItems.length,
           },
           {
             label: "KM",
-            value: formatDistance(profile.stats.totalDistanceM),
-            icon: "📏",
+            value: formatDistance(
+              profile.stats.totalDistanceM ||
+                activityItems.reduce((s, a) => s + a.distanceM, 0),
+            ),
           },
           {
             label: "SÜRE",
-            value: formatDuration(profile.stats.totalTimeSec),
-            icon: "⏱",
+            value: formatDuration(
+              profile.stats.totalTimeSec ||
+                activityItems.reduce((s, a) => s + a.movingTimeSec, 0),
+            ),
           },
           {
             label: "ETKİNLİK",
             value: profile.stats.eventsAttended,
-            icon: "📅",
           },
         ].map((stat, i) => (
           <motion.div
@@ -252,31 +450,29 @@ function OverviewTab({ profile }: { profile: MemberProfile }) {
         ))}
       </motion.div>
 
-      {/* Strava Connect CTA */}
-      {!profile.stravaConnected && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="border border-dashed border-[#333] p-8 text-center"
-        >
-          <p className="text-[11px] tracking-[0.15em] uppercase text-[#666] mb-4">
-            STRAVA BAĞLANTISI
-          </p>
-          <p className="text-[15px] text-[#999] leading-relaxed mb-6">
-            Strava hesabını bağlayarak koşu verilerini otomatik senkronize et.
-          </p>
+      {/* Strava Connection */}
+      <StravaConnectCard
+        connected={profile.stravaConnected}
+        onDisconnect={onStravaDisconnect}
+      />
+
+      {/* Sync button (when connected) */}
+      {profile.stravaConnected && (
+        <div className="flex items-center gap-4">
           <button
-            disabled
-            className="inline-block bg-[#FC4C02]/50 text-white/70 py-3 px-8 text-sm font-bold tracking-[0.15em] uppercase cursor-not-allowed"
+            onClick={onSync}
+            disabled={syncing}
+            className="text-[11px] tracking-[0.15em] uppercase border border-[#333] px-5 py-2.5 text-[#999] hover:border-[#E6FF00]/50 hover:text-[#E6FF00] transition-colors disabled:opacity-50"
           >
-            STRAVA İLE BAĞLAN
+            {syncing ? "SENKRONİZE EDİLİYOR..." : "STRAVA SENKRONLA"}
           </button>
-          <p className="text-[11px] text-[#555] mt-3">Yakında aktif olacak</p>
-        </motion.div>
+          {syncing && (
+            <div className="w-4 h-4 border-2 border-[#E6FF00] border-t-transparent rounded-full animate-spin" />
+          )}
+        </div>
       )}
 
-      {/* Activities Section */}
+      {/* Recent Activities */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -286,16 +482,16 @@ function OverviewTab({ profile }: { profile: MemberProfile }) {
           <h2 className="text-[11px] tracking-[0.15em] uppercase text-[#666]">
             SON AKTİVİTELER
           </h2>
+          {activityItems.length > 0 && (
+            <button
+              onClick={() => {}}
+              className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-[#E6FF00] transition-colors"
+            >
+              TÜMÜNÜ GÖR
+            </button>
+          )}
         </div>
-        <div className="border border-[#222] p-12 text-center">
-          <div className="text-4xl mb-4 opacity-30">🏃</div>
-          <p className="text-[15px] text-[#666] mb-2">
-            Henüz aktivite yok
-          </p>
-          <p className="text-[12px] text-[#444]">
-            Strava bağlantısı kurulduğunda koşuların burada görünecek
-          </p>
-        </div>
+        <ActivityList activities={activityItems.slice(0, 5)} />
       </motion.div>
 
       {/* Upcoming Events */}
@@ -312,11 +508,11 @@ function OverviewTab({ profile }: { profile: MemberProfile }) {
             href="/runs"
             className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-[#E6FF00] transition-colors"
           >
-            TÜMÜNÜ GÖR →
+            TÜMÜNÜ GÖR
           </Link>
         </div>
         <div className="border border-[#222] p-12 text-center">
-          <div className="text-4xl mb-4 opacity-30">📅</div>
+          <div className="text-4xl mb-4 opacity-30">&#x1F4C5;</div>
           <p className="text-[15px] text-[#666] mb-2">
             Yaklaşan etkinlik yok
           </p>
@@ -329,11 +525,59 @@ function OverviewTab({ profile }: { profile: MemberProfile }) {
   );
 }
 
+/* ─── ACTIVITIES TAB (FULL LIST) ─── */
+function ActivitiesTab({ activities: items, syncing, onSync, stravaConnected }: {
+  activities: ActivityItem[];
+  syncing: boolean;
+  onSync: () => void;
+  stravaConnected: boolean;
+}) {
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <p className="text-[15px] text-[#666]">
+          {items.length > 0
+            ? `${items.length} aktivite`
+            : "Henüz aktivite yok"}
+        </p>
+        {stravaConnected && (
+          <button
+            onClick={onSync}
+            disabled={syncing}
+            className="text-[11px] tracking-[0.15em] uppercase border border-[#333] px-5 py-2.5 text-[#999] hover:border-[#E6FF00]/50 hover:text-[#E6FF00] transition-colors disabled:opacity-50"
+          >
+            {syncing ? "SENKRONİZE EDİLİYOR..." : "SENKRONLA"}
+          </button>
+        )}
+      </div>
+      <ActivityList activities={items} />
+    </div>
+  );
+}
+
 /* ─── MAIN DASHBOARD ─── */
 export default function DashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-[#E6FF00] border-t-transparent rounded-full animate-spin" />
+        </main>
+      }
+    >
+      <DashboardContent />
+    </Suspense>
+  );
+}
+
+function DashboardContent() {
   const [profile, setProfile] = useState<MemberProfile | null>(null);
+  const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("overview");
+  const [syncing, setSyncing] = useState(false);
+  const [stravaMsg, setStravaMsg] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   const loadProfile = useCallback(() => {
     fetch("/api/members/me")
@@ -346,9 +590,61 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const loadActivities = useCallback(() => {
+    fetch("/api/activities?limit=50")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.activities) setActivityItems(data.activities);
+      })
+      .catch(console.error);
+  }, []);
+
+  const handleSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/strava/sync", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.synced > 0) {
+        loadActivities();
+        loadProfile();
+      }
+    } catch (err) {
+      console.error("Sync error:", err);
+    } finally {
+      setSyncing(false);
+    }
+  }, [loadActivities, loadProfile]);
+
+  const handleStravaDisconnect = useCallback(() => {
+    setProfile((p) => p ? { ...p, stravaConnected: false } : p);
+    setActivityItems([]);
+  }, []);
+
   useEffect(() => {
     loadProfile();
-  }, [loadProfile]);
+    loadActivities();
+  }, [loadProfile, loadActivities]);
+
+  // Handle Strava callback URL params
+  useEffect(() => {
+    const stravaStatus = searchParams.get("strava");
+    if (stravaStatus === "connected") {
+      setStravaMsg("Strava bağlantısı kuruldu! Senkronize ediliyor...");
+      loadProfile();
+      // Auto-sync after connection
+      setTimeout(() => handleSync(), 500);
+      setTimeout(() => setStravaMsg(null), 5000);
+    } else if (stravaStatus === "denied") {
+      setStravaMsg("Strava bağlantısı reddedildi");
+      setTimeout(() => setStravaMsg(null), 4000);
+    } else if (stravaStatus === "already_linked") {
+      setStravaMsg("Bu Strava hesabı başka bir üyeye bağlı");
+      setTimeout(() => setStravaMsg(null), 4000);
+    } else if (stravaStatus === "error") {
+      setStravaMsg("Strava bağlantısında bir hata oluştu");
+      setTimeout(() => setStravaMsg(null), 4000);
+    }
+  }, [searchParams, loadProfile, handleSync]);
 
   if (loading) {
     return (
@@ -450,11 +746,24 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Strava status message */}
+            {stravaMsg && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mb-4 p-3 border border-[#FC4C02]/30 bg-[#FC4C02]/5 text-[#FC4C02] text-sm"
+              >
+                {stravaMsg}
+              </motion.div>
+            )}
+
             {/* Tabs */}
             <div className="flex gap-6 border-b border-[#1a1a1a]">
               {(
                 [
                   { key: "overview", label: "GENEL BAKIŞ" },
+                  { key: "activities", label: "AKTİVİTELER" },
                   { key: "profile", label: "PROFİL" },
                 ] as const
               ).map(({ key, label }) => (
@@ -481,24 +790,31 @@ export default function DashboardPage() {
 
           {/* Tab Content */}
           <AnimatePresence mode="wait">
-            {tab === "overview" ? (
-              <motion.div
-                key="overview"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-              >
-                <OverviewTab profile={profile} />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="profile"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-              >
+            <motion.div
+              key={tab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              {tab === "overview" && (
+                <OverviewTab
+                  profile={profile}
+                  activities={activityItems}
+                  syncing={syncing}
+                  onSync={handleSync}
+                  onStravaDisconnect={handleStravaDisconnect}
+                />
+              )}
+              {tab === "activities" && (
+                <ActivitiesTab
+                  activities={activityItems}
+                  syncing={syncing}
+                  onSync={handleSync}
+                  stravaConnected={profile.stravaConnected}
+                />
+              )}
+              {tab === "profile" && (
                 <div className="max-w-[600px]">
                   <p className="text-[15px] text-[#666] mb-8">
                     Profil bilgilerini güncelle.
@@ -508,8 +824,8 @@ export default function DashboardPage() {
                     onUpdate={setProfile}
                   />
                 </div>
-              </motion.div>
-            )}
+              )}
+            </motion.div>
           </AnimatePresence>
         </div>
       </div>
