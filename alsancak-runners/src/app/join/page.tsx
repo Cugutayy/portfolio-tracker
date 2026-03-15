@@ -100,25 +100,25 @@ export default function JoinPage() {
             className="mb-16"
           >
             <p className="label-text text-white/60 mb-4">
-              {mode === "join" ? "ÜYE OL" : "HOŞ GELDİN"}
+              {mode === "join" ? "BECOME A MEMBER" : "WELCOME BACK"}
             </p>
             <h1 className="headline-xl mb-6">
               {mode === "join" ? (
                 <>
-                  KOŞUYA<br />
-                  <span className="text-[#E6FF00]">KATIL</span>
+                  JOIN<br />
+                  <span className="text-[#E6FF00]">THE RUN</span>
                 </>
               ) : (
                 <>
-                  GİRİŞ<br />
-                  <span className="text-[#E6FF00]">YAP</span>
+                  SIGN<br />
+                  <span className="text-[#E6FF00]">IN</span>
                 </>
               )}
             </h1>
             <p className="body-text">
               {mode === "join"
-                ? "Her seviyeye açık. Katılım ücretsiz. Sadece ayakkabılarını getir."
-                : "Hesabına giriş yap ve koşmaya devam et."}
+                ? "Open to all levels. Free to join. Just bring your shoes."
+                : "Sign in to your account and keep running."}
             </p>
           </motion.div>
 
@@ -141,13 +141,13 @@ export default function JoinPage() {
               >
                 <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
               </svg>
-              STRAVA İLE GİRİŞ YAP
+              SIGN IN WITH STRAVA
             </button>
 
             <div className="flex items-center gap-4 mt-8">
               <div className="flex-1 h-px bg-[#222]" />
               <span className="text-[10px] tracking-[0.2em] text-[#555] uppercase">
-                veya email ile
+                or with email
               </span>
               <div className="flex-1 h-px bg-[#222]" />
             </div>
@@ -166,7 +166,7 @@ export default function JoinPage() {
                   : "text-[#666] border-transparent hover:text-white"
               }`}
             >
-              KAYIT OL
+              REGISTER
             </button>
             <button
               onClick={() => {
@@ -179,7 +179,7 @@ export default function JoinPage() {
                   : "text-[#666] border-transparent hover:text-white"
               }`}
             >
-              GİRİŞ YAP
+              SIGN IN
             </button>
           </div>
 
@@ -205,7 +205,7 @@ export default function JoinPage() {
                     htmlFor="join-name"
                     className="label-text block mb-3"
                   >
-                    İSİM
+                    NAME
                   </label>
                   <input
                     id="join-name"
@@ -216,7 +216,7 @@ export default function JoinPage() {
                     }
                     required
                     className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors"
-                    placeholder="Adınız"
+                    placeholder="Your name"
                   />
                 </div>
               )}
@@ -248,7 +248,7 @@ export default function JoinPage() {
                   htmlFor="join-password"
                   className="label-text block mb-3"
                 >
-                  {mode === "join" ? "ŞİFRE (MİN. 8 KARAKTER)" : "ŞİFRE"}
+                  {mode === "join" ? "PASSWORD (MIN. 8 CHARS)" : "PASSWORD"}
                 </label>
                 <input
                   id="join-password"
@@ -281,7 +281,7 @@ export default function JoinPage() {
                       setFormData({ ...formData, instagram: e.target.value })
                     }
                     className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors"
-                    placeholder="@kullaniciadi"
+                    placeholder="@yourusername"
                   />
                 </div>
               )}
@@ -293,7 +293,7 @@ export default function JoinPage() {
                     htmlFor="join-pace"
                     className="label-text block mb-3"
                   >
-                    KOŞU TEMPOSU
+                    RUNNING PACE
                   </label>
                   <select
                     id="join-pace"
@@ -303,16 +303,16 @@ export default function JoinPage() {
                     }
                     className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors cursor-pointer [&>option]:bg-black"
                   >
-                    <option value="">Temponuzu seçin</option>
+                    <option value="">Select your pace</option>
                     <option value="beginner">
-                      Başlangıç (&gt;7:00 min/km)
+                      Beginner (&gt;7:00 min/km)
                     </option>
-                    <option value="casual">Rahat (6:00-7:00 min/km)</option>
+                    <option value="casual">Casual (6:00-7:00 min/km)</option>
                     <option value="intermediate">
-                      Orta (5:00-6:00 min/km)
+                      Intermediate (5:00-6:00 min/km)
                     </option>
                     <option value="advanced">
-                      İleri (&lt;5:00 min/km)
+                      Advanced (&lt;5:00 min/km)
                     </option>
                   </select>
                 </div>
@@ -329,8 +329,8 @@ export default function JoinPage() {
                 {loading
                   ? "..."
                   : mode === "join"
-                    ? "ALSANCAK RUNNERS'A KATIL"
-                    : "GİRİŞ YAP"}
+                    ? "JOIN ALSANCAK RUNNERS"
+                    : "SIGN IN"}
               </motion.button>
             </motion.form>
           ) : (
