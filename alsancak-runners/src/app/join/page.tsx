@@ -1,13 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { signIn } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import SmoothScroll from "@/components/SmoothScroll";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  AccessDenied: "Access denied. Please try again or use a different account.",
+  Configuration: "Server configuration error. Please try again later.",
+  OAuthSignin: "Could not start sign-in flow. Please try again.",
+  OAuthCallback: "Sign-in callback error. Please try again.",
+  OAuthAccountNotLinked: "This email is already linked to another account.",
+  CredentialsSignin: "Invalid email or password.",
+  Default: "An error occurred during sign-in. Please try again.",
+};
+
 export default function JoinPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-[#E6FF00] border-t-transparent rounded-full animate-spin" />
+        </main>
+      }
+    >
+      <JoinContent />
+    </Suspense>
+  );
+}
+
+function JoinContent() {
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -19,6 +45,14 @@ export default function JoinPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState<"join" | "login">("join");
+
+  // Display Auth.js error from URL params (e.g., ?error=AccessDenied)
+  useEffect(() => {
+    const authError = searchParams.get("error");
+    if (authError) {
+      setError(AUTH_ERROR_MESSAGES[authError] || AUTH_ERROR_MESSAGES.Default);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +76,7 @@ export default function JoinPage() {
 
         if (!res.ok) {
           const data = await res.json();
-          setError(data.error || "Bir hata oluştu");
+          setError(data.error || "Something went wrong");
           setLoading(false);
           return;
         }
@@ -73,11 +107,11 @@ export default function JoinPage() {
         if (result?.ok) {
           window.location.href = "/dashboard";
         } else {
-          setError("Email veya şifre hatalı");
+          setError("Invalid email or password");
         }
       }
     } catch {
-      setError("Bir hata oluştu, lütfen tekrar deneyin");
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -138,7 +172,8 @@ export default function JoinPage() {
           >
             <button
               onClick={handleStravaSignIn}
-              className="w-full flex items-center justify-center gap-3 bg-[#FC4C02] hover:bg-[#E34402] text-white py-4 text-sm font-bold tracking-[0.1em] uppercase transition-colors duration-300"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 bg-[#FC4C02] hover:bg-[#E34402] text-white py-4 text-sm font-bold tracking-[0.1em] uppercase transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg
                 width="20"
@@ -363,10 +398,10 @@ export default function JoinPage() {
                 </svg>
               </div>
               <h2 className="headline-md mb-4">
-                HOŞ GELDİN<span className="text-[#E6FF00]">.</span>
+                WELCOME<span className="text-[#E6FF00]">.</span>
               </h2>
               <p className="body-text">
-                Hesabın oluşturuldu! Dashboard&apos;a yönlendiriliyorsun...
+                Account created! Redirecting to dashboard...
               </p>
             </motion.div>
           )}

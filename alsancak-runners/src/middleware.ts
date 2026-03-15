@@ -28,8 +28,12 @@ async function middleware(req: NextRequest) {
     return NextResponse.next();
   } catch (error) {
     console.error("Middleware auth error:", error);
-    // On auth failure, allow the request through — individual API routes
-    // handle their own auth checks, so the app degrades gracefully.
+    // On auth failure, redirect to join page — fail-closed to prevent
+    // unauthenticated access to protected routes.
+    const { pathname } = req.nextUrl;
+    if (protectedPaths.some((p) => pathname.startsWith(p))) {
+      return NextResponse.redirect(new URL("/join", req.url));
+    }
     return NextResponse.next();
   }
 }
