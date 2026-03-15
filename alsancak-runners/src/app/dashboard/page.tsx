@@ -49,8 +49,8 @@ function formatDistance(meters: number): string {
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
-  if (h === 0) return `${m}dk`;
-  return `${h}sa ${m}dk`;
+  if (h === 0) return `${m}m`;
+  return `${h}h ${m}m`;
 }
 
 function formatPace(secPerKm: number): string {
@@ -94,7 +94,7 @@ function ProfileEditor({
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch {
-      setError("Kayıt başarısız oldu");
+      setError("Save failed");
     } finally {
       setSaving(false);
     }
@@ -105,7 +105,7 @@ function ProfileEditor({
       {/* Name */}
       <div>
         <label className="block text-[11px] tracking-[0.15em] uppercase text-[#666] mb-3">
-          İSİM
+          NAME
         </label>
         <input
           type="text"
@@ -137,7 +137,7 @@ function ProfileEditor({
           type="text"
           value={form.instagram}
           onChange={(e) => setForm({ ...form, instagram: e.target.value })}
-          placeholder="@kullaniciadi"
+          placeholder="@yourusername"
           className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors"
         />
       </div>
@@ -145,30 +145,30 @@ function ProfileEditor({
       {/* Pace Group */}
       <div>
         <label className="block text-[11px] tracking-[0.15em] uppercase text-[#666] mb-3">
-          TEMPO GRUBU
+          PACE GROUP
         </label>
         <select
           value={form.paceGroup}
           onChange={(e) => setForm({ ...form, paceGroup: e.target.value })}
           className="w-full bg-transparent border-b border-[#333] focus:border-[#E6FF00] text-white py-3 text-lg outline-none transition-colors cursor-pointer [&>option]:bg-[#0A0A0A]"
         >
-          <option value="">Seçilmedi</option>
-          <option value="beginner">Başlangıç (&gt;7:00 min/km)</option>
-          <option value="casual">Rahat (6:00-7:00 min/km)</option>
-          <option value="intermediate">Orta (5:00-6:00 min/km)</option>
-          <option value="advanced">İleri (&lt;5:00 min/km)</option>
+          <option value="">Not selected</option>
+          <option value="beginner">Beginner (&gt;7:00 min/km)</option>
+          <option value="casual">Casual (6:00-7:00 min/km)</option>
+          <option value="intermediate">Intermediate (5:00-6:00 min/km)</option>
+          <option value="advanced">Advanced (&lt;5:00 min/km)</option>
         </select>
       </div>
 
       {/* Bio */}
       <div>
         <label className="block text-[11px] tracking-[0.15em] uppercase text-[#666] mb-3">
-          HAKKINDA
+          ABOUT
         </label>
         <textarea
           value={form.bio}
           onChange={(e) => setForm({ ...form, bio: e.target.value })}
-          placeholder="Kendin hakkında birkaç kelime..."
+          placeholder="A few words about yourself..."
           rows={3}
           className="w-full bg-transparent border border-[#333] focus:border-[#E6FF00] text-white p-4 text-base outline-none transition-colors resize-none"
         />
@@ -177,7 +177,7 @@ function ProfileEditor({
       {/* Privacy */}
       <div>
         <label className="block text-[11px] tracking-[0.15em] uppercase text-[#666] mb-3">
-          GİZLİLİK
+          PRIVACY
         </label>
         <div className="flex gap-3">
           {(["private", "members", "public"] as const).map((opt) => (
@@ -191,10 +191,10 @@ function ProfileEditor({
               }`}
             >
               {opt === "private"
-                ? "Gizli"
+                ? "Private"
                 : opt === "members"
-                  ? "Üyeler"
-                  : "Herkese Açık"}
+                  ? "Members"
+                  : "Public"}
             </button>
           ))}
         </div>
@@ -207,7 +207,7 @@ function ProfileEditor({
           disabled={saving}
           className="bg-[#E6FF00] text-black py-3 px-8 text-sm font-bold tracking-[0.15em] uppercase hover:bg-white transition-colors disabled:opacity-50"
         >
-          {saving ? "KAYDEDİLİYOR..." : "KAYDET"}
+          {saving ? "SAVING..." : "SAVE"}
         </button>
         {saved && (
           <motion.span
@@ -216,7 +216,7 @@ function ProfileEditor({
             exit={{ opacity: 0 }}
             className="text-[#E6FF00] text-sm"
           >
-            ✓ Kaydedildi
+            Saved
           </motion.span>
         )}
         {error && <span className="text-red-400 text-sm">{error}</span>}
@@ -236,7 +236,7 @@ function StravaConnectCard({
   const [disconnecting, setDisconnecting] = useState(false);
 
   const handleDisconnect = async () => {
-    if (!confirm("Strava bağlantısını kaldırmak istediğinden emin misin?")) return;
+    if (!confirm("Are you sure you want to disconnect Strava?")) return;
     setDisconnecting(true);
     try {
       const res = await fetch("/api/strava/connection", { method: "DELETE" });
@@ -256,10 +256,10 @@ function StravaConnectCard({
       >
         <div>
           <p className="text-[11px] tracking-[0.15em] uppercase text-[#FC4C02] mb-1">
-            STRAVA BAĞLI
+            STRAVA CONNECTED
           </p>
           <p className="text-[13px] text-[#999]">
-            Koşuların otomatik senkronize ediliyor
+            Your runs are syncing automatically
           </p>
         </div>
         <button
@@ -267,7 +267,7 @@ function StravaConnectCard({
           disabled={disconnecting}
           className="text-[11px] tracking-[0.15em] uppercase text-[#666] border border-[#333] px-4 py-2 hover:border-red-500/50 hover:text-red-400 transition-colors disabled:opacity-50"
         >
-          {disconnecting ? "..." : "BAĞLANTIYI KES"}
+          {disconnecting ? "..." : "DISCONNECT"}
         </button>
       </motion.div>
     );
@@ -281,16 +281,16 @@ function StravaConnectCard({
       className="border border-dashed border-[#333] p-8 text-center"
     >
       <p className="text-[11px] tracking-[0.15em] uppercase text-[#666] mb-4">
-        STRAVA BAĞLANTISI
+        STRAVA CONNECTION
       </p>
       <p className="text-[15px] text-[#999] leading-relaxed mb-6">
-        Strava hesabını bağlayarak koşu verilerini otomatik senkronize et.
+        Connect your Strava account to automatically sync your runs.
       </p>
       <a
         href="/api/strava/authorize"
         className="inline-block bg-[#FC4C02] text-white py-3 px-8 text-sm font-bold tracking-[0.15em] uppercase hover:bg-[#e04500] transition-colors"
       >
-        STRAVA İLE BAĞLAN
+        CONNECT WITH STRAVA
       </a>
     </motion.div>
   );
@@ -302,9 +302,9 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
     return (
       <div className="border border-[#222] p-12 text-center">
         <div className="text-4xl mb-4 opacity-30">&#x1F3C3;</div>
-        <p className="text-[15px] text-[#666] mb-2">Henüz aktivite yok</p>
+        <p className="text-[15px] text-[#666] mb-2">No activities yet</p>
         <p className="text-[12px] text-[#444]">
-          Strava bağlantısı kurulduğunda koşuların burada görünecek
+          Your runs will appear here once Strava is connected
         </p>
       </div>
     );
@@ -324,7 +324,7 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
             <div>
               <h3 className="text-white text-base font-medium group-hover:text-[#E6FF00] transition-colors">{a.title}</h3>
               <p className="text-[12px] text-[#666] mt-1">
-                {new Date(a.startTime).toLocaleDateString("tr-TR", {
+                {new Date(a.startTime).toLocaleDateString("en-US", {
                   day: "numeric",
                   month: "long",
                   year: "numeric",
@@ -342,7 +342,7 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
           <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
             <div>
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
-                MESAFE
+                DISTANCE
               </p>
               <p className="text-white text-lg font-semibold">
                 {formatDistance(a.distanceM)}
@@ -351,7 +351,7 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
             </div>
             <div>
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
-                SÜRE
+                TIME
               </p>
               <p className="text-white text-lg font-semibold">
                 {formatDuration(a.movingTimeSec)}
@@ -359,26 +359,26 @@ function ActivityList({ activities: items }: { activities: ActivityItem[] }) {
             </div>
             <div>
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
-                TEMPO
+                PACE
               </p>
               <p className="text-white text-lg font-semibold">
-                {a.avgPaceSecKm ? formatPace(a.avgPaceSecKm) : "—"}
+                {a.avgPaceSecKm ? formatPace(a.avgPaceSecKm) : "\u2014"}
               </p>
             </div>
             <div className="hidden md:block">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
-                TIRMANMA
+                ELEVATION
               </p>
               <p className="text-white text-lg font-semibold">
-                {a.elevationGainM ? `${Math.round(a.elevationGainM)}m` : "—"}
+                {a.elevationGainM ? `${Math.round(a.elevationGainM)}m` : "\u2014"}
               </p>
             </div>
             <div className="hidden md:block">
               <p className="text-[10px] tracking-[0.15em] uppercase text-[#555]">
-                NABIZ
+                HEART RATE
               </p>
               <p className="text-white text-lg font-semibold">
-                {a.avgHeartrate ? `${Math.round(a.avgHeartrate)}` : "—"}
+                {a.avgHeartrate ? `${Math.round(a.avgHeartrate)}` : "\u2014"}
               </p>
             </div>
           </div>
@@ -402,11 +402,11 @@ interface UpcomingEventItem {
 }
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
-  group_run: "GRUP",
+  group_run: "GROUP",
   tempo_run: "TEMPO",
-  long_run: "UZUN",
-  race: "YARIŞ",
-  social: "SOSYAL",
+  long_run: "LONG",
+  race: "RACE",
+  social: "SOCIAL",
 };
 
 /* ─── OVERVIEW TAB ─── */
@@ -416,6 +416,7 @@ function OverviewTab({
   syncing,
   onSync,
   onStravaDisconnect,
+  onViewAllActivities,
   upcomingEvents,
 }: {
   profile: MemberProfile;
@@ -423,6 +424,7 @@ function OverviewTab({
   syncing: boolean;
   onSync: () => void;
   onStravaDisconnect: () => void;
+  onViewAllActivities: () => void;
   upcomingEvents: UpcomingEventItem[];
 }) {
   return (
@@ -436,7 +438,7 @@ function OverviewTab({
       >
         {[
           {
-            label: "KOŞU",
+            label: "RUNS",
             value: profile.stats.totalRuns || activityItems.length,
           },
           {
@@ -447,14 +449,14 @@ function OverviewTab({
             ),
           },
           {
-            label: "SÜRE",
+            label: "TIME",
             value: formatDuration(
               profile.stats.totalTimeSec ||
                 activityItems.reduce((s, a) => s + a.movingTimeSec, 0),
             ),
           },
           {
-            label: "ETKİNLİK",
+            label: "EVENTS",
             value: profile.stats.eventsAttended,
           },
         ].map((stat, i) => (
@@ -487,7 +489,7 @@ function OverviewTab({
             disabled={syncing}
             className="text-[11px] tracking-[0.15em] uppercase border border-[#333] px-5 py-2.5 text-[#999] hover:border-[#E6FF00]/50 hover:text-[#E6FF00] transition-colors disabled:opacity-50"
           >
-            {syncing ? "SENKRONİZE EDİLİYOR..." : "STRAVA SENKRONLA"}
+            {syncing ? "SYNCING..." : "SYNC STRAVA"}
           </button>
           {syncing && (
             <div className="w-4 h-4 border-2 border-[#E6FF00] border-t-transparent rounded-full animate-spin" />
@@ -503,14 +505,14 @@ function OverviewTab({
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[11px] tracking-[0.15em] uppercase text-[#666]">
-            SON AKTİVİTELER
+            RECENT ACTIVITIES
           </h2>
-          {activityItems.length > 0 && (
+          {activityItems.length > 5 && (
             <button
-              onClick={() => {}}
+              onClick={onViewAllActivities}
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-[#E6FF00] transition-colors"
             >
-              TÜMÜNÜ GÖR
+              VIEW ALL
             </button>
           )}
         </div>
@@ -525,39 +527,35 @@ function OverviewTab({
       >
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-[11px] tracking-[0.15em] uppercase text-[#666]">
-            YAKLAŞAN ETKİNLİKLER
+            UPCOMING EVENTS
           </h2>
           <Link
-            href="/etkinlikler"
+            href="/events"
             className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-[#E6FF00] transition-colors"
           >
-            TÜMÜNÜ GÖR
+            VIEW ALL
           </Link>
         </div>
         {upcomingEvents.length === 0 ? (
           <div className="border border-[#222] p-12 text-center">
             <div className="text-4xl mb-4 opacity-30">&#x1F4C5;</div>
             <p className="text-[15px] text-[#666] mb-2">
-              Yaklaşan etkinlik yok
+              No upcoming events
             </p>
             <p className="text-[12px] text-[#444]">
-              Yeni koşu etkinlikleri eklendiğinde burada görünecek
+              New running events will appear here when scheduled
             </p>
           </div>
         ) : (
           <div className="space-y-2">
             {upcomingEvents.slice(0, 3).map((ev, i) => {
               const date = new Date(ev.date);
-              const dateStr = date.toLocaleDateString("tr-TR", {
-                day: "numeric",
-                month: "short",
-              });
-              const timeStr = date.toLocaleTimeString("tr-TR", {
+              const timeStr = date.toLocaleTimeString("en-US", {
                 hour: "2-digit",
                 minute: "2-digit",
               });
               return (
-                <Link key={ev.id} href={`/etkinlikler/${ev.slug}`}>
+                <Link key={ev.id} href={`/events/${ev.slug}`}>
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -571,7 +569,7 @@ function OverviewTab({
                             {date.getDate()}
                           </p>
                           <p className="text-[9px] tracking-wider uppercase text-[#666]">
-                            {date.toLocaleDateString("tr-TR", { month: "short" }).toUpperCase()}
+                            {date.toLocaleDateString("en-US", { month: "short" }).toUpperCase()}
                           </p>
                         </div>
                         <div>
@@ -616,8 +614,8 @@ function ActivitiesTab({ activities: items, syncing, onSync, stravaConnected }: 
       <div className="flex items-center justify-between">
         <p className="text-[15px] text-[#666]">
           {items.length > 0
-            ? `${items.length} aktivite`
-            : "Henüz aktivite yok"}
+            ? `${items.length} activities`
+            : "No activities yet"}
         </p>
         {stravaConnected && (
           <button
@@ -625,7 +623,7 @@ function ActivitiesTab({ activities: items, syncing, onSync, stravaConnected }: 
             disabled={syncing}
             className="text-[11px] tracking-[0.15em] uppercase border border-[#333] px-5 py-2.5 text-[#999] hover:border-[#E6FF00]/50 hover:text-[#E6FF00] transition-colors disabled:opacity-50"
           >
-            {syncing ? "SENKRONİZE EDİLİYOR..." : "SENKRONLA"}
+            {syncing ? "SYNCING..." : "SYNC"}
           </button>
         )}
       </div>
@@ -687,19 +685,19 @@ function DashboardContent() {
       const data = await res.json();
       if (res.ok) {
         if (data.synced > 0) {
-          setStravaMsg(`${data.synced} yeni aktivite senkronize edildi!`);
+          setStravaMsg(`${data.synced} new activities synced!`);
           loadActivities();
           loadProfile();
         } else {
-          setStravaMsg("Tüm aktiviteler güncel — yeni aktivite bulunamadı");
+          setStravaMsg("All activities are up to date");
         }
       } else {
-        setStravaMsg(`Senkronizasyon hatası: ${data.error || "Bilinmeyen hata"}`);
+        setStravaMsg(`Sync error: ${data.error || "Unknown error"}`);
       }
       setTimeout(() => setStravaMsg(null), 5000);
     } catch (err) {
       console.error("Sync error:", err);
-      setStravaMsg("Strava bağlantısında bir hata oluştu. Tekrar deneyin.");
+      setStravaMsg("Strava connection error. Please try again.");
       setTimeout(() => setStravaMsg(null), 5000);
     } finally {
       setSyncing(false);
@@ -730,19 +728,19 @@ function DashboardContent() {
   useEffect(() => {
     const stravaStatus = searchParams.get("strava");
     if (stravaStatus === "connected") {
-      setStravaMsg("Strava bağlantısı kuruldu! Senkronize ediliyor...");
+      setStravaMsg("Strava connected! Syncing activities...");
       loadProfile();
       // Auto-sync after connection
       setTimeout(() => handleSync(), 500);
       setTimeout(() => setStravaMsg(null), 5000);
     } else if (stravaStatus === "denied") {
-      setStravaMsg("Strava bağlantısı reddedildi");
+      setStravaMsg("Strava connection was denied");
       setTimeout(() => setStravaMsg(null), 4000);
     } else if (stravaStatus === "already_linked") {
-      setStravaMsg("Bu Strava hesabı başka bir üyeye bağlı");
+      setStravaMsg("This Strava account is linked to another member");
       setTimeout(() => setStravaMsg(null), 4000);
     } else if (stravaStatus === "error") {
-      setStravaMsg("Strava bağlantısında bir hata oluştu");
+      setStravaMsg("An error occurred with Strava connection");
       setTimeout(() => setStravaMsg(null), 4000);
     }
   }, [searchParams, loadProfile, handleSync]);
@@ -760,13 +758,13 @@ function DashboardContent() {
       <main className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-6">
         <div className="text-center">
           <p className="text-[15px] text-[#666] mb-6">
-            Profil yüklenemedi.
+            Could not load profile.
           </p>
           <Link
             href="/join"
             className="text-[11px] tracking-[0.15em] uppercase text-[#E6FF00] border border-[#E6FF00] px-6 py-3 hover:bg-[#E6FF00] hover:text-black transition-colors"
           >
-            GİRİŞ YAP
+            SIGN IN
           </Link>
         </div>
       </main>
@@ -774,10 +772,10 @@ function DashboardContent() {
   }
 
   const paceLabels: Record<string, string> = {
-    beginner: "Başlangıç",
-    casual: "Rahat",
-    intermediate: "Orta",
-    advanced: "İleri",
+    beginner: "Beginner",
+    casual: "Casual",
+    intermediate: "Intermediate",
+    advanced: "Advanced",
   };
 
   return (
@@ -796,25 +794,25 @@ function DashboardContent() {
               href="/"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              ANA SAYFA
+              HOME
             </Link>
             <Link
-              href="/etkinlikler"
+              href="/events"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              ETKİNLİKLER
+              EVENTS
             </Link>
             <Link
-              href="/topluluk"
+              href="/community"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
-              TOPLULUK
+              COMMUNITY
             </Link>
             <button
               onClick={() => signOut({ callbackUrl: "/" })}
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] border border-[#333] px-4 py-2 hover:border-red-500/50 hover:text-red-400 transition-colors"
             >
-              ÇIKIŞ
+              SIGN OUT
             </button>
           </div>
         </div>
@@ -836,7 +834,7 @@ function DashboardContent() {
                   className="text-4xl md:text-5xl font-bold text-white leading-tight mb-3"
                   style={{ fontFamily: "var(--font-heading, inherit)" }}
                 >
-                  HOŞ GELDİN
+                  WELCOME
                   <span className="text-[#E6FF00]">.</span>
                 </h1>
                 <div className="flex items-center gap-3">
@@ -869,9 +867,9 @@ function DashboardContent() {
             <div className="flex gap-6 border-b border-[#1a1a1a]">
               {(
                 [
-                  { key: "overview", label: "GENEL BAKIŞ" },
-                  { key: "activities", label: "AKTİVİTELER" },
-                  { key: "profile", label: "PROFİL" },
+                  { key: "overview", label: "OVERVIEW" },
+                  { key: "activities", label: "ACTIVITIES" },
+                  { key: "profile", label: "PROFILE" },
                 ] as const
               ).map(({ key, label }) => (
                 <button
@@ -911,6 +909,7 @@ function DashboardContent() {
                   syncing={syncing}
                   onSync={handleSync}
                   onStravaDisconnect={handleStravaDisconnect}
+                  onViewAllActivities={() => setTab("activities")}
                   upcomingEvents={upcomingEvents}
                 />
               )}
@@ -925,7 +924,7 @@ function DashboardContent() {
               {tab === "profile" && (
                 <div className="max-w-[600px]">
                   <p className="text-[15px] text-[#666] mb-8">
-                    Profil bilgilerini güncelle.
+                    Update your profile information.
                   </p>
                   <ProfileEditor
                     profile={profile}
