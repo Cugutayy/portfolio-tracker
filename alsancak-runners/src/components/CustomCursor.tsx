@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function CustomCursor() {
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
   const [isTouch, setIsTouch] = useState(true); // SSR-safe: always true initially
+  const pathname = usePathname();
+
+  // Skip custom cursor on dashboard — it's an app shell
+  const isDashboard = pathname.startsWith("/dashboard");
 
   // Detect touch device after hydration
   useEffect(() => {
@@ -101,7 +106,7 @@ export default function CustomCursor() {
     };
   }, [isTouch]);
 
-  if (isTouch) return null;
+  if (isTouch || isDashboard) return null;
 
   return (
     <>
