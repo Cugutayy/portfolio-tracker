@@ -530,7 +530,7 @@ function OverviewTab({
             UPCOMING EVENTS
           </h2>
           <Link
-            href="/events"
+            href="/etkinlikler"
             className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-[#E6FF00] transition-colors"
           >
             VIEW ALL
@@ -555,7 +555,7 @@ function OverviewTab({
                 minute: "2-digit",
               });
               return (
-                <Link key={ev.id} href={`/events/${ev.slug}`}>
+                <Link key={ev.id} href={`/etkinlikler/${ev.slug}`}>
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -797,13 +797,13 @@ function DashboardContent() {
               HOME
             </Link>
             <Link
-              href="/events"
+              href="/etkinlikler"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
               EVENTS
             </Link>
             <Link
-              href="/community"
+              href="/topluluk"
               className="text-[11px] tracking-[0.15em] uppercase text-[#666] hover:text-white transition-colors hidden md:block"
             >
               COMMUNITY
