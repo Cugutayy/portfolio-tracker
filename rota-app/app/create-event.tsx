@@ -11,10 +11,20 @@ import {
   ActivityIndicator,
   Platform,
 } from "react-native";
+import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
+
+const MONTHS = ["Oca", "Sub", "Mar", "Nis", "May", "Haz", "Tem", "Agu", "Eyl", "Eki", "Kas", "Ara"];
+
+function formatDateTR(d: Date) {
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+function formatTimeTR(d: Date) {
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
 
 export default function CreateEventScreen() {
   const [title, setTitle] = useState("");
@@ -22,39 +32,38 @@ export default function CreateEventScreen() {
   const [meetingPoint, setMeetingPoint] = useState("");
   const [distanceKm, setDistanceKm] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
-  const [dateStr, setDateStr] = useState("");
-  const [timeStr, setTimeStr] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Date/time state — default to tomorrow at 07:30
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(7, 30, 0, 0);
+
+  const [eventDate, setEventDate] = useState(tomorrow);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
+  const onDateChange = (_event: DateTimePickerEvent, selected?: Date) => {
+    if (Platform.OS === "android") setShowDatePicker(false);
+    if (selected) {
+      const updated = new Date(eventDate);
+      updated.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
+      setEventDate(updated);
+    }
+  };
+
+  const onTimeChange = (_event: DateTimePickerEvent, selected?: Date) => {
+    if (Platform.OS === "android") setShowTimePicker(false);
+    if (selected) {
+      const updated = new Date(eventDate);
+      updated.setHours(selected.getHours(), selected.getMinutes());
+      setEventDate(updated);
+    }
+  };
 
   const handleCreate = async () => {
     if (!title.trim()) {
       Alert.alert("Hata", "Etkinlik adi gerekli");
-      return;
-    }
-    if (!dateStr.trim() || !timeStr.trim()) {
-      Alert.alert("Hata", "Tarih ve saat gerekli (orn: 25.03.2026 ve 07:30)");
-      return;
-    }
-
-    // Parse date from DD.MM.YYYY format
-    const dateParts = dateStr.trim().split(/[./\-]/);
-    if (dateParts.length !== 3) {
-      Alert.alert("Hata", "Tarih formati: GG.AA.YYYY (orn: 25.03.2026)");
-      return;
-    }
-    const [day, month, year] = dateParts.map(Number);
-
-    // Parse time from HH:MM format
-    const timeParts = timeStr.trim().split(":");
-    if (timeParts.length !== 2) {
-      Alert.alert("Hata", "Saat formati: SS:DD (orn: 07:30)");
-      return;
-    }
-    const [hour, minute] = timeParts.map(Number);
-
-    const eventDate = new Date(year, month - 1, day, hour, minute);
-    if (isNaN(eventDate.getTime())) {
-      Alert.alert("Hata", "Gecersiz tarih veya saat");
       return;
     }
     if (eventDate < new Date()) {
@@ -118,31 +127,54 @@ export default function CreateEventScreen() {
           />
         </View>
 
+        {/* Date & Time Pickers */}
         <View style={s.row}>
           <View style={[s.field, { flex: 1 }]}>
             <Text style={s.label}>TARIH *</Text>
-            <TextInput
-              style={s.input}
-              value={dateStr}
-              onChangeText={setDateStr}
-              placeholder="25.03.2026"
-              placeholderTextColor={brand.textDim}
-              keyboardType="numbers-and-punctuation"
-            />
+            <TouchableOpacity
+              style={s.pickerBtn}
+              onPress={() => { setShowTimePicker(false); setShowDatePicker(true); }}
+            >
+              <Ionicons name="calendar-outline" size={16} color={brand.accent} />
+              <Text style={s.pickerText}>{formatDateTR(eventDate)}</Text>
+            </TouchableOpacity>
           </View>
           <View style={{ width: 12 }} />
           <View style={[s.field, { flex: 1 }]}>
             <Text style={s.label}>SAAT *</Text>
-            <TextInput
-              style={s.input}
-              value={timeStr}
-              onChangeText={setTimeStr}
-              placeholder="07:30"
-              placeholderTextColor={brand.textDim}
-              keyboardType="numbers-and-punctuation"
-            />
+            <TouchableOpacity
+              style={s.pickerBtn}
+              onPress={() => { setShowDatePicker(false); setShowTimePicker(true); }}
+            >
+              <Ionicons name="time-outline" size={16} color={brand.accent} />
+              <Text style={s.pickerText}>{formatTimeTR(eventDate)}</Text>
+            </TouchableOpacity>
           </View>
         </View>
+
+        {showDatePicker && (
+          <DateTimePicker
+            value={eventDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={onDateChange}
+            minimumDate={new Date()}
+            locale="tr"
+            themeVariant="dark"
+          />
+        )}
+
+        {showTimePicker && (
+          <DateTimePicker
+            value={eventDate}
+            mode="time"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={onTimeChange}
+            minuteInterval={5}
+            locale="tr"
+            themeVariant="dark"
+          />
+        )}
 
         <View style={s.field}>
           <Text style={s.label}>BULUSMA NOKTASI</Text>
@@ -150,7 +182,7 @@ export default function CreateEventScreen() {
             style={s.input}
             value={meetingPoint}
             onChangeText={setMeetingPoint}
-            placeholder="orn: Alsancak Kordon, Starbucks onü"
+            placeholder="orn: Alsancak Kordon, Starbucks onu"
             placeholderTextColor={brand.textDim}
           />
         </View>
@@ -226,6 +258,18 @@ const s = StyleSheet.create({
   },
   textArea: { minHeight: 80, textAlignVertical: "top" },
   row: { flexDirection: "row" },
+  pickerBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: brand.surface,
+    borderWidth: 1,
+    borderColor: brand.border,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  pickerText: { fontSize: 14, color: brand.text, fontWeight: "600" },
   createBtn: {
     backgroundColor: brand.accent,
     paddingVertical: 16,

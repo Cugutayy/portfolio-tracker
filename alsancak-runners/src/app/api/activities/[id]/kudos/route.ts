@@ -3,6 +3,7 @@ import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { kudos, members, activities } from "@/db/schema";
 import { eq, and, count } from "drizzle-orm";
+import { cacheInvalidate } from "@/lib/cache";
 
 // GET /api/activities/:id/kudos - list kudos for activity
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -69,11 +70,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Remove kudos
     await db.delete(kudos).where(eq(kudos.id, existing.id));
     const [{ value: newCount }] = await db.select({ value: count() }).from(kudos).where(eq(kudos.activityId, activityId));
+    await cacheInvalidate("community:activities:*", true);
     return NextResponse.json({ action: "removed", count: newCount, hasKudosed: false });
   } else {
     // Add kudos
     await db.insert(kudos).values({ activityId, memberId: user.id });
     const [{ value: newCount }] = await db.select({ value: count() }).from(kudos).where(eq(kudos.activityId, activityId));
+    await cacheInvalidate("community:activities:*", true);
     return NextResponse.json({ action: "added", count: newCount, hasKudosed: true });
   }
 }

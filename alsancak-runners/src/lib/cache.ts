@@ -76,7 +76,7 @@ export const CACHE_KEYS = {
 export const CACHE_TTL = {
   communityStats: 300, // 5 minutes
   leaderboard: 300, // 5 minutes
-  communityActivities: 120, // 2 minutes
+  communityActivities: 30, // 30 seconds — social interactions need fresher data
   stravaToken: (expiresAt: number) =>
     Math.max(0, expiresAt - Math.floor(Date.now() / 1000) - 300), // expiry - 5 min buffer
 } as const;
