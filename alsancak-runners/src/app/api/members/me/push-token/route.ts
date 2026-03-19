@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { members } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 // POST /api/members/me/push-token — register push notification token
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };  // compatibility shim
 
   const body = await request.json();
   const { token, platform } = body;
@@ -34,11 +35,12 @@ export async function POST(request: NextRequest) {
 }
 
 // DELETE /api/members/me/push-token — unregister push token
-export async function DELETE() {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function DELETE(request: NextRequest) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };  // compatibility shim
 
   await db
     .update(members)

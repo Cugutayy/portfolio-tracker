@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { events, eventRsvps, members } from "@/db/schema";
 import { eq, gte, asc, desc, sql, and } from "drizzle-orm";
@@ -44,10 +44,11 @@ export async function GET(request: NextRequest) {
 
 // POST /api/events — create event (admin/captain only)
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };  // compatibility shim
 
   // Check role
   const [member] = await db

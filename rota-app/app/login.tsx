@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
-import { setToken } from "@/lib/auth";
+import { setToken, setUser } from "@/lib/auth";
 
 const API_BASE = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 
@@ -29,22 +29,26 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/auth/callback/credentials`, {
+      const res = await fetch(`${API_BASE}/api/auth/mobile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, redirect: false, csrfToken: "" }),
+        body: JSON.stringify({ email: email.trim(), password }),
       });
 
-      const cookies = res.headers.get("set-cookie") || "";
-      const tokenMatch = cookies.match(/(?:authjs\.session-token|__Secure-authjs\.session-token)=([^;]+)/);
+      const data = await res.json();
 
-      if (tokenMatch?.[1]) {
-        await setToken(tokenMatch[1]);
-        router.replace("/(tabs)");
-      } else {
-        Alert.alert("Hata", "Email veya sifre hatali");
+      if (!res.ok) {
+        Alert.alert("Hata", data.error || "Giris yapilamadi");
+        return;
       }
-    } catch (err) {
+
+      // Store token + user data
+      await setToken(data.token);
+      if (data.user) {
+        await setUser(data.user);
+      }
+      router.replace("/(tabs)");
+    } catch {
       Alert.alert("Hata", "Baglanti saglanamadi. Lutfen tekrar deneyin.");
     } finally {
       setLoading(false);
