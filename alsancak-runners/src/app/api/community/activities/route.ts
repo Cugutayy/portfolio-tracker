@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { activities, members } from "@/db/schema";
+import { activities, members, kudos, comments } from "@/db/schema";
 import { sql, eq, and, gte, lte } from "drizzle-orm";
 import { cacheGet, cacheSet, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
+import { getRequestUser } from "@/lib/mobile-auth";
 
 // GET /api/community/activities — community activities for Runs Explorer map
 export async function GET(request: NextRequest) {
@@ -34,8 +35,15 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Cache key from params
-  const cacheHash = `${boundsParam || "all"}:${period}:${type}:${runner || ""}:${limit}:${offset}`;
+  // Optional auth for hasKudosed
+  let currentUserId: string | null = null;
+  try {
+    const user = await getRequestUser(request);
+    if (user) currentUserId = user.id;
+  } catch {}
+
+  // Cache key from params (include user for hasKudosed)
+  const cacheHash = `${boundsParam || "all"}:${period}:${type}:${runner || ""}:${limit}:${offset}:${currentUserId || "anon"}`;
   const cacheKey = CACHE_KEYS.communityActivities(cacheHash);
   const cached = await cacheGet<Record<string, unknown>>(cacheKey);
   if (cached) {
@@ -99,7 +107,7 @@ export async function GET(request: NextRequest) {
     conditions.push(eq(activities.memberId, runner));
   }
 
-  // Query with member join
+  // Query with member join + social counts
   const rows = await db
     .select({
       id: activities.id,
@@ -114,6 +122,11 @@ export async function GET(request: NextRequest) {
       polylineEncoded: activities.polylineEncoded,
       startLat: activities.startLat,
       startLng: activities.startLng,
+      kudosCount: sql<number>`(SELECT COUNT(*)::int FROM ${kudos} WHERE ${kudos.activityId} = ${activities.id})`,
+      commentCount: sql<number>`(SELECT COUNT(*)::int FROM ${comments} WHERE ${comments.activityId} = ${activities.id})`,
+      hasKudosed: currentUserId
+        ? sql<boolean>`EXISTS(SELECT 1 FROM ${kudos} WHERE ${kudos.activityId} = ${activities.id} AND ${kudos.memberId} = ${currentUserId})`
+        : sql<boolean>`false`,
     })
     .from(activities)
     .innerJoin(members, eq(activities.memberId, members.id))

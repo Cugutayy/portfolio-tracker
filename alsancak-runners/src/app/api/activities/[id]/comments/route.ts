@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { comments, members } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 // GET /api/activities/:id/comments
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -55,4 +55,36 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .limit(1);
 
   return NextResponse.json({ comment: { ...comment, memberName: member?.name } }, { status: 201 });
+}
+
+// DELETE /api/activities/:id/comments
+export async function DELETE(request: NextRequest) {
+  const user = await getRequestUser(request);
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await request.json();
+  const { commentId } = body;
+
+  if (!commentId) {
+    return NextResponse.json({ error: "commentId is required" }, { status: 400 });
+  }
+
+  // Verify comment exists and belongs to the current user
+  const [existing] = await db
+    .select({ id: comments.id, memberId: comments.memberId })
+    .from(comments)
+    .where(eq(comments.id, commentId))
+    .limit(1);
+
+  if (!existing) {
+    return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+  }
+
+  if (existing.memberId !== user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  await db.delete(comments).where(eq(comments.id, commentId));
+
+  return NextResponse.json({ success: true });
 }

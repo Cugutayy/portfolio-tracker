@@ -414,7 +414,14 @@ export default function TrackScreen() {
             <TouchableOpacity style={s.pauseButton} onPress={pauseRun} activeOpacity={0.8}>
               <Text style={s.pauseButtonText}>DURAKLAT</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.stopButton} onPress={stopRun} activeOpacity={0.8}>
+            <TouchableOpacity style={s.stopButton} onPress={() => Alert.alert(
+              "Kosuyu Bitir",
+              "Kosuyu bitirmek istediginize emin misiniz?",
+              [
+                { text: "Devam Et", style: "cancel" },
+                { text: "Bitir", style: "destructive", onPress: stopRun },
+              ]
+            )} activeOpacity={0.8}>
               <Text style={s.stopButtonText}>BITIR</Text>
             </TouchableOpacity>
           </View>
@@ -447,9 +454,14 @@ export default function TrackScreen() {
             <TouchableOpacity style={s.resumeButton} onPress={resumeRun} activeOpacity={0.8}>
               <Text style={s.resumeButtonText}>DEVAM ET</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={s.stopButton} onPress={stopRun} activeOpacity={0.8}>
-              <Text style={s.stopButtonText}>BITIR</Text>
-            </TouchableOpacity>
+            <TouchableOpacity style={s.stopButton} onPress={() => Alert.alert(
+              "Kosuyu Bitir",
+              "Kosuyu bitirmek istediginize emin misiniz?",
+              [
+                { text: "Devam Et", style: "cancel" },
+                { text: "Bitir", style: "destructive", onPress: stopRun },
+              ]
+            )} activeOpacity={0.8}>
           </View>
         </View>
       )}

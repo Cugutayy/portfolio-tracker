@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
 
@@ -49,9 +50,11 @@ export default function EventsScreen() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchEvents();
+    }, [fetchEvents])
+  );
 
   const handleRsvp = async (slug: string) => {
     setRsvpLoading(slug);
