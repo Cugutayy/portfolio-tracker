@@ -3,10 +3,14 @@
 import dynamic from "next/dynamic";
 import { useRunsExplorer } from "@/components/runs-explorer/useRunsExplorer";
 import RunsExplorerSidebar from "@/components/runs-explorer/RunsExplorerSidebar";
-import RunsExplorerBottomSheet from "@/components/runs-explorer/RunsExplorerBottomSheet";
 
 const RunsExplorerMap = dynamic(
   () => import("@/components/runs-explorer/RunsExplorerMap"),
+  { ssr: false }
+);
+
+const RunsExplorerBottomSheet = dynamic(
+  () => import("@/components/runs-explorer/RunsExplorerBottomSheet"),
   { ssr: false }
 );
 
