@@ -178,9 +178,8 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Mobile auth error:", error);
-    const msg = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "Bir hata olustu, tekrar deneyin", detail: msg },
+      { error: "Bir hata olustu, tekrar deneyin" },
       { status: 500 },
     );
   }
