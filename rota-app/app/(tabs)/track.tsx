@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   Alert,
   Vibration,
+  BackHandler,
 } from "react-native";
 import * as Location from "expo-location";
 import polyline from "@mapbox/polyline";
@@ -15,7 +16,7 @@ import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
 import { formatDuration, formatDistance, formatPace } from "@/lib/format";
 
-type TrackState = "idle" | "running" | "finished";
+type TrackState = "idle" | "running" | "paused" | "finished";
 
 interface Coordinate {
   latitude: number;
@@ -42,8 +43,31 @@ export default function TrackScreen() {
   const locationSub = useRef<Location.LocationSubscription | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<Date | null>(null);
+  // Rolling pace: keep last 5 distance samples for smoothing
+  const recentPaces = useRef<number[]>([]);
 
-  // Timer — runs only during "running" state, auto-cleans on state change
+  // Prevent accidental back during active run
+  useEffect(() => {
+    if (state !== "running" && state !== "paused") return;
+    const handler = BackHandler.addEventListener("hardwareBackPress", () => {
+      Alert.alert(
+        "Kosu Devam Ediyor",
+        "Geri donersen kosu verisi kaybolur. Devam etmek istiyor musun?",
+        [
+          { text: "Devam Et", style: "cancel" },
+          {
+            text: "Kosuyu Bitir",
+            style: "destructive",
+            onPress: stopRun,
+          },
+        ],
+      );
+      return true; // prevent default back
+    });
+    return () => handler.remove();
+  }, [state]);
+
+  // Timer — runs only during "running" state
   useEffect(() => {
     if (state !== "running") return;
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
@@ -65,7 +89,6 @@ export default function TrackScreen() {
     // Request background permission for tracking while phone is in pocket
     const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
     if (bgStatus !== "granted") {
-      // Not critical — foreground still works, just warn
       Alert.alert(
         "Arka Plan Konum",
         "Arka plan konum izni verilmedi. Telefon kilitlenirse takip durabilir.",
@@ -76,6 +99,7 @@ export default function TrackScreen() {
     setCoords([]);
     setDistanceM(0);
     setSeconds(0);
+    recentPaces.current = [];
     startTimeRef.current = new Date();
     setState("running");
     Vibration.vibrate(100);
@@ -91,7 +115,6 @@ export default function TrackScreen() {
         const timestamp = location.timestamp;
 
         setCoords((prev) => {
-          // Calculate distance from previous point
           if (prev.length > 0) {
             const last = prev[prev.length - 1];
             const d = haversineDistance(last.latitude, last.longitude, latitude, longitude);
@@ -100,11 +123,58 @@ export default function TrackScreen() {
               return prev; // discard noisy point
             }
             setDistanceM((prevD) => prevD + d);
+
+            // Track pace samples for smoothing
+            const timeDiff = (timestamp - last.timestamp) / 1000;
+            if (d > 0 && timeDiff > 0) {
+              const paceSecKm = (timeDiff / d) * 1000;
+              recentPaces.current = [...recentPaces.current.slice(-4), paceSecKm];
+            }
           }
 
           return [...prev, { latitude, longitude, timestamp }];
         });
-      }
+      },
+    );
+  }, []);
+
+  const pauseRun = useCallback(() => {
+    locationSub.current?.remove();
+    locationSub.current = null;
+    setState("paused");
+    Vibration.vibrate(50);
+  }, []);
+
+  const resumeRun = useCallback(async () => {
+    setState("running");
+    Vibration.vibrate(50);
+
+    locationSub.current = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.BestForNavigation,
+        timeInterval: 3000,
+        distanceInterval: 5,
+      },
+      (location) => {
+        const { latitude, longitude } = location.coords;
+        const timestamp = location.timestamp;
+
+        setCoords((prev) => {
+          if (prev.length > 0) {
+            const last = prev[prev.length - 1];
+            const d = haversineDistance(last.latitude, last.longitude, latitude, longitude);
+            if (d < 3 || d > 100) return prev;
+            setDistanceM((prevD) => prevD + d);
+
+            const timeDiff = (timestamp - last.timestamp) / 1000;
+            if (d > 0 && timeDiff > 0) {
+              const paceSecKm = (timeDiff / d) * 1000;
+              recentPaces.current = [...recentPaces.current.slice(-4), paceSecKm];
+            }
+          }
+          return [...prev, { latitude, longitude, timestamp }];
+        });
+      },
     );
   }, []);
 
@@ -140,15 +210,19 @@ export default function TrackScreen() {
       });
 
       Alert.alert("Kaydedildi!", `${formatDistance(distanceM)} km kosu kaydedildi.`, [
-        { text: "Tamam", onPress: () => {
-          setState("idle");
-          setSeconds(0);
-          setDistanceM(0);
-          setCoords([]);
-          router.push("/(tabs)");
-        }},
+        {
+          text: "Tamam",
+          onPress: () => {
+            setState("idle");
+            setSeconds(0);
+            setDistanceM(0);
+            setCoords([]);
+            recentPaces.current = [];
+            router.push("/(tabs)");
+          },
+        },
       ]);
-    } catch (err) {
+    } catch {
       Alert.alert("Hata", "Kosu kaydedilemedi. Tekrar dene.");
     } finally {
       setSaving(false);
@@ -158,16 +232,27 @@ export default function TrackScreen() {
   const discardRun = useCallback(() => {
     Alert.alert("Iptal et?", "Bu kosu kaydedilmeyecek.", [
       { text: "Vazgec", style: "cancel" },
-      { text: "Iptal et", style: "destructive", onPress: () => {
-        setState("idle");
-        setSeconds(0);
-        setDistanceM(0);
-        setCoords([]);
-      }},
+      {
+        text: "Iptal et",
+        style: "destructive",
+        onPress: () => {
+          setState("idle");
+          setSeconds(0);
+          setDistanceM(0);
+          setCoords([]);
+          recentPaces.current = [];
+        },
+      },
     ]);
   }, []);
 
-  const currentPace = seconds > 0 && distanceM > 0 ? seconds / (distanceM / 1000) : 0;
+  // Smoothed pace (rolling average of last 5 samples)
+  const smoothedPace =
+    recentPaces.current.length > 0
+      ? recentPaces.current.reduce((a, b) => a + b, 0) / recentPaces.current.length
+      : seconds > 0 && distanceM > 0
+        ? seconds / (distanceM / 1000)
+        : 0;
 
   return (
     <SafeAreaView style={s.container}>
@@ -196,16 +281,51 @@ export default function TrackScreen() {
               <Text style={s.gridLabel}>SURE</Text>
             </View>
             <View style={s.gridItem}>
-              <Text style={s.gridValue}>{formatPace(currentPace)}</Text>
+              <Text style={s.gridValue}>{formatPace(smoothedPace)}</Text>
               <Text style={s.gridLabel}>TEMPO</Text>
             </View>
           </View>
 
           <Text style={s.coordCount}>{coords.length} GPS noktasi</Text>
 
-          <TouchableOpacity style={s.stopButton} onPress={stopRun} activeOpacity={0.8}>
-            <Text style={s.stopButtonText}>BITIR</Text>
-          </TouchableOpacity>
+          <View style={s.runButtons}>
+            <TouchableOpacity style={s.pauseButton} onPress={pauseRun} activeOpacity={0.8}>
+              <Text style={s.pauseButtonText}>DURAKLAT</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.stopButton} onPress={stopRun} activeOpacity={0.8}>
+              <Text style={s.stopButtonText}>BITIR</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* State: PAUSED */}
+      {state === "paused" && (
+        <View style={s.runningContainer}>
+          <View style={s.mainStat}>
+            <Text style={[s.mainValue, { opacity: 0.5 }]}>{formatDistance(distanceM)}</Text>
+            <Text style={s.mainLabel}>KM — DURAKLATILDI</Text>
+          </View>
+
+          <View style={s.statsGrid}>
+            <View style={s.gridItem}>
+              <Text style={s.gridValue}>{formatDuration(seconds)}</Text>
+              <Text style={s.gridLabel}>SURE</Text>
+            </View>
+            <View style={s.gridItem}>
+              <Text style={s.gridValue}>{formatPace(smoothedPace)}</Text>
+              <Text style={s.gridLabel}>TEMPO</Text>
+            </View>
+          </View>
+
+          <View style={s.runButtons}>
+            <TouchableOpacity style={s.resumeButton} onPress={resumeRun} activeOpacity={0.8}>
+              <Text style={s.resumeButtonText}>DEVAM ET</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.stopButton} onPress={stopRun} activeOpacity={0.8}>
+              <Text style={s.stopButtonText}>BITIR</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -224,13 +344,18 @@ export default function TrackScreen() {
               <Text style={s.summaryLabel}>SURE</Text>
             </View>
             <View style={s.summaryItem}>
-              <Text style={s.summaryValue}>{formatPace(currentPace)}</Text>
+              <Text style={s.summaryValue}>{formatPace(smoothedPace)}</Text>
               <Text style={s.summaryLabel}>TEMPO</Text>
             </View>
           </View>
 
-          <TouchableOpacity style={s.saveButton} onPress={saveRun} disabled={saving} activeOpacity={0.8}>
-            <Text style={s.saveButtonText}>{saving ? "KAYDEDILİYOR..." : "KAYDET"}</Text>
+          <TouchableOpacity
+            style={[s.saveButton, saving && s.saveButtonDisabled]}
+            onPress={saveRun}
+            disabled={saving}
+            activeOpacity={0.8}
+          >
+            <Text style={s.saveButtonText}>{saving ? "KAYDEDILIYOR..." : "KAYDET"}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={s.discardButton} onPress={discardRun} activeOpacity={0.8}>
@@ -252,7 +377,7 @@ const s = StyleSheet.create({
   startButton: { width: 180, height: 180, borderRadius: 90, backgroundColor: brand.accent, justifyContent: "center", alignItems: "center", shadowColor: brand.accent, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 20 },
   startButtonText: { fontSize: 28, fontWeight: "bold", color: brand.bg, letterSpacing: 6 },
 
-  // RUNNING
+  // RUNNING + PAUSED
   runningContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
   mainStat: { alignItems: "center", marginBottom: 32 },
   mainValue: { fontSize: 72, fontWeight: "bold", color: brand.accent, letterSpacing: 2 },
@@ -262,8 +387,13 @@ const s = StyleSheet.create({
   gridValue: { fontSize: 28, fontWeight: "600", color: brand.text },
   gridLabel: { fontSize: 10, color: brand.textDim, letterSpacing: 3, marginTop: 4 },
   coordCount: { fontSize: 11, color: brand.textDim, marginBottom: 32 },
-  stopButton: { width: 120, height: 120, borderRadius: 60, backgroundColor: "#FF3B30", justifyContent: "center", alignItems: "center" },
-  stopButtonText: { fontSize: 20, fontWeight: "bold", color: "#fff", letterSpacing: 4 },
+  runButtons: { flexDirection: "row", gap: 20, alignItems: "center" },
+  pauseButton: { width: 100, height: 100, borderRadius: 50, borderWidth: 2, borderColor: brand.accent, justifyContent: "center", alignItems: "center" },
+  pauseButtonText: { fontSize: 12, fontWeight: "bold", color: brand.accent, letterSpacing: 2 },
+  resumeButton: { width: 100, height: 100, borderRadius: 50, backgroundColor: brand.accent, justifyContent: "center", alignItems: "center" },
+  resumeButtonText: { fontSize: 12, fontWeight: "bold", color: brand.bg, letterSpacing: 2 },
+  stopButton: { width: 100, height: 100, borderRadius: 50, backgroundColor: "#FF3B30", justifyContent: "center", alignItems: "center" },
+  stopButtonText: { fontSize: 14, fontWeight: "bold", color: "#fff", letterSpacing: 4 },
 
   // FINISHED
   finishedContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
@@ -273,6 +403,7 @@ const s = StyleSheet.create({
   summaryValue: { fontSize: 24, fontWeight: "bold", color: brand.text },
   summaryLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 3, marginTop: 4 },
   saveButton: { backgroundColor: brand.accent, paddingVertical: 16, paddingHorizontal: 48, borderRadius: 4, marginBottom: 16 },
+  saveButtonDisabled: { opacity: 0.5 },
   saveButtonText: { fontSize: 14, fontWeight: "700", color: brand.bg, letterSpacing: 2 },
   discardButton: { paddingVertical: 12 },
   discardButtonText: { fontSize: 12, color: brand.textDim, letterSpacing: 2 },

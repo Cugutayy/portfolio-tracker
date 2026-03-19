@@ -9,7 +9,7 @@ export default function StravaCallbackScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       router.replace("/(tabs)/profile");
-    }, 2000);
+    }, 4000);
     return () => clearTimeout(timer);
   }, []);
 

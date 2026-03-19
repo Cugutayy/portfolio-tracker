@@ -33,6 +33,7 @@ export default function MapScreen() {
   const [period, setPeriod] = useState<Period>("month");
   const [loading, setLoading] = useState(true);
   const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState(false);
   const [activityCount, setActivityCount] = useState(0);
 
   const pendingData = useRef<{
@@ -137,23 +138,34 @@ export default function MapScreen() {
 
       {/* Map WebView */}
       <View style={s.mapWrapper}>
-        <WebView
-          ref={webviewRef}
-          source={MAP_HTML}
-          style={s.webview}
-          onMessage={onMessage}
-          injectedJavaScriptBeforeContentLoaded={`window.__MAPBOX_TOKEN__="${MAPBOX_TOKEN}";true;`}
-          onLoadEnd={() => { if (!mapReady) sendToMap("setToken", MAPBOX_TOKEN); }}
-          javaScriptEnabled
-          domStorageEnabled
-          scrollEnabled={false}
-          bounces={false}
-          overScrollMode="never"
-          showsHorizontalScrollIndicator={false}
-          showsVerticalScrollIndicator={false}
-          originWhitelist={["*"]}
-          mixedContentMode="always"
-        />
+        {mapError ? (
+          <View style={s.mapError}>
+            <Text style={s.mapErrorText}>Harita yuklenemedi</Text>
+            <TouchableOpacity onPress={() => setMapError(false)} style={s.retryBtn}>
+              <Text style={s.retryText}>TEKRAR DENE</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <WebView
+            ref={webviewRef}
+            source={MAP_HTML}
+            style={s.webview}
+            onMessage={onMessage}
+            onError={() => setMapError(true)}
+            onHttpError={() => setMapError(true)}
+            injectedJavaScriptBeforeContentLoaded={`window.__MAPBOX_TOKEN__="${MAPBOX_TOKEN}";true;`}
+            onLoadEnd={() => { if (!mapReady) sendToMap("setToken", MAPBOX_TOKEN); }}
+            javaScriptEnabled
+            domStorageEnabled
+            scrollEnabled={false}
+            bounces={false}
+            overScrollMode="never"
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            originWhitelist={["*"]}
+            mixedContentMode="always"
+          />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -218,5 +230,29 @@ const s = StyleSheet.create({
   webview: {
     flex: 1,
     backgroundColor: brand.bg,
+  },
+  mapError: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: brand.surface,
+  },
+  mapErrorText: {
+    fontSize: 14,
+    color: brand.textMuted,
+    marginBottom: 12,
+  },
+  retryBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: brand.accent,
+    borderRadius: 4,
+  },
+  retryText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: brand.accent,
+    letterSpacing: 1,
   },
 });

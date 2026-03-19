@@ -32,7 +32,7 @@ export default function LoginScreen() {
       const res = await fetch(`${API_BASE}/api/auth/mobile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
 
       const data = await res.json();
