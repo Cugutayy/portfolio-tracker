@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/mobile-auth";
+import { checkRateLimit } from "@/lib/rateLimit";
 import { db } from "@/lib/db";
 import { events, eventRsvps, members } from "@/db/schema";
 import { eq, gte, asc, desc, sql, and } from "drizzle-orm";
@@ -48,6 +49,8 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const rateLimited = await checkRateLimit(`event:${user.id}`, { maxRequests: 10, windowSec: 60 });
+  if (rateLimited) return rateLimited;
   const session = { user: { id: user.id } };  // compatibility shim
 
   // Check role

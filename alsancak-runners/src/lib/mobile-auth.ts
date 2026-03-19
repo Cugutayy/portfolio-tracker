@@ -1,9 +1,10 @@
 import { SignJWT, jwtVerify } from "jose";
 import { NextRequest } from "next/server";
 
-const secret = new TextEncoder().encode(
-  process.env.AUTH_SECRET || "fallback-secret-change-me",
-);
+if (!process.env.AUTH_SECRET) {
+  throw new Error("AUTH_SECRET environment variable is required");
+}
+const secret = new TextEncoder().encode(process.env.AUTH_SECRET);
 
 const ISSUER = "alsancak-runners";
 const AUDIENCE = "rota-app";
