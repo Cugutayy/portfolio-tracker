@@ -51,6 +51,13 @@ function AuthGatedNavigation() {
       <Stack.Screen name="register" options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="strava-callback" options={{ animation: "fade" }} />
       <Stack.Screen
+        name="import-activity"
+        options={{
+          animation: "slide_from_bottom",
+          presentation: "modal",
+        }}
+      />
+      <Stack.Screen
         name="activity/[id]"
         options={{
           headerShown: true,
