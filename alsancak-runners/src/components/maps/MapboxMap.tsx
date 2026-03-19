@@ -10,6 +10,7 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
 const DARK_STYLE: mapboxgl.StyleSpecification = {
   version: 8,
   name: "Alsancak Dark",
+  glyphs: "mapbox://fonts/mapbox/{fontstack}/{range}.pbf",
   sources: {
     "mapbox-streets": {
       type: "vector",
