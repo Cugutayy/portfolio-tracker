@@ -6,6 +6,20 @@ import { db } from "@/lib/db";
 import { stravaConnections, oauthStates, members } from "@/db/schema";
 import { eq, and, lt } from "drizzle-orm";
 
+/** Redirect to web dashboard or mobile deep link based on OAuth state */
+function redirectResult(
+  request: NextRequest,
+  isMobile: boolean,
+  status: string,
+) {
+  if (isMobile) {
+    return NextResponse.redirect(`rota://strava-callback?status=${status}`);
+  }
+  return NextResponse.redirect(
+    new URL(`/dashboard?strava=${status}`, request.url),
+  );
+}
+
 export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -17,34 +31,25 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get("state");
   const error = searchParams.get("error");
 
+  // Parse state = "userId:nonce" or "userId:nonce:mobile"
+  const stateParts = state?.split(":") ?? [];
+  const isMobile = stateParts[2] === "mobile";
+
   // User denied access
   if (error) {
-    return NextResponse.redirect(
-      new URL("/dashboard?strava=denied", request.url),
-    );
+    return redirectResult(request, isMobile, "denied");
   }
 
-  if (!code || !state) {
-    return NextResponse.redirect(
-      new URL("/dashboard?strava=error", request.url),
-    );
+  if (!code || !state || stateParts.length < 2) {
+    return redirectResult(request, isMobile, "error");
   }
 
-  // Parse state = "userId:nonce"
-  const colonIdx = state.indexOf(":");
-  if (colonIdx === -1) {
-    return NextResponse.redirect(
-      new URL("/dashboard?strava=error", request.url),
-    );
-  }
-  const stateUserId = state.slice(0, colonIdx);
-  const stateNonce = state.slice(colonIdx + 1);
+  const stateUserId = stateParts[0];
+  const stateNonce = stateParts[1];
 
   // Verify user ID matches session
   if (stateUserId !== session.user.id) {
-    return NextResponse.redirect(
-      new URL("/dashboard?strava=error", request.url),
-    );
+    return redirectResult(request, isMobile, "error");
   }
 
   // Verify nonce exists in DB and hasn't expired
@@ -60,19 +65,16 @@ export async function GET(request: NextRequest) {
     .limit(1);
 
   if (!storedState || storedState.expiresAt < new Date()) {
-    // Clean up expired state if it exists
     if (storedState) {
       await db.delete(oauthStates).where(eq(oauthStates.id, storedState.id));
     }
-    return NextResponse.redirect(
-      new URL("/dashboard?strava=error", request.url),
-    );
+    return redirectResult(request, isMobile, "error");
   }
 
   // Delete the used nonce (one-time use)
   await db.delete(oauthStates).where(eq(oauthStates.id, storedState.id));
 
-  // Clean up any expired states for this user (housekeeping)
+  // Clean up expired states
   await db
     .delete(oauthStates)
     .where(
@@ -83,10 +85,7 @@ export async function GET(request: NextRequest) {
     );
 
   try {
-    // Exchange code for tokens
     const tokenData = await exchangeCode(code);
-
-    // Encrypt tokens
     const encrypted = encryptTokenPair(
       tokenData.access_token,
       tokenData.refresh_token,
@@ -103,18 +102,16 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (existing && existing.memberId !== session.user.id) {
-      // Check if the existing connection belongs to a placeholder account
-      // (created by Auth.js Strava sign-in flow). If so, reassign it.
       const [existingMember] = await db
         .select({ email: members.email })
         .from(members)
         .where(eq(members.id, existing.memberId))
         .limit(1);
 
-      const isPlaceholder = existingMember?.email?.endsWith("@placeholder.local");
+      const isPlaceholder =
+        existingMember?.email?.endsWith("@placeholder.local");
 
       if (isPlaceholder) {
-        // Reassign the connection to the current user
         await db
           .update(stravaConnections)
           .set({
@@ -125,21 +122,14 @@ export async function GET(request: NextRequest) {
           })
           .where(eq(stravaConnections.id, existing.id));
 
-        // Delete the orphaned placeholder member
         await db.delete(members).where(eq(members.id, existing.memberId));
-
-        return NextResponse.redirect(
-          new URL("/dashboard?strava=connected", request.url),
-        );
+        return redirectResult(request, isMobile, "connected");
       }
 
-      return NextResponse.redirect(
-        new URL("/dashboard?strava=already_linked", request.url),
-      );
+      return redirectResult(request, isMobile, "already_linked");
     }
 
     if (existing && existing.memberId === session.user.id) {
-      // Update existing connection (re-auth)
       await db
         .update(stravaConnections)
         .set({
@@ -149,7 +139,6 @@ export async function GET(request: NextRequest) {
         })
         .where(eq(stravaConnections.id, existing.id));
     } else {
-      // Create new connection
       await db.insert(stravaConnections).values({
         memberId: session.user.id,
         stravaAthleteId: tokenData.athlete.id,
@@ -159,13 +148,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.redirect(
-      new URL("/dashboard?strava=connected", request.url),
-    );
+    return redirectResult(request, isMobile, "connected");
   } catch (err) {
     console.error("Strava callback error:", err);
-    return NextResponse.redirect(
-      new URL("/dashboard?strava=error", request.url),
-    );
+    return redirectResult(request, isMobile, "error");
   }
 }
