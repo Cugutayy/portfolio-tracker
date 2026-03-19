@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activities } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
+import { getRequestUser } from "@/lib/mobile-auth";
 
 export async function GET(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };
 
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
@@ -48,10 +49,11 @@ export async function GET(request: NextRequest) {
 
 // POST /api/activities — manual activity creation (for GPS tracking / non-Strava users)
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };
 
   const rateLimited = await checkRateLimit(
     `create-activity:${session.user.id}`,

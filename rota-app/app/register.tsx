@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
+import { setToken, setUser } from "@/lib/auth";
 
 const API_BASE = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 
@@ -33,20 +34,26 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/members/join`, {
+      // Unified endpoint: name present = register + auto-login
+      const res = await fetch(`${API_BASE}/api/auth/mobile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
       });
 
-      if (res.ok) {
-        Alert.alert("Basarili", "Hesabin olusturuldu! Giris yapabilirsin.", [
-          { text: "Tamam", onPress: () => router.replace("/login") },
-        ]);
-      } else {
-        const data = await res.json().catch(() => ({}));
+      const data = await res.json();
+
+      if (!res.ok) {
         Alert.alert("Hata", data.error || "Kayit basarisiz");
+        return;
       }
+
+      // Auto-login: token comes back immediately
+      await setToken(data.token);
+      if (data.user) {
+        await setUser(data.user);
+      }
+      router.replace("/(tabs)");
     } catch {
       Alert.alert("Hata", "Baglanti saglanamadi");
     } finally {

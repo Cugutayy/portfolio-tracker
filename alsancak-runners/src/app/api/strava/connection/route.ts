@@ -1,16 +1,17 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { stravaConnections } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { decryptAccessToken, decryptRefreshToken } from "@/lib/crypto";
 import { revokeAccess, refreshAccessToken } from "@/lib/strava";
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function GET(request: NextRequest) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };  // compatibility shim
 
   const [conn] = await db
     .select({
@@ -37,11 +38,12 @@ export async function GET() {
   });
 }
 
-export async function DELETE() {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function DELETE(request: NextRequest) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };  // compatibility shim
 
   const [conn] = await db
     .select()

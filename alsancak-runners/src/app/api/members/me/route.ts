@@ -1,14 +1,15 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { members, stravaConnections, communityStats } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { getRequestUser } from "@/lib/mobile-auth";
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function GET(request: NextRequest) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };
 
   const [member] = await db
     .select()
@@ -68,11 +69,12 @@ export async function GET() {
   });
 }
 
-export async function PATCH(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function PATCH(request: NextRequest) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };
 
   try {
     const body = await request.json();

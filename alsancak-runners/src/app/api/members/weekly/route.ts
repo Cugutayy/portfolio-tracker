@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { activities } from "@/db/schema";
 import { eq, and, gte, lt, sql, desc } from "drizzle-orm";
@@ -9,11 +9,12 @@ import { eq, and, gte, lt, sql, desc } from "drizzle-orm";
  * Returns the current member's weekly running summary.
  * Computed live from activities (no pre-aggregation needed for MVP).
  */
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function GET(request: NextRequest) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };  // compatibility shim
 
   const memberId = session.user.id;
 
