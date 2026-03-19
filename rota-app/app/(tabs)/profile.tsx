@@ -33,21 +33,22 @@ export default function ProfileScreen() {
       const cached = await getUser();
       if (cached) setUser(cached);
 
-      const data = await API.getProfile();
-      const profile = data as unknown as {
-        id: string;
-        name: string;
-        email: string;
-        totalRuns?: number;
-        totalDistanceKm?: number;
-        avgPaceSecKm?: number;
+      const profile = await API.getProfile() as {
+        member?: { id: string; name: string; email: string };
+        id?: string; name?: string; email?: string;
         stravaConnected?: boolean;
+        stats?: { totalRuns?: number; totalDistanceM?: number; avgPaceSecKm?: number };
       };
-      setUser({ id: profile.id, name: profile.name, email: profile.email });
+      // Backend wraps in { member } or returns flat — handle both
+      const m = profile.member || profile;
+      if (m.id && m.name && m.email) {
+        setUser({ id: m.id, name: m.name, email: m.email });
+      }
+      const s = profile.stats;
       setStats({
-        totalRuns: profile.totalRuns || 0,
-        totalDistanceKm: profile.totalDistanceKm || 0,
-        avgPaceSecKm: profile.avgPaceSecKm || 0,
+        totalRuns: s?.totalRuns || 0,
+        totalDistanceKm: s?.totalDistanceM ? s.totalDistanceM / 1000 : 0,
+        avgPaceSecKm: s?.avgPaceSecKm || 0,
         stravaConnected: profile.stravaConnected || false,
       });
     } catch {
