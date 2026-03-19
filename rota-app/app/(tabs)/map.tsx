@@ -143,7 +143,7 @@ export default function MapScreen() {
           style={s.webview}
           onMessage={onMessage}
           injectedJavaScriptBeforeContentLoaded={`window.__MAPBOX_TOKEN__="${MAPBOX_TOKEN}";true;`}
-          onLoadEnd={() => sendToMap("setToken", MAPBOX_TOKEN)}
+          onLoadEnd={() => { if (!mapReady) sendToMap("setToken", MAPBOX_TOKEN); }}
           javaScriptEnabled
           domStorageEnabled
           scrollEnabled={false}

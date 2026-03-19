@@ -24,8 +24,9 @@ export async function isHealthKitAvailable(): Promise<boolean> {
       HK!.HKQuantityTypeIdentifier.distanceWalkingRunning,
     ]);
     return status !== undefined;
-  } catch {
-    // Native module not available (Expo Go)
+  } catch (e) {
+    // Native module not available — expected in Expo Go, only works in EAS dev builds
+    console.log("[HealthKit] Unavailable:", e instanceof Error ? e.message : "native module missing");
     return false;
   }
 }
