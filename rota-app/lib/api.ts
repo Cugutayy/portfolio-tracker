@@ -147,12 +147,12 @@ export class ApiError extends Error {
 // ── Typed API methods ──
 
 export const API = {
-  // Auth
+  // Auth (mobile endpoint — login/register/refresh all use /api/auth/mobile)
   login: (email: string, password: string) =>
-    api<{ token: string }>("/api/auth/callback/credentials", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    }),
+    api<{ accessToken: string; refreshToken: string; user: { id: string; name: string; email: string } }>(
+      "/api/auth/mobile",
+      { method: "POST", body: JSON.stringify({ email, password }), skipAuth: true }
+    ),
 
   // Profile
   getProfile: () => api<{ member: Member }>("/api/members/me"),
@@ -302,6 +302,15 @@ export interface CreateActivityInput {
   endLat?: number;
   endLng?: number;
   elevationGainM?: number;
+  elapsedTimeSec?: number;
+  splits?: Array<{
+    splitIndex: number;
+    distanceM: number;
+    movingTimeSec: number;
+    avgPaceSecKm: number;
+    elevationDiffM: number | null;
+    avgHeartrate: number | null;
+  }>;
 }
 
 export interface CommunityActivity {
