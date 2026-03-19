@@ -28,9 +28,9 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Privacy check: only owner can see private activities
+  // Privacy check: owner always sees; others can see if shared or non-private
   const isOwner = activity.memberId === session.user.id;
-  if (!isOwner && activity.privacy === "private") {
+  if (!isOwner && activity.privacy === "private" && !activity.sharedToBoard) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
