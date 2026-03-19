@@ -25,8 +25,12 @@ export const routing = defineRouting({
     '/routes/[slug]': '/routes/[slug]',
     '/gallery': '/gallery',
     '/collaborations': '/collaborations',
-    '/runs': '/runs',
+    '/runs': {
+      tr: '/kosular',
+      en: '/runs'
+    },
     '/join': '/join',
+    '/invite/[code]': '/invite/[code]',
     '/dashboard': '/dashboard',
     '/dashboard/activity/[id]': '/dashboard/activity/[id]'
   }

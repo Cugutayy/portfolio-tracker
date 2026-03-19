@@ -29,6 +29,7 @@ export async function rateLimit(
   config: RateLimitConfig
 ): Promise<RateLimitResult> {
   // If Redis is not configured, fail open (allow all requests)
+  // Rate limiting requires Redis — without it, we rely on other security layers
   if (!redis) {
     return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
   }
@@ -100,4 +101,5 @@ export const RATE_LIMITS = {
   authRegister: { maxRequests: 3, windowSec: 60 } as RateLimitConfig, // 3 per minute
   stravaWebhook: { maxRequests: 100, windowSec: 60 } as RateLimitConfig, // 100 per minute
   eventRsvp: { maxRequests: 10, windowSec: 60 } as RateLimitConfig, // 10 per minute
+  communityActivities: { maxRequests: 30, windowSec: 60 } as RateLimitConfig, // 30 per minute
 } as const;

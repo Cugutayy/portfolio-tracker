@@ -1,17 +1,30 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { members, stravaConnections, communityStats } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { members, stravaConnections, communityStats, follows } from "@/db/schema";
+import { eq, and, count } from "drizzle-orm";
+import { getRequestUser } from "@/lib/mobile-auth";
+import { checkRateLimit } from "@/lib/rateLimit";
 
-export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function GET(request: NextRequest) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };
 
   const [member] = await db
-    .select()
+    .select({
+      id: members.id,
+      name: members.name,
+      email: members.email,
+      role: members.role,
+      bio: members.bio,
+      image: members.image,
+      instagram: members.instagram,
+      paceGroup: members.paceGroup,
+      privacy: members.privacy,
+      createdAt: members.createdAt,
+    })
     .from(members)
     .where(eq(members.id, session.user.id))
     .limit(1);
@@ -26,6 +39,17 @@ export async function GET() {
     .from(stravaConnections)
     .where(eq(stravaConnections.memberId, member.id))
     .limit(1);
+
+  // Get follower/following counts
+  const [{ value: followerCount }] = await db
+    .select({ value: count() })
+    .from(follows)
+    .where(eq(follows.followingId, member.id));
+
+  const [{ value: followingCount }] = await db
+    .select({ value: count() })
+    .from(follows)
+    .where(eq(follows.followerId, member.id));
 
   // Get all-time stats
   const [stats] = await db
@@ -49,6 +73,8 @@ export async function GET() {
     role: member.role,
     privacy: member.privacy,
     image: member.image,
+    followerCount,
+    followingCount,
     stravaConnected: !!strava,
     stats: stats
       ? {
@@ -68,11 +94,14 @@ export async function GET() {
   });
 }
 
-export async function PATCH(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function PATCH(request: NextRequest) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const rateLimited = await checkRateLimit(`profile:${user.id}`, { maxRequests: 10, windowSec: 60 });
+  if (rateLimited) return rateLimited;
+  const session = { user: { id: user.id } };
 
   try {
     const body = await request.json();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { events, eventRsvps } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -10,10 +10,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };  // compatibility shim
 
   // Rate limit: 10 RSVPs per minute per user
   const rateLimited = await checkRateLimit(
@@ -39,8 +40,13 @@ export async function POST(
     return NextResponse.json({ error: "Event is not accepting RSVPs" }, { status: 400 });
   }
 
-  const body = await request.json();
-  const { paceGroup } = body;
+  let paceGroup: string | undefined;
+  try {
+    const body = await request.json();
+    paceGroup = body.paceGroup;
+  } catch {
+    // Body is optional — RSVP without pace group is fine
+  }
 
   // Check existing RSVP
   const [existing] = await db
