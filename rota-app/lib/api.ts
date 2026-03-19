@@ -303,6 +303,7 @@ export interface CreateActivityInput {
   endLng?: number;
   elevationGainM?: number;
   elapsedTimeSec?: number;
+  photoBase64?: string;
   splits?: Array<{
     splitIndex: number;
     distanceM: number;
@@ -330,6 +331,7 @@ export interface CommunityActivity {
   kudosCount?: number;
   hasKudosed?: boolean;
   commentCount?: number;
+  photoUrl?: string | null;
 }
 
 export interface LeaderboardEntry {
