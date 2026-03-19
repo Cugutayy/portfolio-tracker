@@ -30,6 +30,7 @@ export const routing = defineRouting({
       en: '/runs'
     },
     '/join': '/join',
+    '/invite/[code]': '/invite/[code]',
     '/dashboard': '/dashboard',
     '/dashboard/activity/[id]': '/dashboard/activity/[id]'
   }
