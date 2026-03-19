@@ -3,6 +3,7 @@ import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { activities, activitySplits } from "@/db/schema";
 import { eq, and, asc } from "drizzle-orm";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function GET(
   request: NextRequest,
@@ -45,6 +46,8 @@ export async function PATCH(
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const rateLimited = await checkRateLimit(`activity:${user.id}`, { maxRequests: 30, windowSec: 60 });
+  if (rateLimited) return rateLimited;
   const session = { user: { id: user.id } };  // compatibility shim
 
   const { id } = await params;
@@ -88,6 +91,8 @@ export async function DELETE(
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const rateLimited = await checkRateLimit(`activity:${user.id}`, { maxRequests: 10, windowSec: 60 });
+  if (rateLimited) return rateLimited;
   const session = { user: { id: user.id } };  // compatibility shim
 
   const { id } = await params;

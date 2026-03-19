@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/mobile-auth";
+import { checkRateLimit } from "@/lib/rateLimit";
 import { db } from "@/lib/db";
 import { stravaConnections } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -43,6 +44,8 @@ export async function DELETE(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const rateLimited = await checkRateLimit(`strava:${user.id}`, { maxRequests: 5, windowSec: 60 });
+  if (rateLimited) return rateLimited;
   const session = { user: { id: user.id } };  // compatibility shim
 
   const [conn] = await db

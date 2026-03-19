@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { members, stravaConnections, communityStats } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { getRequestUser } from "@/lib/mobile-auth";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 export async function GET(request: NextRequest) {
   const user = await getRequestUser(request);
@@ -12,7 +13,18 @@ export async function GET(request: NextRequest) {
   const session = { user: { id: user.id } };
 
   const [member] = await db
-    .select()
+    .select({
+      id: members.id,
+      name: members.name,
+      email: members.email,
+      role: members.role,
+      bio: members.bio,
+      image: members.image,
+      instagram: members.instagram,
+      paceGroup: members.paceGroup,
+      privacy: members.privacy,
+      createdAt: members.createdAt,
+    })
     .from(members)
     .where(eq(members.id, session.user.id))
     .limit(1);
@@ -74,6 +86,8 @@ export async function PATCH(request: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const rateLimited = await checkRateLimit(`profile:${user.id}`, { maxRequests: 10, windowSec: 60 });
+  if (rateLimited) return rateLimited;
   const session = { user: { id: user.id } };
 
   try {
