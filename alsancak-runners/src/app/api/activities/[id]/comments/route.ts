@@ -3,6 +3,7 @@ import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { comments, members } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { cacheInvalidate } from "@/lib/cache";
 
 // GET /api/activities/:id/comments
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .where(eq(members.id, user.id))
     .limit(1);
 
+  await cacheInvalidate("community:activities:*", true);
   return NextResponse.json({ comment: { ...comment, memberName: member?.name } }, { status: 201 });
 }
 
