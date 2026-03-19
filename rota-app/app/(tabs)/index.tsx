@@ -12,6 +12,7 @@ import {
 import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
 import { API, type CommunityActivity, type LeaderboardEntry } from "@/lib/api";
+import { Ionicons } from "@expo/vector-icons";
 import { formatDistance, formatPace, formatDate } from "@/lib/format";
 
 const PAGE_SIZE = 20;
@@ -188,6 +189,14 @@ export default function FeedScreen() {
             {item.kudosCount || 0}
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={s.commentButton}
+          onPress={() => router.push(`/activity/${item.id}` as never)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="chatbubble-outline" size={16} color={brand.textDim} />
+          <Text style={s.commentCount}>{item.commentCount || 0}</Text>
+        </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
@@ -266,6 +275,8 @@ const s = StyleSheet.create({
   kudosActive: { opacity: 1 },
   kudosCount: { fontSize: 12, color: brand.textDim, fontWeight: "500" },
   kudosCountActive: { color: brand.accent },
+  commentButton: { flexDirection: "row", alignItems: "center", gap: 4, marginLeft: 16 },
+  commentCount: { fontSize: 12, color: brand.textDim, fontWeight: "500" },
   footerLoader: { paddingVertical: 20, alignItems: "center" },
   empty: { alignItems: "center", paddingVertical: 48 },
   emptyText: { fontSize: 15, color: brand.textMuted },

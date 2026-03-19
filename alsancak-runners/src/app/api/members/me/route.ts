@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { members, stravaConnections, communityStats } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { members, stravaConnections, communityStats, follows } from "@/db/schema";
+import { eq, and, count } from "drizzle-orm";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -40,6 +40,17 @@ export async function GET(request: NextRequest) {
     .where(eq(stravaConnections.memberId, member.id))
     .limit(1);
 
+  // Get follower/following counts
+  const [{ value: followerCount }] = await db
+    .select({ value: count() })
+    .from(follows)
+    .where(eq(follows.followingId, member.id));
+
+  const [{ value: followingCount }] = await db
+    .select({ value: count() })
+    .from(follows)
+    .where(eq(follows.followerId, member.id));
+
   // Get all-time stats
   const [stats] = await db
     .select()
@@ -62,6 +73,8 @@ export async function GET(request: NextRequest) {
     role: member.role,
     privacy: member.privacy,
     image: member.image,
+    followerCount,
+    followingCount,
     stravaConnected: !!strava,
     stats: stats
       ? {

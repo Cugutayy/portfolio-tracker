@@ -235,6 +235,11 @@ export const API = {
       method: "POST",
       body: JSON.stringify({ text }),
     }),
+  deleteComment: (activityId: string, commentId: string) =>
+    api(`/api/activities/${activityId}/comments`, {
+      method: "DELETE",
+      body: JSON.stringify({ commentId }),
+    }),
 
   // Member profiles
   getMemberProfile: (id: string) =>
@@ -315,6 +320,7 @@ export interface CommunityActivity {
   startLng: number | null;
   kudosCount?: number;
   hasKudosed?: boolean;
+  commentCount?: number;
 }
 
 export interface LeaderboardEntry {
