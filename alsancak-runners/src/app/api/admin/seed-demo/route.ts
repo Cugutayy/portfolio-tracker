@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
-import { members, activities, events, eventRsvps } from "@/db/schema";
+import { members, activities, events, eventRsvps, badges } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
@@ -673,6 +673,30 @@ export async function POST(request: NextRequest) {
     await db.insert(eventRsvps).values({ ...r, status: "going" }).onConflictDoNothing();
   }
 
+  // ── Seed Badges ───────────────────────────────────────
+  const badgeDefs = [
+    { slug: "first_run", name: "İlk Adım", description: "İlk koşunu tamamla", iconEmoji: "👣", category: "milestone", triggerType: "first_run", triggerValue: 1 },
+    { slug: "runs_5", name: "Düzenli Koşucu", description: "5 koşu tamamla", iconEmoji: "🏃", category: "milestone", triggerType: "runs_count", triggerValue: 5 },
+    { slug: "runs_10", name: "Kararlı Koşucu", description: "10 koşu tamamla", iconEmoji: "💪", category: "milestone", triggerType: "runs_count", triggerValue: 10 },
+    { slug: "runs_50", name: "Maraton Ruhu", description: "50 koşu tamamla", iconEmoji: "🔥", category: "milestone", triggerType: "runs_count", triggerValue: 50 },
+    { slug: "first_5k", name: "5K Kulübü", description: "Tek seferde 5km koş", iconEmoji: "⭐", category: "distance", triggerType: "single_run_distance", triggerValue: 5000 },
+    { slug: "first_10k", name: "10K Kulübü", description: "Tek seferde 10km koş", iconEmoji: "🏅", category: "distance", triggerType: "single_run_distance", triggerValue: 10000 },
+    { slug: "half_marathon", name: "Yarı Maraton", description: "Tek seferde 21.1km koş", iconEmoji: "🫡", category: "distance", triggerType: "single_run_distance", triggerValue: 21100 },
+    { slug: "marathon", name: "Maratoncu", description: "Tek seferde 42.195km koş", iconEmoji: "🌟", category: "distance", triggerType: "single_run_distance", triggerValue: 42195 },
+    { slug: "total_50k", name: "50K Toplam", description: "Toplam 50km koş", iconEmoji: "🚶", category: "total", triggerType: "total_distance", triggerValue: 50000 },
+    { slug: "total_100k", name: "100K Kulübü", description: "Toplam 100km koş", iconEmoji: "🚀", category: "total", triggerType: "total_distance", triggerValue: 100000 },
+    { slug: "total_500k", name: "500K Efsane", description: "Toplam 500km koş", iconEmoji: "👑", category: "total", triggerType: "total_distance", triggerValue: 500000 },
+    { slug: "pace_under_5", name: "Hız Şeytanı", description: "5:00/km altında tempo", iconEmoji: "⚡", category: "speed", triggerType: "pace_under", triggerValue: 300 },
+    { slug: "pace_under_430", name: "Rüzgar Gibi", description: "4:30/km altında tempo", iconEmoji: "🌪️", category: "speed", triggerType: "pace_under", triggerValue: 270 },
+    { slug: "pace_under_4", name: "Sonic", description: "4:00/km altında tempo", iconEmoji: "💨", category: "speed", triggerType: "pace_under", triggerValue: 240 },
+  ];
+
+  let badgeCount = 0;
+  for (const b of badgeDefs) {
+    await db.insert(badges).values(b).onConflictDoNothing();
+    badgeCount++;
+  }
+
   return NextResponse.json({
     success: true,
     summary: {
@@ -680,6 +704,7 @@ export async function POST(request: NextRequest) {
       activities: activityCount,
       events: demoEvents.map((e) => e.title),
       rsvps: rsvps.length,
+      badges: badgeCount,
     },
     credentials: {
       password: "demo1234",
