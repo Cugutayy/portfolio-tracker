@@ -1,25 +1,20 @@
 /**
- * Albion Arbitrage Engine
- * =======================
- * Finds profitable buy→transport→sell opportunities.
+ * Albion Arbitrage Engine — Caerleon ↔ Black Market Focus
+ * =======================================================
+ * Finds profitable Caerleon → Black Market instant-sell opportunities.
  *
- * Strategy 1 — Instant Sell (to buy orders):
- *   Buy at sell_price_min in source, instant-sell to buy_price_max in dest.
- *   No tax on instant sell. Guaranteed immediate profit.
+ * Strategy: Buy at sell_price_min in Caerleon → instant-sell at buy_price_max in BM.
+ * - No tax on instant sell to BM buy orders
+ * - Zero travel risk (BM is inside Caerleon)
+ * - Guaranteed immediate profit if both prices are current
  *
- * Strategy 2 — Sell Order (list in dest market):
- *   Buy at sell_price_min in source, list sell order at dest sell_price_min.
- *   Tax applies (4% premium, 6.5% normal). Must wait for buyer.
- *   More opportunities since it doesn't require active buy orders.
- *
- * Opportunity Cost Model:
- *   - deathRisk: probability of dying and losing items during transport
- *   - expectedValue: netProfit × (1 - risk) - sourcePrice × risk
- *   - profitPerHour: expectedValue / transportMinutes × 60
+ * Critical requirement: BOTH sides must be verified as fresh:
+ * - Caerleon sell order must exist RIGHT NOW
+ * - BM buy order must be active RIGHT NOW
  */
 
 import type { ValidatedPrice, AlbionItem, ArbitrageOpportunity, TaxMode, City, Freshness, TradeStrategy } from './types'
-import { CITIES, TAX_NORMAL, TAX_PREMIUM, MAX_SPREAD_RATIO } from './constants'
+import { TAX_NORMAL, TAX_PREMIUM, MAX_SPREAD_RATIO } from './constants'
 import { getRouteInfo } from './constants'
 import { displayName } from './items'
 
@@ -84,21 +79,14 @@ export function findOpportunities(
     const quality = group[0].quality
     const item = itemMap.get(itemId) || itemMap.get(itemId.replace(/@\d+$/, ''))
 
-    // Collect cities with valid sell orders (source: buy from cheapest ask)
+    // Focused mode: only Caerleon as source → Black Market as dest
+    // Caerleon → BM = 0 risk, instant sell, no travel
     const sources: { city: City; price: ValidatedPrice }[] = []
-    // Collect cities with valid buy orders (dest for instant-sell)
-    const destsInstant: { city: City; price: ValidatedPrice }[] = []
-    // Collect cities with valid sell orders (dest for sell-order strategy — price reference)
-    const destsSellOrder: { city: City; price: ValidatedPrice }[] = []
 
-    for (const city of CITIES) {
-      const p = byCity.get(city)
-      if (!p) continue
-      if (p.sellMin > 0) {
-        sources.push({ city, price: p })
-        destsSellOrder.push({ city, price: p })
-      }
-      if (p.buyMax > 0) destsInstant.push({ city, price: p })
+    // Only Caerleon as source city
+    const caerleonPrice = byCity.get('Caerleon')
+    if (caerleonPrice && caerleonPrice.sellMin > 0) {
+      sources.push({ city: 'Caerleon', price: caerleonPrice })
     }
 
     const tier = item?.tier || parseInt(itemId.match(/^T(\d)/)?.[1] || '0', 10)
@@ -106,78 +94,9 @@ export function findOpportunities(
     const category = item?.category || ''
     const dName = displayName(itemId)
 
-    // ── Strategy 1: Instant Sell (City → City) ──
-    // Buy at sell_price_min (cheapest ask) in source
-    // Instant-sell to buy_price_max (highest bid) in dest — NO tax
-    for (const src of sources) {
-      for (const dst of destsInstant) {
-        if (src.city === dst.city) continue
-
-        const buyPrice = src.price.sellMin
-        const sellPrice = dst.price.buyMax
-        if (sellPrice <= buyPrice) continue
-        // Reject unrealistic cross-city spreads
-        if (sellPrice > buyPrice * MAX_SPREAD_RATIO) continue
-
-        const netProfit = sellPrice - buyPrice
-        if (netProfit <= 0) continue
-        const profitPct = (netProfit / buyPrice) * 100
-
-        const freshness = makeFreshness(src.price.freshness, dst.price.freshness)
-        const opp = calcOpportunityCost(src.city, dst.city, buyPrice, netProfit)
-
-        opportunities.push({
-          itemId, displayName: dName, tier, enchantment, category,
-          sourceCity: src.city, sourcePrice: buyPrice, sourceDate: src.price.sellMinDate,
-          destCity: dst.city, destPrice: sellPrice, destDate: dst.price.buyMaxDate,
-          netProfit: Math.round(netProfit),
-          profitPercent: Math.round(profitPct * 10) / 10,
-          isBlackMarket: false, freshness, quality,
-          strategy: 'instant-sell',
-          taxPaid: 0,
-          ...opp,
-        })
-      }
-    }
-
-    // ── Strategy 2: Sell Order (City → City) ──
-    // Buy at sell_price_min in source, list at dest sell_price_min
-    // Tax applies on the sell order listing
-    // Extra validation: reject if cross-city price ratio is too extreme (stale/manipulated data)
-    for (const src of sources) {
-      for (const dst of destsSellOrder) {
-        if (src.city === dst.city) continue
-
-        const buyPrice = src.price.sellMin
-        const listPrice = dst.price.sellMin
-        if (listPrice <= buyPrice) continue
-
-        // Reject unrealistic cross-city spreads (e.g. 230K vs 100M = data issue)
-        if (listPrice > buyPrice * MAX_SPREAD_RATIO) continue
-
-        const tax = Math.round(listPrice * taxRate)
-        const netProfit = listPrice - buyPrice - tax
-        if (netProfit <= 0) continue
-        const profitPct = (netProfit / buyPrice) * 100
-
-        const freshness = makeFreshness(src.price.freshness, dst.price.freshness)
-        const opp = calcOpportunityCost(src.city, dst.city, buyPrice, netProfit)
-
-        opportunities.push({
-          itemId, displayName: dName, tier, enchantment, category,
-          sourceCity: src.city, sourcePrice: buyPrice, sourceDate: src.price.sellMinDate,
-          destCity: dst.city, destPrice: listPrice, destDate: dst.price.sellMinDate,
-          netProfit: Math.round(netProfit),
-          profitPercent: Math.round(profitPct * 10) / 10,
-          isBlackMarket: false, freshness, quality,
-          strategy: 'sell-order',
-          taxPaid: tax,
-          ...opp,
-        })
-      }
-    }
-
-    // ── Strategy 1: Instant Sell (City → Black Market) ──
+    // ── Caerleon → Black Market: Instant Sell ──
+    // Buy at sell_price_min in Caerleon, instant-sell to BM at buy_price_max
+    // No tax, no travel risk, instant profit
     const bm = byCity.get('Black Market')
     if (bm && bm.buyMax > 0) {
       for (const src of sources) {

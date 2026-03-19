@@ -4,12 +4,15 @@ import type { City, FilterState, RiskLevel } from './types'
 
 export const API_BASE = 'https://europe.albion-online-data.com'
 export const ITEMS_URL = 'https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/items.json'
+export const ITEM_NAMES_URL = 'https://raw.githubusercontent.com/broderickhyman/ao-bin-dumps/master/formatted/items.txt'
 
 export const CITIES: City[] = [
   'Bridgewatch', 'Martlock', 'Fort Sterling',
   'Lymhurst', 'Thetford', 'Caerleon', 'Brecilien',
 ]
 export const ALL_LOCATIONS: City[] = [...CITIES, 'Black Market']
+/** Focused scan: only Caerleon + BM (fastest, zero risk arbitrage) */
+export const BM_LOCATIONS: City[] = ['Caerleon', 'Black Market']
 
 export const TAX_NORMAL = 0.065
 export const TAX_PREMIUM = 0.04
@@ -22,6 +25,7 @@ export const MAX_SPREAD_RATIO = 3
 export const PRICE_CACHE_TTL = 90_000           // 90s
 export const ITEMS_CACHE_TTL = 24 * 60 * 60 * 1000
 export const SCAN_INTERVAL = 2 * 60 * 1000     // 2min
+export const BM_REFRESH_INTERVAL = 30 * 1000   // 30s — BM quick refresh
 
 export const CITY_COLORS: Record<string, string> = {
   'Bridgewatch':   '#e2a44f',
@@ -32,6 +36,25 @@ export const CITY_COLORS: Record<string, string> = {
   'Caerleon':      '#e53935',
   'Brecilien':     '#ab47bc',
   'Black Market':  '#888',
+}
+
+/** Quality names matching in-game display */
+export const QUALITY_NAMES: Record<number, string> = {
+  1: 'Normal',
+  2: 'Good',
+  3: 'Outstanding',
+  4: 'Excellent',
+  5: 'Masterpiece',
+}
+export const QUALITY_COLORS: Record<number, string> = {
+  1: '#aaa',       // gray
+  2: '#4caf50',    // green
+  3: '#2196f3',    // blue
+  4: '#ab47bc',    // purple
+  5: '#f0c860',    // gold
+}
+export const QUALITY_SHORT: Record<number, string> = {
+  1: 'NQ', 2: 'GQ', 3: 'OQ', 4: 'EQ', 5: 'MQ',
 }
 
 export const CATEGORY_LABELS: Record<string, string> = {
