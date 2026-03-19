@@ -469,3 +469,70 @@ export const communityStatsRelations = relations(communityStats, ({ one }) => ({
     references: [members.id],
   }),
 }));
+
+// ============================================================
+// DOMAIN 5: SOCIAL (kudos, comments, follows, badges, invites)
+// ============================================================
+
+export const kudos = pgTable("kudos", {
+  id: uuid().primaryKey().defaultRandom(),
+  activityId: uuid("activity_id").notNull().references(() => activities.id, { onDelete: "cascade" }),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("kudos_unique").on(t.activityId, t.memberId),
+  index("idx_kudos_activity").on(t.activityId),
+]);
+
+export const comments = pgTable("comments", {
+  id: uuid().primaryKey().defaultRandom(),
+  activityId: uuid("activity_id").notNull().references(() => activities.id, { onDelete: "cascade" }),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  text: text().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("idx_comments_activity").on(t.activityId),
+]);
+
+export const follows = pgTable("follows", {
+  id: uuid().primaryKey().defaultRandom(),
+  followerId: uuid("follower_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  followingId: uuid("following_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("follows_unique").on(t.followerId, t.followingId),
+  index("idx_follows_follower").on(t.followerId),
+  index("idx_follows_following").on(t.followingId),
+]);
+
+export const badges = pgTable("badges", {
+  id: uuid().primaryKey().defaultRandom(),
+  slug: text().notNull().unique(),
+  name: text().notNull(),
+  description: text(),
+  iconEmoji: text("icon_emoji").notNull().default("🏅"),
+  category: text().notNull().default("milestone"),
+  triggerType: text("trigger_type").notNull(),
+  triggerValue: real("trigger_value"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const memberBadges = pgTable("member_badges", {
+  id: uuid().primaryKey().defaultRandom(),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  badgeId: uuid("badge_id").notNull().references(() => badges.id, { onDelete: "cascade" }),
+  activityId: uuid("activity_id").references(() => activities.id),
+  earnedAt: timestamp("earned_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("member_badges_unique").on(t.memberId, t.badgeId),
+]);
+
+export const inviteCodes = pgTable("invite_codes", {
+  id: uuid().primaryKey().defaultRandom(),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  code: text().notNull().unique(),
+  usedBy: uuid("used_by").references(() => members.id),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

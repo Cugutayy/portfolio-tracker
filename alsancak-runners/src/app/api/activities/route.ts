@@ -195,5 +195,14 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Badge evaluation (best-effort)
+  try {
+    const { evaluateBadges } = await import("@/lib/badge-engine");
+    const newBadges = await evaluateBadges(session.user.id, created.id);
+    if (newBadges.length > 0) {
+      return NextResponse.json({ id: created.id, newBadges }, { status: 201 });
+    }
+  } catch {}
+
   return NextResponse.json({ id: created.id }, { status: 201 });
 }

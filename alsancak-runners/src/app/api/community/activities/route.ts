@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get("type") || "all";
   const runner = searchParams.get("runner");
   const limit = Math.min(200, parseInt(searchParams.get("limit") || "100"));
+  const offset = Math.max(0, parseInt(searchParams.get("offset") || "0"));
 
   // Parse bounds
   let bounds: { swLng: number; swLat: number; neLng: number; neLat: number } | null = null;
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Cache key from params
-  const cacheHash = `${boundsParam || "all"}:${period}:${type}:${runner || ""}:${limit}`;
+  const cacheHash = `${boundsParam || "all"}:${period}:${type}:${runner || ""}:${limit}:${offset}`;
   const cacheKey = CACHE_KEYS.communityActivities(cacheHash);
   const cached = await cacheGet<Record<string, unknown>>(cacheKey);
   if (cached) {
@@ -118,6 +119,7 @@ export async function GET(request: NextRequest) {
     .innerJoin(members, eq(activities.memberId, members.id))
     .where(and(...conditions))
     .orderBy(sql`${activities.startTime} DESC`)
+    .offset(offset)
     .limit(limit + 1); // +1 to check hasMore
 
   const hasMore = rows.length > limit;
