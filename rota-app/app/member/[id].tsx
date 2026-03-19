@@ -133,14 +133,14 @@ export default function MemberProfileScreen() {
 
       {/* Followers / Following */}
       <View style={s.followRow}>
-        <View style={s.followBadge}>
+        <TouchableOpacity style={s.followBadge} onPress={() => router.push(`/followers?memberId=${id}&type=followers`)}>
           <Text style={s.followCount}>{profile.followerCount}</Text>
           <Text style={s.followLabel}>TAKIPCI</Text>
-        </View>
-        <View style={s.followBadge}>
+        </TouchableOpacity>
+        <TouchableOpacity style={s.followBadge} onPress={() => router.push(`/followers?memberId=${id}&type=following`)}>
           <Text style={s.followCount}>{profile.followingCount}</Text>
           <Text style={s.followLabel}>TAKIP</Text>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Stats */}

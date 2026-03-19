@@ -28,12 +28,16 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       const res = await fetch(`${API_BASE}/api/auth/mobile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       const data = await res.json();
 
@@ -47,8 +51,13 @@ export default function LoginScreen() {
       if (data.refreshToken) await setRefreshToken(data.refreshToken);
       if (data.user) await setUser(data.user);
       router.replace("/(tabs)");
-    } catch {
-      Alert.alert("Hata", "Baglanti saglanamadi. Lutfen tekrar deneyin.");
+    } catch (e: any) {
+      clearTimeout(timeout);
+      if (e.name === "AbortError") {
+        Alert.alert("Hata", "Baglanti zaman asimina ugradi. Internet baglantinizi kontrol edin.");
+      } else {
+        Alert.alert("Hata", "Baglanti saglanamadi. Lutfen tekrar deneyin.");
+      }
     } finally {
       setLoading(false);
     }

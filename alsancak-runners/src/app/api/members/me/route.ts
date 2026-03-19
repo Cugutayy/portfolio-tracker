@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { members, stravaConnections, communityStats, follows } from "@/db/schema";
-import { eq, and, count } from "drizzle-orm";
+import { members, stravaConnections, communityStats, follows, activities } from "@/db/schema";
+import { eq, and, count, gte, lt, sql } from "drizzle-orm";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -63,6 +63,46 @@ export async function GET(request: NextRequest) {
     )
     .limit(1);
 
+  // Weekly stats (Turkey time UTC+3, Monday-based weeks)
+  const now = new Date();
+  const turkeyOffset = 3 * 60 * 60 * 1000;
+  const turkeyNow = new Date(now.getTime() + turkeyOffset);
+  const dayOfWeek = turkeyNow.getUTCDay(); // 0=Sun
+  const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const thisMonday = new Date(turkeyNow);
+  thisMonday.setUTCDate(thisMonday.getUTCDate() - mondayOffset);
+  thisMonday.setUTCHours(0, 0, 0, 0);
+  const thisMondayUTC = new Date(thisMonday.getTime() - turkeyOffset);
+  const lastMonday = new Date(thisMondayUTC.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const thisWeekStats = await db.select({
+    totalRuns: count(),
+    totalDistanceM: sql<number>`COALESCE(SUM(${activities.distanceM}), 0)`,
+    totalTimeSec: sql<number>`COALESCE(SUM(${activities.movingTimeSec}), 0)`,
+  }).from(activities).where(
+    and(eq(activities.memberId, member.id), gte(activities.startTime, thisMondayUTC))
+  );
+
+  const lastWeekStats = await db.select({
+    totalRuns: count(),
+    totalDistanceM: sql<number>`COALESCE(SUM(${activities.distanceM}), 0)`,
+  }).from(activities).where(
+    and(
+      eq(activities.memberId, member.id),
+      gte(activities.startTime, lastMonday),
+      lt(activities.startTime, thisMondayUTC)
+    )
+  );
+
+  const tw = thisWeekStats[0];
+  const lw = lastWeekStats[0];
+  const distanceChange = lw.totalDistanceM > 0
+    ? Math.round(((tw.totalDistanceM - lw.totalDistanceM) / lw.totalDistanceM) * 100)
+    : null;
+  const avgPaceSecKm = tw.totalDistanceM > 0
+    ? Math.round(tw.totalTimeSec / (tw.totalDistanceM / 1000))
+    : null;
+
   return NextResponse.json({
     id: member.id,
     name: member.name,
@@ -93,6 +133,13 @@ export async function GET(request: NextRequest) {
           currentStreak: 0,
           eventsAttended: 0,
         },
+    weeklyStats: {
+      totalRuns: Number(tw.totalRuns),
+      totalDistanceM: Number(tw.totalDistanceM),
+      totalTimeSec: Number(tw.totalTimeSec),
+      avgPaceSecKm,
+      distanceChange,
+    },
   });
 }
 

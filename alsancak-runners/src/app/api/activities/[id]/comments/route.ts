@@ -5,6 +5,7 @@ import { comments, members, activities } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { cacheInvalidate } from "@/lib/cache";
 import { sendPushNotification } from "@/lib/push";
+import { checkRateLimit } from "@/lib/rateLimit";
 
 // GET /api/activities/:id/comments
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -32,6 +33,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getRequestUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rateLimited = await checkRateLimit(`comments:${user.id}`, { maxRequests: 20, windowSec: 60 });
+  if (rateLimited) return rateLimited;
 
   const { id: activityId } = await params;
   const body = await request.json();
@@ -92,10 +96,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 }
 
 // DELETE /api/activities/:id/comments
-export async function DELETE(request: NextRequest) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getRequestUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const { id: activityId } = await params;
   const body = await request.json();
   const { commentId } = body;
 
@@ -103,11 +108,11 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: "commentId is required" }, { status: 400 });
   }
 
-  // Verify comment exists and belongs to the current user
+  // Verify comment exists and belongs to this activity
   const [existing] = await db
     .select({ id: comments.id, memberId: comments.memberId })
     .from(comments)
-    .where(eq(comments.id, commentId))
+    .where(and(eq(comments.id, commentId), eq(comments.activityId, activityId)))
     .limit(1);
 
   if (!existing) {
