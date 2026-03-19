@@ -43,21 +43,34 @@ export default function TrackScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<Date | null>(null);
 
-  // Timer
+  // Timer — runs only during "running" state, auto-cleans on state change
   useEffect(() => {
-    if (state === "running") {
-      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
-    }
+    if (state !== "running") return;
+    timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [state]);
 
   const startRun = useCallback(async () => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
+    const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
+    if (fgStatus !== "granted") {
       Alert.alert("Konum Izni", "Kosu takibi icin konum izni gerekli.");
       return;
+    }
+
+    // Request background permission for tracking while phone is in pocket
+    const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
+    if (bgStatus !== "granted") {
+      // Not critical — foreground still works, just warn
+      Alert.alert(
+        "Arka Plan Konum",
+        "Arka plan konum izni verilmedi. Telefon kilitlenirse takip durabilir.",
+        [{ text: "Tamam" }],
+      );
     }
 
     setCoords([]);
@@ -78,18 +91,18 @@ export default function TrackScreen() {
         const timestamp = location.timestamp;
 
         setCoords((prev) => {
-          const newCoords = [...prev, { latitude, longitude, timestamp }];
-
           // Calculate distance from previous point
           if (prev.length > 0) {
             const last = prev[prev.length - 1];
             const d = haversineDistance(last.latitude, last.longitude, latitude, longitude);
-            if (d > 2 && d < 100) {
-              setDistanceM((prevD) => prevD + d);
+            // Filter GPS noise (< 3m) and spikes (> 100m in one reading)
+            if (d < 3 || d > 100) {
+              return prev; // discard noisy point
             }
+            setDistanceM((prevD) => prevD + d);
           }
 
-          return newCoords;
+          return [...prev, { latitude, longitude, timestamp }];
         });
       }
     );
@@ -118,7 +131,7 @@ export default function TrackScreen() {
         distanceM,
         movingTimeSec: seconds,
         startTime: startTimeRef.current?.toISOString() || new Date().toISOString(),
-        activityType: "Run",
+        activityType: "run",
         polylineEncoded: encoded,
         startLat: coords[0].latitude,
         startLng: coords[0].longitude,
