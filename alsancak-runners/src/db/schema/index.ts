@@ -34,6 +34,8 @@ export const members = pgTable(
     role: text("role").notNull().default("member"),
     privacy: text("privacy").notNull().default("private"),
     onboardingDone: boolean("onboarding_done").notNull().default(false),
+    pushToken: text("push_token"),
+    pushPlatform: text("push_platform"), // "ios" | "android"
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
