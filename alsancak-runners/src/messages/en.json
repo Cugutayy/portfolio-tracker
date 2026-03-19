@@ -13,6 +13,7 @@
     "gallery": "GALLERY",
     "about": "ABOUT",
     "join": "JOIN",
+    "runs": "RUNS",
     "signOut": "SIGN OUT",
     "dashboard": "DASHBOARD"
   },
@@ -432,5 +433,48 @@
     "m": "m",
     "close": "CLOSE",
     "strava": "STRAVA"
+  },
+  "runsExplorer": {
+    "title": "RUNS MAP",
+    "subtitle": "Discover where our community runs",
+    "filters": {
+      "period": "PERIOD",
+      "activityType": "TYPE",
+      "distance": "DISTANCE",
+      "runner": "RUNNER",
+      "searchRunner": "Search runner...",
+      "allTypes": "ALL",
+      "run": "RUN",
+      "walk": "WALK"
+    },
+    "mapMode": {
+      "routes": "ROUTES",
+      "heatmap": "HEATMAP"
+    },
+    "list": {
+      "runsNearby": "{count} runs nearby",
+      "noRuns": "No runs in this area",
+      "zoomIn": "Zoom in to see routes",
+      "viewDetails": "VIEW DETAILS",
+      "loadMore": "LOAD MORE"
+    },
+    "periods": {
+      "week": "THIS WEEK",
+      "month": "THIS MONTH",
+      "year": "THIS YEAR",
+      "allTime": "ALL TIME"
+    },
+    "leaderboard": {
+      "title": "LEADERBOARD",
+      "viewAll": "VIEW ALL"
+    },
+    "runners": {
+      "title": "RUNNERS",
+      "showAll": "SHOW ALL",
+      "hideAll": "HIDE ALL"
+    },
+    "stravaCta": {
+      "download": "GET STRAVA"
+    }
   }
 }

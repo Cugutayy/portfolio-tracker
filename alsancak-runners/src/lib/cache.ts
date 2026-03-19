@@ -68,6 +68,7 @@ export const CACHE_KEYS = {
   communityStats: "community:stats",
   leaderboard: (period: string) => `leaderboard:${period}`,
   stravaToken: (memberId: string) => `strava:token:${memberId}`,
+  communityActivities: (hash: string) => `community:activities:${hash}`,
 } as const;
 
 // ── TTLs in seconds ─────────────────────────────────────────────────
@@ -75,6 +76,7 @@ export const CACHE_KEYS = {
 export const CACHE_TTL = {
   communityStats: 300, // 5 minutes
   leaderboard: 300, // 5 minutes
+  communityActivities: 120, // 2 minutes
   stravaToken: (expiresAt: number) =>
     Math.max(0, expiresAt - Math.floor(Date.now() / 1000) - 300), // expiry - 5 min buffer
 } as const;

@@ -10,6 +10,7 @@ const navLinks = [
   { key: "home" as const, href: "/" as const },
   { key: "events" as const, href: "/etkinlikler" as const },
   { key: "community" as const, href: "/topluluk" as const },
+  { key: "runs" as const, href: "/runs" as const },
   { key: "routes" as const, href: "/routes" as const },
   { key: "gallery" as const, href: "/gallery" as const },
   { key: "about" as const, href: "/about" as const },
