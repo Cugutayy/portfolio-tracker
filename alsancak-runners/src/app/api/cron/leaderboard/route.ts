@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       .where(
         sql`${activities.startTime} >= ${periodStart}
           AND ${members.privacy} IN ('public', 'members')
-          AND ${activities.source} = 'strava'`
+          AND ${activities.sharedToBoard} = true`
       )
       .groupBy(activities.memberId, members.name, members.image)
       .orderBy(sql`SUM(${activities.distanceM}) DESC`)

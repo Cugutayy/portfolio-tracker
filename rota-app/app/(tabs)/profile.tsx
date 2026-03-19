@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
+import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
 import { clearToken, getUser } from "@/lib/auth";
@@ -31,21 +33,22 @@ export default function ProfileScreen() {
       const cached = await getUser();
       if (cached) setUser(cached);
 
-      const data = await API.getProfile();
-      const profile = data as unknown as {
-        id: string;
-        name: string;
-        email: string;
-        totalRuns?: number;
-        totalDistanceKm?: number;
-        avgPaceSecKm?: number;
+      const profile = await API.getProfile() as {
+        member?: { id: string; name: string; email: string };
+        id?: string; name?: string; email?: string;
         stravaConnected?: boolean;
+        stats?: { totalRuns?: number; totalDistanceM?: number; avgPaceSecKm?: number };
       };
-      setUser({ id: profile.id, name: profile.name, email: profile.email });
+      // Backend wraps in { member } or returns flat — handle both
+      const m = profile.member || profile;
+      if (m.id && m.name && m.email) {
+        setUser({ id: m.id, name: m.name, email: m.email });
+      }
+      const s = profile.stats;
       setStats({
-        totalRuns: profile.totalRuns || 0,
-        totalDistanceKm: profile.totalDistanceKm || 0,
-        avgPaceSecKm: profile.avgPaceSecKm || 0,
+        totalRuns: s?.totalRuns || 0,
+        totalDistanceKm: s?.totalDistanceM ? s.totalDistanceM / 1000 : 0,
+        avgPaceSecKm: s?.avgPaceSecKm || 0,
         stravaConnected: profile.stravaConnected || false,
       });
     } catch {
@@ -131,6 +134,16 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Health Data Import */}
+        <TouchableOpacity
+          style={s.healthButton}
+          onPress={() => router.push("/import-activity")}
+        >
+          <Ionicons name="heart-outline" size={18} color={brand.accent} />
+          <Text style={s.healthButtonText}>SAGLIK VERİLERİNİ İCE AKTAR</Text>
+          <Ionicons name="chevron-forward" size={16} color={brand.textDim} />
+        </TouchableOpacity>
+
         {/* Strava Section */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>STRAVA</Text>
@@ -153,7 +166,16 @@ export default function ProfileScreen() {
           ) : (
             <TouchableOpacity
               style={s.stravaButton}
-              onPress={() => Alert.alert("Strava", "Web sitesinden Strava'ni baglayabilirsin.")}
+              onPress={async () => {
+                try {
+                  const { url } = await API.getStravaAuthUrl();
+                  await WebBrowser.openAuthSessionAsync(url, "rota://strava-callback");
+                  // Reload profile after returning from browser
+                  loadProfile();
+                } catch {
+                  Alert.alert("Hata", "Strava baglantisi baslatilamadi.");
+                }
+              }}
             >
               <Text style={s.stravaButtonText}>STRAVA BAGLA</Text>
             </TouchableOpacity>
@@ -191,6 +213,8 @@ const s = StyleSheet.create({
   syncButtonText: { fontSize: 12, fontWeight: "700", color: "#fff", letterSpacing: 2 },
   stravaButton: { backgroundColor: brand.strava, paddingVertical: 14, borderRadius: 4, alignItems: "center" },
   stravaButtonText: { fontSize: 12, fontWeight: "700", color: "#fff", letterSpacing: 2 },
+  healthButton: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 14, marginBottom: 16 },
+  healthButtonText: { flex: 1, fontSize: 12, fontWeight: "600", color: brand.text, letterSpacing: 1 },
   logoutButton: { borderWidth: 1, borderColor: brand.border, paddingVertical: 14, borderRadius: 4, alignItems: "center", marginTop: 16 },
   logoutText: { fontSize: 12, color: brand.textMuted, letterSpacing: 2, fontWeight: "600" },
 });

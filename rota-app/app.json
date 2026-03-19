@@ -18,7 +18,13 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Kosu rotanizi haritada gostermek icin konum izni gerekiyor.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Arka planda kosu takibi icin konum izni gerekiyor.",
-        "NSMotionUsageDescription": "Adim sayaci ve hareket takibi icin."
+        "NSMotionUsageDescription": "Adim sayaci ve hareket takibi icin.",
+        "NSHealthShareUsageDescription": "Kosu ve yuruyus verilerini Apple Health'ten otomatik olarak almak icin.",
+        "NSHealthUpdateUsageDescription": "Kosu verilerinizi Apple Health'e kaydetmek icin."
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": ["health-records"]
       }
     },
     "android": {
@@ -49,7 +55,10 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Arka planda kosu takibi icin konum izni gerekiyor."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true
