@@ -13,6 +13,7 @@
     "gallery": "GALERİ",
     "about": "HAKKIMIZDA",
     "join": "KATIL",
+    "runs": "KOŞULAR",
     "signOut": "ÇIKIŞ YAP",
     "dashboard": "PANEL"
   },
@@ -432,5 +433,36 @@
     "m": "m",
     "close": "KAPAT",
     "strava": "STRAVA"
+  },
+  "runsExplorer": {
+    "title": "KOŞU HARİTASI",
+    "subtitle": "Topluluğumuzun koştuğu yerleri keşfet",
+    "filters": {
+      "period": "DÖNEM",
+      "activityType": "TÜR",
+      "distance": "MESAFE",
+      "runner": "KOŞUCU",
+      "searchRunner": "Koşucu ara...",
+      "allTypes": "HEPSİ",
+      "run": "KOŞU",
+      "walk": "YÜRÜYÜŞ"
+    },
+    "mapMode": {
+      "routes": "ROTALAR",
+      "heatmap": "ISI HARİTASI"
+    },
+    "list": {
+      "runsNearby": "{count} koşu bu bölgede",
+      "noRuns": "Bu alanda koşu bulunamadı",
+      "zoomIn": "Rotaları görmek için yakınlaştır",
+      "viewDetails": "DETAYLAR",
+      "loadMore": "DAHA FAZLA"
+    },
+    "periods": {
+      "week": "BU HAFTA",
+      "month": "BU AY",
+      "year": "BU YIL",
+      "allTime": "TÜM ZAMANLAR"
+    }
   }
 }

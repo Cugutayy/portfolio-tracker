@@ -205,7 +205,7 @@ export const activities = pgTable(
     weatherTempC: real("weather_temp_c"),
     weatherCondition: text("weather_condition"),
     privacy: text("privacy").notNull().default("private"),
-    sharedToBoard: boolean("shared_to_board").notNull().default(false),
+    sharedToBoard: boolean("shared_to_board").notNull().default(true),
     stravaRaw: jsonb("strava_raw"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -215,6 +215,7 @@ export const activities = pgTable(
     index("idx_activities_start_time").on(table.memberId, table.startTime),
     index("idx_activities_shared").on(table.sharedToBoard, table.startTime),
     index("idx_activities_city_time").on(table.city, table.startTime),
+    index("idx_activities_geo").on(table.sharedToBoard, table.startLat, table.startLng),
   ],
 );
 
