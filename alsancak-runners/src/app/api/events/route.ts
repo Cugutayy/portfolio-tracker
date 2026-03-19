@@ -11,6 +11,9 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status") || "upcoming";
   const limit = Math.min(50, parseInt(searchParams.get("limit") || "20"));
 
+  // Try to get current user (optional — public endpoint)
+  const user = await getRequestUser(request).catch(() => null);
+
   const now = new Date();
 
   const results = await db
@@ -40,7 +43,31 @@ export async function GET(request: NextRequest) {
     .orderBy(status === "upcoming" ? asc(events.date) : desc(events.date))
     .limit(limit);
 
-  return NextResponse.json({ events: results });
+  // If user is authenticated, annotate each event with isGoing flag
+  if (user) {
+    const eventIds = results.map((e) => e.id);
+    if (eventIds.length > 0) {
+      const myRsvps = await db
+        .select({ eventId: eventRsvps.eventId, status: eventRsvps.status })
+        .from(eventRsvps)
+        .where(
+          and(
+            eq(eventRsvps.memberId, user.id),
+            sql`${eventRsvps.eventId} IN (${sql.join(eventIds.map(id => sql`${id}`), sql`, `)})`
+          )
+        );
+      const goingSet = new Set(
+        myRsvps.filter((r) => r.status === "going").map((r) => r.eventId)
+      );
+      const annotated = results.map((e) => ({
+        ...e,
+        isGoing: goingSet.has(e.id),
+      }));
+      return NextResponse.json({ events: annotated });
+    }
+  }
+
+  return NextResponse.json({ events: results.map((e) => ({ ...e, isGoing: false })) });
 }
 
 // POST /api/events — create event (admin/captain only)
