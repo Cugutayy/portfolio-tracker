@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Image,
+  AppState,
 } from "react-native";
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -27,6 +28,7 @@ export default function FeedScreen() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [activeTab, setActiveTab] = useState<"following" | "everyone">("everyone");
   const loadingMoreRef = useRef(false);
 
   const fetchActivities = useCallback(async (pageNum: number, append: boolean) => {
@@ -35,6 +37,7 @@ export default function FeedScreen() {
       period: "month",
       limit: String(PAGE_SIZE),
       offset: String(offset),
+      filter: activeTab,
     });
     if (append) {
       setActivities((prev) => [...prev, ...res.activities]);
@@ -42,7 +45,7 @@ export default function FeedScreen() {
       setActivities(res.activities);
     }
     setHasMore(res.hasMore);
-  }, []);
+  }, [activeTab]);
 
   const loadData = useCallback(async () => {
     try {
@@ -61,11 +64,20 @@ export default function FeedScreen() {
     useCallback(() => {
       loadData();
 
+      const appStateRef = { current: true };
+      const appStateSub = AppState.addEventListener("change", (state) => {
+        appStateRef.current = state === "active";
+      });
       const interval = setInterval(() => {
-        fetchActivities(1, false);
-      }, 30000);
+        if (appStateRef.current) {
+          fetchActivities(1, false);
+        }
+      }, 60000);
 
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        appStateSub.remove();
+      };
     }, [loadData, fetchActivities])
   );
 
@@ -89,6 +101,18 @@ export default function FeedScreen() {
     setLoadingMore(false);
     loadingMoreRef.current = false;
   }, [hasMore, page, fetchActivities]);
+
+  const switchTab = (tab: "following" | "everyone") => {
+    if (tab === activeTab) return;
+    setActiveTab(tab);
+    setActivities([]);
+    setPage(1);
+    setHasMore(true);
+  };
+
+  useEffect(() => {
+    fetchActivities(1, false);
+  }, [activeTab, fetchActivities]);
 
   // Optimistic kudos toggle
   const handleKudos = useCallback(async (activityId: string) => {
@@ -162,6 +186,21 @@ export default function FeedScreen() {
           ))}
         </View>
       )}
+
+      <View style={s.tabRow}>
+        <TouchableOpacity
+          style={[s.tabButton, activeTab === "following" && s.tabButtonActive]}
+          onPress={() => switchTab("following")}
+        >
+          <Text style={[s.tabText, activeTab === "following" && s.tabTextActive]}>TAKIP</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[s.tabButton, activeTab === "everyone" && s.tabButtonActive]}
+          onPress={() => switchTab("everyone")}
+        >
+          <Text style={[s.tabText, activeTab === "everyone" && s.tabTextActive]}>HERKES</Text>
+        </TouchableOpacity>
+      </View>
 
       <Text style={s.sectionTitle}>SON KOSULAR</Text>
     </View>
@@ -249,10 +288,18 @@ export default function FeedScreen() {
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={
-          <View style={s.empty}>
-            <Text style={s.emptyText}>Henuz kosu yok</Text>
-            <Text style={s.emptySubtext}>Strava'ni bagla veya bir kosuya basla!</Text>
-          </View>
+          !refreshing ? (
+            <View style={s.empty}>
+              <Text style={s.emptyText}>
+                {activeTab === "following" ? "Henuz kimseyi takip etmiyorsun" : "Henuz kosu yok"}
+              </Text>
+              <Text style={s.emptySubtext}>
+                {activeTab === "following"
+                  ? "'Herkes' sekmesinden kosuculari kesfet!"
+                  : "Strava'ni bagla veya bir kosuya basla!"}
+              </Text>
+            </View>
+          ) : null
         }
       />
     </SafeAreaView>
@@ -276,6 +323,11 @@ const s = StyleSheet.create({
   lbInitials: { fontSize: 10, color: brand.accent, fontWeight: "600" },
   lbName: { flex: 1, fontSize: 13, color: brand.text },
   lbKm: { fontSize: 13, color: brand.accent, fontWeight: "600" },
+  tabRow: { flexDirection: "row", gap: 0, marginBottom: 16 },
+  tabButton: { flex: 1, paddingVertical: 8, alignItems: "center", borderWidth: 1, borderColor: brand.border, borderRadius: 0 },
+  tabButtonActive: { backgroundColor: brand.accent, borderColor: brand.accent },
+  tabText: { fontSize: 11, fontWeight: "600", color: brand.textDim, letterSpacing: 2 },
+  tabTextActive: { color: brand.bg },
   card: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, marginBottom: 8 },
   cardHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
   cardAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: brand.elevated, alignItems: "center", justifyContent: "center" },

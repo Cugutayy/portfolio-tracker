@@ -342,15 +342,19 @@ export default function TrackScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 0.6,
+      quality: 0.4,
       base64: true,
+      exif: false,
     });
 
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
+      if (asset.base64 && asset.base64.length > 1_000_000) {
+        Alert.alert("Cok Buyuk", "Fotograf boyutu cok buyuk. Daha kucuk bir fotograf secin.");
+        return;
+      }
       setPhotoUri(asset.uri);
       if (asset.base64) {
-        // Determine mime type from URI
         const ext = asset.uri.split(".").pop()?.toLowerCase() || "jpeg";
         const mime = ext === "png" ? "image/png" : "image/jpeg";
         setPhotoBase64(`data:${mime};base64,${asset.base64}`);

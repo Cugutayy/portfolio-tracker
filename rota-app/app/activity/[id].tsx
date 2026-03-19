@@ -223,7 +223,18 @@ map.on('load',function(){
         </View>
 
         {/* Splits */}
-        {splits.length > 0 && (
+        {splits.length > 0 && (() => {
+          const paceValues = splits.map(sp => sp.avgPaceSecKm).filter(Boolean) as number[];
+          const minPace = Math.min(...paceValues);
+          const maxPace = Math.max(...paceValues);
+          function getSplitColor(pace: number, mn: number, mx: number): string {
+            if (mx === mn) return "transparent";
+            const ratio = (pace - mn) / (mx - mn);
+            if (ratio < 0.3) return "rgba(76, 175, 80, 0.15)";
+            if (ratio < 0.7) return "transparent";
+            return "rgba(255, 82, 82, 0.15)";
+          }
+          return (
           <View style={s.splitsSection}>
             <Text style={s.sectionTitle}>KM BAZINDA DETAY</Text>
             <View style={s.splitsHeader}>
@@ -235,7 +246,7 @@ map.on('load',function(){
               )}
             </View>
             {splits.map((split) => (
-              <View key={split.splitIndex} style={s.splitRow}>
+              <View key={split.splitIndex} style={[s.splitRow, { backgroundColor: split.avgPaceSecKm ? getSplitColor(split.avgPaceSecKm, minPace, maxPace) : "transparent" }]}>
                 <Text style={[s.splitCell, { flex: 0.5, color: brand.textDim }]}>
                   {split.splitIndex}
                 </Text>
@@ -252,8 +263,21 @@ map.on('load',function(){
                 )}
               </View>
             ))}
+            {splits.length > 1 && (
+              <View style={s.splitLegend}>
+                <View style={s.legendItem}>
+                  <View style={[s.legendDot, { backgroundColor: "rgba(76, 175, 80, 0.4)" }]} />
+                  <Text style={s.legendText}>Hizli</Text>
+                </View>
+                <View style={s.legendItem}>
+                  <View style={[s.legendDot, { backgroundColor: "rgba(255, 82, 82, 0.4)" }]} />
+                  <Text style={s.legendText}>Yavas</Text>
+                </View>
+              </View>
+            )}
           </View>
-        )}
+          );
+        })()}
 
         {/* Kudos Section */}
         <View style={s.kudosSection}>
@@ -337,6 +361,7 @@ map.on('load',function(){
           movingTimeSec={activity.movingTimeSec}
           startTime={activity.startTime}
           activityType={activity.activityType}
+          polylineEncoded={activity.polylineEncoded}
         />
       </View>
     </KeyboardAvoidingView>
@@ -368,6 +393,10 @@ const s = StyleSheet.create({
   splitHeaderText: { color: brand.textDim, fontSize: 10, letterSpacing: 2 },
   splitRow: { flexDirection: "row", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: brand.border },
   splitCell: { flex: 1, fontSize: 13, color: brand.text, textAlign: "center" },
+  splitLegend: { flexDirection: "row", justifyContent: "center", gap: 16, marginTop: 8, marginBottom: 0 },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 4 },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
+  legendText: { fontSize: 10, color: brand.textDim },
 
   // Kudos
   kudosSection: { marginHorizontal: 20, marginBottom: 16, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16 },
