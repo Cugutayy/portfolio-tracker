@@ -78,6 +78,7 @@ export async function POST(request: Request) {
           name: name.trim(),
           email,
           passwordHash,
+          privacy: "members", // visible to other members by default (social app)
         })
         .returning({
           id: members.id,

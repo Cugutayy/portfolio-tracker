@@ -77,9 +77,10 @@ export async function POST(request: NextRequest) {
     .insert(activities)
     .values({
       memberId: session.user.id,
-      source: "manual",
+      source: polylineEncoded ? "gps" : "manual",
       title,
-      activityType: activityType || "run",
+      // Normalize activity type to match Strava format (capitalized)
+      activityType: (activityType || "run").charAt(0).toUpperCase() + (activityType || "run").slice(1).toLowerCase(),
       startTime: new Date(startTime),
       elapsedTimeSec: movingTimeSec,
       movingTimeSec,
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
       startLng: startLng || null,
       endLat: endLat || null,
       endLng: endLng || null,
-      privacy: "private",
+      privacy: "public",
       sharedToBoard: true,
     })
     .returning({ id: activities.id });
