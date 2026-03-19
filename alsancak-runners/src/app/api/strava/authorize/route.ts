@@ -21,12 +21,14 @@ export async function GET(request: NextRequest) {
     expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   });
 
-  // State = userId:nonce (verified in callback)
-  const state = `${session.user.id}:${nonce}`;
-
   // Mobile apps pass ?platform=mobile to get a JSON response instead of redirect
   const { searchParams } = new URL(request.url);
   const isMobile = searchParams.get("platform") === "mobile";
+
+  // State = userId:nonce[:mobile] (verified in callback)
+  const state = isMobile
+    ? `${session.user.id}:${nonce}:mobile`
+    : `${session.user.id}:${nonce}`;
 
   const origin = new URL(request.url).origin;
   const url = getStravaAuthUrl(state, origin);

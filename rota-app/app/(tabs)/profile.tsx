@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
 import { clearToken, getUser } from "@/lib/auth";
@@ -153,7 +154,16 @@ export default function ProfileScreen() {
           ) : (
             <TouchableOpacity
               style={s.stravaButton}
-              onPress={() => Alert.alert("Strava", "Web sitesinden Strava'ni baglayabilirsin.")}
+              onPress={async () => {
+                try {
+                  const { url } = await API.getStravaAuthUrl();
+                  await WebBrowser.openAuthSessionAsync(url, "rota://strava-callback");
+                  // Reload profile after returning from browser
+                  loadProfile();
+                } catch {
+                  Alert.alert("Hata", "Strava baglantisi baslatilamadi.");
+                }
+              }}
             >
               <Text style={s.stravaButtonText}>STRAVA BAGLA</Text>
             </TouchableOpacity>
