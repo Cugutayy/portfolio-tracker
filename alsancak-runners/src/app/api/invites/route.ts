@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     code: invite.code,
     deepLink: `rota://invite/${invite.code}`,
-    webLink: `https://alsancak-runners.vercel.app/invite/${invite.code}`,
+    webLink: `${process.env.NEXT_PUBLIC_BASE_URL || "https://alsancak-runners.vercel.app"}/tr/invite/${invite.code}`,
     expiresAt: invite.expiresAt,
   }, { status: 201 });
 }
