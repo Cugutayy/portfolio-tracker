@@ -33,6 +33,7 @@ export default function ProfileScreen() {
   const [followingCount, setFollowingCount] = useState(0);
   const [badges, setBadges] = useState<Array<{ badge: Badge; earnedAt: string }>>([]);
   const [inviting, setInviting] = useState(false);
+  const [weeklyStats, setWeeklyStats] = useState<{ totalRuns: number; totalDistanceM: number; totalTimeSec: number; avgPaceSecKm: number | null; distanceChange: number | null } | null>(null);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -46,6 +47,7 @@ export default function ProfileScreen() {
         stats?: { totalRuns?: number; totalDistanceM?: number; avgPaceSecKm?: number };
         followerCount?: number;
         followingCount?: number;
+        weeklyStats?: { totalRuns: number; totalDistanceM: number; totalTimeSec: number; avgPaceSecKm: number | null; distanceChange: number | null };
       };
       const m = profile.member || profile;
       if (m.id && m.name && m.email) {
@@ -60,6 +62,7 @@ export default function ProfileScreen() {
       });
       setFollowerCount(profile.followerCount || 0);
       setFollowingCount(profile.followingCount || 0);
+      if (profile.weeklyStats) setWeeklyStats(profile.weeklyStats);
     } catch {
       const cached = await getUser();
       if (cached) setUser(cached);
@@ -154,15 +157,34 @@ export default function ProfileScreen() {
 
         {/* Followers / Following */}
         <View style={s.followRow}>
-          <TouchableOpacity style={s.followBadge}>
+          <TouchableOpacity style={s.followBadge} onPress={() => user && router.push(`/followers?memberId=${user.id}&type=followers`)}>
             <Text style={s.followCount}>{followerCount}</Text>
             <Text style={s.followLabel}>TAKIPCI</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.followBadge}>
+          <TouchableOpacity style={s.followBadge} onPress={() => user && router.push(`/followers?memberId=${user.id}&type=following`)}>
             <Text style={s.followCount}>{followingCount}</Text>
             <Text style={s.followLabel}>TAKIP</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Weekly Summary */}
+        {weeklyStats && (
+          <View style={s.weeklyCard}>
+            <Text style={s.weeklyTitle}>BU HAFTA</Text>
+            <Text style={s.weeklyStats}>
+              {weeklyStats.totalRuns} kosu · {(weeklyStats.totalDistanceM / 1000).toFixed(1)} km
+              {weeklyStats.avgPaceSecKm ? ` · ${formatPace(weeklyStats.avgPaceSecKm)} tempo` : ""}
+            </Text>
+            {weeklyStats.distanceChange !== null && weeklyStats.distanceChange !== undefined && (
+              <Text style={[s.weeklyChange, { color: weeklyStats.distanceChange >= 0 ? "#4CAF50" : "#FF5252" }]}>
+                {weeklyStats.distanceChange >= 0 ? "\u2191" : "\u2193"} {Math.abs(weeklyStats.distanceChange)}% gecen haftaya gore
+              </Text>
+            )}
+            {weeklyStats.totalRuns === 0 && (
+              <Text style={s.weeklyEmpty}>Bu hafta henuz kosu yok. Hadi baslayalim!</Text>
+            )}
+          </View>
+        )}
 
         {/* Stats */}
         <View style={s.statsRow}>
@@ -274,6 +296,12 @@ const s = StyleSheet.create({
   followBadge: { alignItems: "center", backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, paddingVertical: 10, paddingHorizontal: 20 },
   followCount: { fontSize: 18, fontWeight: "bold", color: brand.text },
   followLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 2 },
+
+  weeklyCard: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 8, padding: 16, marginBottom: 16, alignItems: "center" as const },
+  weeklyTitle: { fontSize: 11, fontWeight: "bold" as const, color: brand.textDim, letterSpacing: 3, marginBottom: 8 },
+  weeklyStats: { fontSize: 14, color: brand.text, marginBottom: 4 },
+  weeklyChange: { fontSize: 12, fontWeight: "600" as const },
+  weeklyEmpty: { fontSize: 12, color: brand.textMuted, fontStyle: "italic" as const },
 
   statsRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
   statBox: { flex: 1, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, padding: 16, borderRadius: 4, alignItems: "center" },

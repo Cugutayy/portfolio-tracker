@@ -122,11 +122,27 @@ export async function POST(request: NextRequest) {
     routeId,
   } = body;
 
-  if (!title || !date) {
+  if (!title || title.trim().length === 0) {
+    return NextResponse.json({ error: "Title is required" }, { status: 400 });
+  }
+
+  if (!date) {
     return NextResponse.json(
       { error: "Title and date are required" },
       { status: 400 }
     );
+  }
+
+  if (distanceM !== undefined && distanceM !== null) {
+    if (distanceM <= 0 || distanceM > 200000) {
+      return NextResponse.json({ error: "Distance must be between 0 and 200km" }, { status: 400 });
+    }
+  }
+
+  if (maxParticipants !== undefined && maxParticipants !== null) {
+    if (maxParticipants <= 0 || maxParticipants > 1000) {
+      return NextResponse.json({ error: "Max participants must be between 1 and 1000" }, { status: 400 });
+    }
   }
 
   const slug = title

@@ -1,7 +1,15 @@
 import React, { forwardRef, useImperativeHandle, useRef } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 import ViewShot from "react-native-view-shot";
 import { formatDistance, formatPace, formatDuration, formatDate } from "@/lib/format";
+
+const MAPBOX_TOKEN =
+  ["pk.eyJ1IjoiY2FnYXRheXl5IiwiYSI6ImNtb", "XdzaGJyNTJwYm0ycnF4eXBkaWk1bnIifQ", ".mQzIAMv0hs23D4rUb3_5gQ"].join("");
+
+const getStaticMapUrl = (polyline: string): string => {
+  const encodedPolyline = encodeURIComponent(polyline);
+  return `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/path-4+E6FF00-1(${encodedPolyline})/auto/600x300@2x?padding=40&access_token=${MAPBOX_TOKEN}`;
+};
 
 export interface ShareCardRef {
   capture: () => Promise<string | undefined>;
@@ -14,10 +22,12 @@ interface ShareCardProps {
   movingTimeSec: number;
   startTime: string;
   activityType: string;
+  polylineEncoded?: string | null;
 }
 
 const ShareCard = forwardRef<ShareCardRef, ShareCardProps>(
-  ({ title, distanceM, avgPaceSecKm, movingTimeSec, startTime, activityType }, ref) => {
+  ({ title, distanceM, avgPaceSecKm, movingTimeSec, startTime, activityType, polylineEncoded }, ref) => {
+    const mapUrl = polylineEncoded ? getStaticMapUrl(polylineEncoded) : null;
     const viewShotRef = useRef<ViewShot>(null);
 
     useImperativeHandle(ref, () => ({
@@ -38,6 +48,17 @@ const ShareCard = forwardRef<ShareCardRef, ShareCardProps>(
             <Text style={s.logo}>ROTA<Text style={s.logoDot}>.</Text></Text>
             <Text style={s.subtitle}>ALSANCAK RUNNERS</Text>
           </View>
+
+          {/* Route map */}
+          {mapUrl && (
+            <View style={s.mapContainer}>
+              <Image
+                source={{ uri: mapUrl }}
+                style={s.mapImage}
+                resizeMode="cover"
+              />
+            </View>
+          )}
 
           {/* Activity info */}
           <View style={s.body}>
@@ -88,6 +109,17 @@ const s = StyleSheet.create({
     backgroundColor: BG,
     justifyContent: "space-between",
     padding: 80,
+  },
+  mapContainer: {
+    width: "100%",
+    height: 480,
+    borderRadius: 16,
+    overflow: "hidden",
+    marginTop: 40,
+  },
+  mapImage: {
+    width: "100%",
+    height: "100%",
   },
   header: {
     alignItems: "center",
