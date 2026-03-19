@@ -11,6 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
 
@@ -156,8 +157,18 @@ export default function EventsScreen() {
   return (
     <SafeAreaView style={s.container}>
       <View style={s.header}>
-        <Text style={s.title}>ETKİNLİKLER</Text>
-        <Text style={s.subtitle}>Yaklasan kosular ve bulusmalar</Text>
+        <View style={s.headerRow}>
+          <View>
+            <Text style={s.title}>ETKİNLİKLER</Text>
+            <Text style={s.subtitle}>Yaklasan kosular ve bulusmalar</Text>
+          </View>
+          <TouchableOpacity
+            style={s.addBtn}
+            onPress={() => router.push("/create-event")}
+          >
+            <Ionicons name="add" size={20} color={brand.bg} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <FlatList
@@ -193,8 +204,17 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: brand.bg },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   title: { fontSize: 18, fontWeight: "bold", color: brand.text, letterSpacing: 4 },
   subtitle: { fontSize: 12, color: brand.textDim, letterSpacing: 1, marginTop: 2 },
+  addBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: brand.accent,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   list: { padding: 16, gap: 12 },
   card: {
     flexDirection: "row",

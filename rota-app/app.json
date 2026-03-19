@@ -53,7 +53,10 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Arka planda kosu takibi icin konum izni gerekiyor."
+          "locationWhenInUsePermission": "Kosu rotanizi haritada gostermek icin konum izni gerekiyor.",
+          "locationAlwaysAndWhenInUsePermission": "Arka planda kosu takibi icin konum izni gerekiyor.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true
         }
       ],
       "expo-font",

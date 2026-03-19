@@ -103,16 +103,7 @@ export async function POST(request: NextRequest) {
   if (rateLimited) return rateLimited;
   const session = { user: { id: user.id } };  // compatibility shim
 
-  // Check role
-  const [member] = await db
-    .select({ role: members.role })
-    .from(members)
-    .where(eq(members.id, session.user.id))
-    .limit(1);
-
-  if (!member || !["admin", "captain"].includes(member.role)) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-  }
+  // All authenticated users can create events
 
   const body = await request.json();
   const {
