@@ -25,7 +25,6 @@ export async function GET(
       maxParticipants: events.maxParticipants,
       coverImageUrl: events.coverImageUrl,
       status: events.status,
-      rsvpCount: sql<number>`(SELECT COUNT(*) FROM event_rsvps WHERE event_id = ${events.id} AND status = 'going')::int`,
     })
     .from(events)
     .where(eq(events.slug, slug))
@@ -48,5 +47,7 @@ export async function GET(
     .innerJoin(members, eq(eventRsvps.memberId, members.id))
     .where(eq(eventRsvps.eventId, event.id));
 
-  return NextResponse.json({ event, rsvps });
+  const rsvpCount = rsvps.filter((r) => r.status === "going").length;
+
+  return NextResponse.json({ event: { ...event, rsvpCount }, rsvps });
 }
