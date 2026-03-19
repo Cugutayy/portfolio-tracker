@@ -49,7 +49,9 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Arka planda kosu takibi icin konum izni gerekiyor."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
