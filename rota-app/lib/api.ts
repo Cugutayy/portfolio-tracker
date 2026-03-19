@@ -1,4 +1,4 @@
-import { getToken, clearToken } from "./auth";
+import { getToken, clearToken, getRefreshToken, setToken, setRefreshToken } from "./auth";
 import { getGlobalLogout } from "./auth-context";
 
 // In development, use your local Alsancak Runners backend
@@ -7,6 +7,43 @@ const API_BASE =
   process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 
 const REQUEST_TIMEOUT = 10_000; // 10 seconds
+let _refreshing: Promise<boolean> | null = null;
+
+/** Try to refresh the access token using the stored refresh token.
+ *  Returns true if successful, false if refresh token is also expired. */
+async function tryRefreshToken(): Promise<boolean> {
+  // Prevent concurrent refresh attempts
+  if (_refreshing) return _refreshing;
+
+  _refreshing = (async () => {
+    try {
+      const refresh = await getRefreshToken();
+      if (!refresh) return false;
+
+      const res = await fetch(`${API_BASE}/api/auth/mobile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken: refresh }),
+      });
+
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      if (data.accessToken) {
+        await setToken(data.accessToken);
+        if (data.refreshToken) await setRefreshToken(data.refreshToken);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    } finally {
+      _refreshing = null;
+    }
+  })();
+
+  return _refreshing;
+}
 
 interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
@@ -51,8 +88,29 @@ export async function api<T = unknown>(
     });
 
     if (response.status === 401) {
+      // Try refresh token before logout
+      const refreshed = await tryRefreshToken();
+      if (refreshed) {
+        // Retry the request with new token
+        const newToken = await getToken();
+        if (newToken) {
+          headers["Authorization"] = `Bearer ${newToken}`;
+          headers["Cookie"] = `authjs.session-token=${newToken}`;
+        }
+        const retryController = new AbortController();
+        const retryTimeout = setTimeout(() => retryController.abort(), REQUEST_TIMEOUT);
+        try {
+          const retryResponse = await fetch(url, { ...fetchOptions, headers, signal: retryController.signal });
+          if (retryResponse.ok) {
+            if (retryResponse.status === 204) return {} as T;
+            return retryResponse.json();
+          }
+        } finally {
+          clearTimeout(retryTimeout);
+        }
+      }
+      // Refresh failed — full logout
       await clearToken();
-      // Trigger global logout (redirect to login)
       const globalLogout = getGlobalLogout();
       if (globalLogout) globalLogout();
       throw new ApiError("Unauthorized", 401);

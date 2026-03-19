@@ -3,17 +3,15 @@ import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 import { members } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { createMobileToken } from "@/lib/mobile-auth";
+import { createTokenPair, verifyMobileToken } from "@/lib/mobile-auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 
 /**
- * POST /api/auth/mobile — Mobile login + registration (unified endpoint)
+ * POST /api/auth/mobile — Mobile login, registration, and token refresh
  *
- * Body: { email, password, name? }
- * - If name is provided: register new account, then auto-login
- * - If name is omitted: login with existing account
- *
- * Returns: { token, user: { id, name, email } }
+ * Login:    { email, password }         → { accessToken, refreshToken, expiresAt, user }
+ * Register: { email, password, name }   → { accessToken, refreshToken, expiresAt, user }
+ * Refresh:  { refreshToken }            → { accessToken, refreshToken, expiresAt }
  */
 export async function POST(request: Request) {
   try {
@@ -22,8 +20,44 @@ export async function POST(request: Request) {
       "unknown";
 
     const body = await request.json();
-    const { email: rawEmail, password, name } = body;
+    const { email: rawEmail, password, name, refreshToken: incomingRefresh } = body;
 
+    // ── REFRESH MODE ──
+    if (incomingRefresh && !rawEmail) {
+      const payload = await verifyMobileToken(incomingRefresh);
+      if (!payload || payload.type !== "refresh") {
+        return NextResponse.json(
+          { error: "Gecersiz veya suresi dolmus refresh token" },
+          { status: 401 },
+        );
+      }
+
+      // Look up user to get current role
+      const [member] = await db
+        .select({ id: members.id, role: members.role })
+        .from(members)
+        .where(eq(members.id, payload.userId))
+        .limit(1);
+
+      if (!member) {
+        return NextResponse.json(
+          { error: "Kullanici bulunamadi" },
+          { status: 401 },
+        );
+      }
+
+      const tokens = await createTokenPair({ id: member.id, role: member.role });
+
+      return NextResponse.json({
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        expiresAt: tokens.expiresAt,
+        // Also return token for backward compat
+        token: tokens.accessToken,
+      });
+    }
+
+    // ── LOGIN / REGISTER MODE ──
     if (!rawEmail || !password) {
       return NextResponse.json(
         { error: "Email ve sifre gerekli" },
@@ -33,7 +67,6 @@ export async function POST(request: Request) {
 
     const email = rawEmail.toLowerCase().trim();
 
-    // Basic email format check
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json(
         { error: "Gecerli bir email adresi girin" },
@@ -41,7 +74,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // ── REGISTER MODE (name provided) ──
+    // ── REGISTER (name provided) ──
     if (name) {
       const rateLimited = await checkRateLimit(
         `register:${ip}`,
@@ -56,7 +89,6 @@ export async function POST(request: Request) {
         );
       }
 
-      // Check duplicate
       const [existing] = await db
         .select({ id: members.id })
         .from(members)
@@ -78,7 +110,7 @@ export async function POST(request: Request) {
           name: name.trim(),
           email,
           passwordHash,
-          privacy: "members", // visible to other members by default (social app)
+          privacy: "members",
         })
         .returning({
           id: members.id,
@@ -87,24 +119,24 @@ export async function POST(request: Request) {
           role: members.role,
         });
 
-      const token = await createMobileToken({
-        id: member.id,
-        role: member.role,
-      });
+      const tokens = await createTokenPair({ id: member.id, role: member.role });
 
       return NextResponse.json(
         {
-          token,
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          expiresAt: tokens.expiresAt,
+          token: tokens.accessToken, // backward compat
           user: { id: member.id, name: member.name, email: member.email },
         },
         { status: 201 },
       );
     }
 
-    // ── LOGIN MODE (no name) ──
+    // ── LOGIN (no name) ──
     const rateLimited = await checkRateLimit(
       `login:${ip}`,
-      { maxRequests: 10, windowSec: 60 }, // 10 attempts/minute
+      { maxRequests: 10, windowSec: 60 },
     );
     if (rateLimited) return rateLimited;
 
@@ -135,13 +167,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const token = await createMobileToken({
-      id: member.id,
-      role: member.role,
-    });
+    const tokens = await createTokenPair({ id: member.id, role: member.role });
 
     return NextResponse.json({
-      token,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresAt: tokens.expiresAt,
+      token: tokens.accessToken, // backward compat
       user: { id: member.id, name: member.name, email: member.email },
     });
   } catch (error) {
