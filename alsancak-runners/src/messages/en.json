@@ -463,6 +463,18 @@
       "month": "THIS MONTH",
       "year": "THIS YEAR",
       "allTime": "ALL TIME"
+    },
+    "leaderboard": {
+      "title": "LEADERBOARD",
+      "viewAll": "VIEW ALL"
+    },
+    "runners": {
+      "title": "RUNNERS",
+      "showAll": "SHOW ALL",
+      "hideAll": "HIDE ALL"
+    },
+    "stravaCta": {
+      "download": "GET STRAVA"
     }
   }
 }
