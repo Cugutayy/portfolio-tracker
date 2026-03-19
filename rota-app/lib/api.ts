@@ -1,9 +1,12 @@
 import { getToken, clearToken } from "./auth";
+import { getGlobalLogout } from "./auth-context";
 
 // In development, use your local Alsancak Runners backend
 // In production, use the deployed Vercel URL
 const API_BASE =
   process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+
+const REQUEST_TIMEOUT = 10_000; // 10 seconds
 
 interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
@@ -11,7 +14,8 @@ interface RequestOptions extends RequestInit {
 
 /**
  * Authenticated fetch wrapper for the Alsancak Runners API.
- * Automatically attaches JWT token and handles 401 responses.
+ * Automatically attaches JWT token, handles 401 responses with global logout,
+ * and applies a 10s timeout.
  */
 export async function api<T = unknown>(
   path: string,
@@ -35,30 +39,41 @@ export async function api<T = unknown>(
 
   const url = `${API_BASE}${path}`;
 
-  const response = await fetch(url, {
-    ...fetchOptions,
-    headers,
-  });
+  // Timeout via AbortController
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
 
-  if (response.status === 401) {
-    await clearToken();
-    throw new ApiError("Unauthorized", 401);
+  try {
+    const response = await fetch(url, {
+      ...fetchOptions,
+      headers,
+      signal: controller.signal,
+    });
+
+    if (response.status === 401) {
+      await clearToken();
+      // Trigger global logout (redirect to login)
+      const globalLogout = getGlobalLogout();
+      if (globalLogout) globalLogout();
+      throw new ApiError("Unauthorized", 401);
+    }
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new ApiError(
+        body.error || `Request failed: ${response.status}`,
+        response.status
+      );
+    }
+
+    if (response.status === 204) {
+      return {} as T;
+    }
+
+    return response.json();
+  } finally {
+    clearTimeout(timeout);
   }
-
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new ApiError(
-      body.error || `Request failed: ${response.status}`,
-      response.status
-    );
-  }
-
-  // Handle 204 No Content
-  if (response.status === 204) {
-    return {} as T;
-  }
-
-  return response.json();
 }
 
 export class ApiError extends Error {
