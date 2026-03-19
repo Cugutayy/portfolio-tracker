@@ -40,8 +40,13 @@ export async function POST(
     return NextResponse.json({ error: "Event is not accepting RSVPs" }, { status: 400 });
   }
 
-  const body = await request.json();
-  const { paceGroup } = body;
+  let paceGroup: string | undefined;
+  try {
+    const body = await request.json();
+    paceGroup = body.paceGroup;
+  } catch {
+    // Body is optional — RSVP without pace group is fine
+  }
 
   // Check existing RSVP
   const [existing] = await db

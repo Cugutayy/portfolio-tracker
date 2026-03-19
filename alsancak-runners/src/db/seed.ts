@@ -24,14 +24,14 @@ const db = drizzle(sql, { schema });
 
 // ── Izmir polylines (real routes) ──
 
-// Kordon — Alsancak sahil yolu (~3.5km)
-const KORDON_POLYLINE = "_{kzEotthGgA}CwAiDcBiEgAqDYwCUyBSwBOqBKuAEaA?w@Bq@Hg@Nc@R]V[ZU\\O^I`@E^?^B\\F\\L\\RVVPZLb@Hb@Db@@b@Ab@Cb@Gb@Kb@QZUZ]T_@Ra@Pc@Nc@Le@Jg@Hi@Fk@Dm@@m@Am@Ck@Ei@Gg@Ie@Mc@Oa@Q_@SY";
+// Kordon — Alsancak sahil yolu (~3.5km) — Cumhuriyet Meydanı'ndan kuzeye
+const KORDON_POLYLINE = "{|qiFgctdDgE~CcGnFwGbG_IjHsInFkHfEgJbGsIbGkHnFkHnFkHfEkHfEcG~CoFbBoFjCcG~CcG~CoFjCgEjCoF~C";
 
-// Kulturpark — park icinde tur (~2km)
-const KULTURPARK_POLYLINE = "wdkzEqvthGsA}AcBqBaBsBgAqBw@yBi@{Be@}Be@}BcAqEYsBMqAIqAEsA?sADsAHqANqARoATmA\\kAb@iAh@gAn@eAt@cAx@aA|@_A~@}@bAy@dAw@fAu@hAs@jAq@lAo@nAm@pAk@";
+// Kulturpark — park icinde tur (~2km) — Kültürpark döngüsü
+const KULTURPARK_POLYLINE = "_npiFo}tdDcBgEcBgEcBgEz@gEf@gEf@gEz@gEbBcBbBcBjCf@~Cf@bBbBbBjCf@fEg@fEcBfEcBfEcBfEcBfE?~C";
 
-// Goztepe — sahil yolu (~5km)
-const GOZTEPE_POLYLINE = "u_jzE}fshGaA{CcAaDcAcDeAcDeAaDeAaDgA_DgA}CiA{CiAyCkAyCkAwCmAuCmAsCo@}AoAqCqAmCsAkCsAiCuAgCuAeCwAcCwAaCyA_Cy@oAyAmC{AkC{AiC}AgC}AeC_BcC_BaC";
+// Goztepe — sahil yolu (~5km) — Göztepe'den kuzeye sahil boyunca
+const GOZTEPE_POLYLINE = "{tkiF_zhdDjCkH~CsI~CgJjCoKjCgJ~CoK~CoKjCoKjCoK~CoKbBoKbBoKf@oKz@oKz@oKf@oKf@oKz@oKz@oKf@oKf@oKz@oKz@oK";
 
 async function seed() {
   console.log("Seeding database...\n");
