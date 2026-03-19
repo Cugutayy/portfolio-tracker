@@ -13,6 +13,7 @@ const Manifesto = dynamic(() => import("@/components/Manifesto"));
 const PhotoStoryStrip = dynamic(() => import("@/components/PhotoStoryStrip"));
 const UpcomingRuns = dynamic(() => import("@/components/UpcomingRuns"));
 const IzmirRunMap = dynamic(() => import("@/components/IzmirRunMap"));
+const RunsExplorerCTA = dynamic(() => import("@/components/RunsExplorerCTA"));
 const Collaborations = dynamic(() => import("@/components/Collaborations"));
 const EditorialGallery = dynamic(() => import("@/components/EditorialGallery"));
 const JoinCommunity = dynamic(() => import("@/components/JoinCommunity"));
@@ -43,6 +44,9 @@ export default function Home() {
 
         {/* Scene 6 — Izmir Running Map */}
         <IzmirRunMap />
+
+        {/* Runs Explorer CTA */}
+        <RunsExplorerCTA />
 
         {/* Scene 7 — Collaborations */}
         <Collaborations />
