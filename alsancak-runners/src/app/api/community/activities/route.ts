@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { activities, members, kudos, comments, activityPhotos } from "@/db/schema";
+import { activities, members, kudos, comments, activityPhotos, follows } from "@/db/schema";
 import { sql, eq, and, gte, lte } from "drizzle-orm";
 import { cacheGet, cacheSet, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
   const period = searchParams.get("period") || "month";
   const type = searchParams.get("type") || "all";
   const runner = searchParams.get("runner");
+  const filter = searchParams.get("filter") === "following" ? "following" : "everyone";
   const limit = Math.max(1, Math.min(200, parseInt(searchParams.get("limit") || "100") || 100));
   const offset = Math.max(0, parseInt(searchParams.get("offset") || "0") || 0);
 
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
   } catch {}
 
   // Cache key from params (include user for hasKudosed)
-  const cacheHash = `${boundsParam || "all"}:${period}:${type}:${runner || ""}:${limit}:${offset}:${currentUserId || "anon"}`;
+  const cacheHash = `${boundsParam || "all"}:${period}:${type}:${runner || ""}:${filter}:${limit}:${offset}:${currentUserId || "anon"}`;
   const cacheKey = CACHE_KEYS.communityActivities(cacheHash);
   const cached = await cacheGet<Record<string, unknown>>(cacheKey);
   if (cached) {
@@ -107,6 +108,12 @@ export async function GET(request: NextRequest) {
 
   if (runner) {
     conditions.push(eq(activities.memberId, runner));
+  }
+
+  if (filter === "following" && currentUserId) {
+    conditions.push(
+      sql`(${activities.memberId} IN (SELECT ${follows.followingId} FROM ${follows} WHERE ${follows.followerId} = ${currentUserId}) OR ${activities.memberId} = ${currentUserId})`
+    );
   }
 
   // Query with member join + social counts

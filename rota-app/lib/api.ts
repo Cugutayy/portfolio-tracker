@@ -246,6 +246,10 @@ export const API = {
     api<MemberProfile>(`/api/members/${id}`),
   toggleFollow: (id: string) =>
     api<{ action: string }>(`/api/members/${id}/follow`, { method: "POST" }),
+  getFollowers: (memberId: string, type: "followers" | "following") =>
+    api<{ users: Array<{ id: string; name: string; image: string | null; bio: string | null }> }>(
+      `/api/members/${memberId}/followers?type=${type}`
+    ),
 
   // Badges
   getBadges: () => api<{ badges: Badge[] }>("/api/badges"),

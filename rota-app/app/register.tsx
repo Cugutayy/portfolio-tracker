@@ -33,13 +33,17 @@ export default function RegisterScreen() {
     }
 
     setLoading(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       // Unified endpoint: name present = register + auto-login
       const res = await fetch(`${API_BASE}/api/auth/mobile`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), email: email.trim(), password }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       const data = await res.json();
 
@@ -53,8 +57,13 @@ export default function RegisterScreen() {
       if (data.refreshToken) await setRefreshToken(data.refreshToken);
       if (data.user) await setUser(data.user);
       router.replace("/(tabs)");
-    } catch {
-      Alert.alert("Hata", "Baglanti saglanamadi");
+    } catch (e: any) {
+      clearTimeout(timeout);
+      if (e.name === "AbortError") {
+        Alert.alert("Hata", "Baglanti zaman asimina ugradi. Internet baglantinizi kontrol edin.");
+      } else {
+        Alert.alert("Hata", "Baglanti saglanamadi");
+      }
     } finally {
       setLoading(false);
     }
