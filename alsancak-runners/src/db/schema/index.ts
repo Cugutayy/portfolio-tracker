@@ -482,6 +482,7 @@ export const kudos = pgTable("kudos", {
 }, (t) => [
   uniqueIndex("kudos_unique").on(t.activityId, t.memberId),
   index("idx_kudos_activity").on(t.activityId),
+  index("idx_kudos_member").on(t.memberId),
 ]);
 
 export const comments = pgTable("comments", {
@@ -492,6 +493,7 @@ export const comments = pgTable("comments", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   index("idx_comments_activity").on(t.activityId),
+  index("idx_comments_member").on(t.memberId),
 ]);
 
 export const follows = pgTable("follows", {
@@ -525,6 +527,7 @@ export const memberBadges = pgTable("member_badges", {
   earnedAt: timestamp("earned_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
   uniqueIndex("member_badges_unique").on(t.memberId, t.badgeId),
+  index("idx_member_badges_member").on(t.memberId),
 ]);
 
 export const inviteCodes = pgTable("invite_codes", {

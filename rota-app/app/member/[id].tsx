@@ -49,32 +49,33 @@ export default function MemberProfileScreen() {
 
   const handleFollow = useCallback(async () => {
     if (!id || !profile) return;
+    const originalIsFollowing = profile.isFollowing;
+    const originalFollowerCount = profile.followerCount;
+
     setFollowLoading(true);
     // Optimistic update
-    setProfile((prev) => {
-      if (!prev) return prev;
-      return {
+    setProfile((prev) =>
+      prev ? {
         ...prev,
         isFollowing: !prev.isFollowing,
         followerCount: prev.followerCount + (prev.isFollowing ? -1 : 1),
-      };
-    });
+      } : prev
+    );
     try {
       await API.toggleFollow(id);
     } catch {
-      // Revert
-      setProfile((prev) => {
-        if (!prev) return prev;
-        return {
+      // Revert to original
+      setProfile((prev) =>
+        prev ? {
           ...prev,
-          isFollowing: !prev.isFollowing,
-          followerCount: prev.followerCount + (prev.isFollowing ? -1 : 1),
-        };
-      });
+          isFollowing: originalIsFollowing,
+          followerCount: originalFollowerCount,
+        } : prev
+      );
     } finally {
       setFollowLoading(false);
     }
-  }, [id, profile]);
+  }, [id, profile?.isFollowing, profile?.followerCount]);
 
   if (loading) {
     return (

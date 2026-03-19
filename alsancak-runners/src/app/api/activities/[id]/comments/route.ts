@@ -36,12 +36,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const text = body.text?.trim();
 
   if (!text || text.length < 1 || text.length > 500) {
-    return NextResponse.json({ error: "Yorum 1-500 karakter olmalı" }, { status: 400 });
+    return NextResponse.json({ error: "Yorum 1-500 karakter olmali" }, { status: 400 });
   }
+
+  // Strip any HTML tags
+  const cleanText = text.replace(/<[^>]*>/g, '');
 
   const [comment] = await db
     .insert(comments)
-    .values({ activityId, memberId: user.id, text })
+    .values({ activityId, memberId: user.id, text: cleanText })
     .returning();
 
   // Fetch member name for response
