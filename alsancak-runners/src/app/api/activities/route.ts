@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { activities } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -43,4 +44,55 @@ export async function GET(request: NextRequest) {
     limit,
     hasMore: results.length === limit,
   });
+}
+
+// POST /api/activities — manual activity creation (for GPS tracking / non-Strava users)
+export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const rateLimited = await checkRateLimit(
+    `create-activity:${session.user.id}`,
+    RATE_LIMITS.stravaSync // reuse 5/min limit
+  );
+  if (rateLimited) return rateLimited;
+
+  const body = await request.json();
+  const { title, distanceM, movingTimeSec, startTime, activityType, polylineEncoded, startLat, startLng, endLat, endLng, elevationGainM } = body;
+
+  if (!title || !distanceM || !movingTimeSec || !startTime) {
+    return NextResponse.json(
+      { error: "Missing required fields: title, distanceM, movingTimeSec, startTime" },
+      { status: 400 }
+    );
+  }
+
+  const avgPaceSecKm = distanceM > 0 ? (movingTimeSec / (distanceM / 1000)) : null;
+
+  const [created] = await db
+    .insert(activities)
+    .values({
+      memberId: session.user.id,
+      source: "manual",
+      title,
+      activityType: activityType || "run",
+      startTime: new Date(startTime),
+      elapsedTimeSec: movingTimeSec,
+      movingTimeSec,
+      distanceM,
+      elevationGainM: elevationGainM || null,
+      avgPaceSecKm,
+      polylineEncoded: polylineEncoded || null,
+      startLat: startLat || null,
+      startLng: startLng || null,
+      endLat: endLat || null,
+      endLng: endLng || null,
+      privacy: "private",
+      sharedToBoard: true,
+    })
+    .returning({ id: activities.id });
+
+  return NextResponse.json({ id: created.id }, { status: 201 });
 }

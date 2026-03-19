@@ -24,8 +24,17 @@ export async function GET(request: NextRequest) {
   // State = userId:nonce (verified in callback)
   const state = `${session.user.id}:${nonce}`;
 
-  // Use request origin for correct redirect_uri in dev and production
+  // Mobile apps pass ?platform=mobile to get a JSON response instead of redirect
+  const { searchParams } = new URL(request.url);
+  const isMobile = searchParams.get("platform") === "mobile";
+
   const origin = new URL(request.url).origin;
   const url = getStravaAuthUrl(state, origin);
+
+  if (isMobile) {
+    // Return the URL for the mobile app to open in a WebView/browser
+    return NextResponse.json({ url });
+  }
+
   return NextResponse.redirect(url);
 }
