@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
   if (rateLimited) return rateLimited;
 
   const body = await request.json();
-  const { title, distanceM, movingTimeSec, startTime, activityType, polylineEncoded, startLat, startLng, endLat, endLng, elevationGainM } = body;
+  const { title, distanceM, movingTimeSec, startTime, activityType, polylineEncoded, startLat, startLng, endLat, endLng, elevationGainM, splits: clientSplits, elapsedTimeSec } = body;
 
   if (!title || !distanceM || !movingTimeSec || !startTime) {
     return NextResponse.json(
@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
       // Normalize activity type to match Strava format (capitalized)
       activityType: (activityType || "run").charAt(0).toUpperCase() + (activityType || "run").slice(1).toLowerCase(),
       startTime: new Date(startTime),
-      elapsedTimeSec: movingTimeSec,
+      elapsedTimeSec: elapsedTimeSec || movingTimeSec,
       movingTimeSec,
       distanceM,
       elevationGainM: elevationGainM || null,
@@ -173,9 +173,22 @@ export async function POST(request: NextRequest) {
     })
     .returning({ id: activities.id });
 
-  // Compute and store per-km splits from polyline
-  if (polylineEncoded && distanceM > 500) {
-    try {
+  // Store per-km splits: prefer client-provided (has real GPS timestamps) over server-computed (uniform pace)
+  try {
+    if (clientSplits && Array.isArray(clientSplits) && clientSplits.length > 0) {
+      // Client-provided splits with actual GPS-derived pace
+      await db.insert(activitySplits).values(
+        clientSplits.map((s: { splitIndex: number; distanceM: number; elapsedSec: number; paceSecKm: number }) => ({
+          activityId: created.id,
+          splitIndex: s.splitIndex,
+          distanceM: s.distanceM,
+          elapsedTimeSec: s.elapsedSec,
+          movingTimeSec: s.elapsedSec,
+          avgPaceSecKm: s.paceSecKm,
+        })),
+      );
+    } else if (polylineEncoded && distanceM > 500) {
+      // Fallback: compute from polyline with uniform pace (legacy behavior)
       const splits = computeSplits(polylineEncoded, movingTimeSec, distanceM);
       if (splits.length > 0) {
         await db.insert(activitySplits).values(
@@ -189,10 +202,10 @@ export async function POST(request: NextRequest) {
           })),
         );
       }
-    } catch (e) {
-      // Non-critical: splits are best-effort
-      console.error("Split computation failed:", e);
     }
+  } catch (e) {
+    // Non-critical: splits are best-effort
+    console.error("Split computation failed:", e);
   }
 
   // Badge evaluation (best-effort)

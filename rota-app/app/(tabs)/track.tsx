@@ -293,6 +293,56 @@ export default function TrackScreen() {
     Vibration.vibrate([0, 100, 50, 100]);
   }, []);
 
+  /** Compute per-km splits client-side using actual GPS timestamps */
+  const computeClientSplits = useCallback((pts: Coordinate[]) => {
+    if (pts.length < 2) return [];
+
+    const splits: { splitIndex: number; distanceM: number; elapsedSec: number; paceSecKm: number }[] = [];
+    let cumDistance = 0;
+    let splitStartDistance = 0;
+    let splitStartTime = pts[0].timestamp;
+    let splitIndex = 1;
+
+    for (let i = 1; i < pts.length; i++) {
+      const d = haversineDistance(pts[i - 1].latitude, pts[i - 1].longitude, pts[i].latitude, pts[i].longitude);
+      cumDistance += d;
+
+      if (cumDistance - splitStartDistance >= 1000) {
+        const splitDistM = cumDistance - splitStartDistance;
+        const elapsedSec = (pts[i].timestamp - splitStartTime) / 1000;
+        const paceSecKm = splitDistM > 0 ? elapsedSec / (splitDistM / 1000) : 0;
+
+        splits.push({
+          splitIndex,
+          distanceM: Math.round(splitDistM),
+          elapsedSec: Math.round(elapsedSec),
+          paceSecKm: Math.round(paceSecKm),
+        });
+
+        splitStartDistance = cumDistance;
+        splitStartTime = pts[i].timestamp;
+        splitIndex++;
+      }
+    }
+
+    // Final partial split (at least 50m)
+    const remaining = cumDistance - splitStartDistance;
+    if (remaining > 50) {
+      const lastPt = pts[pts.length - 1];
+      const elapsedSec = (lastPt.timestamp - splitStartTime) / 1000;
+      const paceSecKm = remaining > 0 ? elapsedSec / (remaining / 1000) : 0;
+
+      splits.push({
+        splitIndex,
+        distanceM: Math.round(remaining),
+        elapsedSec: Math.round(elapsedSec),
+        paceSecKm: Math.round(paceSecKm),
+      });
+    }
+
+    return splits;
+  }, []);
+
   const saveRun = useCallback(async () => {
     if (coords.length < 2 || distanceM < 50) {
       Alert.alert("Cok kisa", "Kosu kaydedilecek kadar uzun degil.");
@@ -302,14 +352,20 @@ export default function TrackScreen() {
     setSaving(true);
     try {
       const encoded = polyline.encode(coords.map((c) => [c.latitude, c.longitude]));
+      const splits = computeClientSplits(coords);
+      const elapsedTimeSec = startTimeRef.current
+        ? Math.round((Date.now() - startTimeRef.current.getTime()) / 1000)
+        : seconds;
 
       await API.createActivity({
         title: `Kosu — ${formatDistance(distanceM)} km`,
         distanceM,
         movingTimeSec: seconds,
+        elapsedTimeSec,
         startTime: startTimeRef.current?.toISOString() || new Date().toISOString(),
         activityType: "run",
         polylineEncoded: encoded,
+        splits,
         startLat: coords[0].latitude,
         startLng: coords[0].longitude,
         endLat: coords[coords.length - 1].latitude,
@@ -338,7 +394,7 @@ export default function TrackScreen() {
     } finally {
       setSaving(false);
     }
-  }, [coords, distanceM, seconds]);
+  }, [coords, distanceM, seconds, computeClientSplits]);
 
   const discardRun = useCallback(() => {
     Alert.alert("Iptal et?", "Bu kosu kaydedilmeyecek.", [
