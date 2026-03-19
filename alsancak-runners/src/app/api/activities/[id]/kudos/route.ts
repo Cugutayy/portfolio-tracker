@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { kudos, members, activities } from "@/db/schema";
 import { eq, and, count } from "drizzle-orm";
 import { cacheInvalidate } from "@/lib/cache";
+import { sendPushNotification } from "@/lib/push";
 
 // GET /api/activities/:id/kudos - list kudos for activity
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -77,6 +78,35 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await db.insert(kudos).values({ activityId, memberId: user.id });
     const [{ value: newCount }] = await db.select({ value: count() }).from(kudos).where(eq(kudos.activityId, activityId));
     await cacheInvalidate("community:activities:*", true);
+
+    // Notify activity owner (fire and forget)
+    (async () => {
+      try {
+        const [owner] = await db
+          .select({ pushToken: members.pushToken })
+          .from(members)
+          .where(eq(members.id, activity.memberId))
+          .limit(1);
+
+        const [kudoser] = await db
+          .select({ name: members.name })
+          .from(members)
+          .where(eq(members.id, user.id))
+          .limit(1);
+
+        if (owner?.pushToken && kudoser) {
+          sendPushNotification(
+            owner.pushToken,
+            "Kudos!",
+            `\u{1F44F} ${kudoser.name} ko\u015Funu be\u011Fendi!`,
+            { type: "kudos", activityId }
+          );
+        }
+      } catch (e) {
+        console.error("Kudos push notification error:", e);
+      }
+    })();
+
     return NextResponse.json({ action: "added", count: newCount, hasKudosed: true });
   }
 }

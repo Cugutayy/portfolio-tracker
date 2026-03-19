@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { activities, members, kudos, comments } from "@/db/schema";
+import { activities, members, kudos, comments, activityPhotos } from "@/db/schema";
 import { sql, eq, and, gte, lte } from "drizzle-orm";
 import { cacheGet, cacheSet, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
@@ -129,6 +129,7 @@ export async function GET(request: NextRequest) {
       hasKudosed: currentUserId
         ? sql<boolean>`EXISTS(SELECT 1 FROM ${kudos} WHERE ${kudos.activityId} = ${activities.id} AND ${kudos.memberId} = ${currentUserId})`
         : sql<boolean>`false`,
+      photoUrl: sql<string | null>`(SELECT ${activityPhotos.url} FROM ${activityPhotos} WHERE ${activityPhotos.activityId} = ${activities.id} LIMIT 1)`,
     })
     .from(activities)
     .innerJoin(members, eq(activities.memberId, members.id))

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
-import { comments, members } from "@/db/schema";
+import { comments, members, activities } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { cacheInvalidate } from "@/lib/cache";
+import { sendPushNotification } from "@/lib/push";
 
 // GET /api/activities/:id/comments
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -56,6 +57,37 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .limit(1);
 
   await cacheInvalidate("community:activities:*", true);
+
+  // Notify activity owner if not self-comment (fire and forget)
+  (async () => {
+    try {
+      const [activity] = await db
+        .select({ memberId: activities.memberId })
+        .from(activities)
+        .where(eq(activities.id, activityId))
+        .limit(1);
+
+      if (activity && activity.memberId !== user.id) {
+        const [owner] = await db
+          .select({ pushToken: members.pushToken })
+          .from(members)
+          .where(eq(members.id, activity.memberId))
+          .limit(1);
+
+        if (owner?.pushToken) {
+          sendPushNotification(
+            owner.pushToken,
+            "Yeni Yorum",
+            `\u{1F4AC} ${member?.name || 'Biri'} ko\u015Funa yorum yapt\u0131`,
+            { type: "comment", activityId }
+          );
+        }
+      }
+    } catch (e) {
+      console.error("Comment push notification error:", e);
+    }
+  })();
+
   return NextResponse.json({ comment: { ...comment, memberName: member?.name } }, { status: 201 });
 }
 
