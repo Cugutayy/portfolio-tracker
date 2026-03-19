@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
 import { clearToken, getUser } from "@/lib/auth";
@@ -132,6 +133,16 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Health Data Import */}
+        <TouchableOpacity
+          style={s.healthButton}
+          onPress={() => router.push("/import-activity")}
+        >
+          <Ionicons name="heart-outline" size={18} color={brand.accent} />
+          <Text style={s.healthButtonText}>SAGLIK VERİLERİNİ İCE AKTAR</Text>
+          <Ionicons name="chevron-forward" size={16} color={brand.textDim} />
+        </TouchableOpacity>
+
         {/* Strava Section */}
         <View style={s.section}>
           <Text style={s.sectionTitle}>STRAVA</Text>
@@ -201,6 +212,8 @@ const s = StyleSheet.create({
   syncButtonText: { fontSize: 12, fontWeight: "700", color: "#fff", letterSpacing: 2 },
   stravaButton: { backgroundColor: brand.strava, paddingVertical: 14, borderRadius: 4, alignItems: "center" },
   stravaButtonText: { fontSize: 12, fontWeight: "700", color: "#fff", letterSpacing: 2 },
+  healthButton: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 14, marginBottom: 16 },
+  healthButtonText: { flex: 1, fontSize: 12, fontWeight: "600", color: brand.text, letterSpacing: 1 },
   logoutButton: { borderWidth: 1, borderColor: brand.border, paddingVertical: 14, borderRadius: 4, alignItems: "center", marginTop: 16 },
   logoutText: { fontSize: 12, color: brand.textMuted, letterSpacing: 2, fontWeight: "600" },
 });
