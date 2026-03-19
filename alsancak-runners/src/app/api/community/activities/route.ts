@@ -22,8 +22,8 @@ export async function GET(request: NextRequest) {
   const period = searchParams.get("period") || "month";
   const type = searchParams.get("type") || "all";
   const runner = searchParams.get("runner");
-  const limit = Math.min(200, parseInt(searchParams.get("limit") || "100"));
-  const offset = Math.max(0, parseInt(searchParams.get("offset") || "0"));
+  const limit = Math.max(1, Math.min(200, parseInt(searchParams.get("limit") || "100") || 100));
+  const offset = Math.max(0, parseInt(searchParams.get("offset") || "0") || 0);
 
   // Parse bounds
   let bounds: { swLng: number; swLat: number; neLng: number; neLat: number } | null = null;
