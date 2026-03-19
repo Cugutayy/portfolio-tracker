@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
@@ -67,8 +68,8 @@ export default function EventsScreen() {
             : e,
         ),
       );
-    } catch {
-      // ignore
+    } catch (err) {
+      Alert.alert("Hata", err instanceof Error ? err.message : "RSVP yapilamadi");
     } finally {
       setRsvpLoading(null);
     }
