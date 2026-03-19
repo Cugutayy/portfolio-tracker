@@ -135,10 +135,15 @@ const GOZTEPE_ROUTE: [number, number][] = [
 
 // POST /api/admin/seed-demo — Create demo accounts + activities for İzmir
 export async function POST(request: NextRequest) {
-  // Auth check — admin only
-  const user = await getRequestUser(request);
-  if (!user || user.role !== "admin") {
-    return NextResponse.json({ error: "Admin only" }, { status: 403 });
+  // Auth check: admin OR seed secret
+  const seedSecret = request.headers.get("x-seed-secret");
+  if (seedSecret === process.env.AUTH_SECRET) {
+    // Seed secret matches — allow
+  } else {
+    const user = await getRequestUser(request);
+    if (!user || user.role !== "admin") {
+      return NextResponse.json({ error: "Admin only" }, { status: 403 });
+    }
   }
 
   const passwordHash = await bcrypt.hash("demo1234", 12);
