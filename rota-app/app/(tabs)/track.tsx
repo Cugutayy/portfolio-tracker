@@ -10,6 +10,7 @@ import {
   BackHandler,
 } from "react-native";
 import * as Location from "expo-location";
+import * as Speech from "expo-speech";
 import polyline from "@mapbox/polyline";
 import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
@@ -40,11 +41,19 @@ export default function TrackScreen() {
   const [distanceM, setDistanceM] = useState(0);
   const [coords, setCoords] = useState<Coordinate[]>([]);
   const [saving, setSaving] = useState(false);
+  const [gpsLost, setGpsLost] = useState(false);
   const locationSub = useRef<Location.LocationSubscription | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<Date | null>(null);
   // Rolling pace: keep last 5 distance samples for smoothing
   const recentPaces = useRef<number[]>([]);
+  // Auto-pause refs
+  const lowSpeedSince = useRef<number | null>(null);
+  const autoPaused = useRef(false);
+  // GPS signal loss ref
+  const lastLocationTime = useRef<number>(Date.now());
+  // Voice announcement ref
+  const lastAnnouncedKm = useRef(0);
 
   // Prevent accidental back during active run
   useEffect(() => {
@@ -79,6 +88,108 @@ export default function TrackScreen() {
     };
   }, [state]);
 
+  // GPS signal loss detection
+  useEffect(() => {
+    if (state !== "running") return;
+    const interval = setInterval(() => {
+      if (Date.now() - lastLocationTime.current > 30000) {
+        setGpsLost(true);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [state]);
+
+  // Shared location update handler
+  const handleLocationUpdate = useCallback((location: Location.LocationObject) => {
+    const { latitude, longitude, accuracy } = location.coords;
+    const timestamp = location.timestamp;
+
+    // 1.1 GPS Accuracy Filtering
+    if (accuracy && accuracy > 20) return;
+
+    // Update GPS signal tracking
+    lastLocationTime.current = Date.now();
+    setGpsLost(false);
+
+    // Skip distance/pace updates if auto-paused (still track coords for GPS signal)
+    if (autoPaused.current) {
+      // Check if we should auto-resume
+      setCoords((prev) => {
+        if (prev.length > 0) {
+          const last = prev[prev.length - 1];
+          const d = haversineDistance(last.latitude, last.longitude, latitude, longitude);
+          const timeDiff = (timestamp - last.timestamp) / 1000;
+          const speedKmH = timeDiff > 0 ? (d / timeDiff) * 3.6 : 0;
+          if (speedKmH >= 1.0) {
+            lowSpeedSince.current = null;
+            autoPaused.current = false;
+            setState("running");
+            Vibration.vibrate(50);
+          }
+        }
+        return prev; // don't add coords while auto-paused
+      });
+      return;
+    }
+
+    setCoords((prev) => {
+      if (prev.length > 0) {
+        const last = prev[prev.length - 1];
+        const d = haversineDistance(last.latitude, last.longitude, latitude, longitude);
+        // Filter GPS noise (< 3m) and spikes (> 100m in one reading)
+        if (d < 3 || d > 100) {
+          return prev; // discard noisy point
+        }
+
+        const timeDiff = (timestamp - last.timestamp) / 1000;
+
+        // 1.2 Auto-pause: check speed
+        const speedKmH = timeDiff > 0 ? (d / timeDiff) * 3.6 : 0;
+        if (speedKmH < 1.0) {
+          if (lowSpeedSince.current === null) {
+            lowSpeedSince.current = Date.now();
+          } else if (Date.now() - lowSpeedSince.current > 10000) {
+            // Auto-pause: stop timer but keep location watching
+            autoPaused.current = true;
+            setState("paused");
+            Vibration.vibrate(50);
+            return prev; // don't add this point
+          }
+        } else {
+          lowSpeedSince.current = null;
+        }
+
+        setDistanceM((prevD) => {
+          const newDist = prevD + d;
+
+          // 1.4 Voice KM announcement
+          const currentKm = Math.floor(newDist / 1000);
+          if (currentKm > lastAnnouncedKm.current && currentKm > 0) {
+            lastAnnouncedKm.current = currentKm;
+            // Compute pace from total time and distance
+            const totalPace = newDist > 0 ? (seconds / (newDist / 1000)) : 0;
+            const paceMin = Math.floor(totalPace / 60);
+            const paceSec = Math.round(totalPace % 60);
+            Speech.speak(
+              `${currentKm} kilometre tamamlandi. Tempo: ${paceMin} dakika ${paceSec} saniye.`,
+              { language: "tr-TR", rate: 1.1 },
+            );
+          }
+
+          return newDist;
+        });
+
+        // Track pace samples for smoothing
+        if (d > 0 && timeDiff > 0) {
+          const paceSecKm = (timeDiff / d) * 1000;
+          recentPaces.current = [...recentPaces.current.slice(-4), paceSecKm];
+        }
+      }
+
+      return [...prev, { latitude, longitude, timestamp }];
+    });
+  }, [seconds]);
+
   const startRun = useCallback(async () => {
     const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
     if (fgStatus !== "granted") {
@@ -100,6 +211,11 @@ export default function TrackScreen() {
     setDistanceM(0);
     setSeconds(0);
     recentPaces.current = [];
+    lowSpeedSince.current = null;
+    autoPaused.current = false;
+    lastAnnouncedKm.current = 0;
+    lastLocationTime.current = Date.now();
+    setGpsLost(false);
     startTimeRef.current = new Date();
     setState("running");
     Vibration.vibrate(100);
@@ -110,42 +226,22 @@ export default function TrackScreen() {
         timeInterval: 3000,
         distanceInterval: 5,
       },
-      (location) => {
-        const { latitude, longitude } = location.coords;
-        const timestamp = location.timestamp;
-
-        setCoords((prev) => {
-          if (prev.length > 0) {
-            const last = prev[prev.length - 1];
-            const d = haversineDistance(last.latitude, last.longitude, latitude, longitude);
-            // Filter GPS noise (< 3m) and spikes (> 100m in one reading)
-            if (d < 3 || d > 100) {
-              return prev; // discard noisy point
-            }
-            setDistanceM((prevD) => prevD + d);
-
-            // Track pace samples for smoothing
-            const timeDiff = (timestamp - last.timestamp) / 1000;
-            if (d > 0 && timeDiff > 0) {
-              const paceSecKm = (timeDiff / d) * 1000;
-              recentPaces.current = [...recentPaces.current.slice(-4), paceSecKm];
-            }
-          }
-
-          return [...prev, { latitude, longitude, timestamp }];
-        });
-      },
+      (location) => handleLocationUpdate(location),
     );
-  }, []);
+  }, [handleLocationUpdate]);
 
   const pauseRun = useCallback(() => {
     locationSub.current?.remove();
     locationSub.current = null;
+    autoPaused.current = false;
+    lowSpeedSince.current = null;
     setState("paused");
     Vibration.vibrate(50);
   }, []);
 
   const resumeRun = useCallback(async () => {
+    autoPaused.current = false;
+    lowSpeedSince.current = null;
     setState("running");
     Vibration.vibrate(50);
 
@@ -155,33 +251,17 @@ export default function TrackScreen() {
         timeInterval: 3000,
         distanceInterval: 5,
       },
-      (location) => {
-        const { latitude, longitude } = location.coords;
-        const timestamp = location.timestamp;
-
-        setCoords((prev) => {
-          if (prev.length > 0) {
-            const last = prev[prev.length - 1];
-            const d = haversineDistance(last.latitude, last.longitude, latitude, longitude);
-            if (d < 3 || d > 100) return prev;
-            setDistanceM((prevD) => prevD + d);
-
-            const timeDiff = (timestamp - last.timestamp) / 1000;
-            if (d > 0 && timeDiff > 0) {
-              const paceSecKm = (timeDiff / d) * 1000;
-              recentPaces.current = [...recentPaces.current.slice(-4), paceSecKm];
-            }
-          }
-          return [...prev, { latitude, longitude, timestamp }];
-        });
-      },
+      (location) => handleLocationUpdate(location),
     );
-  }, []);
+  }, [handleLocationUpdate]);
 
   const stopRun = useCallback(() => {
     locationSub.current?.remove();
     locationSub.current = null;
     if (timerRef.current) clearInterval(timerRef.current);
+    autoPaused.current = false;
+    lowSpeedSince.current = null;
+    setGpsLost(false);
     setState("finished");
     Vibration.vibrate([0, 100, 50, 100]);
   }, []);
@@ -218,6 +298,10 @@ export default function TrackScreen() {
             setDistanceM(0);
             setCoords([]);
             recentPaces.current = [];
+            lowSpeedSince.current = null;
+            autoPaused.current = false;
+            lastAnnouncedKm.current = 0;
+            setGpsLost(false);
             router.push("/(tabs)");
           },
         },
@@ -241,6 +325,10 @@ export default function TrackScreen() {
           setDistanceM(0);
           setCoords([]);
           recentPaces.current = [];
+          lowSpeedSince.current = null;
+          autoPaused.current = false;
+          lastAnnouncedKm.current = 0;
+          setGpsLost(false);
         },
       },
     ]);
@@ -256,6 +344,13 @@ export default function TrackScreen() {
 
   return (
     <SafeAreaView style={s.container}>
+      {/* GPS Signal Loss Banner */}
+      {gpsLost && (state === "running" || state === "paused") && (
+        <View style={s.gpsLostBanner}>
+          <Text style={s.gpsLostText}>GPS sinyali kaybedildi</Text>
+        </View>
+      )}
+
       {/* State: IDLE */}
       {state === "idle" && (
         <View style={s.idleContainer}>
@@ -302,6 +397,9 @@ export default function TrackScreen() {
       {/* State: PAUSED */}
       {state === "paused" && (
         <View style={s.runningContainer}>
+          {autoPaused.current && (
+            <Text style={s.autoPauseText}>Otomatik Duraklama</Text>
+          )}
           <View style={s.mainStat}>
             <Text style={[s.mainValue, { opacity: 0.5 }]}>{formatDistance(distanceM)}</Text>
             <Text style={s.mainLabel}>KM — DURAKLATILDI</Text>
@@ -407,4 +505,11 @@ const s = StyleSheet.create({
   saveButtonText: { fontSize: 14, fontWeight: "700", color: brand.bg, letterSpacing: 2 },
   discardButton: { paddingVertical: 12 },
   discardButtonText: { fontSize: 12, color: brand.textDim, letterSpacing: 2 },
+
+  // GPS Lost Banner
+  gpsLostBanner: { backgroundColor: "#FF6B35", paddingVertical: 8, paddingHorizontal: 16, alignItems: "center" },
+  gpsLostText: { fontSize: 13, fontWeight: "600", color: "#fff" },
+
+  // Auto-Pause
+  autoPauseText: { fontSize: 12, color: brand.textMuted, letterSpacing: 2, marginBottom: 8 },
 });

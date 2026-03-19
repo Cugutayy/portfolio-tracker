@@ -27,3 +27,17 @@ export function formatTime(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 }
+
+export function formatRelativeTime(iso: string): string {
+  const now = Date.now();
+  const then = new Date(iso).getTime();
+  const diffSec = Math.floor((now - then) / 1000);
+  if (diffSec < 60) return "az once";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} dk`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour} sa`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay} gun`;
+  return formatDate(iso);
+}

@@ -208,6 +208,43 @@ export const API = {
   getEvents: () => api("/api/events"),
   rsvpEvent: (slug: string) =>
     api(`/api/events/${slug}/rsvp`, { method: "POST" }),
+
+  // Kudos
+  getKudos: (activityId: string) =>
+    api<KudosResponse>(`/api/activities/${activityId}/kudos`),
+  toggleKudos: (activityId: string) =>
+    api<{ action: string; count: number; hasKudosed: boolean }>(
+      `/api/activities/${activityId}/kudos`,
+      { method: "POST" }
+    ),
+
+  // Comments
+  getComments: (activityId: string) =>
+    api<{ comments: Comment[] }>(`/api/activities/${activityId}/comments`),
+  addComment: (activityId: string, text: string) =>
+    api<{ comment: Comment }>(`/api/activities/${activityId}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    }),
+
+  // Member profiles
+  getMemberProfile: (id: string) =>
+    api<MemberProfile>(`/api/members/${id}`),
+  toggleFollow: (id: string) =>
+    api<{ action: string }>(`/api/members/${id}/follow`, { method: "POST" }),
+
+  // Badges
+  getBadges: () => api<{ badges: Badge[] }>("/api/badges"),
+  getMyBadges: () =>
+    api<{ badges: Array<{ badge: Badge; earnedAt: string }> }>(
+      "/api/members/me/badges"
+    ),
+
+  // Invites
+  createInvite: () =>
+    api<{ code: string; deepLink: string; webLink: string }>("/api/invites", {
+      method: "POST",
+    }),
 };
 
 // ── Types ──
@@ -267,6 +304,8 @@ export interface CommunityActivity {
   polylineEncoded: string | null;
   startLat: number | null;
   startLng: number | null;
+  kudosCount?: number;
+  hasKudosed?: boolean;
 }
 
 export interface LeaderboardEntry {
@@ -285,4 +324,51 @@ export interface Split {
   avgPaceSecKm: number;
   elevationDiffM: number | null;
   avgHeartrate: number | null;
+}
+
+export interface KudosResponse {
+  kudos: Array<{
+    id: string;
+    memberName: string;
+    memberId: string;
+    createdAt: string;
+  }>;
+  count: number;
+  hasKudosed: boolean;
+}
+
+export interface Comment {
+  id: string;
+  text: string;
+  memberName: string;
+  memberImage: string | null;
+  memberId: string;
+  createdAt: string;
+}
+
+export interface MemberProfile {
+  member: {
+    id: string;
+    name: string;
+    image: string | null;
+    bio: string | null;
+    paceGroup: string | null;
+  };
+  stats: {
+    totalRuns: number;
+    totalDistanceM: number;
+    avgPace: number;
+  };
+  followerCount: number;
+  followingCount: number;
+  isFollowing: boolean;
+}
+
+export interface Badge {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  iconEmoji: string;
+  category: string;
 }

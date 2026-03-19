@@ -8,12 +8,13 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Share,
 } from "react-native";
 import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
-import { API } from "@/lib/api";
+import { API, type Badge } from "@/lib/api";
 import { clearToken, getUser } from "@/lib/auth";
 import { formatPace } from "@/lib/format";
 
@@ -27,6 +28,10 @@ export default function ProfileScreen() {
   } | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [badges, setBadges] = useState<Array<{ badge: Badge; earnedAt: string }>>([]);
+  const [inviting, setInviting] = useState(false);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -38,19 +43,22 @@ export default function ProfileScreen() {
         id?: string; name?: string; email?: string;
         stravaConnected?: boolean;
         stats?: { totalRuns?: number; totalDistanceM?: number; avgPaceSecKm?: number };
+        followerCount?: number;
+        followingCount?: number;
       };
-      // Backend wraps in { member } or returns flat — handle both
       const m = profile.member || profile;
       if (m.id && m.name && m.email) {
         setUser({ id: m.id, name: m.name, email: m.email });
       }
-      const s = profile.stats;
+      const st = profile.stats;
       setStats({
-        totalRuns: s?.totalRuns || 0,
-        totalDistanceKm: s?.totalDistanceM ? s.totalDistanceM / 1000 : 0,
-        avgPaceSecKm: s?.avgPaceSecKm || 0,
+        totalRuns: st?.totalRuns || 0,
+        totalDistanceKm: st?.totalDistanceM ? st.totalDistanceM / 1000 : 0,
+        avgPaceSecKm: st?.avgPaceSecKm || 0,
         stravaConnected: profile.stravaConnected || false,
       });
+      setFollowerCount(profile.followerCount || 0);
+      setFollowingCount(profile.followingCount || 0);
     } catch {
       const cached = await getUser();
       if (cached) setUser(cached);
@@ -59,9 +67,17 @@ export default function ProfileScreen() {
     }
   }, []);
 
+  const loadBadges = useCallback(async () => {
+    try {
+      const res = await API.getMyBadges();
+      setBadges(res.badges);
+    } catch {}
+  }, []);
+
   useEffect(() => {
     loadProfile();
-  }, [loadProfile]);
+    loadBadges();
+  }, [loadProfile, loadBadges]);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -72,6 +88,21 @@ export default function ProfileScreen() {
       Alert.alert("Hata", "Strava senkronizasyonu basarisiz.");
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleInvite = async () => {
+    setInviting(true);
+    try {
+      const res = await API.createInvite();
+      await Share.share({
+        message: `Rota'ya katil! ${res.webLink}`,
+        url: res.webLink,
+      });
+    } catch {
+      Alert.alert("Hata", "Davet linki olusturulamadi.");
+    } finally {
+      setInviting(false);
     }
   };
 
@@ -118,6 +149,18 @@ export default function ProfileScreen() {
           <Text style={s.email}>{user?.email || ""}</Text>
         </View>
 
+        {/* Followers / Following */}
+        <View style={s.followRow}>
+          <TouchableOpacity style={s.followBadge}>
+            <Text style={s.followCount}>{followerCount}</Text>
+            <Text style={s.followLabel}>TAKIPCI</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.followBadge}>
+            <Text style={s.followCount}>{followingCount}</Text>
+            <Text style={s.followLabel}>TAKIP</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Stats */}
         <View style={s.statsRow}>
           <View style={s.statBox}>
@@ -134,13 +177,36 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Invite Button */}
+        <TouchableOpacity style={s.inviteButton} onPress={handleInvite} disabled={inviting}>
+          <Ionicons name="person-add-outline" size={18} color={brand.bg} />
+          <Text style={s.inviteButtonText}>
+            {inviting ? "HAZIRLANIYOR..." : "DAVET ET"}
+          </Text>
+        </TouchableOpacity>
+
+        {/* Badges Section */}
+        {badges.length > 0 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>ROZETLER</Text>
+            <View style={s.badgesGrid}>
+              {badges.map(({ badge }) => (
+                <View key={badge.id} style={s.badgeItem}>
+                  <Text style={s.badgeEmoji}>{badge.iconEmoji}</Text>
+                  <Text style={s.badgeName}>{badge.name}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Health Data Import */}
         <TouchableOpacity
           style={s.healthButton}
           onPress={() => router.push("/import-activity")}
         >
           <Ionicons name="heart-outline" size={18} color={brand.accent} />
-          <Text style={s.healthButtonText}>SAGLIK VERİLERİNİ İCE AKTAR</Text>
+          <Text style={s.healthButtonText}>SAGLIK VERiLERiNi iCE AKTAR</Text>
           <Ionicons name="chevron-forward" size={16} color={brand.textDim} />
         </TouchableOpacity>
 
@@ -159,7 +225,7 @@ export default function ProfileScreen() {
                 disabled={syncing}
               >
                 <Text style={s.syncButtonText}>
-                  {syncing ? "SENKRONİZE EDİLİYOR..." : "STRAVA SYNC"}
+                  {syncing ? "SENKRONiZE EDiLiYOR..." : "STRAVA SYNC"}
                 </Text>
               </TouchableOpacity>
             </>
@@ -170,7 +236,6 @@ export default function ProfileScreen() {
                 try {
                   const { url } = await API.getStravaAuthUrl();
                   await WebBrowser.openAuthSessionAsync(url, "rota://strava-callback");
-                  // Reload profile after returning from browser
                   loadProfile();
                 } catch {
                   Alert.alert("Hata", "Strava baglantisi baslatilamadi.");
@@ -200,10 +265,28 @@ const s = StyleSheet.create({
   avatarText: { fontSize: 24, fontWeight: "bold", color: brand.accent },
   name: { fontSize: 20, fontWeight: "bold", color: brand.text, letterSpacing: 2 },
   email: { fontSize: 13, color: brand.textDim, marginTop: 4 },
-  statsRow: { flexDirection: "row", gap: 8, marginBottom: 24 },
+
+  // Followers
+  followRow: { flexDirection: "row", justifyContent: "center", gap: 24, marginBottom: 24 },
+  followBadge: { alignItems: "center", backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, paddingVertical: 10, paddingHorizontal: 20 },
+  followCount: { fontSize: 18, fontWeight: "bold", color: brand.text },
+  followLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 2 },
+
+  statsRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
   statBox: { flex: 1, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, padding: 16, borderRadius: 4, alignItems: "center" },
   statValue: { fontSize: 22, fontWeight: "bold", color: brand.text },
   statLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 4 },
+
+  // Invite
+  inviteButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: brand.accent, paddingVertical: 14, borderRadius: 4, marginBottom: 16 },
+  inviteButtonText: { fontSize: 12, fontWeight: "700", color: brand.bg, letterSpacing: 2 },
+
+  // Badges
+  badgesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  badgeItem: { alignItems: "center", width: 72 },
+  badgeEmoji: { fontSize: 28 },
+  badgeName: { fontSize: 10, color: brand.textDim, textAlign: "center", marginTop: 4 },
+
   section: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, marginBottom: 16 },
   sectionTitle: { fontSize: 11, color: brand.textMuted, letterSpacing: 3, fontWeight: "600", marginBottom: 12 },
   stravaConnected: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
