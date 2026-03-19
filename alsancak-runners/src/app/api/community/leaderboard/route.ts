@@ -61,8 +61,7 @@ export async function GET(request: NextRequest) {
     .innerJoin(members, eq(activities.memberId, members.id))
     .where(
       sql`${activities.startTime} >= ${periodStart}
-        AND ${members.privacy} IN ('public', 'members')
-        AND ${activities.source} = 'strava'`,
+        AND ${members.privacy} IN ('public', 'members')`,
     )
     .groupBy(activities.memberId, members.name, members.image)
     .orderBy(sql`SUM(${activities.distanceM}) DESC`)
