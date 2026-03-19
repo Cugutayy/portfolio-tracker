@@ -215,14 +215,20 @@ export default function TrackScreen() {
       return;
     }
 
-    // Request background permission for tracking while phone is in pocket
-    const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
-    if (bgStatus !== "granted") {
-      Alert.alert(
-        "Arka Plan Konum",
-        "Arka plan konum izni verilmedi. Telefon kilitlenirse takip durabilir.",
-        [{ text: "Tamam" }],
-      );
+    // Request background permission — wrapped in try/catch because
+    // Expo Go doesn't support background location (needs dev build)
+    try {
+      const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
+      if (bgStatus !== "granted") {
+        Alert.alert(
+          "Arka Plan Konum",
+          "Arka plan konum izni verilmedi. Telefon kilitlenirse takip durabilir.",
+          [{ text: "Tamam" }],
+        );
+      }
+    } catch {
+      // Expo Go — background location not available, foreground tracking still works
+      console.log("Background location not available (Expo Go)");
     }
 
     setCoords([]);

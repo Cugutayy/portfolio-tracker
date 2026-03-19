@@ -208,6 +208,15 @@ export const API = {
   getEvents: () => api("/api/events"),
   rsvpEvent: (slug: string) =>
     api(`/api/events/${slug}/rsvp`, { method: "POST" }),
+  createEvent: (data: {
+    title: string;
+    description?: string | null;
+    meetingPoint?: string | null;
+    distanceM?: number | null;
+    maxParticipants?: number | null;
+    date: string;
+    eventType?: string;
+  }) => api("/api/events", { method: "POST", body: JSON.stringify(data) }),
 
   // Kudos
   getKudos: (activityId: string) =>
