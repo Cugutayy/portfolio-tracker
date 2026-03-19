@@ -8,9 +8,11 @@ import {
   Alert,
   Vibration,
   BackHandler,
+  Image,
 } from "react-native";
 import * as Location from "expo-location";
-import * as Speech from "expo-speech";
+import * as ImagePicker from "expo-image-picker";
+// Speech removed — sesli koç devre dışı
 import polyline from "@mapbox/polyline";
 import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
@@ -42,6 +44,8 @@ export default function TrackScreen() {
   const [coords, setCoords] = useState<Coordinate[]>([]);
   const [saving, setSaving] = useState(false);
   const [gpsLost, setGpsLost] = useState(false);
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photoBase64, setPhotoBase64] = useState<string | null>(null);
   const locationSub = useRef<Location.LocationSubscription | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<Date | null>(null);
@@ -178,20 +182,10 @@ export default function TrackScreen() {
         setDistanceM((prevD) => {
           const newDist = prevD + d;
 
-          // 1.4 Voice KM announcement
+          // KM milestone tracking (no voice — just update ref)
           const currentKm = Math.floor(newDist / 1000);
           if (currentKm > lastAnnouncedKm.current && currentKm > 0) {
             lastAnnouncedKm.current = currentKm;
-            // Use smoothed pace (rolling average) for more accurate announcement
-            const rollingPace = recentPaces.current.length > 0
-              ? recentPaces.current.reduce((a, b) => a + b, 0) / recentPaces.current.length
-              : 0;
-            const paceMin = Math.floor(rollingPace / 60);
-            const paceSec = Math.round(rollingPace % 60);
-            Speech.speak(
-              `${currentKm} kilometre tamamlandi. Tempo: ${paceMin} dakika ${paceSec} saniye.`,
-              { language: "tr-TR", rate: 1.1 },
-            );
           }
 
           return newDist;
@@ -343,6 +337,32 @@ export default function TrackScreen() {
     return splits;
   }, []);
 
+  const pickPhoto = useCallback(async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.6,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      setPhotoUri(asset.uri);
+      if (asset.base64) {
+        // Determine mime type from URI
+        const ext = asset.uri.split(".").pop()?.toLowerCase() || "jpeg";
+        const mime = ext === "png" ? "image/png" : "image/jpeg";
+        setPhotoBase64(`data:${mime};base64,${asset.base64}`);
+      }
+    }
+  }, []);
+
+  const removePhoto = useCallback(() => {
+    setPhotoUri(null);
+    setPhotoBase64(null);
+  }, []);
+
   const saveRun = useCallback(async () => {
     if (coords.length < 2 || distanceM < 50) {
       Alert.alert("Cok kisa", "Kosu kaydedilecek kadar uzun degil.");
@@ -370,6 +390,7 @@ export default function TrackScreen() {
         startLng: coords[0].longitude,
         endLat: coords[coords.length - 1].latitude,
         endLng: coords[coords.length - 1].longitude,
+        ...(photoBase64 ? { photoBase64 } : {}),
       });
 
       Alert.alert("Kaydedildi!", `${formatDistance(distanceM)} km kosu kaydedildi.`, [
@@ -385,6 +406,8 @@ export default function TrackScreen() {
             autoPaused.current = false;
             lastAnnouncedKm.current = 0;
             setGpsLost(false);
+            setPhotoUri(null);
+            setPhotoBase64(null);
             router.push("/(tabs)");
           },
         },
@@ -394,7 +417,7 @@ export default function TrackScreen() {
     } finally {
       setSaving(false);
     }
-  }, [coords, distanceM, seconds, computeClientSplits]);
+  }, [coords, distanceM, seconds, computeClientSplits, photoBase64]);
 
   const discardRun = useCallback(() => {
     Alert.alert("Iptal et?", "Bu kosu kaydedilmeyecek.", [
@@ -412,6 +435,8 @@ export default function TrackScreen() {
           autoPaused.current = false;
           lastAnnouncedKm.current = 0;
           setGpsLost(false);
+          setPhotoUri(null);
+          setPhotoBase64(null);
         },
       },
     ]);
@@ -544,6 +569,21 @@ export default function TrackScreen() {
             </View>
           </View>
 
+          {/* Photo picker */}
+          {photoUri ? (
+            <View style={s.photoPreviewContainer}>
+              <Image source={{ uri: photoUri }} style={s.photoPreview} />
+              <TouchableOpacity style={s.photoRemoveButton} onPress={removePhoto} activeOpacity={0.8}>
+                <Text style={s.photoRemoveText}>KALDIR</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity style={s.photoAddButton} onPress={pickPhoto} activeOpacity={0.8}>
+              <Text style={s.photoAddIcon}>📷</Text>
+              <Text style={s.photoAddText}>FOTOGRAF EKLE</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
             style={[s.saveButton, saving && s.saveButtonDisabled]}
             onPress={saveRun}
@@ -602,6 +642,15 @@ const s = StyleSheet.create({
   saveButtonText: { fontSize: 14, fontWeight: "700", color: brand.bg, letterSpacing: 2 },
   discardButton: { paddingVertical: 12 },
   discardButtonText: { fontSize: 12, color: brand.textDim, letterSpacing: 2 },
+
+  // Photo picker
+  photoAddButton: { flexDirection: "row", alignItems: "center", gap: 8, borderWidth: 1, borderColor: brand.border, borderStyle: "dashed", borderRadius: 4, paddingVertical: 14, paddingHorizontal: 24, marginBottom: 24 },
+  photoAddIcon: { fontSize: 18 },
+  photoAddText: { fontSize: 11, color: brand.textMuted, letterSpacing: 2, fontWeight: "600" },
+  photoPreviewContainer: { alignItems: "center", marginBottom: 24 },
+  photoPreview: { width: 200, height: 150, borderRadius: 4, marginBottom: 8 },
+  photoRemoveButton: { paddingVertical: 6, paddingHorizontal: 12 },
+  photoRemoveText: { fontSize: 10, color: "#FF3B30", letterSpacing: 2, fontWeight: "600" },
 
   // GPS Lost Banner
   gpsLostBanner: { backgroundColor: "#FF6B35", paddingVertical: 8, paddingHorizontal: 16, alignItems: "center" },

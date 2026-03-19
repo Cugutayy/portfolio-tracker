@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   FlatList,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { brand } from "@/constants/Colors";
 import { API, type MemberProfile, type CommunityActivity } from "@/lib/api";
 import { formatDistance, formatPace, formatDate } from "@/lib/format";
@@ -43,9 +44,11 @@ export default function MemberProfileScreen() {
     }
   }, [id]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const handleFollow = useCallback(async () => {
     if (!id || !profile) return;

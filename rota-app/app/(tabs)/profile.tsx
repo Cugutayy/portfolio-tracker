@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Share,
 } from "react-native";
 import { router } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
@@ -74,10 +75,12 @@ export default function ProfileScreen() {
     } catch {}
   }, []);
 
-  useEffect(() => {
-    loadProfile();
-    loadBadges();
-  }, [loadProfile, loadBadges]);
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+      loadBadges();
+    }, [loadProfile, loadBadges])
+  );
 
   const handleSync = async () => {
     setSyncing(true);

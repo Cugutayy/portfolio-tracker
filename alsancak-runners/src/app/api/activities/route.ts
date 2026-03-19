@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { activities, activitySplits } from "@/db/schema";
+import { activities, activitySplits, activityPhotos } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 import { getRequestUser } from "@/lib/mobile-auth";
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
   if (rateLimited) return rateLimited;
 
   const body = await request.json();
-  const { title, distanceM, movingTimeSec, startTime, activityType, polylineEncoded, startLat, startLng, endLat, endLng, elevationGainM, splits: clientSplits, elapsedTimeSec } = body;
+  const { title, distanceM, movingTimeSec, startTime, activityType, polylineEncoded, startLat, startLng, endLat, endLng, elevationGainM, splits: clientSplits, elapsedTimeSec, photoBase64 } = body;
 
   if (!title || !distanceM || !movingTimeSec || !startTime) {
     return NextResponse.json(
@@ -206,6 +206,24 @@ export async function POST(request: NextRequest) {
   } catch (e) {
     // Non-critical: splits are best-effort
     console.error("Split computation failed:", e);
+  }
+
+  // Store photo if provided (base64 data URI, max ~500KB)
+  try {
+    if (photoBase64 && typeof photoBase64 === "string" && photoBase64.startsWith("data:image/")) {
+      // Sanity check: reject if > 1MB base64 string
+      if (photoBase64.length <= 1_400_000) {
+        await db.insert(activityPhotos).values({
+          activityId: created.id,
+          url: photoBase64,
+          caption: null,
+          lat: startLat || null,
+          lng: startLng || null,
+        });
+      }
+    }
+  } catch (e) {
+    console.error("Photo save failed:", e);
   }
 
   // Badge evaluation (best-effort)
