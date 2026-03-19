@@ -463,6 +463,18 @@
       "month": "BU AY",
       "year": "BU YIL",
       "allTime": "TÜM ZAMANLAR"
+    },
+    "leaderboard": {
+      "title": "LİDER TABLOSU",
+      "viewAll": "TÜMÜ"
+    },
+    "runners": {
+      "title": "KOŞUCULAR",
+      "showAll": "HEPSİNİ GÖSTER",
+      "hideAll": "HEPSİNİ GİZLE"
+    },
+    "stravaCta": {
+      "download": "STRAVA İNDİR"
     }
   }
 }
