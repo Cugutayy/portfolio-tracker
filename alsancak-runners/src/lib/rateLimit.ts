@@ -100,4 +100,5 @@ export const RATE_LIMITS = {
   authRegister: { maxRequests: 3, windowSec: 60 } as RateLimitConfig, // 3 per minute
   stravaWebhook: { maxRequests: 100, windowSec: 60 } as RateLimitConfig, // 100 per minute
   eventRsvp: { maxRequests: 10, windowSec: 60 } as RateLimitConfig, // 10 per minute
+  communityActivities: { maxRequests: 30, windowSec: 60 } as RateLimitConfig, // 30 per minute
 } as const;
