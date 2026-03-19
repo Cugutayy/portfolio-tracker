@@ -9,29 +9,62 @@ const ISSUER = "alsancak-runners";
 const AUDIENCE = "rota-app";
 
 /**
- * Create a signed JWT for mobile app auth.
- * Contains user ID and role — valid for 30 days.
+ * Create access + refresh token pair for mobile auth.
+ * Access token: 1 hour (short-lived, used for API calls)
+ * Refresh token: 30 days (long-lived, used to get new access token)
  */
-export async function createMobileToken(user: {
+export async function createTokenPair(user: {
   id: string;
   role?: string;
-}): Promise<string> {
-  return new SignJWT({ sub: user.id, role: user.role || "member" })
+}): Promise<{ accessToken: string; refreshToken: string; expiresAt: number }> {
+  const now = Math.floor(Date.now() / 1000);
+
+  const accessToken = await new SignJWT({
+    sub: user.id,
+    role: user.role || "member",
+    type: "access",
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setIssuer(ISSUER)
+    .setAudience(AUDIENCE)
+    .setExpirationTime("1h")
+    .sign(secret);
+
+  const refreshToken = await new SignJWT({
+    sub: user.id,
+    type: "refresh",
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setIssuer(ISSUER)
     .setAudience(AUDIENCE)
     .setExpirationTime("30d")
     .sign(secret);
+
+  return {
+    accessToken,
+    refreshToken,
+    expiresAt: now + 3600, // 1 hour from now
+  };
+}
+
+/** Legacy: create single token (backward compat during migration) */
+export async function createMobileToken(user: {
+  id: string;
+  role?: string;
+}): Promise<string> {
+  const { accessToken } = await createTokenPair(user);
+  return accessToken;
 }
 
 /**
- * Verify a mobile JWT token and extract the user ID.
+ * Verify a mobile JWT token (access or refresh).
  * Returns null if token is invalid or expired.
  */
 export async function verifyMobileToken(
   token: string,
-): Promise<{ userId: string; role: string } | null> {
+): Promise<{ userId: string; role: string; type: string } | null> {
   try {
     const { payload } = await jwtVerify(token, secret, {
       issuer: ISSUER,
@@ -41,6 +74,7 @@ export async function verifyMobileToken(
     return {
       userId: payload.sub,
       role: (payload.role as string) || "member",
+      type: (payload.type as string) || "access",
     };
   } catch {
     return null;
@@ -49,10 +83,9 @@ export async function verifyMobileToken(
 
 /**
  * Extract user from request — checks both:
- * 1. NextAuth session (web, cookie-based)
- * 2. Mobile Bearer token (Authorization header)
- *
- * Use this instead of `auth()` in API routes that serve both web and mobile.
+ * 1. Mobile Bearer token (Authorization header)
+ * 2. Cookie token (mobile also sends this)
+ * 3. NextAuth session (web, cookie-based)
  */
 export async function getRequestUser(
   request: NextRequest,
@@ -62,7 +95,7 @@ export async function getRequestUser(
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
     const result = await verifyMobileToken(token);
-    if (result) {
+    if (result && result.type === "access") {
       return { id: result.userId, role: result.role };
     }
   }
@@ -73,9 +106,8 @@ export async function getRequestUser(
     request.cookies.get("__Secure-authjs.session-token")?.value;
 
   if (cookieToken) {
-    // Try as mobile JWT first
     const result = await verifyMobileToken(cookieToken);
-    if (result) {
+    if (result && result.type === "access") {
       return { id: result.userId, role: result.role };
     }
   }

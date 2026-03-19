@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
-import { setToken, setUser } from "@/lib/auth";
+import { setToken, setUser, setRefreshToken } from "@/lib/auth";
 
 const API_BASE = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 
@@ -42,11 +42,10 @@ export default function LoginScreen() {
         return;
       }
 
-      // Store token + user data
-      await setToken(data.token);
-      if (data.user) {
-        await setUser(data.user);
-      }
+      // Store tokens + user data
+      await setToken(data.accessToken || data.token);
+      if (data.refreshToken) await setRefreshToken(data.refreshToken);
+      if (data.user) await setUser(data.user);
       router.replace("/(tabs)");
     } catch {
       Alert.alert("Hata", "Baglanti saglanamadi. Lutfen tekrar deneyin.");

@@ -28,8 +28,14 @@ export async function rateLimit(
   identifier: string,
   config: RateLimitConfig
 ): Promise<RateLimitResult> {
-  // If Redis is not configured, fail open (allow all requests)
+  // If Redis is not configured, allow read endpoints but block writes
   if (!redis) {
+    // In production without Redis: deny auth/write endpoints (security-critical)
+    if (identifier.startsWith("login:") || identifier.startsWith("register:")) {
+      console.warn("[RateLimit] Redis unavailable — blocking auth endpoint");
+      return { allowed: false, remaining: 0, resetAt: Math.ceil(Date.now() / 1000) + 60 };
+    }
+    // Allow read-only community endpoints to continue
     return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
   }
 
