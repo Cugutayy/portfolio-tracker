@@ -50,6 +50,8 @@ export default function TrackScreen() {
   // Auto-pause refs
   const lowSpeedSince = useRef<number | null>(null);
   const autoPaused = useRef(false);
+  // Manual pause ref — prevents auto-resume after explicit pause
+  const manuallyPaused = useRef(false);
   // GPS signal loss ref
   const lastLocationTime = useRef<number>(Date.now());
   // Voice announcement ref
@@ -99,6 +101,14 @@ export default function TrackScreen() {
     return () => clearInterval(interval);
   }, [state]);
 
+  // Cleanup on unmount — prevent memory leaks
+  useEffect(() => {
+    return () => {
+      locationSub.current?.remove();
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   // Shared location update handler
   const handleLocationUpdate = useCallback((location: Location.LocationObject) => {
     const { latitude, longitude, accuracy } = location.coords;
@@ -113,14 +123,16 @@ export default function TrackScreen() {
 
     // Skip distance/pace updates if auto-paused (still track coords for GPS signal)
     if (autoPaused.current) {
-      // Check if we should auto-resume
+      // Don't auto-resume if user explicitly paused
+      if (manuallyPaused.current) return;
+      // Check if we should auto-resume (hysteresis: resume at 2.0 km/h, pause at 1.0)
       setCoords((prev) => {
         if (prev.length > 0) {
           const last = prev[prev.length - 1];
           const d = haversineDistance(last.latitude, last.longitude, latitude, longitude);
           const timeDiff = (timestamp - last.timestamp) / 1000;
           const speedKmH = timeDiff > 0 ? (d / timeDiff) * 3.6 : 0;
-          if (speedKmH >= 1.0) {
+          if (speedKmH >= 2.0) {
             lowSpeedSince.current = null;
             autoPaused.current = false;
             setState("running");
@@ -142,6 +154,10 @@ export default function TrackScreen() {
         }
 
         const timeDiff = (timestamp - last.timestamp) / 1000;
+
+        // Speed sanity check: reject GPS spikes (12 m/s = 43 km/h, impossible for running)
+        const speedMs = d / timeDiff;
+        if (speedMs > 12) return prev;
 
         // 1.2 Auto-pause: check speed
         const speedKmH = timeDiff > 0 ? (d / timeDiff) * 3.6 : 0;
@@ -166,10 +182,12 @@ export default function TrackScreen() {
           const currentKm = Math.floor(newDist / 1000);
           if (currentKm > lastAnnouncedKm.current && currentKm > 0) {
             lastAnnouncedKm.current = currentKm;
-            // Compute pace from total time and distance
-            const totalPace = newDist > 0 ? (seconds / (newDist / 1000)) : 0;
-            const paceMin = Math.floor(totalPace / 60);
-            const paceSec = Math.round(totalPace % 60);
+            // Use smoothed pace (rolling average) for more accurate announcement
+            const rollingPace = recentPaces.current.length > 0
+              ? recentPaces.current.reduce((a, b) => a + b, 0) / recentPaces.current.length
+              : 0;
+            const paceMin = Math.floor(rollingPace / 60);
+            const paceSec = Math.round(rollingPace % 60);
             Speech.speak(
               `${currentKm} kilometre tamamlandi. Tempo: ${paceMin} dakika ${paceSec} saniye.`,
               { language: "tr-TR", rate: 1.1 },
@@ -188,7 +206,7 @@ export default function TrackScreen() {
 
       return [...prev, { latitude, longitude, timestamp }];
     });
-  }, [seconds]);
+  }, []);
 
   const startRun = useCallback(async () => {
     const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
@@ -213,6 +231,7 @@ export default function TrackScreen() {
     recentPaces.current = [];
     lowSpeedSince.current = null;
     autoPaused.current = false;
+    manuallyPaused.current = false;
     lastAnnouncedKm.current = 0;
     lastLocationTime.current = Date.now();
     setGpsLost(false);
@@ -235,6 +254,7 @@ export default function TrackScreen() {
     locationSub.current = null;
     autoPaused.current = false;
     lowSpeedSince.current = null;
+    manuallyPaused.current = true;
     setState("paused");
     Vibration.vibrate(50);
   }, []);
@@ -242,6 +262,7 @@ export default function TrackScreen() {
   const resumeRun = useCallback(async () => {
     autoPaused.current = false;
     lowSpeedSince.current = null;
+    manuallyPaused.current = false;
     setState("running");
     Vibration.vibrate(50);
 

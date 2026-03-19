@@ -76,27 +76,28 @@ export default function ActivityDetailScreen() {
     API.getComments(id).then((res) => setComments(res.comments)).catch(() => {});
   }, [id]);
 
-  const handleKudos = useCallback(async () => {
+  const handleToggleKudos = useCallback(async () => {
     if (!id) return;
-    const wasKudosed = kudosData.hasKudosed;
+    const originalHasKudosed = kudosData.hasKudosed;
+    const originalCount = kudosData.count;
+
     // Optimistic update
     setKudosData((prev) => ({
       ...prev,
-      hasKudosed: !wasKudosed,
-      count: prev.count + (wasKudosed ? -1 : 1),
+      hasKudosed: !prev.hasKudosed,
+      count: prev.count + (prev.hasKudosed ? -1 : 1),
     }));
     try {
-      const res = await API.toggleKudos(id);
-      setKudosData((prev) => ({ ...prev, count: res.count, hasKudosed: res.hasKudosed }));
+      await API.toggleKudos(id);
     } catch {
-      // Revert
+      // Revert to original
       setKudosData((prev) => ({
         ...prev,
-        hasKudosed: wasKudosed,
-        count: prev.count + (wasKudosed ? 1 : -1),
+        hasKudosed: originalHasKudosed,
+        count: originalCount,
       }));
     }
-  }, [id, kudosData.hasKudosed]);
+  }, [id, kudosData.hasKudosed, kudosData.count]);
 
   const handleSendComment = useCallback(async () => {
     if (!id || !commentText.trim()) return;
@@ -257,7 +258,7 @@ map.on('load',function(){
         {/* Kudos Section */}
         <View style={s.kudosSection}>
           <View style={s.kudosRow}>
-            <TouchableOpacity style={s.kudosButton} onPress={handleKudos}>
+            <TouchableOpacity style={s.kudosButton} onPress={handleToggleKudos}>
               <Text style={[s.kudosEmoji, kudosData.hasKudosed && s.kudosActiveEmoji]}>
                 {"\uD83D\uDC4F"}
               </Text>

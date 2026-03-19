@@ -79,31 +79,32 @@ export default function FeedScreen() {
 
   // Optimistic kudos toggle
   const handleKudos = useCallback(async (activityId: string) => {
+    // Store original state BEFORE toggle
+    let originalHasKudosed = false;
+    let originalKudosCount = 0;
+
     setActivities((prev) =>
       prev.map((a) => {
         if (a.id !== activityId) return a;
-        const wasKudosed = a.hasKudosed;
+        originalHasKudosed = !!a.hasKudosed;
+        originalKudosCount = a.kudosCount || 0;
         return {
           ...a,
-          hasKudosed: !wasKudosed,
-          kudosCount: (a.kudosCount || 0) + (wasKudosed ? -1 : 1),
+          hasKudosed: !a.hasKudosed,
+          kudosCount: (a.kudosCount || 0) + (a.hasKudosed ? -1 : 1),
         };
       })
     );
     try {
       await API.toggleKudos(activityId);
     } catch {
-      // Revert on error
+      // Revert to ORIGINAL state
       setActivities((prev) =>
-        prev.map((a) => {
-          if (a.id !== activityId) return a;
-          const wasKudosed = a.hasKudosed;
-          return {
-            ...a,
-            hasKudosed: !wasKudosed,
-            kudosCount: (a.kudosCount || 0) + (wasKudosed ? -1 : 1),
-          };
-        })
+        prev.map((a) =>
+          a.id === activityId
+            ? { ...a, hasKudosed: originalHasKudosed, kudosCount: originalKudosCount }
+            : a
+        )
       );
     }
   }, []);
@@ -192,12 +193,21 @@ export default function FeedScreen() {
   );
 
   const renderFooter = () => {
-    if (!loadingMore) return null;
-    return (
-      <View style={s.footerLoader}>
-        <ActivityIndicator color={brand.accent} size="small" />
-      </View>
-    );
+    if (loadingMore) {
+      return (
+        <View style={s.footerLoader}>
+          <ActivityIndicator color={brand.accent} size="small" />
+        </View>
+      );
+    }
+    if (!hasMore && activities.length > 0) {
+      return (
+        <Text style={{ color: "#666", textAlign: "center", padding: 20, fontSize: 13 }}>
+          Tüm aktiviteler yüklendi
+        </Text>
+      );
+    }
+    return null;
   };
 
   return (

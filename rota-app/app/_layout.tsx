@@ -67,6 +67,23 @@ function AuthGatedNavigation() {
           headerStyle: { backgroundColor: brand.bg },
         }}
       />
+      <Stack.Screen
+        name="member/[id]"
+        options={{
+          headerShown: true,
+          headerTitle: "",
+          headerBackTitle: "Geri",
+          headerTintColor: brand.accent,
+          headerStyle: { backgroundColor: brand.bg },
+        }}
+      />
+      <Stack.Screen
+        name="invite"
+        options={{
+          animation: "slide_from_bottom",
+          presentation: "modal",
+        }}
+      />
     </Stack>
   );
 }

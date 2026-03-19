@@ -39,7 +39,9 @@ export async function evaluateBadges(memberId: string, activityId?: string): Pro
   const newBadges: string[] = [];
 
   for (const badge of unearnedBadges) {
-    const val = badge.triggerValue || 0;
+    const val = badge.triggerValue ?? 0;
+    // Don't evaluate badges with no trigger value for numeric comparisons
+    if (val === 0 && badge.triggerType !== "first_run") continue;
     let earned = false;
 
     switch (badge.triggerType) {
@@ -56,7 +58,8 @@ export async function evaluateBadges(memberId: string, activityId?: string): Pro
         earned = latestDistanceM >= val;
         break;
       case "pace_under":
-        earned = latestPace > 0 && latestPace <= val;
+        // Only evaluate if activity has actual pace data
+        earned = latest?.avgPaceSecKm != null && latest.avgPaceSecKm > 0 && latest.avgPaceSecKm <= val;
         break;
       default:
         break;

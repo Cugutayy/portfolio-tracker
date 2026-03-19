@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
-import { kudos, members } from "@/db/schema";
+import { kudos, members, activities } from "@/db/schema";
 import { eq, and, count } from "drizzle-orm";
 
 // GET /api/activities/:id/kudos - list kudos for activity
@@ -45,6 +45,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id: activityId } = await params;
+
+  // Prevent self-kudos (like Strava)
+  const [activity] = await db
+    .select({ memberId: activities.memberId })
+    .from(activities)
+    .where(eq(activities.id, activityId))
+    .limit(1);
+
+  if (!activity) return NextResponse.json({ error: "Activity not found" }, { status: 404 });
+  if (activity.memberId === user.id) {
+    return NextResponse.json({ error: "Kendi aktivitene kudos veremezsin" }, { status: 400 });
+  }
 
   // Check if already kudosed
   const [existing] = await db
