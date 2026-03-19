@@ -1,6 +1,6 @@
 import React from "react";
 import { Tabs } from "expo-router";
-import { SymbolView } from "expo-symbols";
+import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 
 export default function TabLayout() {
@@ -30,12 +30,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Feed",
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{ ios: "list.bullet", android: "list", web: "list" }}
-              tintColor={color}
-              size={24}
-            />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="list-outline" size={size} color={color} />
           ),
         }}
       />
@@ -43,12 +39,8 @@ export default function TabLayout() {
         name="map"
         options={{
           title: "Harita",
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{ ios: "map", android: "map", web: "map" }}
-              tintColor={color}
-              size={24}
-            />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="map-outline" size={size} color={color} />
           ),
         }}
       />
@@ -56,12 +48,8 @@ export default function TabLayout() {
         name="track"
         options={{
           title: "Kosu",
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{ ios: "figure.run", android: "directions_run", web: "directions_run" }}
-              tintColor={color}
-              size={24}
-            />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="walk-outline" size={size} color={color} />
           ),
         }}
       />
@@ -69,12 +57,8 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Profil",
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{ ios: "person.circle", android: "person", web: "person" }}
-              tintColor={color}
-              size={24}
-            />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
           ),
         }}
       />
