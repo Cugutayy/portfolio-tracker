@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { db } from "@/lib/db";
-import { events, eventRsvps, members } from "@/db/schema";
+import { events, eventRsvps, members, follows } from "@/db/schema";
 import { eq, gte, asc, desc, sql, and } from "drizzle-orm";
+import { sendPushNotifications } from "@/lib/push";
 
 // GET /api/events — list upcoming events (public) or all for admin
 export async function GET(request: NextRequest) {
@@ -154,6 +155,38 @@ export async function POST(request: NextRequest) {
       createdBy: session.user.id,
     })
     .returning();
+
+  // Notify followers of the event creator (fire and forget)
+  (async () => {
+    try {
+      const [creator] = await db
+        .select({ name: members.name })
+        .from(members)
+        .where(eq(members.id, session.user.id))
+        .limit(1);
+
+      const followerTokens = await db
+        .select({ pushToken: members.pushToken })
+        .from(follows)
+        .innerJoin(members, eq(follows.followerId, members.id))
+        .where(eq(follows.followingId, session.user.id));
+
+      const tokens = followerTokens
+        .map(f => f.pushToken)
+        .filter((t): t is string => !!t);
+
+      if (tokens.length > 0 && creator) {
+        sendPushNotifications(
+          tokens,
+          "Yeni Etkinlik",
+          `\u{1F3C3} ${creator.name} yeni bir etkinlik olu\u015Fturdu: ${title}`,
+          { type: "event", eventId: event.id }
+        );
+      }
+    } catch (e) {
+      console.error("Event push notification error:", e);
+    }
+  })();
 
   return NextResponse.json(event, { status: 201 });
 }

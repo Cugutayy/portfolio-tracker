@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -8,8 +8,10 @@ import {
   RefreshControl,
   SafeAreaView,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
+import { useFocusEffect } from "@react-navigation/native";
 import { brand } from "@/constants/Colors";
 import { API, type CommunityActivity, type LeaderboardEntry } from "@/lib/api";
 import { Ionicons } from "@expo/vector-icons";
@@ -55,7 +57,17 @@ export default function FeedScreen() {
     } catch {}
   }, [fetchActivities]);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+
+      const interval = setInterval(() => {
+        fetchActivities(1, false);
+      }, 30000);
+
+      return () => clearInterval(interval);
+    }, [loadData, fetchActivities])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -175,6 +187,11 @@ export default function FeedScreen() {
         <Text style={s.cardStat}><Text style={s.cardStatValue}>{formatPace(item.avgPaceSecKm)}</Text> /km</Text>
       </View>
 
+      {/* Activity photo */}
+      {item.photoUrl && (
+        <Image source={{ uri: item.photoUrl }} style={s.cardPhoto} resizeMode="cover" />
+      )}
+
       {/* Kudos button */}
       <View style={s.cardFooter}>
         <TouchableOpacity
@@ -269,6 +286,7 @@ const s = StyleSheet.create({
   cardStats: { flexDirection: "row", gap: 16 },
   cardStat: { fontSize: 12, color: brand.textMuted },
   cardStatValue: { color: brand.accent, fontWeight: "600" },
+  cardPhoto: { width: "100%", height: 200, borderRadius: 4, marginTop: 10 },
   cardFooter: { flexDirection: "row", alignItems: "center", marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: brand.border },
   kudosButton: { flexDirection: "row", alignItems: "center", gap: 4 },
   kudosEmoji: { fontSize: 16, opacity: 0.6 },

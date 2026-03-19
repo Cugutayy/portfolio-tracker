@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
-import { activities, activitySplits, memberBadges } from "@/db/schema";
+import { activities, activitySplits, activityPhotos, memberBadges } from "@/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -41,7 +41,17 @@ export async function GET(
     .where(eq(activitySplits.activityId, id))
     .orderBy(asc(activitySplits.splitIndex));
 
-  return NextResponse.json({ activity, splits });
+  // Get photos
+  const photos = await db
+    .select({
+      id: activityPhotos.id,
+      url: activityPhotos.url,
+      caption: activityPhotos.caption,
+    })
+    .from(activityPhotos)
+    .where(eq(activityPhotos.activityId, id));
+
+  return NextResponse.json({ activity, splits, photos });
 }
 
 // PATCH /api/activities/[id] — update activity (owner only)
