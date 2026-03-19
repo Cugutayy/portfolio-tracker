@@ -1,13 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
-  TouchableOpacity,
-  FlatList,
-  Alert,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,233 +17,245 @@ import {
   getHealthKitWorkouts,
 } from "@/lib/health";
 
-interface HealthWorkout {
-  startDate: string;
-  duration: number;
-  totalDistance?: number;
-  totalEnergyBurned?: number;
-}
+type Phase = "checking" | "importing" | "done" | "unavailable" | "empty" | "error";
 
 export default function ImportActivityScreen() {
-  const [healthAvailable, setHealthAvailable] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [workouts, setWorkouts] = useState<HealthWorkout[]>([]);
-  const [importedIds, setImportedIds] = useState<Set<number>>(new Set());
-  const [importingAll, setImportingAll] = useState(false);
+  const [phase, setPhase] = useState<Phase>("checking");
+  const [imported, setImported] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    isHealthKitAvailable().then((available) => {
-      setHealthAvailable(available);
-      if (available) {
-        loadWorkouts();
-      }
-    });
+    runAutoImport();
   }, []);
 
-  const loadWorkouts = useCallback(async () => {
-    setLoading(true);
-    const authorized = await requestHealthKitAuth();
-    if (!authorized) {
-      Alert.alert("Izin Gerekli", "Apple Health erisim izni verilmedi.");
-      setLoading(false);
+  async function runAutoImport() {
+    // 1. Check if HealthKit is available
+    const available = await isHealthKitAvailable();
+    if (!available) {
+      setPhase("unavailable");
       return;
     }
-    const data = await getHealthKitWorkouts(30);
-    setWorkouts(data);
-    setLoading(false);
-  }, []);
 
-  const importSingle = async (workout: HealthWorkout, index: number) => {
-    try {
-      await API.createActivity({
-        title: `Kosu — ${new Date(workout.startDate).toLocaleDateString("tr-TR")}`,
-        distanceM: workout.totalDistance || 0,
-        movingTimeSec: Math.round(workout.duration),
-        startTime: workout.startDate,
-        activityType: "run",
-      });
-      setImportedIds((prev) => new Set(prev).add(index));
-    } catch {
-      Alert.alert("Hata", "Aktivite kaydedilemedi.");
+    // 2. Request permission (auto — system dialog appears)
+    const authorized = await requestHealthKitAuth();
+    if (!authorized) {
+      setPhase("error");
+      return;
     }
-  };
 
-  const importAll = async () => {
-    setImportingAll(true);
+    // 3. Fetch workouts from last 30 days
+    const workouts = await getHealthKitWorkouts(30);
+    if (workouts.length === 0) {
+      setPhase("empty");
+      return;
+    }
+
+    // 4. Auto-import all workouts
+    setTotal(workouts.length);
+    setPhase("importing");
+
     let count = 0;
-    for (let i = 0; i < workouts.length; i++) {
-      if (importedIds.has(i)) continue;
+    for (const w of workouts) {
       try {
         await API.createActivity({
-          title: `Kosu — ${new Date(workouts[i].startDate).toLocaleDateString("tr-TR")}`,
-          distanceM: workouts[i].totalDistance || 0,
-          movingTimeSec: Math.round(workouts[i].duration),
-          startTime: workouts[i].startDate,
+          title: `Kosu — ${new Date(w.startDate).toLocaleDateString("tr-TR")}`,
+          distanceM: w.totalDistance || 0,
+          movingTimeSec: Math.round(w.duration),
+          startTime: w.startDate,
           activityType: "run",
         });
-        setImportedIds((prev) => new Set(prev).add(i));
         count++;
       } catch {
-        // skip failed ones
+        // skip duplicates or errors
       }
+      setImported(count);
+      setProgress((count / workouts.length) * 100);
     }
-    setImportingAll(false);
-    Alert.alert("Tamamlandi", `${count} aktivite iceri aktarildi!`, [
-      { text: "Tamam", onPress: () => router.back() },
-    ]);
-  };
 
-  const formatDuration = (sec: number) => {
-    const h = Math.floor(sec / 3600);
-    const m = Math.floor((sec % 3600) / 60);
-    return h > 0 ? `${h}s ${m}dk` : `${m}dk`;
-  };
+    setImported(count);
+    setPhase("done");
 
-  const renderWorkout = ({
-    item,
-    index,
-  }: {
-    item: HealthWorkout;
-    index: number;
-  }) => {
-    const imported = importedIds.has(index);
-    const d = new Date(item.startDate);
-    return (
-      <View style={s.card}>
-        <View style={s.cardLeft}>
-          <Text style={s.cardDate}>
-            {d.getDate()}{" "}
-            {d.toLocaleDateString("tr-TR", { month: "short" })}
-          </Text>
-          <Text style={s.cardTime}>
-            {d.toLocaleTimeString("tr-TR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </Text>
-        </View>
-        <View style={s.cardBody}>
-          <Text style={s.cardDist}>
-            {item.totalDistance
-              ? `${(item.totalDistance / 1000).toFixed(1)} km`
-              : "—"}
-          </Text>
-          <Text style={s.cardDur}>{formatDuration(item.duration)}</Text>
-        </View>
-        {imported ? (
-          <View style={s.importedBadge}>
-            <Ionicons name="checkmark" size={16} color={brand.accent} />
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={s.importBtn}
-            onPress={() => importSingle(item, index)}
-          >
-            <Ionicons name="add" size={18} color={brand.accent} />
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  };
+    // Auto-close after 2 seconds
+    setTimeout(() => router.back(), 2000);
+  }
 
   return (
     <SafeAreaView style={s.container}>
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={brand.text} />
-        </TouchableOpacity>
-        <Text style={s.title}>SAGLIK VERİLERİ</Text>
+      <View style={s.content}>
+        {phase === "checking" && (
+          <>
+            <ActivityIndicator color={brand.accent} size="large" />
+            <Text style={s.statusText}>Apple Health kontrol ediliyor...</Text>
+          </>
+        )}
+
+        {phase === "importing" && (
+          <>
+            <View style={s.progressRing}>
+              <Text style={s.progressNumber}>{imported}</Text>
+              <Text style={s.progressTotal}>/ {total}</Text>
+            </View>
+            <View style={s.progressBar}>
+              <View style={[s.progressFill, { width: `${progress}%` }]} />
+            </View>
+            <Text style={s.statusText}>Aktiviteler aktariliyor...</Text>
+          </>
+        )}
+
+        {phase === "done" && (
+          <>
+            <View style={s.doneIcon}>
+              <Ionicons name="checkmark" size={40} color={brand.bg} />
+            </View>
+            <Text style={s.doneTitle}>{imported} AKTİVİTE AKTARILDI</Text>
+            <Text style={s.doneSubtext}>Otomatik olarak kapatiliyor...</Text>
+          </>
+        )}
+
+        {phase === "empty" && (
+          <>
+            <Ionicons name="fitness-outline" size={56} color={brand.textDim} />
+            <Text style={s.emptyTitle}>Kosu Bulunamadi</Text>
+            <Text style={s.emptyText}>
+              Son 30 gunde Apple Health'te kosu veya yuruyus kaydi yok.
+            </Text>
+            <TouchableOpacity style={s.closeBtn} onPress={() => router.back()}>
+              <Text style={s.closeBtnText}>KAPAT</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {phase === "unavailable" && (
+          <>
+            <Ionicons name="heart-outline" size={56} color={brand.textDim} />
+            <Text style={s.emptyTitle}>Apple Health Kullanilamiyor</Text>
+            <Text style={s.emptyText}>
+              Bu ozellik icin uygulamanin EAS build ile yuklenmesi gerekiyor.
+              {"\n\n"}
+              Kosu takibi icin alt bardaki Kosu sekmesini kullan — GPS ile otomatik kaydeder!
+            </Text>
+            <TouchableOpacity
+              style={s.trackBtn}
+              onPress={() => {
+                router.back();
+                setTimeout(() => router.push("/(tabs)/track"), 300);
+              }}
+            >
+              <Ionicons name="walk-outline" size={18} color={brand.bg} />
+              <Text style={s.trackBtnText}>KOSU BASLA</Text>
+            </TouchableOpacity>
+          </>
+        )}
+
+        {phase === "error" && (
+          <>
+            <Ionicons name="close-circle-outline" size={56} color="#FF6B6B" />
+            <Text style={s.emptyTitle}>Erisim Reddedildi</Text>
+            <Text style={s.emptyText}>
+              Apple Health erisim izni verilmedi. Ayarlar &gt; Gizlilik &gt; Saglik'tan izin verebilirsin.
+            </Text>
+            <TouchableOpacity style={s.closeBtn} onPress={() => router.back()}>
+              <Text style={s.closeBtnText}>KAPAT</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
-
-      {healthAvailable === null || loading ? (
-        <View style={s.center}>
-          <ActivityIndicator color={brand.accent} size="large" />
-          <Text style={s.loadingText}>Apple Health kontrol ediliyor...</Text>
-        </View>
-      ) : !healthAvailable ? (
-        <View style={s.center}>
-          <Ionicons name="heart-outline" size={64} color={brand.textDim} />
-          <Text style={s.unavailableTitle}>Apple Health Kulanilamiyor</Text>
-          <Text style={s.unavailableText}>
-            Apple Health entegrasyonu icin uygulama EAS build ile
-            yuklenmis olmalidir.{"\n\n"}
-            Simdilik kosu takip etmek icin alt bardaki{" "}
-            <Text style={{ color: brand.accent }}>Kosu</Text> sekmesini
-            kullanabilirsin — GPS ile otomatik kaydeder!
-          </Text>
-          <TouchableOpacity
-            style={s.goTrackBtn}
-            onPress={() => {
-              router.back();
-              setTimeout(() => router.push("/(tabs)/track"), 300);
-            }}
-          >
-            <Ionicons name="walk-outline" size={18} color={brand.bg} />
-            <Text style={s.goTrackText}>KOSU BASLA</Text>
-          </TouchableOpacity>
-        </View>
-      ) : workouts.length === 0 ? (
-        <View style={s.center}>
-          <Ionicons name="fitness-outline" size={64} color={brand.textDim} />
-          <Text style={s.unavailableTitle}>Kosu Bulunamadi</Text>
-          <Text style={s.unavailableText}>
-            Son 30 gunde Apple Health'te kayitli kosu/yuruyus yok.
-          </Text>
-        </View>
-      ) : (
-        <>
-          {/* Import all button */}
-          <TouchableOpacity
-            style={s.importAllBtn}
-            onPress={importAll}
-            disabled={importingAll}
-          >
-            {importingAll ? (
-              <ActivityIndicator color={brand.bg} size="small" />
-            ) : (
-              <>
-                <Ionicons name="cloud-download-outline" size={18} color={brand.bg} />
-                <Text style={s.importAllText}>
-                  TUMUNU ICERL AKTAR ({workouts.length - importedIds.size})
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          <FlatList
-            data={workouts}
-            renderItem={renderWorkout}
-            keyExtractor={(_, i) => String(i)}
-            contentContainerStyle={s.list}
-          />
-        </>
-      )}
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: brand.bg },
-  header: {
-    flexDirection: "row",
+  content: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 8,
+    padding: 32,
   },
-  backBtn: { padding: 4 },
-  title: { fontSize: 16, fontWeight: "bold", color: brand.text, letterSpacing: 3 },
-  center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
-  loadingText: { color: brand.textMuted, marginTop: 12, fontSize: 13 },
-  unavailableTitle: { fontSize: 18, fontWeight: "bold", color: brand.text, marginTop: 16 },
-  unavailableText: {
+  statusText: {
+    color: brand.textMuted,
+    fontSize: 14,
+    marginTop: 16,
+    letterSpacing: 1,
+  },
+  progressRing: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    marginBottom: 16,
+  },
+  progressNumber: {
+    fontSize: 48,
+    fontWeight: "bold",
+    color: brand.accent,
+  },
+  progressTotal: {
+    fontSize: 20,
+    color: brand.textDim,
+    marginLeft: 4,
+  },
+  progressBar: {
+    width: "80%",
+    height: 4,
+    backgroundColor: brand.border,
+    borderRadius: 2,
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: "100%",
+    backgroundColor: brand.accent,
+    borderRadius: 2,
+  },
+  doneIcon: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: brand.accent,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  doneTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: brand.accent,
+    letterSpacing: 2,
+  },
+  doneSubtext: {
+    fontSize: 12,
+    color: brand.textDim,
+    marginTop: 8,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: brand.text,
+    marginTop: 16,
+    textAlign: "center",
+  },
+  emptyText: {
     fontSize: 13,
     color: brand.textMuted,
     textAlign: "center",
     lineHeight: 22,
     marginTop: 12,
   },
-  goTrackBtn: {
+  closeBtn: {
+    borderWidth: 1,
+    borderColor: brand.border,
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginTop: 24,
+  },
+  closeBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: brand.textMuted,
+    letterSpacing: 2,
+  },
+  trackBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -255,50 +265,10 @@ const s = StyleSheet.create({
     borderRadius: 8,
     marginTop: 24,
   },
-  goTrackText: { fontSize: 12, fontWeight: "700", color: brand.bg, letterSpacing: 2 },
-  importAllBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    backgroundColor: brand.accent,
-    marginHorizontal: 16,
-    marginBottom: 8,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  importAllText: { fontSize: 11, fontWeight: "700", color: brand.bg, letterSpacing: 1 },
-  list: { padding: 16, gap: 8 },
-  card: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: brand.surface,
-    borderWidth: 1,
-    borderColor: brand.border,
-    borderRadius: 8,
-    padding: 12,
-  },
-  cardLeft: { width: 50, alignItems: "center" },
-  cardDate: { fontSize: 13, fontWeight: "700", color: brand.text },
-  cardTime: { fontSize: 10, color: brand.textDim, marginTop: 2 },
-  cardBody: { flex: 1, marginLeft: 12 },
-  cardDist: { fontSize: 16, fontWeight: "700", color: brand.accent },
-  cardDur: { fontSize: 12, color: brand.textMuted, marginTop: 2 },
-  importBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: brand.accent,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  importedBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "rgba(230,255,0,0.15)",
-    justifyContent: "center",
-    alignItems: "center",
+  trackBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: brand.bg,
+    letterSpacing: 2,
   },
 });
