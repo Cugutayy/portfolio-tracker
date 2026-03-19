@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { stravaConnections, activities } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -11,11 +11,12 @@ import { cacheInvalidate, CACHE_KEYS } from "@/lib/cache";
 const PAGE_SIZE = 30;
 const MAX_PAGES = 5; // 150 activities max per request
 
-export async function POST() {
-  const session = await auth();
-  if (!session?.user?.id) {
+export async function POST(request: NextRequest) {
+  const user = await getRequestUser(request);
+  if (!user) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
+  const session = { user: { id: user.id } };  // compatibility shim
 
   // Rate limit: 5 syncs per minute per user
   const rateLimited = await checkRateLimit(
