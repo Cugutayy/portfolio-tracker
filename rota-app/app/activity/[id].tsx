@@ -1,19 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Dimensions,
+  TouchableOpacity,
+  TextInput,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, Stack } from "expo-router";
 import { WebView } from "react-native-webview";
+import * as Sharing from "expo-sharing";
 import { brand } from "@/constants/Colors";
-import { API, type Activity, type Split } from "@/lib/api";
-import { formatDistance, formatPace, formatDuration, formatDate, formatTime } from "@/lib/format";
+import {
+  API,
+  type Activity,
+  type Split,
+  type KudosResponse,
+  type Comment,
+} from "@/lib/api";
+import {
+  formatDistance,
+  formatPace,
+  formatDuration,
+  formatDate,
+  formatTime,
+  formatRelativeTime,
+} from "@/lib/format";
+import ShareCard, { type ShareCardRef } from "@/components/ShareCard";
 
-// Mapbox public token — injected at runtime to avoid GitHub secret scanning
+// Mapbox public token
 const MAPBOX_TOKEN =
   process.env.EXPO_PUBLIC_MAPBOX_TOKEN ||
   ["pk.eyJ1IjoiY2FnYXRheXl5IiwiYSI6ImNtb", "XdzaGJyNTJwYm0ycnF4eXBkaWk1bnIifQ", ".mQzIAMv0hs23D4rUb3_5gQ"].join("");
@@ -26,6 +46,18 @@ export default function ActivityDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Kudos state
+  const [kudosData, setKudosData] = useState<KudosResponse>({ kudos: [], count: 0, hasKudosed: false });
+  const [showAllKudos, setShowAllKudos] = useState(false);
+
+  // Comments state
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [sendingComment, setSendingComment] = useState(false);
+
+  // Share card ref
+  const shareCardRef = useRef<ShareCardRef>(null);
+
   useEffect(() => {
     if (!id) return;
     API.getActivity(id)
@@ -35,10 +67,62 @@ export default function ActivityDetailScreen() {
       })
       .catch((err) => {
         console.error("Activity fetch error:", err);
-        setError(err.message || "Aktivite yüklenemedi");
+        setError(err.message || "Aktivite yuklenemedi");
       })
       .finally(() => setLoading(false));
+
+    // Load kudos and comments
+    API.getKudos(id).then(setKudosData).catch(() => {});
+    API.getComments(id).then((res) => setComments(res.comments)).catch(() => {});
   }, [id]);
+
+  const handleKudos = useCallback(async () => {
+    if (!id) return;
+    const wasKudosed = kudosData.hasKudosed;
+    // Optimistic update
+    setKudosData((prev) => ({
+      ...prev,
+      hasKudosed: !wasKudosed,
+      count: prev.count + (wasKudosed ? -1 : 1),
+    }));
+    try {
+      const res = await API.toggleKudos(id);
+      setKudosData((prev) => ({ ...prev, count: res.count, hasKudosed: res.hasKudosed }));
+    } catch {
+      // Revert
+      setKudosData((prev) => ({
+        ...prev,
+        hasKudosed: wasKudosed,
+        count: prev.count + (wasKudosed ? 1 : -1),
+      }));
+    }
+  }, [id, kudosData.hasKudosed]);
+
+  const handleSendComment = useCallback(async () => {
+    if (!id || !commentText.trim()) return;
+    setSendingComment(true);
+    try {
+      const res = await API.addComment(id, commentText.trim());
+      setComments((prev) => [...prev, res.comment]);
+      setCommentText("");
+    } catch {
+      Alert.alert("Hata", "Yorum gonderilemedi.");
+    } finally {
+      setSendingComment(false);
+    }
+  }, [id, commentText]);
+
+  const handleShare = useCallback(async () => {
+    if (!shareCardRef.current) return;
+    try {
+      const uri = await shareCardRef.current.capture();
+      if (uri && (await Sharing.isAvailableAsync())) {
+        await Sharing.shareAsync(uri, { mimeType: "image/png" });
+      }
+    } catch {
+      Alert.alert("Hata", "Paylasim basarisiz.");
+    }
+  }, []);
 
   if (loading) {
     return (
@@ -64,7 +148,6 @@ export default function ActivityDetailScreen() {
     ...(activity.avgHeartrate ? [{ label: "ORT. KAH", value: `${Math.round(activity.avgHeartrate)} bpm` }] : []),
   ];
 
-  // Build inline map HTML for polyline
   const mapHtml = activity.polylineEncoded ? `<!DOCTYPE html>
 <html><head>
 <meta charset="utf-8"/>
@@ -90,69 +173,172 @@ map.on('load',function(){
 </script>
 </body></html>` : null;
 
+  const visibleKudos = showAllKudos ? kudosData.kudos : kudosData.kudos.slice(0, 3);
+
   return (
-    <ScrollView style={s.container} contentContainerStyle={s.content}>
-      {/* Route Map */}
-      {mapHtml && (
-        <View style={s.mapContainer}>
-          <WebView
-            source={{ html: mapHtml }}
-            style={s.map}
-            scrollEnabled={false}
-            javaScriptEnabled={true}
-          />
-        </View>
-      )}
-
-      {/* Title + Meta */}
-      <Text style={s.title}>{activity.title}</Text>
-      <Text style={s.meta}>
-        {formatDate(activity.startTime)} · {formatTime(activity.startTime)} · {activity.activityType}
-      </Text>
-
-      {/* Stats Grid */}
-      <View style={s.statsGrid}>
-        {statItems.map((item) => (
-          <View key={item.label} style={s.statBox}>
-            <Text style={s.statValue}>{item.value}</Text>
-            <Text style={s.statLabel}>{item.label}</Text>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: brand.bg }}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={90}
+    >
+      <Stack.Screen
+        options={{
+          headerRight: () => (
+            <TouchableOpacity onPress={handleShare} hitSlop={8}>
+              <Text style={{ fontSize: 16, color: brand.accent, fontWeight: "600", marginRight: 8 }}>
+                PAYLAS
+              </Text>
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <ScrollView style={s.container} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+        {/* Route Map */}
+        {mapHtml && (
+          <View style={s.mapContainer}>
+            <WebView
+              source={{ html: mapHtml }}
+              style={s.map}
+              scrollEnabled={false}
+              javaScriptEnabled={true}
+            />
           </View>
-        ))}
-      </View>
+        )}
 
-      {/* Splits */}
-      {splits.length > 0 && (
-        <View style={s.splitsSection}>
-          <Text style={s.sectionTitle}>KM BAZINDA DETAY</Text>
-          <View style={s.splitsHeader}>
-            <Text style={[s.splitCell, s.splitHeaderText, { flex: 0.5 }]}>KM</Text>
-            <Text style={[s.splitCell, s.splitHeaderText]}>TEMPO</Text>
-            <Text style={[s.splitCell, s.splitHeaderText]}>SURE</Text>
-            {splits[0]?.avgHeartrate != null && (
-              <Text style={[s.splitCell, s.splitHeaderText]}>KAH</Text>
-            )}
-          </View>
-          {splits.map((split) => (
-            <View key={split.splitIndex} style={s.splitRow}>
-              <Text style={[s.splitCell, { flex: 0.5, color: brand.textDim }]}>
-                {split.splitIndex}
-              </Text>
-              <Text style={[s.splitCell, { color: brand.accent }]}>
-                {formatPace(split.avgPaceSecKm)}
-              </Text>
-              <Text style={s.splitCell}>
-                {formatDuration(split.movingTimeSec)}
-              </Text>
-              {split.avgHeartrate != null && (
-                <Text style={[s.splitCell, { color: brand.strava }]}>
-                  {Math.round(split.avgHeartrate)}
-                </Text>
-              )}
+        {/* Title + Meta */}
+        <Text style={s.title}>{activity.title}</Text>
+        <Text style={s.meta}>
+          {formatDate(activity.startTime)} · {formatTime(activity.startTime)} · {activity.activityType}
+        </Text>
+
+        {/* Stats Grid */}
+        <View style={s.statsGrid}>
+          {statItems.map((item) => (
+            <View key={item.label} style={s.statBox}>
+              <Text style={s.statValue}>{item.value}</Text>
+              <Text style={s.statLabel}>{item.label}</Text>
             </View>
           ))}
         </View>
-      )}
-    </ScrollView>
+
+        {/* Splits */}
+        {splits.length > 0 && (
+          <View style={s.splitsSection}>
+            <Text style={s.sectionTitle}>KM BAZINDA DETAY</Text>
+            <View style={s.splitsHeader}>
+              <Text style={[s.splitCell, s.splitHeaderText, { flex: 0.5 }]}>KM</Text>
+              <Text style={[s.splitCell, s.splitHeaderText]}>TEMPO</Text>
+              <Text style={[s.splitCell, s.splitHeaderText]}>SURE</Text>
+              {splits[0]?.avgHeartrate != null && (
+                <Text style={[s.splitCell, s.splitHeaderText]}>KAH</Text>
+              )}
+            </View>
+            {splits.map((split) => (
+              <View key={split.splitIndex} style={s.splitRow}>
+                <Text style={[s.splitCell, { flex: 0.5, color: brand.textDim }]}>
+                  {split.splitIndex}
+                </Text>
+                <Text style={[s.splitCell, { color: brand.accent }]}>
+                  {formatPace(split.avgPaceSecKm)}
+                </Text>
+                <Text style={s.splitCell}>
+                  {formatDuration(split.movingTimeSec)}
+                </Text>
+                {split.avgHeartrate != null && (
+                  <Text style={[s.splitCell, { color: brand.strava }]}>
+                    {Math.round(split.avgHeartrate)}
+                  </Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Kudos Section */}
+        <View style={s.kudosSection}>
+          <View style={s.kudosRow}>
+            <TouchableOpacity style={s.kudosButton} onPress={handleKudos}>
+              <Text style={[s.kudosEmoji, kudosData.hasKudosed && s.kudosActiveEmoji]}>
+                {"\uD83D\uDC4F"}
+              </Text>
+            </TouchableOpacity>
+            <Text style={s.kudosCount}>{kudosData.count}</Text>
+            <Text style={s.kudosLabel}>kudos</Text>
+          </View>
+          {visibleKudos.length > 0 && (
+            <View style={s.kudosNames}>
+              {visibleKudos.map((k) => (
+                <Text key={k.id} style={s.kudosName}>{k.memberName}</Text>
+              ))}
+              {!showAllKudos && kudosData.kudos.length > 3 && (
+                <TouchableOpacity onPress={() => setShowAllKudos(true)}>
+                  <Text style={s.kudosMore}>+{kudosData.kudos.length - 3} daha</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </View>
+
+        {/* Comments Section */}
+        <View style={s.commentsSection}>
+          <Text style={s.sectionTitle}>YORUMLAR</Text>
+          {comments.length === 0 && (
+            <Text style={s.noComments}>Henuz yorum yok</Text>
+          )}
+          {comments.map((c) => (
+            <View key={c.id} style={s.commentItem}>
+              <View style={s.commentAvatar}>
+                <Text style={s.commentAvatarText}>
+                  {c.memberName.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                </Text>
+              </View>
+              <View style={s.commentBody}>
+                <View style={s.commentMeta}>
+                  <Text style={s.commentName}>{c.memberName}</Text>
+                  <Text style={s.commentTime}>{formatRelativeTime(c.createdAt)}</Text>
+                </View>
+                <Text style={s.commentText}>{c.text}</Text>
+              </View>
+            </View>
+          ))}
+
+          {/* Comment Input */}
+          <View style={s.commentInputRow}>
+            <TextInput
+              style={s.commentInput}
+              value={commentText}
+              onChangeText={setCommentText}
+              placeholder="Yorum yaz..."
+              placeholderTextColor={brand.textDim}
+              multiline
+              maxLength={500}
+            />
+            <TouchableOpacity
+              style={[s.sendButton, (!commentText.trim() || sendingComment) && s.sendButtonDisabled]}
+              onPress={handleSendComment}
+              disabled={!commentText.trim() || sendingComment}
+            >
+              <Text style={s.sendButtonText}>
+                {sendingComment ? "..." : "GONDER"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Hidden share card for capture */}
+      <View style={s.shareCardHidden}>
+        <ShareCard
+          ref={shareCardRef}
+          title={activity.title}
+          distanceM={activity.distanceM}
+          avgPaceSecKm={activity.avgPaceSecKm}
+          movingTimeSec={activity.movingTimeSec}
+          startTime={activity.startTime}
+          activityType={activity.activityType}
+        />
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -175,10 +361,42 @@ const s = StyleSheet.create({
   statBox: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, minWidth: "30%", flex: 1, alignItems: "center" },
   statValue: { fontSize: 18, fontWeight: "bold", color: brand.text },
   statLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 4 },
-  splitsSection: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, marginHorizontal: 20 },
+  splitsSection: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, marginHorizontal: 20, marginBottom: 16 },
   sectionTitle: { fontSize: 11, color: brand.textMuted, letterSpacing: 3, fontWeight: "600", marginBottom: 12 },
   splitsHeader: { flexDirection: "row", paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: brand.border },
   splitHeaderText: { color: brand.textDim, fontSize: 10, letterSpacing: 2 },
   splitRow: { flexDirection: "row", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: brand.border },
   splitCell: { flex: 1, fontSize: 13, color: brand.text, textAlign: "center" },
+
+  // Kudos
+  kudosSection: { marginHorizontal: 20, marginBottom: 16, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16 },
+  kudosRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  kudosButton: { padding: 4 },
+  kudosEmoji: { fontSize: 24, opacity: 0.6 },
+  kudosActiveEmoji: { opacity: 1 },
+  kudosCount: { fontSize: 18, fontWeight: "bold", color: brand.text },
+  kudosLabel: { fontSize: 13, color: brand.textMuted },
+  kudosNames: { marginTop: 8, gap: 2 },
+  kudosName: { fontSize: 12, color: brand.textDim },
+  kudosMore: { fontSize: 12, color: brand.accent, marginTop: 2 },
+
+  // Comments
+  commentsSection: { marginHorizontal: 20, marginBottom: 16, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16 },
+  noComments: { fontSize: 13, color: brand.textDim, textAlign: "center", paddingVertical: 12 },
+  commentItem: { flexDirection: "row", gap: 10, marginBottom: 12 },
+  commentAvatar: { width: 28, height: 28, borderRadius: 14, backgroundColor: brand.elevated, alignItems: "center", justifyContent: "center" },
+  commentAvatarText: { fontSize: 10, color: brand.accent, fontWeight: "600" },
+  commentBody: { flex: 1 },
+  commentMeta: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 2 },
+  commentName: { fontSize: 12, color: brand.text, fontWeight: "600" },
+  commentTime: { fontSize: 10, color: brand.textDim },
+  commentText: { fontSize: 13, color: brand.text, lineHeight: 18 },
+  commentInputRow: { flexDirection: "row", alignItems: "flex-end", gap: 8, marginTop: 12, borderTopWidth: 1, borderTopColor: brand.border, paddingTop: 12 },
+  commentInput: { flex: 1, backgroundColor: brand.elevated, borderRadius: 4, paddingHorizontal: 12, paddingVertical: 8, color: brand.text, fontSize: 13, maxHeight: 80 },
+  sendButton: { backgroundColor: brand.accent, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 4 },
+  sendButtonDisabled: { opacity: 0.4 },
+  sendButtonText: { fontSize: 11, fontWeight: "700", color: brand.bg, letterSpacing: 1 },
+
+  // Hidden share card
+  shareCardHidden: { position: "absolute", left: -9999, top: -9999 },
 });
