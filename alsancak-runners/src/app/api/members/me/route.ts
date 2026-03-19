@@ -81,6 +81,7 @@ export async function GET(request: NextRequest) {
           totalRuns: stats.totalRuns,
           totalDistanceM: stats.totalDistanceM,
           totalTimeSec: stats.totalTimeSec,
+          avgPaceSecKm: stats.avgPaceSecKm || 0,
           currentStreak: stats.streakDays,
           eventsAttended: stats.eventsAttended,
         }
@@ -88,6 +89,7 @@ export async function GET(request: NextRequest) {
           totalRuns: 0,
           totalDistanceM: 0,
           totalTimeSec: 0,
+          avgPaceSecKm: 0,
           currentStreak: 0,
           eventsAttended: 0,
         },
