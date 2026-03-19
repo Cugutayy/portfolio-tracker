@@ -17,13 +17,20 @@ export async function GET(
 
   const { id } = await params;
 
+  // First try to find the activity (visible to anyone for public/members activities)
   const [activity] = await db
     .select()
     .from(activities)
-    .where(and(eq(activities.id, id), eq(activities.memberId, session.user.id)))
+    .where(eq(activities.id, id))
     .limit(1);
 
   if (!activity) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Privacy check: only owner can see private activities
+  const isOwner = activity.memberId === session.user.id;
+  if (!isOwner && activity.privacy === "private") {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
