@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
-import { activities, activitySplits } from "@/db/schema";
+import { activities, activitySplits, memberBadges } from "@/db/schema";
 import { eq, and, asc } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -114,6 +114,8 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  // Clear member_badges references (no cascade on FK) before deleting
+  await db.delete(memberBadges).where(eq(memberBadges.activityId, id));
   await db.delete(activities).where(eq(activities.id, id));
 
   return NextResponse.json({ success: true });
