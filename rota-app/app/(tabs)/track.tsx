@@ -462,6 +462,8 @@ export default function TrackScreen() {
                 { text: "Bitir", style: "destructive", onPress: stopRun },
               ]
             )} activeOpacity={0.8}>
+              <Text style={s.stopButtonText}>BITIR</Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}
