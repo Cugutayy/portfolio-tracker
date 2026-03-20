@@ -17,6 +17,7 @@ import {
 import { useLocalSearchParams, Stack, router } from "expo-router";
 import { WebView } from "react-native-webview";
 import * as Sharing from "expo-sharing";
+import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 import {
   API,
@@ -247,6 +248,16 @@ map.on('load',function(){
         <Text style={s.meta}>
           {formatDate(activity.startTime)} · {formatTime(activity.startTime)} · {activity.activityType}
         </Text>
+        {(activity.startLocation || activity.endLocation) && (
+          <View style={s.locationRow}>
+            <Ionicons name="location-outline" size={14} color={brand.accent} />
+            <Text style={s.locationText}>
+              {activity.startLocation && activity.endLocation && activity.startLocation !== activity.endLocation
+                ? `${activity.startLocation} → ${activity.endLocation}`
+                : activity.startLocation || activity.endLocation}
+            </Text>
+          </View>
+        )}
 
         {/* Stats Grid */}
         <View style={s.statsGrid}>
@@ -422,6 +433,8 @@ const s = StyleSheet.create({
   memberAvatarImage: { width: 34, height: 34, borderRadius: 17 },
   memberAvatarText: { fontSize: 12, fontWeight: "bold", color: brand.accent },
   memberName: { fontSize: 14, fontWeight: "600", color: brand.text },
+  locationRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, marginTop: 6, gap: 6 },
+  locationText: { fontSize: 13, color: brand.textMuted, flex: 1 },
   title: { fontSize: 22, fontWeight: "bold", color: brand.text, letterSpacing: 1, marginBottom: 4, paddingHorizontal: 20, paddingTop: 16 },
   meta: { fontSize: 12, color: brand.textDim, letterSpacing: 1, marginBottom: 24, paddingHorizontal: 20 },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24, paddingHorizontal: 20 },

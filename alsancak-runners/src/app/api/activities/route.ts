@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
   if (rateLimited) return rateLimited;
 
   const body = await request.json();
-  const { title, distanceM, movingTimeSec, startTime, activityType, polylineEncoded, startLat, startLng, endLat, endLng, elevationGainM, splits: clientSplits, elapsedTimeSec, photoBase64 } = body;
+  const { title, distanceM, movingTimeSec, startTime, activityType, polylineEncoded, startLat, startLng, endLat, endLng, elevationGainM, splits: clientSplits, elapsedTimeSec, photoBase64, startLocation, endLocation } = body;
 
   if (!title || !distanceM || !movingTimeSec || !startTime) {
     return NextResponse.json(
@@ -179,6 +179,8 @@ export async function POST(request: NextRequest) {
       startLng: startLng || null,
       endLat: endLat || null,
       endLng: endLng || null,
+      startLocation: startLocation || null,
+      endLocation: endLocation || null,
       privacy: "public",
       sharedToBoard: true,
     })
