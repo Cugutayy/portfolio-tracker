@@ -1,0 +1,1 @@
+ALTER TABLE "members" ADD COLUMN "last_active_at" TIMESTAMP WITH TIME ZONE;
