@@ -11,8 +11,10 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 import { API, type Member } from "@/lib/api";
@@ -26,6 +28,8 @@ export default function EditProfileScreen() {
   const [bio, setBio] = useState("");
   const [paceGroup, setPaceGroup] = useState<string | null>(null);
   const [instagram, setInstagram] = useState("");
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
 
   useEffect(() => {
     loadProfile();
@@ -39,10 +43,33 @@ export default function EditProfileScreen() {
       setBio(m.bio || "");
       setPaceGroup(m.paceGroup || null);
       setInstagram(m.instagram || "");
+      if (m.image) setImageUri(m.image);
     } catch {
       Alert.alert("Hata", "Profil yuklenemedi.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      const asset = result.assets[0];
+      setImageUri(asset.uri);
+      if (asset.base64) {
+        // Check size (~1MB limit for base64)
+        if (asset.base64.length > 1_400_000) {
+          Alert.alert("Hata", "Fotograf cok buyuk. Daha kucuk bir fotograf secin.");
+          return;
+        }
+        setImageBase64(asset.base64);
+      }
     }
   };
 
@@ -54,12 +81,16 @@ export default function EditProfileScreen() {
 
     setSaving(true);
     try {
-      await API.updateProfile({
+      const updateData: Record<string, unknown> = {
         name: name.trim(),
         bio: bio.trim() || null,
         paceGroup,
         instagram: instagram.trim() || null,
-      } as Partial<Member>);
+      };
+      if (imageBase64) {
+        updateData.image = `data:image/jpeg;base64,${imageBase64}`;
+      }
+      await API.updateProfile(updateData as Partial<Member>);
       router.back();
     } catch {
       Alert.alert("Hata", "Profil guncellenemedi.");
@@ -113,12 +144,19 @@ export default function EditProfileScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* Avatar */}
-          <View style={s.avatarSection}>
+          <TouchableOpacity style={s.avatarSection} onPress={pickImage} activeOpacity={0.7}>
             <View style={s.avatar}>
-              <Text style={s.avatarText}>{initials}</Text>
+              {imageUri ? (
+                <Image source={{ uri: imageUri }} style={s.avatarImage} />
+              ) : (
+                <Text style={s.avatarText}>{initials}</Text>
+              )}
+              <View style={s.cameraIcon}>
+                <Ionicons name="camera" size={14} color={brand.bg} />
+              </View>
             </View>
             <Text style={s.avatarHint}>FOTOGRAF DEGISTIR</Text>
-          </View>
+          </TouchableOpacity>
 
           {/* Name */}
           <View style={s.field}>
@@ -257,7 +295,21 @@ const s = StyleSheet.create({
     alignItems: "center",
     marginBottom: 10,
   },
+  avatarImage: { width: 84, height: 84, borderRadius: 42 },
   avatarText: { fontSize: 28, fontWeight: "bold", color: brand.accent },
+  cameraIcon: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: brand.accent,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: brand.bg,
+  },
   avatarHint: {
     fontSize: 11,
     fontWeight: "600",

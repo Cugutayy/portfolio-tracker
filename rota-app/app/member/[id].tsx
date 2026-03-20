@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
+  Image,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
@@ -109,7 +110,11 @@ export default function MemberProfileScreen() {
       {/* Avatar + Name */}
       <View style={s.profileHeader}>
         <View style={s.avatar}>
-          <Text style={s.avatarText}>{initials}</Text>
+          {member.image ? (
+            <Image source={{ uri: member.image }} style={s.avatarImage} />
+          ) : (
+            <Text style={s.avatarText}>{initials}</Text>
+          )}
           <View style={[s.onlineDot, { backgroundColor: (member as typeof member & { isOnline?: boolean }).isOnline ? "#4CAF50" : "#666" }]} />
         </View>
         <Text style={s.name}>{member.name}</Text>
@@ -198,6 +203,7 @@ const s = StyleSheet.create({
   // Profile header
   profileHeader: { alignItems: "center", paddingVertical: 24 },
   avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: brand.surface, borderWidth: 2, borderColor: brand.accent, justifyContent: "center", alignItems: "center", marginBottom: 16 },
+  avatarImage: { width: 76, height: 76, borderRadius: 38 },
   avatarText: { fontSize: 24, fontWeight: "bold", color: brand.accent },
   onlineDot: { position: "absolute" as const, bottom: 2, right: 2, width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: brand.bg },
   name: { fontSize: 20, fontWeight: "bold", color: brand.text, letterSpacing: 2 },
