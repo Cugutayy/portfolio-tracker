@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
+import { useState, useEffect, useCallback } from "react";
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
 
@@ -16,11 +17,8 @@ export default function FollowersScreen() {
   const [users, setUsers] = useState<FollowUser[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
     try {
       const data = await API.getFollowers(memberId, type as "followers" | "following");
       setUsers(data.users || []);
@@ -29,7 +27,11 @@ export default function FollowersScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [memberId, type]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const renderUser = ({ item }: { item: FollowUser }) => (
     <TouchableOpacity
@@ -52,8 +54,9 @@ export default function FollowersScreen() {
   return (
     <SafeAreaView style={s.container}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={s.backBtn}>{"<-"} Geri</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center" }}>
+          <Ionicons name="arrow-back" size={18} color={brand.accent} />
+          <Text style={s.backBtn}> Geri</Text>
         </TouchableOpacity>
         <Text style={s.title}>{type === "followers" ? "TAKIPCILER" : "TAKIP EDILENLER"}</Text>
         <View style={{ width: 50 }} />
@@ -65,7 +68,7 @@ export default function FollowersScreen() {
         contentContainerStyle={s.list}
         ListEmptyComponent={
           loading ? (
-            <Text style={s.emptyText}>Yukleniyor...</Text>
+            <ActivityIndicator color={brand.accent} style={{ marginTop: 40 }} />
           ) : (
             <Text style={s.emptyText}>
               {type === "followers" ? "Henuz takipci yok" : "Henuz kimse takip edilmiyor"}
