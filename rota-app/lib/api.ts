@@ -354,6 +354,7 @@ export interface CommunityActivity {
   memberId: string;
   memberName: string;
   memberInitials: string;
+  memberImage?: string | null;
   title: string;
   activityType: string;
   startTime: string;

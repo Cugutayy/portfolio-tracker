@@ -9,18 +9,19 @@ import {
   Alert,
   ActivityIndicator,
   Share,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
-import { API, type Badge } from "@/lib/api";
+import { API, type Badge, type Member } from "@/lib/api";
 import { getUser } from "@/lib/auth";
 import { formatPace } from "@/lib/format";
 
 export default function ProfileScreen() {
-  const [user, setUser] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [user, setUser] = useState<{ id: string; name: string; email: string; image?: string | null } | null>(null);
   const [stats, setStats] = useState<{
     totalRuns: number;
     totalDistanceKm: number;
@@ -51,7 +52,7 @@ export default function ProfileScreen() {
       };
       const m = profile.member || profile;
       if (m.id && m.name && m.email) {
-        setUser({ id: m.id, name: m.name, email: m.email });
+        setUser({ id: m.id, name: m.name, email: m.email, image: (m as Member).image });
       }
       const st = profile.stats;
       setStats({
@@ -144,7 +145,11 @@ export default function ProfileScreen() {
         {/* Avatar + Name */}
         <View style={s.profileHeader}>
           <View style={s.avatar}>
-            <Text style={s.avatarText}>{initials}</Text>
+            {user?.image ? (
+              <Image source={{ uri: user.image }} style={s.avatarImage} />
+            ) : (
+              <Text style={s.avatarText}>{initials}</Text>
+            )}
           </View>
           <Text style={s.name}>{user?.name || "Kullanici"}</Text>
           <Text style={s.email}>{user?.email || ""}</Text>
@@ -285,6 +290,7 @@ const s = StyleSheet.create({
   topBarTitle: { fontSize: 13, fontWeight: "bold" as const, color: brand.text, letterSpacing: 3 },
   profileHeader: { alignItems: "center", paddingVertical: 32 },
   avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: brand.surface, borderWidth: 2, borderColor: brand.accent, justifyContent: "center", alignItems: "center", marginBottom: 16 },
+  avatarImage: { width: 76, height: 76, borderRadius: 38 },
   avatarText: { fontSize: 24, fontWeight: "bold", color: brand.accent },
   name: { fontSize: 20, fontWeight: "bold", color: brand.text, letterSpacing: 2 },
   email: { fontSize: 13, color: brand.textDim, marginTop: 4 },
