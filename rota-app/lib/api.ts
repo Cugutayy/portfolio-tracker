@@ -312,6 +312,7 @@ export interface Member {
 
 export interface Activity {
   id: string;
+  memberId: string;
   title: string;
   activityType: string;
   startTime: string;
@@ -323,6 +324,8 @@ export interface Activity {
   avgHeartrate: number | null;
   polylineEncoded: string | null;
   source: string;
+  memberName?: string | null;
+  memberImage?: string | null;
 }
 
 export interface CreateActivityInput {

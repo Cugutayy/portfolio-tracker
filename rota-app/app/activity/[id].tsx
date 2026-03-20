@@ -12,8 +12,9 @@ import {
   Platform,
   Alert,
   RefreshControl,
+  Image,
 } from "react-native";
-import { useLocalSearchParams, Stack } from "expo-router";
+import { useLocalSearchParams, Stack, router } from "expo-router";
 import { WebView } from "react-native-webview";
 import * as Sharing from "expo-sharing";
 import { brand } from "@/constants/Colors";
@@ -223,7 +224,25 @@ map.on('load',function(){
           </View>
         )}
 
-        {/* Title + Meta */}
+        {/* Member + Title + Meta */}
+        {activity.memberName && (
+          <TouchableOpacity
+            style={s.memberRow}
+            onPress={() => router.push(`/member/${activity.memberId}` as never)}
+            activeOpacity={0.7}
+          >
+            <View style={s.memberAvatar}>
+              {activity.memberImage ? (
+                <Image source={{ uri: activity.memberImage }} style={s.memberAvatarImage} />
+              ) : (
+                <Text style={s.memberAvatarText}>
+                  {activity.memberName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+                </Text>
+              )}
+            </View>
+            <Text style={s.memberName}>{activity.memberName}</Text>
+          </TouchableOpacity>
+        )}
         <Text style={s.title}>{activity.title}</Text>
         <Text style={s.meta}>
           {formatDate(activity.startTime)} · {formatTime(activity.startTime)} · {activity.activityType}
@@ -398,6 +417,11 @@ const s = StyleSheet.create({
     borderBottomColor: brand.border,
   },
   map: { flex: 1, backgroundColor: "transparent" },
+  memberRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 16, gap: 10 },
+  memberAvatar: { width: 36, height: 36, borderRadius: 18, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, justifyContent: "center", alignItems: "center" },
+  memberAvatarImage: { width: 34, height: 34, borderRadius: 17 },
+  memberAvatarText: { fontSize: 12, fontWeight: "bold", color: brand.accent },
+  memberName: { fontSize: 14, fontWeight: "600", color: brand.text },
   title: { fontSize: 22, fontWeight: "bold", color: brand.text, letterSpacing: 1, marginBottom: 4, paddingHorizontal: 20, paddingTop: 16 },
   meta: { fontSize: 12, color: brand.textDim, letterSpacing: 1, marginBottom: 24, paddingHorizontal: 20 },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 24, paddingHorizontal: 20 },
