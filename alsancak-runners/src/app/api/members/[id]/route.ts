@@ -7,6 +7,12 @@ import { eq, and, count, sum, avg } from "drizzle-orm";
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
+  // Validate UUID format to prevent DB errors
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(id)) {
+    return NextResponse.json({ error: "Kullan\u0131c\u0131 bulunamad\u0131" }, { status: 404 });
+  }
+
   const [member] = await db
     .select({
       id: members.id,
