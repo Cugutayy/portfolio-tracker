@@ -263,6 +263,37 @@ export const API = {
     api<{ code: string; deepLink: string; webLink: string }>("/api/invites", {
       method: "POST",
     }),
+
+  // Settings
+  updatePrivacy: (privacy: string) =>
+    api("/api/members/me", {
+      method: "PATCH",
+      body: JSON.stringify({ privacy }),
+    }),
+
+  forgotPassword: (email: string) =>
+    api<{ success: boolean; code?: string; message: string; expiresInMinutes: number }>(
+      "/api/auth/forgot-password",
+      { method: "POST", body: JSON.stringify({ email }), skipAuth: true },
+    ),
+
+  resetPassword: (email: string, code: string, newPassword: string) =>
+    api<{ success: boolean; message: string }>(
+      "/api/auth/reset-password",
+      { method: "POST", body: JSON.stringify({ email, code, newPassword }), skipAuth: true },
+    ),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api<{ success: boolean; message: string }>("/api/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
+
+  deleteAccount: () =>
+    api("/api/members/me", { method: "DELETE" }),
+
+  logout: () =>
+    api("/api/auth/logout", { method: "POST" }).catch(() => {}),
 };
 
 // ── Types ──

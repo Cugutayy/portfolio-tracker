@@ -188,3 +188,19 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  const user = await getRequestUser(request);
+  if (!user) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  try {
+    // Cascade deletes handle related data (activities, follows, kudos, etc.)
+    await db.delete(members).where(eq(members.id, user.id));
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete account error:", error);
+    return NextResponse.json({ error: "Failed to delete account" }, { status: 500 });
+  }
+}
