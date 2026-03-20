@@ -27,7 +27,7 @@ export default function MemberProfileScreen() {
     try {
       const [profileRes, activitiesRes] = await Promise.allSettled([
         API.getMemberProfile(id),
-        API.getCommunityActivities({ runner: id, limit: "10" }),
+        API.getCommunityActivities({ runner: id, limit: "10", period: "year" }),
       ]);
       if (profileRes.status === "fulfilled") {
         setProfile(profileRes.value);
