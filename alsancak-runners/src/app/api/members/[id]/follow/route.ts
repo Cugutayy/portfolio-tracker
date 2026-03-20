@@ -12,6 +12,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { id: targetId } = await params;
 
+  // Validate UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(targetId)) {
+    return NextResponse.json({ error: "Kullan\u0131c\u0131 bulunamad\u0131" }, { status: 404 });
+  }
+
   if (targetId === user.id) {
     return NextResponse.json({ error: "Kendini takip edemezsin" }, { status: 400 });
   }

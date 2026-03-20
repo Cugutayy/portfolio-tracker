@@ -8,6 +8,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: memberId } = await params;
+
+  // Validate UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(memberId)) {
+    return NextResponse.json({ users: [], hasMore: false });
+  }
+
   const type = request.nextUrl.searchParams.get("type") || "followers";
   const limit = Math.min(100, Math.max(1, parseInt(request.nextUrl.searchParams.get("limit") || "50")));
   const offset = Math.max(0, parseInt(request.nextUrl.searchParams.get("offset") || "0"));
