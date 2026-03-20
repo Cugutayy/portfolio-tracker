@@ -1,5 +1,6 @@
 import { SignJWT, jwtVerify } from "jose";
 import { NextRequest } from "next/server";
+import { eq } from "drizzle-orm";
 
 if (!process.env.AUTH_SECRET) {
   throw new Error("AUTH_SECRET environment variable is required");
@@ -82,6 +83,27 @@ export async function verifyMobileToken(
   }
 }
 
+// Throttle lastActiveAt updates to once per 60s per user (in-memory)
+const lastActiveCache = new Map<string, number>();
+const ACTIVE_THROTTLE_MS = 60_000;
+
+function touchLastActive(userId: string) {
+  const now = Date.now();
+  const last = lastActiveCache.get(userId) || 0;
+  if (now - last < ACTIVE_THROTTLE_MS) return;
+  lastActiveCache.set(userId, now);
+  // Fire-and-forget DB update
+  import("@/db").then(({ db }) => {
+    import("@/db/schema").then(({ members }) => {
+      db.update(members)
+        .set({ lastActiveAt: new Date() })
+        .where(eq(members.id, userId))
+        .execute()
+        .catch(() => {});
+    });
+  });
+}
+
 /**
  * Extract user from request — checks both:
  * 1. Mobile Bearer token (Authorization header)
@@ -97,6 +119,7 @@ export async function getRequestUser(
     const token = authHeader.slice(7);
     const result = await verifyMobileToken(token);
     if (result && result.type === "access") {
+      touchLastActive(result.userId);
       return { id: result.userId, role: result.role };
     }
   }
@@ -109,6 +132,7 @@ export async function getRequestUser(
   if (cookieToken) {
     const result = await verifyMobileToken(cookieToken);
     if (result && result.type === "access") {
+      touchLastActive(result.userId);
       return { id: result.userId, role: result.role };
     }
   }
@@ -118,6 +142,7 @@ export async function getRequestUser(
     const { auth } = await import("./auth");
     const session = await auth();
     if (session?.user?.id) {
+      touchLastActive(session.user.id);
       return {
         id: session.user.id,
         role: (session as unknown as { role?: string }).role || "member",

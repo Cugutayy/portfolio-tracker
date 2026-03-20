@@ -132,10 +132,10 @@ export default function CreateEventScreen() {
           <View style={[s.field, { flex: 1 }]}>
             <Text style={s.label}>TARIH *</Text>
             <TouchableOpacity
-              style={s.pickerBtn}
-              onPress={() => { setShowTimePicker(false); setShowDatePicker(true); }}
+              style={[s.pickerBtn, showDatePicker && s.pickerBtnActive]}
+              onPress={() => { setShowTimePicker(false); setShowDatePicker(v => !v); }}
             >
-              <Ionicons name="calendar-outline" size={16} color={brand.accent} />
+              <Ionicons name="calendar-outline" size={16} color={showDatePicker ? brand.text : brand.accent} />
               <Text style={s.pickerText}>{formatDateTR(eventDate)}</Text>
             </TouchableOpacity>
           </View>
@@ -143,10 +143,10 @@ export default function CreateEventScreen() {
           <View style={[s.field, { flex: 1 }]}>
             <Text style={s.label}>SAAT *</Text>
             <TouchableOpacity
-              style={s.pickerBtn}
-              onPress={() => { setShowDatePicker(false); setShowTimePicker(true); }}
+              style={[s.pickerBtn, showTimePicker && s.pickerBtnActive]}
+              onPress={() => { setShowDatePicker(false); setShowTimePicker(v => !v); }}
             >
-              <Ionicons name="time-outline" size={16} color={brand.accent} />
+              <Ionicons name="time-outline" size={16} color={showTimePicker ? brand.text : brand.accent} />
               <Text style={s.pickerText}>{formatTimeTR(eventDate)}</Text>
             </TouchableOpacity>
           </View>
@@ -269,6 +269,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
+  pickerBtnActive: { borderColor: brand.accent, backgroundColor: "rgba(230,255,0,0.08)" },
   pickerText: { fontSize: 14, color: brand.text, fontWeight: "600" },
   createBtn: {
     backgroundColor: brand.accent,

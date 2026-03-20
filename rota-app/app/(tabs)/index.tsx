@@ -214,6 +214,7 @@ export default function FeedScreen() {
           onPress={() => router.push(`/member/${item.memberId}` as never)}
         >
           <Text style={s.cardInitials}>{item.memberInitials}</Text>
+          <View style={[s.onlineDot, { backgroundColor: (item as CommunityActivity & { memberIsOnline?: boolean }).memberIsOnline ? "#4CAF50" : "#666" }]} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={s.cardRunner}>{item.memberName}</Text>
@@ -332,6 +333,7 @@ const s = StyleSheet.create({
   cardHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
   cardAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: brand.elevated, alignItems: "center", justifyContent: "center" },
   cardInitials: { fontSize: 11, color: brand.accent, fontWeight: "600" },
+  onlineDot: { position: "absolute" as const, bottom: 0, right: 0, width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: brand.surface },
   cardRunner: { fontSize: 13, color: brand.text, fontWeight: "500" },
   cardDate: { fontSize: 11, color: brand.textDim },
   cardTitle: { fontSize: 15, color: brand.text, fontWeight: "600", marginBottom: 8 },
