@@ -480,10 +480,11 @@ export default function TrackScreen() {
   }, []);
 
   // Smoothed pace (rolling average of last 5 samples)
+  // Only show pace after at least 50m of distance to avoid absurd values at start
   const smoothedPace =
     recentPaces.current.length > 0
       ? recentPaces.current.reduce((a, b) => a + b, 0) / recentPaces.current.length
-      : seconds > 0 && distanceM > 0
+      : seconds > 0 && distanceM >= 50
         ? seconds / (distanceM / 1000)
         : 0;
 
