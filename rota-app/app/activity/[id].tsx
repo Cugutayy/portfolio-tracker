@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { useLocalSearchParams, Stack } from "expo-router";
 import { WebView } from "react-native-webview";
@@ -57,24 +58,32 @@ export default function ActivityDetailScreen() {
 
   // Share card ref
   const shareCardRef = useRef<ShareCardRef>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
+  const loadAll = useCallback(async () => {
     if (!id) return;
-    API.getActivity(id)
-      .then((data) => {
-        setActivity(data.activity);
-        setSplits(data.splits || []);
-      })
-      .catch((err) => {
-        console.error("Activity fetch error:", err);
-        setError(err.message || "Aktivite yuklenemedi");
-      })
-      .finally(() => setLoading(false));
-
-    // Load kudos and comments
+    try {
+      const data = await API.getActivity(id);
+      setActivity(data.activity);
+      setSplits(data.splits || []);
+    } catch (err: unknown) {
+      console.error("Activity fetch error:", err);
+      setError((err as Error).message || "Aktivite yuklenemedi");
+    }
+    // Load kudos and comments (non-blocking)
     API.getKudos(id).then(setKudosData).catch(() => {});
     API.getComments(id).then((res) => setComments(res.comments)).catch(() => {});
   }, [id]);
+
+  useEffect(() => {
+    loadAll().finally(() => setLoading(false));
+  }, [loadAll]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadAll();
+    setRefreshing(false);
+  }, [loadAll]);
 
   const handleToggleKudos = useCallback(async () => {
     if (!id) return;
@@ -193,7 +202,15 @@ map.on('load',function(){
           ),
         }}
       />
-      <ScrollView style={s.container} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        style={s.container}
+        contentContainerStyle={s.content}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={brand.accent} />
+        }
+      >
         {/* Route Map */}
         {mapHtml && (
           <View style={s.mapContainer}>

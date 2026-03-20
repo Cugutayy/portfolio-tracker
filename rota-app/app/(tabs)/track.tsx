@@ -21,6 +21,19 @@ import { formatDuration, formatDistance, formatPace } from "@/lib/format";
 
 type TrackState = "idle" | "running" | "paused" | "finished";
 
+// GPS configuration constants
+const GPS_CONFIG = {
+  MIN_ACCURACY_M: 20,         // Reject points with accuracy > 20m
+  MIN_DISTANCE_M: 3,          // Noise filter: ignore < 3m movement
+  MAX_DISTANCE_M: 100,        // Spike filter: ignore > 100m jumps
+  MAX_SPEED_MS: 12,           // Max speed: 12 m/s = 43 km/h
+  PAUSE_SPEED_KMH: 1.0,      // Auto-pause below 1 km/h
+  RESUME_SPEED_KMH: 2.0,     // Auto-resume above 2 km/h
+  PAUSE_DELAY_MS: 10000,      // Wait 10s before auto-pausing
+  SIGNAL_LOSS_MS: 30000,      // GPS lost after 30s no signal
+  LOCATION_INTERVAL_MS: 3000, // GPS update every 3s
+} as const;
+
 interface Coordinate {
   latitude: number;
   longitude: number;
@@ -98,7 +111,7 @@ export default function TrackScreen() {
   useEffect(() => {
     if (state !== "running") return;
     const interval = setInterval(() => {
-      if (Date.now() - lastLocationTime.current > 30000) {
+      if (Date.now() - lastLocationTime.current > GPS_CONFIG.SIGNAL_LOSS_MS) {
         setGpsLost(true);
       }
     }, 5000);
@@ -119,7 +132,7 @@ export default function TrackScreen() {
     const timestamp = location.timestamp;
 
     // 1.1 GPS Accuracy Filtering
-    if (accuracy && accuracy > 20) return;
+    if (accuracy && accuracy > GPS_CONFIG.MIN_ACCURACY_M) return;
 
     // Update GPS signal tracking
     lastLocationTime.current = Date.now();
@@ -136,7 +149,7 @@ export default function TrackScreen() {
           const d = haversineDistance(last.latitude, last.longitude, latitude, longitude);
           const timeDiff = (timestamp - last.timestamp) / 1000;
           const speedKmH = timeDiff > 0 ? (d / timeDiff) * 3.6 : 0;
-          if (speedKmH >= 2.0) {
+          if (speedKmH >= GPS_CONFIG.RESUME_SPEED_KMH) {
             lowSpeedSince.current = null;
             autoPaused.current = false;
             setState("running");
@@ -152,23 +165,23 @@ export default function TrackScreen() {
       if (prev.length > 0) {
         const last = prev[prev.length - 1];
         const d = haversineDistance(last.latitude, last.longitude, latitude, longitude);
-        // Filter GPS noise (< 3m) and spikes (> 100m in one reading)
-        if (d < 3 || d > 100) {
+        // Filter GPS noise and spikes
+        if (d < GPS_CONFIG.MIN_DISTANCE_M || d > GPS_CONFIG.MAX_DISTANCE_M) {
           return prev; // discard noisy point
         }
 
         const timeDiff = (timestamp - last.timestamp) / 1000;
 
-        // Speed sanity check: reject GPS spikes (12 m/s = 43 km/h, impossible for running)
+        // Speed sanity check: reject GPS spikes
         const speedMs = d / timeDiff;
-        if (speedMs > 12) return prev;
+        if (speedMs > GPS_CONFIG.MAX_SPEED_MS) return prev;
 
         // 1.2 Auto-pause: check speed
         const speedKmH = timeDiff > 0 ? (d / timeDiff) * 3.6 : 0;
-        if (speedKmH < 1.0) {
+        if (speedKmH < GPS_CONFIG.PAUSE_SPEED_KMH) {
           if (lowSpeedSince.current === null) {
             lowSpeedSince.current = Date.now();
-          } else if (Date.now() - lowSpeedSince.current > 10000) {
+          } else if (Date.now() - lowSpeedSince.current > GPS_CONFIG.PAUSE_DELAY_MS) {
             // Auto-pause: stop timer but keep location watching
             autoPaused.current = true;
             setState("paused");
