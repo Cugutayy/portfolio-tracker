@@ -77,10 +77,10 @@ export async function GET(request: NextRequest) {
   // Build WHERE conditions
   const conditions = [
     eq(activities.sharedToBoard, true),
-    // Show activities from public/members privacy OR the current user's own activities
+    // Privacy filter: anonymous sees only 'public'; logged-in sees 'public' + 'members' + own
     currentUserId
       ? sql`(${members.privacy} IN ('public', 'members') OR ${activities.memberId} = ${currentUserId})`
-      : sql`${members.privacy} IN ('public', 'members')`,
+      : sql`${members.privacy} = 'public'`,
     gte(activities.startTime, periodStart),
     sql`${activities.polylineEncoded} IS NOT NULL`,
     sql`${activities.startLat} IS NOT NULL`,

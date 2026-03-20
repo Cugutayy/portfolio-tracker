@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { activities, activitySplits, activityPhotos } from "@/db/schema";
+import { activities, activitySplits, activityPhotos, members, follows } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 import { getRequestUser } from "@/lib/mobile-auth";
+import { sendPushNotifications } from "@/lib/push";
 
 /** Haversine distance in meters between two lat/lng points */
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -147,6 +148,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Validate activity type
+  const VALID_ACTIVITY_TYPES = ["run", "walk", "hike", "ride", "swim", "trailrun", "virtualrun"];
+  const normalizedType = (activityType || "run").toLowerCase();
+  if (!VALID_ACTIVITY_TYPES.includes(normalizedType)) {
+    return NextResponse.json(
+      { error: `Ge\u00E7ersiz aktivite tipi. Ge\u00E7erli tipler: ${VALID_ACTIVITY_TYPES.join(", ")}` },
+      { status: 400 }
+    );
+  }
+
   const avgPaceSecKm = distanceM > 0 ? (movingTimeSec / (distanceM / 1000)) : null;
 
   const [created] = await db
@@ -156,7 +167,7 @@ export async function POST(request: NextRequest) {
       source: polylineEncoded ? "gps" : "manual",
       title,
       // Normalize activity type to match Strava format (capitalized)
-      activityType: (activityType || "run").charAt(0).toUpperCase() + (activityType || "run").slice(1).toLowerCase(),
+      activityType: normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1),
       startTime: new Date(startTime),
       elapsedTimeSec: elapsedTimeSec || movingTimeSec,
       movingTimeSec,
@@ -210,9 +221,10 @@ export async function POST(request: NextRequest) {
 
   // Store photo if provided (base64 data URI, max ~500KB)
   try {
-    if (photoBase64 && typeof photoBase64 === "string" && photoBase64.startsWith("data:image/")) {
-      // Sanity check: reject if > 1MB base64 string
-      if (photoBase64.length <= 1_400_000) {
+    if (photoBase64 && typeof photoBase64 === "string") {
+      // Validate: must be a valid image data URI (jpeg, png, webp, gif only)
+      const validImagePrefix = /^data:image\/(jpeg|png|webp|gif);base64,/;
+      if (validImagePrefix.test(photoBase64) && photoBase64.length <= 1_400_000) {
         await db.insert(activityPhotos).values({
           activityId: created.id,
           url: photoBase64,
@@ -227,13 +239,48 @@ export async function POST(request: NextRequest) {
   }
 
   // Badge evaluation (best-effort)
+  let newBadges: string[] = [];
   try {
     const { evaluateBadges } = await import("@/lib/badge-engine");
-    const newBadges = await evaluateBadges(session.user.id, created.id);
-    if (newBadges.length > 0) {
-      return NextResponse.json({ id: created.id, newBadges }, { status: 201 });
-    }
+    newBadges = await evaluateBadges(session.user.id, created.id);
   } catch {}
+
+  // Notify followers about new activity (fire and forget)
+  (async () => {
+    try {
+      const [creator] = await db
+        .select({ name: members.name })
+        .from(members)
+        .where(eq(members.id, session.user.id))
+        .limit(1);
+
+      const followerTokens = await db
+        .select({ pushToken: members.pushToken })
+        .from(follows)
+        .innerJoin(members, eq(follows.followerId, members.id))
+        .where(eq(follows.followingId, session.user.id));
+
+      const tokens = followerTokens
+        .map(f => f.pushToken)
+        .filter((t): t is string => !!t);
+
+      if (tokens.length > 0 && creator) {
+        const distKm = (distanceM / 1000).toFixed(1);
+        sendPushNotifications(
+          tokens,
+          "Yeni Ko\u015Fu",
+          `\u{1F3C3} ${creator.name} ${distKm} km ko\u015Ftu: ${title}`,
+          { type: "activity", activityId: created.id }
+        );
+      }
+    } catch (e) {
+      console.error("Activity push notification error:", e);
+    }
+  })();
+
+  if (newBadges.length > 0) {
+    return NextResponse.json({ id: created.id, newBadges }, { status: 201 });
+  }
 
   return NextResponse.json({ id: created.id }, { status: 201 });
 }

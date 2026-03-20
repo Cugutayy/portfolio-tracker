@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { events, eventRsvps } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, count, sql } from "drizzle-orm";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 
 // POST /api/events/[slug]/rsvp — RSVP to an event
@@ -63,12 +63,35 @@ export async function POST(
   if (existing) {
     // Toggle: if already going → cancel, if cancelled → re-going
     const newStatus = existing.status === "going" ? "cancelled" : "going";
+
+    // Check capacity when re-joining
+    if (newStatus === "going" && event.maxParticipants) {
+      const [{ value: currentCount }] = await db
+        .select({ value: count() })
+        .from(eventRsvps)
+        .where(and(eq(eventRsvps.eventId, event.id), eq(eventRsvps.status, "going")));
+      if (Number(currentCount) >= event.maxParticipants) {
+        return NextResponse.json({ error: "Etkinlik kapasitesi dolu" }, { status: 400 });
+      }
+    }
+
     await db
       .update(eventRsvps)
       .set({ status: newStatus, paceGroup })
       .where(eq(eventRsvps.id, existing.id));
 
     return NextResponse.json({ status: newStatus, action: newStatus === "going" ? "joined" : "left" });
+  }
+
+  // Check capacity for new RSVP
+  if (event.maxParticipants) {
+    const [{ value: currentCount }] = await db
+      .select({ value: count() })
+      .from(eventRsvps)
+      .where(and(eq(eventRsvps.eventId, event.id), eq(eventRsvps.status, "going")));
+    if (Number(currentCount) >= event.maxParticipants) {
+      return NextResponse.json({ error: "Etkinlik kapasitesi dolu" }, { status: 400 });
+    }
   }
 
   // New RSVP
