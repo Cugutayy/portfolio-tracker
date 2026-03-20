@@ -39,14 +39,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { id: activityId } = await params;
   const body = await request.json();
-  const text = body.text?.trim();
+  const rawText = body.text?.trim();
 
-  if (!text || text.length < 1 || text.length > 500) {
+  if (!rawText || rawText.length > 500) {
     return NextResponse.json({ error: "Yorum 1-500 karakter olmali" }, { status: 400 });
   }
 
-  // Strip any HTML tags
-  const cleanText = text.replace(/<[^>]*>/g, '');
+  // Strip any HTML tags, then re-validate
+  const cleanText = rawText.replace(/<[^>]*>/g, '').trim();
+
+  if (!cleanText || cleanText.length < 1) {
+    return NextResponse.json({ error: "Yorum bos olamaz" }, { status: 400 });
+  }
 
   const [comment] = await db
     .insert(comments)

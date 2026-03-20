@@ -60,7 +60,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Kendi aktivitene kudos veremezsin" }, { status: 400 });
   }
 
-  // Check if already kudosed
+  // Check if already kudosed — atomic toggle
   const [existing] = await db
     .select({ id: kudos.id })
     .from(kudos)
@@ -74,8 +74,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     await cacheInvalidate("community:activities:*", true);
     return NextResponse.json({ action: "removed", count: newCount, hasKudosed: false });
   } else {
-    // Add kudos
-    await db.insert(kudos).values({ activityId, memberId: user.id });
+    // Add kudos — use try/catch to handle race condition (duplicate insert)
+    try {
+      await db.insert(kudos).values({ activityId, memberId: user.id });
+    } catch (e: unknown) {
+      // If duplicate key error from race condition, treat as already kudosed
+      const msg = e instanceof Error ? e.message : "";
+      if (msg.includes("duplicate") || msg.includes("unique")) {
+        const [{ value: newCount }] = await db.select({ value: count() }).from(kudos).where(eq(kudos.activityId, activityId));
+        return NextResponse.json({ action: "added", count: newCount, hasKudosed: true });
+      }
+      throw e;
+    }
     const [{ value: newCount }] = await db.select({ value: count() }).from(kudos).where(eq(kudos.activityId, activityId));
     await cacheInvalidate("community:activities:*", true);
 

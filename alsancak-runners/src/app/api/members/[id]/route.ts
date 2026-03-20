@@ -22,6 +22,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   if (!member) return NextResponse.json({ error: "Kullanıcı bulunamadı" }, { status: 404 });
 
+  // Privacy check: if profile is private, only the owner can view it
+  let currentUserId: string | null = null;
+  try {
+    const currentUser = await getRequestUser(request);
+    if (currentUser) currentUserId = currentUser.id;
+  } catch {}
+
+  if (member.privacy === "private" && currentUserId !== member.id) {
+    return NextResponse.json({
+      member: { id: member.id, name: member.name, image: member.image, privacy: "private" },
+      stats: { totalRuns: 0, totalDistanceM: 0, avgPace: 0 },
+      followerCount: 0,
+      followingCount: 0,
+      isFollowing: false,
+      isPrivate: true,
+    });
+  }
+
   // Stats
   const [stats] = await db
     .select({
@@ -38,17 +56,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   // Check if current user follows this member
   let isFollowing = false;
-  try {
-    const user = await getRequestUser(request);
-    if (user && user.id !== id) {
-      const [existing] = await db
-        .select({ id: follows.id })
-        .from(follows)
-        .where(and(eq(follows.followerId, user.id), eq(follows.followingId, id)))
-        .limit(1);
-      isFollowing = !!existing;
-    }
-  } catch {}
+  if (currentUserId && currentUserId !== id) {
+    const [existing] = await db
+      .select({ id: follows.id })
+      .from(follows)
+      .where(and(eq(follows.followerId, currentUserId), eq(follows.followingId, id)))
+      .limit(1);
+    isFollowing = !!existing;
+  }
 
   return NextResponse.json({
     member,

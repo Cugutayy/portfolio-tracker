@@ -31,6 +31,7 @@ export async function rateLimit(
   // If Redis is not configured, fail open (allow all requests)
   // Rate limiting requires Redis — without it, we rely on other security layers
   if (!redis) {
+    console.warn(`[RATE_LIMIT_BYPASS] Redis unavailable — rate limit skipped for: ${identifier}`);
     return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
   }
 
@@ -49,6 +50,7 @@ export async function rateLimit(
     const results = await pipeline.exec();
     if (!results) {
       // Redis pipeline failed — fail open (allow request)
+      console.warn(`[RATE_LIMIT_BYPASS] Redis pipeline failed for: ${identifier}`);
       return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
     }
 
@@ -58,8 +60,9 @@ export async function rateLimit(
     const resetAt = Math.ceil((now + config.windowSec * 1000) / 1000);
 
     return { allowed, remaining, resetAt };
-  } catch {
+  } catch (err) {
     // Redis unavailable — fail open
+    console.warn(`[RATE_LIMIT_BYPASS] Redis error for ${identifier}:`, err);
     return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
   }
 }

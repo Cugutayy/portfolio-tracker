@@ -9,6 +9,8 @@ export async function GET(
 ) {
   const { id: memberId } = await params;
   const type = request.nextUrl.searchParams.get("type") || "followers";
+  const limit = Math.min(100, Math.max(1, parseInt(request.nextUrl.searchParams.get("limit") || "50")));
+  const offset = Math.max(0, parseInt(request.nextUrl.searchParams.get("offset") || "0"));
 
   let users;
   if (type === "followers") {
@@ -17,15 +19,22 @@ export async function GET(
       .select({ id: members.id, name: members.name, image: members.image, bio: members.bio })
       .from(follows)
       .innerJoin(members, eq(follows.followerId, members.id))
-      .where(eq(follows.followingId, memberId));
+      .where(eq(follows.followingId, memberId))
+      .limit(limit + 1)
+      .offset(offset);
   } else {
     // People this member follows
     users = await db
       .select({ id: members.id, name: members.name, image: members.image, bio: members.bio })
       .from(follows)
       .innerJoin(members, eq(follows.followingId, members.id))
-      .where(eq(follows.followerId, memberId));
+      .where(eq(follows.followerId, memberId))
+      .limit(limit + 1)
+      .offset(offset);
   }
 
-  return NextResponse.json({ users });
+  const hasMore = users.length > limit;
+  const trimmed = hasMore ? users.slice(0, limit) : users;
+
+  return NextResponse.json({ users: trimmed, hasMore });
 }
