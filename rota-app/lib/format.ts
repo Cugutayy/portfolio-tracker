@@ -4,7 +4,7 @@ export function formatDistance(meters: number): string {
 }
 
 export function formatPace(secPerKm: number | null): string {
-  if (!secPerKm || secPerKm <= 0 || !isFinite(secPerKm) || secPerKm > 3600) return "--:--";
+  if (!secPerKm || secPerKm <= 0 || !isFinite(secPerKm) || secPerKm > 900) return "--:--";
   const min = Math.floor(secPerKm / 60);
   const sec = Math.round(secPerKm % 60);
   return `${min}:${sec.toString().padStart(2, "0")}`;

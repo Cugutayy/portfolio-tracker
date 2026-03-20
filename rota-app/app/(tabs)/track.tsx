@@ -216,10 +216,14 @@ export default function TrackScreen() {
           return newDist;
         });
 
-        // Track pace samples for smoothing
-        if (d > 0 && timeDiff > 0) {
+        // Track pace samples for smoothing (Garmin-style 20s rolling window)
+        // Only include samples at running speed (>1.5 m/s ≈ 5.4 km/h)
+        if (d > 0 && timeDiff > 0 && speedMs >= 1.5) {
           const paceSecKm = (timeDiff / d) * 1000;
-          recentPaces.current = [...recentPaces.current.slice(-4), paceSecKm];
+          // Cap at 15:00/km — anything slower isn't running
+          if (paceSecKm <= 900) {
+            recentPaces.current = [...recentPaces.current.slice(-6), paceSecKm]; // ~7 samples × 3s = 21s window
+          }
         }
       }
 
@@ -479,14 +483,13 @@ export default function TrackScreen() {
     ]);
   }, []);
 
-  // Smoothed pace (rolling average of last 5 samples)
-  // Only show pace after at least 50m of distance to avoid absurd values at start
+  // Smoothed pace: rolling average of recent GPS samples at running speed
+  // Need at least 3 valid samples (~9 seconds) before showing pace (like Garmin's 6-15s warmup)
+  // Returns 0 when insufficient data → formatPace shows "--:--"
   const smoothedPace =
-    recentPaces.current.length > 0
+    recentPaces.current.length >= 3
       ? recentPaces.current.reduce((a, b) => a + b, 0) / recentPaces.current.length
-      : seconds > 0 && distanceM >= 50
-        ? seconds / (distanceM / 1000)
-        : 0;
+      : 0;
 
   return (
     <SafeAreaView style={s.container}>
