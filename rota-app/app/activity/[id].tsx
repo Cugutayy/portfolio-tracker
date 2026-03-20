@@ -194,8 +194,8 @@ map.on('load',function(){
       <Stack.Screen
         options={{
           headerRight: () => (
-            <TouchableOpacity onPress={handleShare} hitSlop={8}>
-              <Text style={{ fontSize: 16, color: brand.accent, fontWeight: "600", marginRight: 8 }}>
+            <TouchableOpacity onPress={handleShare} hitSlop={8} style={{ justifyContent: "center", alignItems: "center", paddingRight: 4 }}>
+              <Text style={{ fontSize: 13, color: brand.accent, fontWeight: "700", letterSpacing: 1 }}>
                 PAYLAS
               </Text>
             </TouchableOpacity>

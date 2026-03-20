@@ -137,6 +137,7 @@ export async function GET(request: NextRequest) {
         ? sql<boolean>`EXISTS(SELECT 1 FROM ${kudos} WHERE ${kudos.activityId} = ${activities.id} AND ${kudos.memberId} = ${currentUserId})`
         : sql<boolean>`false`,
       photoUrl: sql<string | null>`(SELECT ${activityPhotos.url} FROM ${activityPhotos} WHERE ${activityPhotos.activityId} = ${activities.id} LIMIT 1)`,
+      memberLastActive: members.lastActiveAt,
     })
     .from(activities)
     .innerJoin(members, eq(activities.memberId, members.id))
@@ -148,16 +149,23 @@ export async function GET(request: NextRequest) {
   const hasMore = rows.length > limit;
   const trimmed = hasMore ? rows.slice(0, limit) : rows;
 
+  const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
   const result = {
-    activities: trimmed.map((row) => ({
-      ...row,
-      memberInitials: row.memberName
-        .split(" ")
-        .map((w) => w[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2),
-    })),
+    activities: trimmed.map((row) => {
+      const { memberLastActive, ...rest } = row;
+      return {
+        ...rest,
+        memberInitials: row.memberName
+          .split(" ")
+          .map((w) => w[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2),
+        memberIsOnline: memberLastActive
+          ? Date.now() - new Date(memberLastActive).getTime() < ONLINE_THRESHOLD_MS
+          : false,
+      };
+    }),
     total: trimmed.length,
     hasMore,
   };

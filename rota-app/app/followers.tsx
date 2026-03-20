@@ -10,6 +10,7 @@ interface FollowUser {
   name: string;
   image: string | null;
   bio: string | null;
+  isOnline?: boolean;
 }
 
 export default function FollowersScreen() {
@@ -43,6 +44,7 @@ export default function FollowersScreen() {
         <Text style={s.avatarText}>
           {item.name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "?"}
         </Text>
+        <View style={[s.onlineDot, { backgroundColor: item.isOnline ? "#4CAF50" : "#666" }]} />
       </View>
       <View style={s.userInfo}>
         <Text style={s.userName}>{item.name}</Text>
@@ -89,6 +91,7 @@ const s = StyleSheet.create({
   userRow: { flexDirection: "row", alignItems: "center", paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: brand.border },
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, justifyContent: "center", alignItems: "center", marginRight: 12 },
   avatarText: { fontSize: 14, fontWeight: "bold", color: brand.accent },
+  onlineDot: { position: "absolute" as const, bottom: 0, right: 0, width: 12, height: 12, borderRadius: 6, borderWidth: 2, borderColor: brand.bg },
   userInfo: { flex: 1 },
   userName: { fontSize: 15, fontWeight: "600", color: brand.text },
   userBio: { fontSize: 12, color: brand.textDim, marginTop: 2 },
