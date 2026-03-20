@@ -133,6 +133,21 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Validate date: must be valid and in the future (within 1 year)
+  const eventDate = new Date(date);
+  if (isNaN(eventDate.getTime())) {
+    return NextResponse.json({ error: "Ge\u00E7ersiz tarih format\u0131" }, { status: 400 });
+  }
+  const oneYearFromNow = new Date();
+  oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+  if (eventDate.getTime() < Date.now() - 3600000) {
+    // Allow up to 1 hour in past for timezone differences
+    return NextResponse.json({ error: "Etkinlik tarihi ge\u00E7mi\u015F olamaz" }, { status: 400 });
+  }
+  if (eventDate.getTime() > oneYearFromNow.getTime()) {
+    return NextResponse.json({ error: "Etkinlik en fazla 1 y\u0131l sonras\u0131na olu\u015Fturulabilir" }, { status: 400 });
+  }
+
   if (distanceM !== undefined && distanceM !== null) {
     if (distanceM <= 0 || distanceM > 200000) {
       return NextResponse.json({ error: "Distance must be between 0 and 200km" }, { status: 400 });
