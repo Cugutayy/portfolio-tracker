@@ -16,7 +16,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 import { API, type Badge } from "@/lib/api";
-import { clearToken, getUser } from "@/lib/auth";
+import { getUser } from "@/lib/auth";
 import { formatPace } from "@/lib/format";
 
 export default function ProfileScreen() {
@@ -112,20 +112,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert("Cikis Yap", "Hesabindan cikmak istiyor musun?", [
-      { text: "Vazgec", style: "cancel" },
-      {
-        text: "Cikis Yap",
-        style: "destructive",
-        onPress: async () => {
-          await clearToken();
-          router.replace("/login");
-        },
-      },
-    ]);
-  };
-
   const initials = user?.name
     .split(" ")
     .map((w) => w[0])
@@ -146,6 +132,15 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={s.container}>
       <ScrollView contentContainerStyle={s.content}>
+        {/* Header with Settings */}
+        <View style={s.topBar}>
+          <View style={{ width: 40 }} />
+          <Text style={s.topBarTitle}>PROFIL</Text>
+          <TouchableOpacity onPress={() => router.push("/settings")} hitSlop={8}>
+            <Ionicons name="settings-outline" size={22} color={brand.textMuted} />
+          </TouchableOpacity>
+        </View>
+
         {/* Avatar + Name */}
         <View style={s.profileHeader}>
           <View style={s.avatar}>
@@ -153,6 +148,10 @@ export default function ProfileScreen() {
           </View>
           <Text style={s.name}>{user?.name || "Kullanici"}</Text>
           <Text style={s.email}>{user?.email || ""}</Text>
+          <TouchableOpacity style={s.editProfileBtn} onPress={() => router.push("/edit-profile")}>
+            <Ionicons name="create-outline" size={14} color={brand.accent} />
+            <Text style={s.editProfileText}>PROFILI DUZENLE</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Followers / Following */}
@@ -272,10 +271,7 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Logout */}
-        <TouchableOpacity style={s.logoutButton} onPress={handleLogout}>
-          <Text style={s.logoutText}>CIKIS YAP</Text>
-        </TouchableOpacity>
+        {/* Settings shortcut — logout moved to settings */}
       </ScrollView>
     </SafeAreaView>
   );
@@ -285,11 +281,15 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: brand.bg },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   content: { padding: 24 },
+  topBar: { flexDirection: "row" as const, justifyContent: "space-between" as const, alignItems: "center" as const, paddingTop: 8, marginBottom: -16 },
+  topBarTitle: { fontSize: 13, fontWeight: "bold" as const, color: brand.text, letterSpacing: 3 },
   profileHeader: { alignItems: "center", paddingVertical: 32 },
   avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: brand.surface, borderWidth: 2, borderColor: brand.accent, justifyContent: "center", alignItems: "center", marginBottom: 16 },
   avatarText: { fontSize: 24, fontWeight: "bold", color: brand.accent },
   name: { fontSize: 20, fontWeight: "bold", color: brand.text, letterSpacing: 2 },
   email: { fontSize: 13, color: brand.textDim, marginTop: 4 },
+  editProfileBtn: { flexDirection: "row" as const, alignItems: "center" as const, gap: 6, marginTop: 12, borderWidth: 1, borderColor: brand.border, borderRadius: 4, paddingHorizontal: 14, paddingVertical: 8 },
+  editProfileText: { fontSize: 11, fontWeight: "600" as const, color: brand.accent, letterSpacing: 2 },
 
   // Followers
   followRow: { flexDirection: "row", justifyContent: "center", gap: 24, marginBottom: 24 },
@@ -329,6 +329,4 @@ const s = StyleSheet.create({
   stravaButtonText: { fontSize: 12, fontWeight: "700", color: "#fff", letterSpacing: 2 },
   healthButton: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 14, marginBottom: 16 },
   healthButtonText: { flex: 1, fontSize: 12, fontWeight: "600", color: brand.text, letterSpacing: 1 },
-  logoutButton: { borderWidth: 1, borderColor: brand.border, paddingVertical: 14, borderRadius: 4, alignItems: "center", marginTop: 16 },
-  logoutText: { fontSize: 12, color: brand.textMuted, letterSpacing: 2, fontWeight: "600" },
 });
