@@ -122,6 +122,7 @@ export async function GET(request: NextRequest) {
       id: activities.id,
       memberId: activities.memberId,
       memberName: members.name,
+      memberImage: members.image,
       title: activities.title,
       activityType: activities.activityType,
       startTime: activities.startTime,
@@ -152,9 +153,10 @@ export async function GET(request: NextRequest) {
   const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
   const result = {
     activities: trimmed.map((row) => {
-      const { memberLastActive, ...rest } = row;
+      const { memberLastActive, memberImage, ...rest } = row;
       return {
         ...rest,
+        memberImage: memberImage || null,
         memberInitials: row.memberName
           .split(" ")
           .map((w) => w[0])

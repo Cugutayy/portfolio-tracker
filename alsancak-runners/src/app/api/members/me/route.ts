@@ -162,7 +162,14 @@ export async function PATCH(request: NextRequest) {
     if (paceGroup !== undefined) updateData.paceGroup = paceGroup;
     if (bio !== undefined) updateData.bio = bio?.trim() || null;
     if (privacy !== undefined) updateData.privacy = privacy;
-    if (image !== undefined) updateData.image = image;
+    if (image !== undefined) {
+      if (image === null) {
+        updateData.image = null;
+      } else if (typeof image === "string" && /^data:image\/(jpeg|png|webp|gif);base64,/.test(image) && image.length <= 1_400_000) {
+        updateData.image = image;
+      }
+      // Silently ignore invalid image values
+    }
 
     const [updated] = await db
       .update(members)
