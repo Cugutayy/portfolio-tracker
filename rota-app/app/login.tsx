@@ -106,6 +106,14 @@ export default function LoginScreen() {
               <Text style={s.buttonText}>GIRIS YAP</Text>
             )}
           </TouchableOpacity>
+
+          {/* Forgot password link */}
+          <TouchableOpacity
+            onPress={() => router.push("/forgot-password")}
+            style={s.forgotButton}
+          >
+            <Text style={s.forgotText}>Sifremi Unuttum</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Register link */}
@@ -131,6 +139,8 @@ const s = StyleSheet.create({
   button: { backgroundColor: brand.accent, paddingVertical: 16, borderRadius: 4, alignItems: "center", marginTop: 8 },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: brand.bg, fontSize: 13, fontWeight: "700", letterSpacing: 2 },
-  link: { textAlign: "center", marginTop: 24, color: brand.textMuted, fontSize: 13 },
+  forgotButton: { alignItems: "center" as const, marginTop: 4 },
+  forgotText: { color: brand.textMuted, fontSize: 13, textDecorationLine: "underline" as const },
+  link: { textAlign: "center" as const, marginTop: 24, color: brand.textMuted, fontSize: 13 },
   linkAccent: { color: brand.accent },
 });
