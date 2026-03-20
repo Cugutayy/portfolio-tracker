@@ -21,6 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       bio: members.bio,
       paceGroup: members.paceGroup,
       privacy: members.privacy,
+      lastActiveAt: members.lastActiveAt,
     })
     .from(members)
     .where(eq(members.id, id))
@@ -71,8 +72,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     isFollowing = !!existing;
   }
 
+  const ONLINE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+  const isOnline = member.lastActiveAt
+    ? Date.now() - new Date(member.lastActiveAt).getTime() < ONLINE_THRESHOLD_MS
+    : false;
+
   return NextResponse.json({
-    member,
+    member: { ...member, lastActiveAt: undefined, isOnline },
     stats: {
       totalRuns: Number(stats?.totalRuns || 0),
       totalDistanceM: Number(stats?.totalDistanceM || 0),

@@ -23,7 +23,7 @@ export async function GET(
   if (type === "followers") {
     // People who follow this member
     users = await db
-      .select({ id: members.id, name: members.name, image: members.image, bio: members.bio })
+      .select({ id: members.id, name: members.name, image: members.image, bio: members.bio, lastActiveAt: members.lastActiveAt })
       .from(follows)
       .innerJoin(members, eq(follows.followerId, members.id))
       .where(eq(follows.followingId, memberId))
@@ -32,7 +32,7 @@ export async function GET(
   } else {
     // People this member follows
     users = await db
-      .select({ id: members.id, name: members.name, image: members.image, bio: members.bio })
+      .select({ id: members.id, name: members.name, image: members.image, bio: members.bio, lastActiveAt: members.lastActiveAt })
       .from(follows)
       .innerJoin(members, eq(follows.followingId, members.id))
       .where(eq(follows.followerId, memberId))
@@ -42,6 +42,11 @@ export async function GET(
 
   const hasMore = users.length > limit;
   const trimmed = hasMore ? users.slice(0, limit) : users;
+  const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
+  const withOnline = trimmed.map(({ lastActiveAt, ...u }) => ({
+    ...u,
+    isOnline: lastActiveAt ? Date.now() - new Date(lastActiveAt).getTime() < ONLINE_THRESHOLD_MS : false,
+  }));
 
-  return NextResponse.json({ users: trimmed, hasMore });
+  return NextResponse.json({ users: withOnline, hasMore });
 }
