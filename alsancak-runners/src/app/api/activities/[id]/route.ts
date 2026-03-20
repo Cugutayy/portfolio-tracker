@@ -17,6 +17,12 @@ export async function GET(
 
   const { id } = await params;
 
+  // Validate UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(id)) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   // First try to find the activity (visible to anyone for public/members activities)
   const [activity] = await db
     .select()
