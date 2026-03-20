@@ -222,7 +222,12 @@ export default function FeedScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={s.cardRunner}>{item.memberName}</Text>
-          <Text style={s.cardDate}>{formatDate(item.startTime)}</Text>
+          <Text style={s.cardDate}>
+            {formatDate(item.startTime)}
+            {(item as CommunityActivity & { startLocation?: string | null }).startLocation
+              ? ` · ${(item as CommunityActivity & { startLocation?: string | null }).startLocation}`
+              : ""}
+          </Text>
         </View>
       </View>
       <Text style={s.cardTitle}>{item.title}</Text>

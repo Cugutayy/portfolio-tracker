@@ -138,6 +138,7 @@ export async function GET(request: NextRequest) {
         ? sql<boolean>`EXISTS(SELECT 1 FROM ${kudos} WHERE ${kudos.activityId} = ${activities.id} AND ${kudos.memberId} = ${currentUserId})`
         : sql<boolean>`false`,
       photoUrl: sql<string | null>`(SELECT ${activityPhotos.url} FROM ${activityPhotos} WHERE ${activityPhotos.activityId} = ${activities.id} LIMIT 1)`,
+      startLocation: activities.startLocation,
       memberLastActive: members.lastActiveAt,
     })
     .from(activities)

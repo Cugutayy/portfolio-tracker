@@ -326,6 +326,8 @@ export interface Activity {
   source: string;
   memberName?: string | null;
   memberImage?: string | null;
+  startLocation?: string | null;
+  endLocation?: string | null;
 }
 
 export interface CreateActivityInput {
@@ -342,6 +344,8 @@ export interface CreateActivityInput {
   elevationGainM?: number;
   elapsedTimeSec?: number;
   photoBase64?: string;
+  startLocation?: string;
+  endLocation?: string;
   splits?: Array<{
     splitIndex: number;
     distanceM: number;

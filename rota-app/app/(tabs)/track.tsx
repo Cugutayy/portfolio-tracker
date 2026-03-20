@@ -21,6 +21,18 @@ import { formatDuration, formatDistance, formatPace } from "@/lib/format";
 
 type TrackState = "idle" | "running" | "paused" | "finished";
 
+async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  try {
+    const results = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+    if (results.length === 0) return null;
+    const r = results[0];
+    const parts = [r.district || r.subregion, r.city].filter(Boolean);
+    return parts.join(", ") || r.name || null;
+  } catch {
+    return null;
+  }
+}
+
 // GPS configuration constants
 const GPS_CONFIG = {
   MIN_ACCURACY_M: 20,         // Reject points with accuracy > 20m
@@ -394,6 +406,12 @@ export default function TrackScreen() {
         ? Math.round((Date.now() - startTimeRef.current.getTime()) / 1000)
         : seconds;
 
+      // Reverse geocode start and end points
+      const [startLoc, endLoc] = await Promise.all([
+        reverseGeocode(coords[0].latitude, coords[0].longitude),
+        reverseGeocode(coords[coords.length - 1].latitude, coords[coords.length - 1].longitude),
+      ]);
+
       await API.createActivity({
         title: `Kosu — ${formatDistance(distanceM)} km`,
         distanceM,
@@ -407,6 +425,8 @@ export default function TrackScreen() {
         startLng: coords[0].longitude,
         endLat: coords[coords.length - 1].latitude,
         endLng: coords[coords.length - 1].longitude,
+        ...(startLoc ? { startLocation: startLoc } : {}),
+        ...(endLoc ? { endLocation: endLoc } : {}),
         ...(photoBase64 ? { photoBase64 } : {}),
       });
 

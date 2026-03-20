@@ -205,6 +205,8 @@ export const activities = pgTable(
     endLat: real("end_lat"),
     endLng: real("end_lng"),
     city: text("city").default("Izmir"),
+    startLocation: text("start_location"),
+    endLocation: text("end_location"),
     weatherTempC: real("weather_temp_c"),
     weatherCondition: text("weather_condition"),
     privacy: text("privacy").notNull().default("private"),
