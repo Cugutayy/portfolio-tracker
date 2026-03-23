@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -28,6 +29,9 @@ interface Event {
   maxParticipants: number | null;
   coverImageUrl: string | null;
   status: string;
+  creatorId?: string;
+  creatorName?: string;
+  creatorImage?: string | null;
   rsvpCount?: number;
   isGoing?: boolean;
 }
@@ -116,6 +120,24 @@ export default function EventsScreen() {
         </Text>
       </View>
       <View style={s.cardBody}>
+        {item.creatorName && (
+          <TouchableOpacity
+            style={s.creatorRow}
+            onPress={() => item.creatorId && router.push(`/member/${item.creatorId}` as never)}
+            activeOpacity={0.7}
+          >
+            <View style={s.creatorAvatar}>
+              {item.creatorImage ? (
+                <Image source={{ uri: item.creatorImage }} style={s.creatorAvatarImg} />
+              ) : (
+                <Text style={s.creatorInitials}>
+                  {item.creatorName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+                </Text>
+              )}
+            </View>
+            <Text style={s.creatorName}>{item.creatorName}</Text>
+          </TouchableOpacity>
+        )}
         <Text style={s.cardTitle}>{item.title}</Text>
         <Text style={s.cardType}>{eventTypeLabels[item.eventType] || item.eventType}</Text>
         <View style={s.cardMeta}>
@@ -252,6 +274,11 @@ const s = StyleSheet.create({
   dateDay: { fontSize: 22, fontWeight: "bold", color: brand.accent },
   dateMonth: { fontSize: 10, color: brand.textMuted, letterSpacing: 2, marginTop: 2 },
   cardBody: { flex: 1, padding: 12 },
+  creatorRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
+  creatorAvatar: { width: 24, height: 24, borderRadius: 12, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, justifyContent: "center", alignItems: "center" },
+  creatorAvatarImg: { width: 22, height: 22, borderRadius: 11 },
+  creatorInitials: { fontSize: 9, fontWeight: "bold", color: brand.accent },
+  creatorName: { fontSize: 12, color: brand.textMuted, fontWeight: "500" },
   cardTitle: { fontSize: 14, fontWeight: "700", color: brand.text, letterSpacing: 1, marginBottom: 2 },
   cardType: { fontSize: 11, color: brand.accent, fontWeight: "600", letterSpacing: 1, marginBottom: 6 },
   cardMeta: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 10 },
