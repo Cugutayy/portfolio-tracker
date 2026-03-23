@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { motion } from "framer-motion";
 import { Link } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import dynamic from "next/dynamic";
 
 const ActivityMap = dynamic(
@@ -96,6 +96,8 @@ export default function ActivityDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const locale = useLocale();
+  const dateLocale = locale === "tr" ? "tr-TR" : "en-US";
   const t = useTranslations("activity");
   const tNav = useTranslations("nav");
   const [activity, setActivity] = useState<ActivityDetail | null>(null);
@@ -203,14 +205,14 @@ export default function ActivityDetailPage({
               {activity.title}
             </h1>
             <p className="text-[14px] text-[#666]">
-              {date.toLocaleDateString("en-US", {
+              {date.toLocaleDateString(dateLocale, {
                 weekday: "long",
                 day: "numeric",
                 month: "long",
                 year: "numeric",
               })}
               {" \u2014 "}
-              {date.toLocaleTimeString("en-US", {
+              {date.toLocaleTimeString(dateLocale, {
                 hour: "2-digit",
                 minute: "2-digit",
               })}

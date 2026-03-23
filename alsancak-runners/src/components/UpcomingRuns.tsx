@@ -104,7 +104,7 @@ export default function UpcomingRuns() {
               hour: "2-digit",
               minute: "2-digit",
             });
-            const distanceKm = (ev.distanceM / 1000).toFixed(0);
+            const distanceKm = (ev.distanceM / 1000).toFixed(1);
             const image = EVENT_IMAGES[ev.eventType] || "/images/ar-05.jpg";
 
             return (
