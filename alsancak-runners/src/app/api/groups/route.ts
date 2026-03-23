@@ -98,30 +98,26 @@ export async function POST(request: NextRequest) {
     .trim();
   const slug = `${baseSlug}-${Date.now().toString(36)}`;
 
-  // Create group + owner membership in a transaction
-  const [group] = await db.transaction(async (tx) => {
-    const [newGroup] = await tx
-      .insert(groups)
-      .values({
-        name,
-        slug,
-        description: description || null,
-        image: image || null,
-        sportType,
-        city: city || null,
-        visibility,
-        postPolicy,
-        createdBy: user.id,
-      })
-      .returning();
+  // Create group then add owner membership (neon-http doesn't support transactions)
+  const [group] = await db
+    .insert(groups)
+    .values({
+      name,
+      slug,
+      description: description || null,
+      image: image || null,
+      sportType,
+      city: city || null,
+      visibility,
+      postPolicy,
+      createdBy: user.id,
+    })
+    .returning();
 
-    await tx.insert(groupMembers).values({
-      groupId: newGroup.id,
-      memberId: user.id,
-      role: "owner",
-    });
-
-    return [newGroup];
+  await db.insert(groupMembers).values({
+    groupId: group.id,
+    memberId: user.id,
+    role: "owner",
   });
 
   return NextResponse.json({ group: { ...group, memberCount: 1 } }, { status: 201 });
