@@ -188,9 +188,10 @@ export async function POST(request: NextRequest) {
 
   const avgPaceSecKm = distanceM > 0 ? (movingTimeSec / (distanceM / 1000)) : null;
 
-  // Create activity then add splits + photo (neon-http doesn't support transactions)
-  const [inserted] = await db
-    .insert(activities)
+  // Atomic: activity + splits + photo in transaction (WebSocket driver supports it)
+  const created = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(activities)
       .values({
         memberId: session.user.id,
         source: polylineEncoded ? "gps" : "manual",
@@ -218,7 +219,7 @@ export async function POST(request: NextRequest) {
     // Store per-km splits: prefer client-provided (has real GPS timestamps) over server-computed (uniform pace)
     if (clientSplits && Array.isArray(clientSplits) && clientSplits.length > 0) {
       // Client-provided splits with actual GPS-derived pace
-      await db.insert(activitySplits).values(
+      await tx.insert(activitySplits).values(
         clientSplits.map((s) => ({
           activityId: inserted.id,
           splitIndex: s.splitIndex,
@@ -232,7 +233,7 @@ export async function POST(request: NextRequest) {
       // Fallback: compute from polyline with uniform pace (legacy behavior)
       const splits = computeSplits(polylineEncoded, movingTimeSec, distanceM);
       if (splits.length > 0) {
-        await db.insert(activitySplits).values(
+        await tx.insert(activitySplits).values(
           splits.map((s) => ({
             activityId: inserted.id,
             splitIndex: s.splitIndex,
@@ -250,7 +251,7 @@ export async function POST(request: NextRequest) {
       // Validate: must be a valid image data URI (jpeg, png, webp, gif only)
       const validImagePrefix = /^data:image\/(jpeg|png|webp|gif);base64,/;
       if (validImagePrefix.test(photoBase64) && photoBase64.length <= 5_000_000) {
-        await db.insert(activityPhotos).values({
+        await tx.insert(activityPhotos).values({
           activityId: inserted.id,
           url: photoBase64,
           caption: null,
@@ -260,7 +261,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-  const created = inserted;
+    return inserted;
+  });
 
   // Badge evaluation (best-effort)
   let newBadges: string[] = [];
