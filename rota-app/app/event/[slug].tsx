@@ -163,7 +163,7 @@ export default function EventDetailScreen() {
           headerBackTitle: "Geri",
           headerTintColor: brand.accent,
           headerStyle: { backgroundColor: brand.bg },
-          headerTitleStyle: { color: brand.text, fontSize: 15, fontWeight: "700", letterSpacing: 1 },
+          headerTitleStyle: { color: brand.text, fontSize: 15, fontWeight: "700" },
         }}
       />
       <ScrollView

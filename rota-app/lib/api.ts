@@ -303,6 +303,8 @@ export const API = {
     ),
   createPost: (data: { text?: string; photoBase64?: string; photoBase64_2?: string; photoBase64_3?: string }) =>
     api<{ id: string }>("/api/posts", { method: "POST", body: JSON.stringify(data) }),
+  getPost: (id: string) =>
+    api<{ post: Post; kudos: KudosResponse; comments: Comment[] }>(`/api/posts/${id}`),
   deletePost: (id: string) =>
     api(`/api/posts/${id}`, { method: "DELETE" }),
   getPostKudos: (postId: string) =>

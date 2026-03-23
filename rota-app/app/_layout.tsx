@@ -78,6 +78,16 @@ function AuthGatedNavigation() {
         }}
       />
       <Stack.Screen
+        name="post/[id]"
+        options={{
+          headerShown: true,
+          headerTitle: "",
+          headerBackTitle: "Geri",
+          headerTintColor: brand.accent,
+          headerStyle: { backgroundColor: brand.bg },
+        }}
+      />
+      <Stack.Screen
         name="event/[slug]"
         options={{
           headerShown: true,
@@ -88,9 +98,51 @@ function AuthGatedNavigation() {
         }}
       />
       <Stack.Screen
-        name="edit-profile"
+        name="leaderboard"
         options={{
-          animation: "slide_from_right",
+          headerShown: true,
+          headerTitle: "",
+          headerBackTitle: "Geri",
+          headerTintColor: brand.accent,
+          headerStyle: { backgroundColor: brand.bg },
+        }}
+      />
+      <Stack.Screen
+        name="edit-profile"
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="settings"
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="change-password"
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="forgot-password"
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="reset-password"
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="create-event"
+        options={{ animation: "slide_from_bottom", presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="create-post"
+        options={{ animation: "slide_from_bottom", presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="followers"
+        options={{
+          headerShown: true,
+          headerTitle: "",
+          headerBackTitle: "Geri",
+          headerTintColor: brand.accent,
+          headerStyle: { backgroundColor: brand.bg },
         }}
       />
       <Stack.Screen

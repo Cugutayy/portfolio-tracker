@@ -26,6 +26,7 @@ import {
   type KudosResponse,
   type Comment,
 } from "@/lib/api";
+import { getUser } from "@/lib/auth";
 import {
   formatDistance,
   formatPace,
@@ -59,6 +60,9 @@ export default function ActivityDetailScreen() {
   const [commentText, setCommentText] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
 
+  // Current user
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
   // Share card ref
   const shareCardRef = useRef<ShareCardRef>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -81,6 +85,7 @@ export default function ActivityDetailScreen() {
 
   useEffect(() => {
     loadAll().finally(() => setLoading(false));
+    getUser().then((u) => { if (u) setCurrentUserId(u.id); });
   }, [loadAll]);
 
   const onRefresh = useCallback(async () => {
@@ -125,6 +130,49 @@ export default function ActivityDetailScreen() {
       setSendingComment(false);
     }
   }, [id, commentText]);
+
+  const handleDeleteComment = useCallback((commentId: string) => {
+    Alert.alert("Yorumu Sil", "Bu yorumu silmek istediginize emin misiniz?", [
+      { text: "Iptal", style: "cancel" },
+      {
+        text: "Sil",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await API.deleteComment(id!, commentId);
+            setComments((prev) => prev.filter((c) => c.id !== commentId));
+          } catch {
+            Alert.alert("Hata", "Yorum silinemedi.");
+          }
+        },
+      },
+    ]);
+  }, [id]);
+
+  const handleEditTitle = useCallback(() => {
+    if (!activity) return;
+    Alert.prompt(
+      "Baslik Duzenle",
+      "Yeni baslik girin:",
+      [
+        { text: "Iptal", style: "cancel" },
+        {
+          text: "Kaydet",
+          onPress: async (newTitle?: string) => {
+            if (!newTitle?.trim() || newTitle.trim() === activity.title) return;
+            try {
+              await API.updateActivity(id!, { title: newTitle.trim() });
+              setActivity((prev) => prev ? { ...prev, title: newTitle.trim() } : prev);
+            } catch {
+              Alert.alert("Hata", "Baslik guncellenemedi.");
+            }
+          },
+        },
+      ],
+      "plain-text",
+      activity.title
+    );
+  }, [id, activity]);
 
   const handleShare = useCallback(async () => {
     if (!shareCardRef.current) return;
@@ -198,11 +246,18 @@ map.on('load',function(){
       <Stack.Screen
         options={{
           headerRight: () => (
-            <TouchableOpacity onPress={handleShare} hitSlop={8} style={{ justifyContent: "center", alignItems: "center", paddingRight: 4 }}>
-              <Text style={{ fontSize: 13, color: brand.accent, fontWeight: "700", letterSpacing: 1 }}>
-                PAYLAS
-              </Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingRight: 4 }}>
+              {currentUserId && activity?.memberId === currentUserId && (
+                <TouchableOpacity onPress={handleEditTitle} hitSlop={8}>
+                  <Ionicons name="pencil-outline" size={18} color={brand.accent} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={handleShare} hitSlop={8} style={{ justifyContent: "center", alignItems: "center" }}>
+                <Text style={{ fontSize: 13, color: brand.accent, fontWeight: "700", letterSpacing: 1 }}>
+                  PAYLAS
+                </Text>
+              </TouchableOpacity>
+            </View>
           ),
         }}
       />
@@ -373,15 +428,30 @@ map.on('load',function(){
           )}
           {comments.map((c) => (
             <View key={c.id} style={s.commentItem}>
-              <View style={s.commentAvatar}>
-                <Text style={s.commentAvatarText}>
-                  {c.memberName.split(" ").map((w) => w[0]).join("").slice(0, 2)}
-                </Text>
-              </View>
+              <TouchableOpacity
+                onPress={() => router.push(`/member/${c.memberId}` as never)}
+                activeOpacity={0.7}
+              >
+                <View style={s.commentAvatar}>
+                  <Text style={s.commentAvatarText}>
+                    {c.memberName.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                  </Text>
+                </View>
+              </TouchableOpacity>
               <View style={s.commentBody}>
                 <View style={s.commentMeta}>
-                  <Text style={s.commentName}>{c.memberName}</Text>
+                  <TouchableOpacity
+                    onPress={() => router.push(`/member/${c.memberId}` as never)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={s.commentName}>{c.memberName}</Text>
+                  </TouchableOpacity>
                   <Text style={s.commentTime}>{formatRelativeTime(c.createdAt)}</Text>
+                  {currentUserId && c.memberId === currentUserId && (
+                    <TouchableOpacity onPress={() => handleDeleteComment(c.id)} hitSlop={8}>
+                      <Ionicons name="trash-outline" size={14} color={brand.textDim} />
+                    </TouchableOpacity>
+                  )}
                 </View>
                 <Text style={s.commentText}>{c.text}</Text>
               </View>

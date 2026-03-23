@@ -24,8 +24,8 @@ body { background: #0A0A0A; overflow: hidden; }
 .mapboxgl-popup-tip { border-top-color: #111 !important; }
 .mapboxgl-popup-close-button { color: #888; font-size: 18px; }
 
-.popup-name { font-weight: 700; color: #E6FF00; margin-bottom: 4px; }
-.popup-title { color: #ccc; margin-bottom: 4px; }
+.popup-name { font-weight: 700; color: #E6FF00; margin-bottom: 4px; cursor: pointer; }
+.popup-title { color: #ccc; margin-bottom: 4px; cursor: pointer; }
 .popup-stats { display: flex; gap: 12px; font-size: 11px; color: #888; }
 .popup-stats span { color: #E6FF00; font-weight: 600; }
 
@@ -109,6 +109,15 @@ function formatPace(secKm) {
 }
 
 let currentPopup = null;
+
+function postNav(type, id) {
+  if (window.ReactNativeWebView) {
+    window.ReactNativeWebView.postMessage(JSON.stringify({
+      type: type === 'activity' ? 'activityClick' : 'memberClick',
+      id: id
+    }));
+  }
+}
 const layerIds = [];
 const sourceIds = [];
 
@@ -158,11 +167,15 @@ function setActivities(activities) {
       currentPopup = new mapboxgl.Popup({ closeOnClick: true, offset: 10 })
         .setLngLat(e.lngLat)
         .setHTML(`
-          <div class="popup-name">${act.memberName}</div>
-          <div class="popup-title">${act.title}</div>
+          <div class="popup-name" onclick="postNav('member','${act.memberId}')">${act.memberName}</div>
+          <div class="popup-title" onclick="postNav('activity','${act.id}')">${act.title}</div>
           <div class="popup-stats">${km} km <span>${pace}/km</span></div>
         `)
         .addTo(map);
+      // Notify React Native of activity click
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'activityClick', id: act.id }));
+      }
     });
 
     map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
@@ -180,7 +193,7 @@ function setLeaderboard(entries) {
   if (!entries || entries.length === 0) { el.style.display = 'none'; return; }
 
   rows.innerHTML = entries.slice(0, 5).map((e, i) => `
-    <div class="lb-row">
+    <div class="lb-row" onclick="postNav('member','${e.memberId}')" style="cursor:pointer">
       <div class="lb-rank ${i === 0 ? 'gold' : ''}">${i + 1}</div>
       <div class="lb-name">${e.memberName}</div>
       <div class="lb-km">${e.totalDistanceKm.toFixed(1)} km</div>

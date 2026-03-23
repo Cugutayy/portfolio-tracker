@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { WebView } from "react-native-webview";
+import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
 import { API, type CommunityActivity, type LeaderboardEntry } from "@/lib/api";
 
@@ -100,6 +101,8 @@ export default function MapScreen() {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type === "mapReady") setMapReady(true);
+      if (msg.type === "activityClick" && msg.id) router.push(`/activity/${msg.id}` as never);
+      if (msg.type === "memberClick" && msg.id) router.push(`/member/${msg.id}` as never);
     } catch {}
   }, []);
 
