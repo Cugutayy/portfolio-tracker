@@ -291,6 +291,28 @@ export const API = {
 
   logout: () =>
     api("/api/auth/logout", { method: "POST" }).catch(() => {}),
+
+  // Posts
+  getPosts: (params: Record<string, string>) =>
+    api<{ posts: Post[]; hasMore: boolean }>(
+      `/api/posts?${new URLSearchParams(params)}`
+    ),
+  createPost: (data: { text?: string; photoBase64?: string; photoBase64_2?: string; photoBase64_3?: string }) =>
+    api<{ id: string }>("/api/posts", { method: "POST", body: JSON.stringify(data) }),
+  deletePost: (id: string) =>
+    api(`/api/posts/${id}`, { method: "DELETE" }),
+  getPostKudos: (postId: string) =>
+    api<KudosResponse>(`/api/posts/${postId}/kudos`),
+  togglePostKudos: (postId: string) =>
+    api<{ action: string; count: number; hasKudosed: boolean }>(
+      `/api/posts/${postId}/kudos`, { method: "POST" }
+    ),
+  getPostComments: (postId: string) =>
+    api<{ comments: Comment[] }>(`/api/posts/${postId}/comments`),
+  addPostComment: (postId: string, text: string) =>
+    api<{ comment: Comment }>(`/api/posts/${postId}/comments`, {
+      method: "POST", body: JSON.stringify({ text })
+    }),
 };
 
 // ── Types ──
@@ -439,4 +461,20 @@ export interface Badge {
   description: string | null;
   iconEmoji: string;
   category: string;
+}
+
+export interface Post {
+  id: string;
+  memberId: string;
+  memberName: string;
+  memberImage: string | null;
+  memberInitials: string;
+  text: string | null;
+  photoUrl: string | null;
+  photoUrl2: string | null;
+  photoUrl3: string | null;
+  kudosCount: number;
+  commentCount: number;
+  hasKudosed: boolean;
+  createdAt: string;
 }

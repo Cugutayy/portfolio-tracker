@@ -543,6 +543,47 @@ export const memberBadges = pgTable("member_badges", {
   index("idx_member_badges_member").on(t.memberId),
 ]);
 
+// ============================================================
+// DOMAIN 6: POSTS (standalone athlete posts, like Strava)
+// ============================================================
+
+export const posts = pgTable("posts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  text: text("text"),
+  photoUrl: text("photo_url"),
+  photoUrl2: text("photo_url_2"),
+  photoUrl3: text("photo_url_3"),
+  privacy: text("privacy").default("public").notNull(),
+  commentsEnabled: boolean("comments_enabled").default(true).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("idx_posts_member").on(table.memberId),
+  index("idx_posts_created").on(table.createdAt),
+]);
+
+export const postKudos = pgTable("post_kudos", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  postId: uuid("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("post_kudos_unique").on(table.postId, table.memberId),
+  index("idx_post_kudos_post").on(table.postId),
+  index("idx_post_kudos_member").on(table.memberId),
+]);
+
+export const postComments = pgTable("post_comments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  postId: uuid("post_id").notNull().references(() => posts.id, { onDelete: "cascade" }),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("idx_post_comments_post").on(table.postId),
+  index("idx_post_comments_member").on(table.memberId),
+]);
+
 export const inviteCodes = pgTable("invite_codes", {
   id: uuid().primaryKey().defaultRandom(),
   memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),

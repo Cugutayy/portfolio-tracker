@@ -17,7 +17,7 @@ import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 import { API, type Badge, type Member } from "@/lib/api";
-import { getUser } from "@/lib/auth";
+import { getUser, setUser as cacheUser } from "@/lib/auth";
 import { formatPace } from "@/lib/format";
 
 export default function ProfileScreen() {
@@ -52,7 +52,10 @@ export default function ProfileScreen() {
       };
       const m = profile.member || profile;
       if (m.id && m.name && m.email) {
-        setUser({ id: m.id, name: m.name, email: m.email, image: (m as Member).image });
+        const userData = { id: m.id, name: m.name, email: m.email, image: (m as Member).image };
+        setUser(userData);
+        // Cache user with image for instant display on next visit
+        cacheUser(userData);
       }
       const st = profile.stats;
       setStats({
