@@ -38,7 +38,7 @@ export default function EditProfileScreen() {
   const loadProfile = async () => {
     try {
       const profile = await API.getProfile();
-      const m = (profile as { member?: Member }).member || (profile as Member);
+      const m = (profile as { member: Member }).member;
       setName(m.name || "");
       setBio(m.bio || "");
       setPaceGroup(m.paceGroup || null);

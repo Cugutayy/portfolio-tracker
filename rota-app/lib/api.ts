@@ -368,6 +368,8 @@ export interface CommunityActivity {
   polylineEncoded: string | null;
   startLat: number | null;
   startLng: number | null;
+  startLocation?: string | null;
+  memberIsOnline?: boolean;
   kudosCount?: number;
   hasKudosed?: boolean;
   commentCount?: number;

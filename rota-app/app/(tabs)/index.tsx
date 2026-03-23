@@ -218,15 +218,13 @@ export default function FeedScreen() {
           ) : (
             <Text style={s.cardInitials}>{item.memberInitials}</Text>
           )}
-          <View style={[s.onlineDot, { backgroundColor: (item as CommunityActivity & { memberIsOnline?: boolean }).memberIsOnline ? "#4CAF50" : "#666" }]} />
+          <View style={[s.onlineDot, { backgroundColor: item.memberIsOnline ? "#4CAF50" : "#666" }]} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={s.cardRunner}>{item.memberName}</Text>
           <Text style={s.cardDate}>
             {formatDate(item.startTime)}
-            {(item as CommunityActivity & { startLocation?: string | null }).startLocation
-              ? ` · ${(item as CommunityActivity & { startLocation?: string | null }).startLocation}`
-              : ""}
+            {item.startLocation ? ` · ${item.startLocation}` : ""}
           </Text>
         </View>
       </View>
