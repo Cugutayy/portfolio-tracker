@@ -276,7 +276,12 @@ export default function FeedScreen() {
 
       {leaderboard.length > 0 && (
         <View style={s.leaderboard}>
-          <Text style={s.sectionTitle}>LIDER TABLOSU</Text>
+          <View style={s.leaderboardHeader}>
+            <Text style={[s.sectionTitle, { marginBottom: 0 }]}>LIDER TABLOSU</Text>
+            <TouchableOpacity onPress={() => router.push("/leaderboard" as never)} hitSlop={8}>
+              <Text style={s.seeAllLink}>TUMUNU GOR</Text>
+            </TouchableOpacity>
+          </View>
           {leaderboard.map((entry, i) => (
             <View key={entry.memberId} style={s.lbRow}>
               <Text style={[s.lbRank, { color: MEDAL[i] || brand.textDim }]}>{entry.rank}</Text>
@@ -371,7 +376,7 @@ export default function FeedScreen() {
   const renderPostCard = (item: Post) => {
     const photos = [item.photoUrl, item.photoUrl2, item.photoUrl3].filter(Boolean) as string[];
     return (
-      <TouchableOpacity style={s.card} activeOpacity={0.7}>
+      <TouchableOpacity style={s.card} activeOpacity={0.7} onPress={() => router.push(`/post/${item.id}` as never)}>
         <View style={s.cardHeader}>
           <TouchableOpacity
             style={s.cardAvatar}
@@ -418,6 +423,7 @@ export default function FeedScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={s.commentButton}
+            onPress={() => router.push(`/post/${item.id}` as never)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons name="chatbubble-outline" size={16} color={brand.textDim} />
@@ -546,6 +552,8 @@ const s = StyleSheet.create({
   statValue: { fontSize: 24, fontWeight: "bold", color: brand.text },
   statLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 4 },
   leaderboard: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, marginBottom: 16 },
+  leaderboardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  seeAllLink: { fontSize: 11, color: brand.accent, fontWeight: "700", letterSpacing: 1 },
   sectionTitle: { fontSize: 11, color: brand.textMuted, letterSpacing: 3, fontWeight: "600", marginBottom: 12 },
   lbRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6 },
   lbRank: { fontSize: 14, fontWeight: "bold", width: 20, textAlign: "center" },
