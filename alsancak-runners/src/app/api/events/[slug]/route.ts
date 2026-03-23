@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
 import { events, eventRsvps, members } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
   const { slug } = await params;
+
+  // Try to get current user (optional)
+  const user = await getRequestUser(request).catch(() => null);
 
   const [event] = await db
     .select({
@@ -34,10 +38,11 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Get RSVP'd members (public names only)
+  // Get RSVP'd members with memberId
   const rsvps = await db
     .select({
       id: eventRsvps.id,
+      memberId: eventRsvps.memberId,
       memberName: members.name,
       memberImage: members.image,
       paceGroup: eventRsvps.paceGroup,
@@ -48,6 +53,9 @@ export async function GET(
     .where(eq(eventRsvps.eventId, event.id));
 
   const rsvpCount = rsvps.filter((r) => r.status === "going").length;
+  const isGoing = user
+    ? rsvps.some((r) => r.memberId === user.id && r.status === "going")
+    : false;
 
-  return NextResponse.json({ event: { ...event, rsvpCount }, rsvps });
+  return NextResponse.json({ event: { ...event, rsvpCount, isGoing }, rsvps });
 }
