@@ -188,10 +188,9 @@ export async function POST(request: NextRequest) {
 
   const avgPaceSecKm = distanceM > 0 ? (movingTimeSec / (distanceM / 1000)) : null;
 
-  // Wrap activity + splits + photo in a transaction
-  const created = await db.transaction(async (tx) => {
-    const [inserted] = await tx
-      .insert(activities)
+  // Create activity then add splits + photo (neon-http doesn't support transactions)
+  const [inserted] = await db
+    .insert(activities)
       .values({
         memberId: session.user.id,
         source: polylineEncoded ? "gps" : "manual",
@@ -219,7 +218,7 @@ export async function POST(request: NextRequest) {
     // Store per-km splits: prefer client-provided (has real GPS timestamps) over server-computed (uniform pace)
     if (clientSplits && Array.isArray(clientSplits) && clientSplits.length > 0) {
       // Client-provided splits with actual GPS-derived pace
-      await tx.insert(activitySplits).values(
+      await db.insert(activitySplits).values(
         clientSplits.map((s) => ({
           activityId: inserted.id,
           splitIndex: s.splitIndex,
@@ -233,7 +232,7 @@ export async function POST(request: NextRequest) {
       // Fallback: compute from polyline with uniform pace (legacy behavior)
       const splits = computeSplits(polylineEncoded, movingTimeSec, distanceM);
       if (splits.length > 0) {
-        await tx.insert(activitySplits).values(
+        await db.insert(activitySplits).values(
           splits.map((s) => ({
             activityId: inserted.id,
             splitIndex: s.splitIndex,
@@ -251,7 +250,7 @@ export async function POST(request: NextRequest) {
       // Validate: must be a valid image data URI (jpeg, png, webp, gif only)
       const validImagePrefix = /^data:image\/(jpeg|png|webp|gif);base64,/;
       if (validImagePrefix.test(photoBase64) && photoBase64.length <= 5_000_000) {
-        await tx.insert(activityPhotos).values({
+        await db.insert(activityPhotos).values({
           activityId: inserted.id,
           url: photoBase64,
           caption: null,
@@ -261,10 +260,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return inserted;
-  });
+  const created = inserted;
 
-  // Badge evaluation (best-effort — OUTSIDE transaction)
+  // Badge evaluation (best-effort)
   let newBadges: string[] = [];
   try {
     const { evaluateBadges } = await import("@/lib/badge-engine");
