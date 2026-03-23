@@ -46,6 +46,7 @@ export default function ActivityDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [splits, setSplits] = useState<Split[]>([]);
+  const [photos, setPhotos] = useState<Array<{ id: string; url: string; caption: string | null }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +69,7 @@ export default function ActivityDetailScreen() {
       const data = await API.getActivity(id);
       setActivity(data.activity);
       setSplits(data.splits || []);
+      setPhotos((data as { photos?: Array<{ id: string; url: string; caption: string | null }> }).photos || []);
     } catch (err: unknown) {
       console.error("Activity fetch error:", err);
       setError((err as Error).message || "Aktivite yuklenemedi");
@@ -269,6 +271,18 @@ map.on('load',function(){
           ))}
         </View>
 
+        {/* Activity Photos */}
+        {photos.length > 0 && (
+          <View style={s.photosSection}>
+            {photos.map((photo) => (
+              <View key={photo.id}>
+                <Image source={{ uri: photo.url }} style={s.activityPhoto} resizeMode="cover" />
+                {photo.caption && <Text style={s.photoCaption}>{photo.caption}</Text>}
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Splits */}
         {splits.length > 0 && (() => {
           const paceValues = splits.map(sp => sp.avgPaceSecKm).filter(Boolean) as number[];
@@ -441,6 +455,11 @@ const s = StyleSheet.create({
   statBox: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, minWidth: "30%", flex: 1, alignItems: "center" },
   statValue: { fontSize: 18, fontWeight: "bold", color: brand.text },
   statLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 4 },
+  // Photos
+  photosSection: { marginHorizontal: 20, marginBottom: 16, gap: 8 },
+  activityPhoto: { width: "100%", height: 280, borderRadius: 8, backgroundColor: brand.surface },
+  photoCaption: { fontSize: 12, color: brand.textDim, marginTop: 4, paddingHorizontal: 4 },
+
   splitsSection: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, marginHorizontal: 20, marginBottom: 16 },
   sectionTitle: { fontSize: 11, color: brand.textMuted, letterSpacing: 3, fontWeight: "600", marginBottom: 12 },
   splitsHeader: { flexDirection: "row", paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: brand.border },
