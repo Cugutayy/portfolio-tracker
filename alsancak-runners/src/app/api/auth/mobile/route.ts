@@ -78,7 +78,7 @@ export async function POST(request: Request) {
     if (name) {
       const rateLimited = await checkRateLimit(
         `register:${ip}`,
-        RATE_LIMITS.authRegister,
+        { ...RATE_LIMITS.authRegister, strict: true },
       );
       if (rateLimited) return rateLimited;
 
@@ -136,7 +136,7 @@ export async function POST(request: Request) {
     // ── LOGIN (no name) ──
     const rateLimited = await checkRateLimit(
       `login:${ip}`,
-      { maxRequests: 10, windowSec: 60 },
+      { maxRequests: 10, windowSec: 60, strict: true },
     );
     if (rateLimited) return rateLimited;
 

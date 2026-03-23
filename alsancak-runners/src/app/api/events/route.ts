@@ -104,7 +104,9 @@ export async function POST(request: NextRequest) {
   if (rateLimited) return rateLimited;
   const session = { user: { id: user.id } };  // compatibility shim
 
-  // All authenticated users can create events
+  if (!["admin", "captain"].includes(user.role)) {
+    return NextResponse.json({ error: "Only captains can create events" }, { status: 403 });
+  }
 
   const body = await request.json();
   const {
