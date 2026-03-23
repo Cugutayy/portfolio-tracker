@@ -34,62 +34,57 @@ export async function POST(
     // Body is optional — RSVP without pace group is fine
   }
 
-  // RSVP logic (neon-http doesn't support transactions, using sequential queries)
-  const [event] = await db
-    .select({ id: events.id, maxParticipants: events.maxParticipants, status: events.status })
-    .from(events)
-    .where(eq(events.slug, slug))
-    .limit(1);
+  // RSVP with transaction + FOR UPDATE to prevent overbooking (10K concurrent safe)
+  const result = await db.transaction(async (tx) => {
+    // Lock event row to serialize concurrent RSVPs
+    const eventRows = await tx.execute(
+      sql`SELECT id, max_participants, status FROM events WHERE slug = ${slug} LIMIT 1 FOR UPDATE`
+    );
+    const event = eventRows.rows?.[0] as { id: string; max_participants: number | null; status: string } | undefined;
 
-  if (!event) {
-    return NextResponse.json({ error: "Event not found" }, { status: 404 });
-  }
-  if (event.status !== "upcoming") {
-    return NextResponse.json({ error: "Event is not accepting RSVPs" }, { status: 400 });
-  }
+    if (!event) return { error: "Etkinlik bulunamadi", status: 404 };
+    if (event.status !== "upcoming") return { error: "Etkinlik katilima kapali", status: 400 };
 
-  // Check existing RSVP
-  const [existing] = await db
-    .select({ id: eventRsvps.id, status: eventRsvps.status })
-    .from(eventRsvps)
-    .where(and(eq(eventRsvps.eventId, event.id), eq(eventRsvps.memberId, session.user.id)))
-    .limit(1);
+    const [existing] = await tx
+      .select({ id: eventRsvps.id, status: eventRsvps.status })
+      .from(eventRsvps)
+      .where(and(eq(eventRsvps.eventId, event.id), eq(eventRsvps.memberId, session.user.id)))
+      .limit(1);
 
-  let result: { data: { status: string; action: string }; status: number };
+    if (existing) {
+      const newStatus = existing.status === "going" ? "cancelled" : "going";
 
-  if (existing) {
-    const newStatus = existing.status === "going" ? "cancelled" : "going";
+      if (newStatus === "going" && event.max_participants) {
+        const [{ value: cnt }] = await tx
+          .select({ value: count() })
+          .from(eventRsvps)
+          .where(and(eq(eventRsvps.eventId, event.id), eq(eventRsvps.status, "going")));
+        if (Number(cnt) >= event.max_participants) return { error: "Etkinlik kapasitesi dolu", status: 400 };
+      }
 
-    if (newStatus === "going" && event.maxParticipants) {
-      const [{ value: currentCount }] = await db
+      await tx.update(eventRsvps).set({ status: newStatus, paceGroup }).where(eq(eventRsvps.id, existing.id));
+      return { data: { status: newStatus, action: newStatus === "going" ? "joined" : "left" }, status: 200 };
+    }
+
+    if (event.max_participants) {
+      const [{ value: cnt }] = await tx
         .select({ value: count() })
         .from(eventRsvps)
         .where(and(eq(eventRsvps.eventId, event.id), eq(eventRsvps.status, "going")));
-      if (Number(currentCount) >= event.maxParticipants) {
-        return NextResponse.json({ error: "Etkinlik kapasitesi dolu" }, { status: 400 });
-      }
+      if (Number(cnt) >= event.max_participants) return { error: "Etkinlik kapasitesi dolu", status: 400 };
     }
 
-    await db.update(eventRsvps).set({ status: newStatus, paceGroup }).where(eq(eventRsvps.id, existing.id));
-    result = { data: { status: newStatus, action: newStatus === "going" ? "joined" : "left" }, status: 200 };
-  } else {
-    if (event.maxParticipants) {
-      const [{ value: currentCount }] = await db
-        .select({ value: count() })
-        .from(eventRsvps)
-        .where(and(eq(eventRsvps.eventId, event.id), eq(eventRsvps.status, "going")));
-      if (Number(currentCount) >= event.maxParticipants) {
-        return NextResponse.json({ error: "Etkinlik kapasitesi dolu" }, { status: 400 });
-      }
-    }
-
-    await db.insert(eventRsvps).values({
+    await tx.insert(eventRsvps).values({
       eventId: event.id,
       memberId: session.user.id,
       paceGroup,
       status: "going",
     });
-    result = { data: { status: "going", action: "joined" }, status: 201 };
+    return { data: { status: "going", action: "joined" }, status: 201 };
+  });
+
+  if ("error" in result) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
 
   // Send push notification to event creator when someone joins
