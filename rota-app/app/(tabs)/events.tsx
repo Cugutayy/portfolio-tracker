@@ -94,7 +94,11 @@ export default function EventsScreen() {
   };
 
   const renderEvent = ({ item }: { item: Event }) => (
-    <View style={s.card}>
+    <TouchableOpacity
+      style={s.card}
+      activeOpacity={0.7}
+      onPress={() => router.push(`/event/${item.slug}` as never)}
+    >
       <View style={s.cardDate}>
         <Text style={s.dateDay}>{new Date(item.date).getDate()}</Text>
         <Text style={s.dateMonth}>
@@ -144,7 +148,7 @@ export default function EventsScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   if (loading) {

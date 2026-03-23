@@ -78,6 +78,16 @@ function AuthGatedNavigation() {
         }}
       />
       <Stack.Screen
+        name="event/[slug]"
+        options={{
+          headerShown: true,
+          headerTitle: "",
+          headerBackTitle: "Geri",
+          headerTintColor: brand.accent,
+          headerStyle: { backgroundColor: brand.bg },
+        }}
+      />
+      <Stack.Screen
         name="edit-profile"
         options={{
           animation: "slide_from_right",
