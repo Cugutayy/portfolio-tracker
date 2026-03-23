@@ -131,7 +131,7 @@ export default function EventsScreen() {
                 <Image source={{ uri: item.creatorImage }} style={s.creatorAvatarImg} />
               ) : (
                 <Text style={s.creatorInitials}>
-                  {item.creatorName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
+                  {(item.creatorName || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
                 </Text>
               )}
             </View>
