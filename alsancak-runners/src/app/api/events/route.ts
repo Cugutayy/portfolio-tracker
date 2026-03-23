@@ -49,8 +49,12 @@ export async function GET(request: NextRequest) {
       maxParticipants: events.maxParticipants,
       coverImageUrl: events.coverImageUrl,
       status: events.status,
+      creatorId: events.createdBy,
+      creatorName: members.name,
+      creatorImage: members.image,
     })
     .from(events)
+    .innerJoin(members, eq(events.createdBy, members.id))
     .where(
       status === "upcoming"
         ? and(eq(events.status, "upcoming"), gte(events.date, now))
