@@ -320,7 +320,7 @@ export default function TrackScreen() {
   const computeClientSplits = useCallback((pts: Coordinate[]) => {
     if (pts.length < 2) return [];
 
-    const splits: { splitIndex: number; distanceM: number; elapsedSec: number; paceSecKm: number }[] = [];
+    const splits: { splitIndex: number; distanceM: number; movingTimeSec: number; avgPaceSecKm: number; elevationDiffM: number | null; avgHeartrate: number | null }[] = [];
     let cumDistance = 0;
     let splitStartDistance = 0;
     let splitStartTime = pts[0].timestamp;
@@ -338,8 +338,10 @@ export default function TrackScreen() {
         splits.push({
           splitIndex,
           distanceM: Math.round(splitDistM),
-          elapsedSec: Math.round(elapsedSec),
-          paceSecKm: Math.round(paceSecKm),
+          movingTimeSec: Math.round(elapsedSec),
+          avgPaceSecKm: Math.round(paceSecKm),
+          elevationDiffM: null,
+          avgHeartrate: null,
         });
 
         splitStartDistance = cumDistance;
@@ -358,8 +360,10 @@ export default function TrackScreen() {
       splits.push({
         splitIndex,
         distanceM: Math.round(remaining),
-        elapsedSec: Math.round(elapsedSec),
-        paceSecKm: Math.round(paceSecKm),
+        movingTimeSec: Math.round(elapsedSec),
+        avgPaceSecKm: Math.round(paceSecKm),
+        elevationDiffM: null,
+        avgHeartrate: null,
       });
     }
 
