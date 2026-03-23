@@ -19,6 +19,16 @@ import { API } from "@/lib/api";
 
 const MONTHS = ["Oca", "Sub", "Mar", "Nis", "May", "Haz", "Tem", "Agu", "Eyl", "Eki", "Kas", "Ara"];
 
+const EVENT_TYPES: { value: string; label: string }[] = [
+  { value: "group_run", label: "Grup Kosusu" },
+  { value: "tempo_run", label: "Tempo Kosusu" },
+  { value: "long_run", label: "Uzun Kosu" },
+  { value: "interval", label: "Interval" },
+  { value: "trail_run", label: "Patika Kosusu" },
+  { value: "social", label: "Sosyal Bulusma" },
+  { value: "race", label: "Yaris" },
+];
+
 function formatDateTR(d: Date) {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
@@ -32,6 +42,7 @@ export default function CreateEventScreen() {
   const [meetingPoint, setMeetingPoint] = useState("");
   const [distanceKm, setDistanceKm] = useState("");
   const [maxParticipants, setMaxParticipants] = useState("");
+  const [eventType, setEventType] = useState("group_run");
   const [saving, setSaving] = useState(false);
 
   // Date/time state — default to tomorrow at 07:30
@@ -80,7 +91,7 @@ export default function CreateEventScreen() {
         distanceM: distanceKm ? Math.round(parseFloat(distanceKm) * 1000) : null,
         maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
         date: eventDate.toISOString(),
-        eventType: "group_run",
+        eventType,
       });
       Alert.alert("Basarili", "Etkinlik olusturuldu!", [
         { text: "Tamam", onPress: () => router.back() },
@@ -112,6 +123,23 @@ export default function CreateEventScreen() {
             placeholder="orn: Kordon Sabah Kosusu"
             placeholderTextColor={brand.textDim}
           />
+        </View>
+
+        <View style={s.field}>
+          <Text style={s.label}>ETKINLIK TURU</Text>
+          <View style={s.chipsRow}>
+            {EVENT_TYPES.map((t) => (
+              <TouchableOpacity
+                key={t.value}
+                style={[s.chip, eventType === t.value && s.chipSelected]}
+                onPress={() => setEventType(t.value)}
+              >
+                <Text style={[s.chipText, eventType === t.value && s.chipTextSelected]}>
+                  {t.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         <View style={s.field}>
@@ -257,6 +285,11 @@ const s = StyleSheet.create({
     color: brand.text,
   },
   textArea: { minHeight: 80, textAlignVertical: "top" },
+  chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 4, borderWidth: 1, borderColor: brand.border, backgroundColor: brand.surface },
+  chipSelected: { borderColor: brand.accent, backgroundColor: brand.accent + "18" },
+  chipText: { fontSize: 12, fontWeight: "600", color: brand.textMuted },
+  chipTextSelected: { color: brand.accent },
   row: { flexDirection: "row" },
   pickerBtn: {
     flexDirection: "row",
