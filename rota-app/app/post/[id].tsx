@@ -48,16 +48,30 @@ export default function PostDetailScreen() {
     try {
       const data = await API.getPost(id);
       setPost(data.post);
-      if (data.kudos) setKudosData(data.kudos);
-      if (data.comments) setComments(data.comments);
+      // Backend returns kudos as array directly, not KudosResponse shape
+      if (Array.isArray(data.kudos)) {
+        setKudosData({
+          kudos: data.kudos,
+          count: data.kudos.length,
+          hasKudosed: data.post?.hasKudosed ?? false,
+        });
+      } else if (data.kudos) {
+        setKudosData(data.kudos);
+      }
+      if (data.comments) {
+        setComments(Array.isArray(data.comments) ? data.comments : []);
+      }
     } catch (err: unknown) {
       console.error("Post fetch error:", err);
-      // Fallback: load kudos and comments separately
       setError((err as Error).message || "Gonderi yuklenemedi");
     }
-    // Also load kudos and comments separately as fallback/refresh
-    API.getPostKudos(id).then(setKudosData).catch(() => {});
-    API.getPostComments(id).then((res) => setComments(res.comments)).catch(() => {});
+    // Also load kudos and comments separately as fallback
+    API.getPostKudos(id).then((res) => {
+      if (res) setKudosData(res);
+    }).catch(() => {});
+    API.getPostComments(id).then((res) => {
+      if (res?.comments) setComments(res.comments);
+    }).catch(() => {});
   }, [id]);
 
   useEffect(() => {
@@ -144,7 +158,8 @@ export default function PostDetailScreen() {
 
   const photos = [post.photoUrl, post.photoUrl2, post.photoUrl3].filter(Boolean) as string[];
   const isOwnPost = user?.id === post.memberId;
-  const visibleKudos = showAllKudos ? kudosData.kudos : kudosData.kudos.slice(0, 3);
+  const allKudos = kudosData.kudos || [];
+  const visibleKudos = showAllKudos ? allKudos : allKudos.slice(0, 3);
 
   return (
     <KeyboardAvoidingView

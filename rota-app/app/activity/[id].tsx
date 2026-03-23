@@ -235,7 +235,8 @@ map.on('load',function(){
 </script>
 </body></html>` : null;
 
-  const visibleKudos = showAllKudos ? kudosData.kudos : kudosData.kudos.slice(0, 3);
+  const allKudos = kudosData.kudos || [];
+  const visibleKudos = showAllKudos ? allKudos : allKudos.slice(0, 3);
 
   return (
     <KeyboardAvoidingView
