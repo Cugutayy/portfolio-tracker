@@ -257,6 +257,9 @@ export default function FeedScreen() {
     <View>
       <View style={s.header}>
         <Text style={s.logo}>ROTA<Text style={{ color: brand.accent }}>.</Text></Text>
+        <TouchableOpacity onPress={() => router.push("/search" as never)} hitSlop={8}>
+          <Ionicons name="search-outline" size={22} color={brand.textMuted} />
+        </TouchableOpacity>
       </View>
 
       {stats && (
@@ -545,7 +548,7 @@ export default function FeedScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: brand.bg },
   list: { paddingHorizontal: 16, paddingBottom: 80 },
-  header: { paddingTop: 16, paddingBottom: 8 },
+  header: { paddingTop: 16, paddingBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   logo: { fontSize: 24, fontWeight: "bold", color: brand.text, letterSpacing: 6 },
   statsRow: { flexDirection: "row", gap: 8, marginVertical: 16 },
   statBox: { flex: 1, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, padding: 16, borderRadius: 4, alignItems: "center" },

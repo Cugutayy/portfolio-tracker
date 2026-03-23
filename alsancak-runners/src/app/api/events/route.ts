@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { db } from "@/lib/db";
-import { events, eventRsvps, members, follows } from "@/db/schema";
+import { events, eventRsvps, members, follows, groupMembers } from "@/db/schema";
 import { eq, gte, asc, desc, sql, and } from "drizzle-orm";
 import { sendPushNotifications } from "@/lib/push";
 
@@ -20,6 +20,7 @@ const createEventSchema = z.object({
   maxParticipants: z.number().int().positive().max(1000).optional().nullable(),
   coverImageUrl: z.string().url().max(2000).optional().nullable(),
   routeId: z.string().uuid().optional().nullable(),
+  groupId: z.string().uuid().optional().nullable(),
 });
 
 // GET /api/events — list upcoming events (public) or all for admin
@@ -27,11 +28,24 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") || "upcoming";
   const limit = Math.min(50, parseInt(searchParams.get("limit") || "20"));
+  const groupId = searchParams.get("groupId");
 
   // Try to get current user (optional — public endpoint)
   const user = await getRequestUser(request).catch(() => null);
 
   const now = new Date();
+
+  // Build WHERE conditions
+  const whereConditions = [];
+  if (status === "upcoming") {
+    whereConditions.push(eq(events.status, "upcoming"));
+    whereConditions.push(gte(events.date, now));
+  } else {
+    whereConditions.push(eq(events.status, status));
+  }
+  if (groupId) {
+    whereConditions.push(eq(events.groupId, groupId));
+  }
 
   const results = await db
     .select({
@@ -55,11 +69,7 @@ export async function GET(request: NextRequest) {
     })
     .from(events)
     .innerJoin(members, eq(events.createdBy, members.id))
-    .where(
-      status === "upcoming"
-        ? and(eq(events.status, "upcoming"), gte(events.date, now))
-        : eq(events.status, status)
-    )
+    .where(and(...whereConditions))
     .orderBy(status === "upcoming" ? asc(events.date) : desc(events.date))
     .limit(limit);
 
@@ -148,6 +158,7 @@ export async function POST(request: NextRequest) {
     maxParticipants,
     coverImageUrl,
     routeId,
+    groupId: eventGroupId,
   } = parsed.data;
 
   // Validate date: must be valid and in the future (within 1 year)
@@ -177,6 +188,18 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Validate group membership if groupId provided
+  if (eventGroupId) {
+    const [gm] = await db
+      .select({ id: groupMembers.id })
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, eventGroupId), eq(groupMembers.memberId, session.user.id)))
+      .limit(1);
+    if (!gm) {
+      return NextResponse.json({ error: "Bu grubun üyesi değilsiniz" }, { status: 403 });
+    }
+  }
+
   const slug = title
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "")
@@ -200,6 +223,7 @@ export async function POST(request: NextRequest) {
       maxParticipants,
       coverImageUrl,
       routeId,
+      groupId: eventGroupId || null,
       createdBy: session.user.id,
     })
     .returning();

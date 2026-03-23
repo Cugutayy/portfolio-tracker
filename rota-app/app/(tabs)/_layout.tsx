@@ -54,11 +54,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="events"
+        name="groups"
         options={{
-          title: "Etkinlik",
+          title: "Gruplar",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
+            <Ionicons name="people-outline" size={size} color={color} />
           ),
         }}
       />

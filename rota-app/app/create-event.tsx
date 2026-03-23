@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
 
@@ -37,6 +37,7 @@ function formatTimeTR(d: Date) {
 }
 
 export default function CreateEventScreen() {
+  const { groupId } = useLocalSearchParams<{ groupId?: string }>();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [meetingPoint, setMeetingPoint] = useState("");
@@ -84,7 +85,7 @@ export default function CreateEventScreen() {
 
     setSaving(true);
     try {
-      await API.createEvent({
+      const eventData: Record<string, any> = {
         title: title.trim(),
         description: description.trim() || null,
         meetingPoint: meetingPoint.trim() || null,
@@ -92,7 +93,9 @@ export default function CreateEventScreen() {
         maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
         date: eventDate.toISOString(),
         eventType,
-      });
+      };
+      if (groupId) eventData.groupId = groupId;
+      await API.createEvent(eventData as any);
       Alert.alert("Basarili", "Etkinlik olusturuldu!", [
         { text: "Tamam", onPress: () => router.back() },
       ]);

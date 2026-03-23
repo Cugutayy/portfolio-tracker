@@ -296,6 +296,21 @@ export const API = {
   logout: () =>
     api("/api/auth/logout", { method: "POST" }).catch(() => {}),
 
+  // Groups
+  getMyGroups: () => api<{ groups: Group[] }>("/api/groups/my"),
+  getGroups: (params: Record<string, string>) => api<{ groups: Group[]; hasMore: boolean }>(`/api/groups?${new URLSearchParams(params)}`),
+  createGroup: (data: { name: string; description?: string; image?: string; sportType?: string; city?: string; visibility?: string }) => api<{ id: string; slug: string }>("/api/groups", { method: "POST", body: JSON.stringify(data) }),
+  getGroup: (slug: string) => api<{ group: Group; stats: { totalMembers: number; totalRuns: number; totalDistanceM: number } }>(`/api/groups/${slug}`),
+  joinGroup: (slug: string, code?: string) => api(`/api/groups/${slug}/join`, { method: "POST", body: JSON.stringify({ code }) }),
+  leaveGroup: (slug: string) => api(`/api/groups/${slug}/leave`, { method: "POST" }),
+  getGroupMembers: (slug: string) => api<{ members: Array<{ id: string; name: string; image: string | null; role: string; isOnline: boolean }> }>(`/api/groups/${slug}/members`),
+  getGroupFeed: (slug: string, params: Record<string, string>) => api<{ items: Array<{ type: string; data: any }>; hasMore: boolean }>(`/api/groups/${slug}/feed?${new URLSearchParams(params)}`),
+  getGroupLeaderboard: (slug: string, period?: string) => api<{ leaderboard: LeaderboardEntry[] }>(`/api/groups/${slug}/leaderboard?period=${period || 'month'}`),
+  createGroupInvite: (slug: string) => api<{ code: string }>(`/api/groups/${slug}/invite`, { method: "POST" }),
+
+  // Search
+  search: (q: string, type?: string) => api<{ members: Array<{ id: string; name: string; image: string | null }>; groups: Group[]; events: Array<{ id: string; title: string; slug: string; date: string }> }>(`/api/search?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`),
+
   // Posts
   getPosts: (params: Record<string, string>) =>
     api<{ posts: Post[]; hasMore: boolean }>(
@@ -467,6 +482,20 @@ export interface Badge {
   description: string | null;
   iconEmoji: string;
   category: string;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image: string | null;
+  sportType: string;
+  city: string | null;
+  visibility: string;
+  memberCount: number;
+  myRole?: string | null;
+  createdBy: string;
 }
 
 export interface Post {
