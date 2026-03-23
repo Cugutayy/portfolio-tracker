@@ -10,26 +10,52 @@ import {
   ActivityIndicator,
   Image,
   AppState,
+  Animated,
+  Dimensions,
 } from "react-native";
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { brand } from "@/constants/Colors";
-import { API, type CommunityActivity, type LeaderboardEntry } from "@/lib/api";
+import { API, type CommunityActivity, type LeaderboardEntry, type Post } from "@/lib/api";
 import { Ionicons } from "@expo/vector-icons";
-import { formatDistance, formatPace, formatDate } from "@/lib/format";
+import { formatDistance, formatPace, formatDate, formatRelativeTime } from "@/lib/format";
 
 const PAGE_SIZE = 20;
 
+// Discriminated union for feed items
+type FeedItem =
+  | { type: "activity"; data: CommunityActivity }
+  | { type: "post"; data: Post };
+
 export default function FeedScreen() {
   const [activities, setActivities] = useState<CommunityActivity[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<{ members: number; totalRuns: number; totalDistanceKm: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
+  const [postPage, setPostPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [hasMorePosts, setHasMorePosts] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [activeTab, setActiveTab] = useState<"following" | "everyone">("everyone");
+  const [fabOpen, setFabOpen] = useState(false);
   const loadingMoreRef = useRef(false);
+  const fabAnim = useRef(new Animated.Value(0)).current;
+
+  // Merge activities and posts into a single feed sorted by date
+  const feedItems: FeedItem[] = (() => {
+    const items: FeedItem[] = [
+      ...activities.map((a): FeedItem => ({ type: "activity", data: a })),
+      ...posts.map((p): FeedItem => ({ type: "post", data: p })),
+    ];
+    items.sort((a, b) => {
+      const dateA = a.type === "activity" ? a.data.startTime : a.data.createdAt;
+      const dateB = b.type === "activity" ? b.data.startTime : b.data.createdAt;
+      return new Date(dateB).getTime() - new Date(dateA).getTime();
+    });
+    return items;
+  })();
 
   const fetchActivities = useCallback(async (pageNum: number, append: boolean) => {
     const offset = (pageNum - 1) * PAGE_SIZE;
@@ -47,18 +73,40 @@ export default function FeedScreen() {
     setHasMore(res.hasMore);
   }, [activeTab]);
 
+  const fetchPosts = useCallback(async (pageNum: number, append: boolean) => {
+    try {
+      const offset = (pageNum - 1) * PAGE_SIZE;
+      const res = await API.getPosts({
+        limit: String(PAGE_SIZE),
+        offset: String(offset),
+        filter: activeTab,
+      });
+      if (append) {
+        setPosts((prev) => [...prev, ...res.posts]);
+      } else {
+        setPosts(res.posts);
+      }
+      setHasMorePosts(res.hasMore);
+    } catch {
+      // Posts API might not be available yet, silently fail
+      if (!append) setPosts([]);
+    }
+  }, [activeTab]);
+
   const loadData = useCallback(async () => {
     try {
-      const [, leaderboardRes, statsRes] = await Promise.allSettled([
+      const [, , leaderboardRes, statsRes] = await Promise.allSettled([
         fetchActivities(1, false),
+        fetchPosts(1, false),
         API.getLeaderboard("month"),
         API.getStats(),
       ]);
       setPage(1);
+      setPostPage(1);
       if (leaderboardRes.status === "fulfilled") setLeaderboard(leaderboardRes.value.leaderboard.slice(0, 3));
       if (statsRes.status === "fulfilled") setStats(statsRes.value as typeof stats);
     } catch {}
-  }, [fetchActivities]);
+  }, [fetchActivities, fetchPosts]);
 
   useFocusEffect(
     useCallback(() => {
@@ -71,6 +119,7 @@ export default function FeedScreen() {
       const interval = setInterval(() => {
         if (appStateRef.current) {
           fetchActivities(1, false);
+          fetchPosts(1, false);
         }
       }, 60000);
 
@@ -78,45 +127,61 @@ export default function FeedScreen() {
         clearInterval(interval);
         appStateSub.remove();
       };
-    }, [loadData, fetchActivities])
+    }, [loadData, fetchActivities, fetchPosts])
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
     setPage(1);
+    setPostPage(1);
     setHasMore(true);
+    setHasMorePosts(true);
     await loadData();
     setRefreshing(false);
   };
 
   const loadMore = useCallback(async () => {
-    if (!hasMore || loadingMoreRef.current) return;
+    if ((!hasMore && !hasMorePosts) || loadingMoreRef.current) return;
     loadingMoreRef.current = true;
     setLoadingMore(true);
-    const nextPage = page + 1;
+    const promises: Promise<void>[] = [];
+    if (hasMore) {
+      const nextPage = page + 1;
+      promises.push(
+        fetchActivities(nextPage, true).then(() => setPage(nextPage))
+      );
+    }
+    if (hasMorePosts) {
+      const nextPostPage = postPage + 1;
+      promises.push(
+        fetchPosts(nextPostPage, true).then(() => setPostPage(nextPostPage))
+      );
+    }
     try {
-      await fetchActivities(nextPage, true);
-      setPage(nextPage);
+      await Promise.allSettled(promises);
     } catch {}
     setLoadingMore(false);
     loadingMoreRef.current = false;
-  }, [hasMore, page, fetchActivities]);
+  }, [hasMore, hasMorePosts, page, postPage, fetchActivities, fetchPosts]);
 
   const switchTab = (tab: "following" | "everyone") => {
     if (tab === activeTab) return;
     setActiveTab(tab);
     setActivities([]);
+    setPosts([]);
     setPage(1);
+    setPostPage(1);
     setHasMore(true);
+    setHasMorePosts(true);
   };
 
   useEffect(() => {
     fetchActivities(1, false);
-  }, [activeTab, fetchActivities]);
+    fetchPosts(1, false);
+  }, [activeTab, fetchActivities, fetchPosts]);
 
-  // Optimistic kudos toggle
-  const handleKudos = useCallback(async (activityId: string) => {
-    // Store original state BEFORE toggle
+  // Optimistic kudos toggle for activities
+  const handleActivityKudos = useCallback(async (activityId: string) => {
     let originalHasKudosed = false;
     let originalKudosCount = 0;
 
@@ -135,7 +200,6 @@ export default function FeedScreen() {
     try {
       await API.toggleKudos(activityId);
     } catch {
-      // Revert to ORIGINAL state
       setActivities((prev) =>
         prev.map((a) =>
           a.id === activityId
@@ -145,6 +209,47 @@ export default function FeedScreen() {
       );
     }
   }, []);
+
+  // Optimistic kudos toggle for posts
+  const handlePostKudos = useCallback(async (postId: string) => {
+    let originalHasKudosed = false;
+    let originalKudosCount = 0;
+
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        originalHasKudosed = p.hasKudosed;
+        originalKudosCount = p.kudosCount;
+        return {
+          ...p,
+          hasKudosed: !p.hasKudosed,
+          kudosCount: p.kudosCount + (p.hasKudosed ? -1 : 1),
+        };
+      })
+    );
+    try {
+      await API.togglePostKudos(postId);
+    } catch {
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? { ...p, hasKudosed: originalHasKudosed, kudosCount: originalKudosCount }
+            : p
+        )
+      );
+    }
+  }, []);
+
+  // FAB animation
+  const toggleFab = () => {
+    const toValue = fabOpen ? 0 : 1;
+    Animated.spring(fabAnim, {
+      toValue,
+      useNativeDriver: true,
+      friction: 6,
+    }).start();
+    setFabOpen(!fabOpen);
+  };
 
   const MEDAL = ["#E6FF00", "#C0C0C0", "#CD7F32"];
 
@@ -202,11 +307,11 @@ export default function FeedScreen() {
         </TouchableOpacity>
       </View>
 
-      <Text style={s.sectionTitle}>SON KOSULAR</Text>
+      <Text style={s.sectionTitle}>SON PAYLASIMLAR</Text>
     </View>
   );
 
-  const renderActivity = ({ item }: { item: CommunityActivity }) => (
+  const renderActivityCard = (item: CommunityActivity) => (
     <TouchableOpacity style={s.card} onPress={() => router.push(`/activity/${item.id}` as never)} activeOpacity={0.7}>
       <View style={s.cardHeader}>
         <TouchableOpacity
@@ -234,16 +339,14 @@ export default function FeedScreen() {
         <Text style={s.cardStat}><Text style={s.cardStatValue}>{formatPace(item.avgPaceSecKm)}</Text> /km</Text>
       </View>
 
-      {/* Activity photo */}
       {item.photoUrl && (
         <Image source={{ uri: item.photoUrl }} style={s.cardPhoto} resizeMode="cover" />
       )}
 
-      {/* Kudos button */}
       <View style={s.cardFooter}>
         <TouchableOpacity
           style={s.kudosButton}
-          onPress={() => handleKudos(item.id)}
+          onPress={() => handleActivityKudos(item.id)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Text style={[s.kudosEmoji, item.hasKudosed && s.kudosActive]}>
@@ -265,6 +368,71 @@ export default function FeedScreen() {
     </TouchableOpacity>
   );
 
+  const renderPostCard = (item: Post) => {
+    const photos = [item.photoUrl, item.photoUrl2, item.photoUrl3].filter(Boolean) as string[];
+    return (
+      <TouchableOpacity style={s.card} activeOpacity={0.7}>
+        <View style={s.cardHeader}>
+          <TouchableOpacity
+            style={s.cardAvatar}
+            onPress={() => router.push(`/member/${item.memberId}` as never)}
+          >
+            {item.memberImage ? (
+              <Image source={{ uri: item.memberImage }} style={s.cardAvatarImage} />
+            ) : (
+              <Text style={s.cardInitials}>{item.memberInitials}</Text>
+            )}
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <Text style={s.cardRunner}>{item.memberName}</Text>
+            <Text style={s.cardDate}>{formatRelativeTime(item.createdAt)}</Text>
+          </View>
+        </View>
+
+        {item.text && <Text style={s.postText}>{item.text}</Text>}
+
+        {photos.length === 1 && (
+          <Image source={{ uri: photos[0] }} style={s.cardPhoto} resizeMode="cover" />
+        )}
+
+        {photos.length > 1 && (
+          <View style={s.multiPhotoRow}>
+            {photos.map((url, i) => (
+              <Image key={i} source={{ uri: url }} style={s.multiPhotoThumb} resizeMode="cover" />
+            ))}
+          </View>
+        )}
+
+        <View style={s.cardFooter}>
+          <TouchableOpacity
+            style={s.kudosButton}
+            onPress={() => handlePostKudos(item.id)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={[s.kudosEmoji, item.hasKudosed && s.kudosActive]}>
+              {"\uD83D\uDC4F"}
+            </Text>
+            <Text style={[s.kudosCount, item.hasKudosed && s.kudosCountActive]}>
+              {item.kudosCount || 0}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s.commentButton}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="chatbubble-outline" size={16} color={brand.textDim} />
+            <Text style={s.commentCount}>{item.commentCount || 0}</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderFeedItem = ({ item }: { item: FeedItem }) => {
+    if (item.type === "activity") return renderActivityCard(item.data);
+    return renderPostCard(item.data);
+  };
+
   const renderFooter = () => {
     if (loadingMore) {
       return (
@@ -273,22 +441,36 @@ export default function FeedScreen() {
         </View>
       );
     }
-    if (!hasMore && activities.length > 0) {
+    if (!hasMore && !hasMorePosts && feedItems.length > 0) {
       return (
         <Text style={{ color: "#666", textAlign: "center", padding: 20, fontSize: 13 }}>
-          Tüm aktiviteler yüklendi
+          Tum paylasimlar yuklendi
         </Text>
       );
     }
     return null;
   };
 
+  // FAB menu item animation
+  const fabMenuTranslate = fabAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [60, 0],
+  });
+  const fabMenuOpacity = fabAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1],
+  });
+  const fabRotation = fabAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "45deg"],
+  });
+
   return (
     <SafeAreaView style={s.container}>
       <FlatList
-        data={activities}
-        renderItem={renderActivity}
-        keyExtractor={(item) => item.id}
+        data={feedItems}
+        renderItem={renderFeedItem}
+        keyExtractor={(item) => `${item.type}-${item.data.id}`}
         ListHeaderComponent={renderHeader}
         ListFooterComponent={renderFooter}
         contentContainerStyle={s.list}
@@ -299,24 +481,64 @@ export default function FeedScreen() {
           !refreshing ? (
             <View style={s.empty}>
               <Text style={s.emptyText}>
-                {activeTab === "following" ? "Henuz kimseyi takip etmiyorsun" : "Henuz kosu yok"}
+                {activeTab === "following" ? "Henuz kimseyi takip etmiyorsun" : "Henuz paylasim yok"}
               </Text>
               <Text style={s.emptySubtext}>
                 {activeTab === "following"
                   ? "'Herkes' sekmesinden kosuculari kesfet!"
-                  : "Strava'ni bagla veya bir kosuya basla!"}
+                  : "Bir gonderi paylas veya kosuya basla!"}
               </Text>
             </View>
           ) : null
         }
       />
+
+      {/* FAB Menu items */}
+      {fabOpen && (
+        <TouchableOpacity
+          style={s.fabOverlay}
+          activeOpacity={1}
+          onPress={toggleFab}
+        />
+      )}
+
+      <Animated.View
+        style={[
+          s.fabMenuItem,
+          {
+            bottom: 100,
+            opacity: fabMenuOpacity,
+            transform: [{ translateY: fabMenuTranslate }],
+          },
+        ]}
+        pointerEvents={fabOpen ? "auto" : "none"}
+      >
+        <TouchableOpacity
+          style={s.fabMenuButton}
+          onPress={() => {
+            toggleFab();
+            router.push("/create-post" as never);
+          }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="create-outline" size={18} color={brand.bg} />
+          <Text style={s.fabMenuLabel}>Gonderi Paylas</Text>
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* FAB */}
+      <TouchableOpacity style={s.fab} onPress={toggleFab} activeOpacity={0.8}>
+        <Animated.View style={{ transform: [{ rotate: fabRotation }] }}>
+          <Ionicons name="add" size={28} color={brand.bg} />
+        </Animated.View>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: brand.bg },
-  list: { paddingHorizontal: 16, paddingBottom: 20 },
+  list: { paddingHorizontal: 16, paddingBottom: 80 },
   header: { paddingTop: 16, paddingBottom: 8 },
   logo: { fontSize: 24, fontWeight: "bold", color: brand.text, letterSpacing: 6 },
   statsRow: { flexDirection: "row", gap: 8, marginVertical: 16 },
@@ -361,4 +583,52 @@ const s = StyleSheet.create({
   empty: { alignItems: "center", paddingVertical: 48 },
   emptyText: { fontSize: 15, color: brand.textMuted },
   emptySubtext: { fontSize: 12, color: brand.textDim, marginTop: 4 },
+
+  // Post-specific styles
+  postText: { fontSize: 14, color: brand.text, lineHeight: 20, marginBottom: 4 },
+  multiPhotoRow: { flexDirection: "row", gap: 6, marginTop: 10 },
+  multiPhotoThumb: { flex: 1, height: 140, borderRadius: 4 },
+
+  // FAB
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 20,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: brand.accent,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    zIndex: 10,
+  },
+  fabOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    zIndex: 5,
+  },
+  fabMenuItem: {
+    position: "absolute",
+    right: 20,
+    zIndex: 8,
+  },
+  fabMenuButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: brand.accent,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  fabMenuLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: brand.bg,
+  },
 });
