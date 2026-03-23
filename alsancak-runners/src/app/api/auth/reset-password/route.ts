@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { members } from "@/db/schema";
+import { members, passwordResetCodes } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/rateLimit";
-import { resetCodes } from "../forgot-password/route";
+import { hashResetCode } from "../forgot-password/route";
 
 const MAX_CODE_ATTEMPTS = 5;
 
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
     const rateLimited = await checkRateLimit(`reset-password:${ip}`, {
       maxRequests: 10,
       windowSec: 300,
+      strict: true,
     });
     if (rateLimited) return rateLimited;
 
@@ -52,8 +53,17 @@ export async function POST(request: Request) {
       );
     }
 
-    // Look up reset code
-    const entry = resetCodes.get(email);
+    // Look up reset code record
+    const [entry] = await db
+      .select({
+        id: passwordResetCodes.id,
+        codeHash: passwordResetCodes.codeHash,
+        expiresAt: passwordResetCodes.expiresAt,
+        attempts: passwordResetCodes.attempts,
+      })
+      .from(passwordResetCodes)
+      .where(eq(passwordResetCodes.email, email))
+      .limit(1);
 
     if (!entry) {
       return NextResponse.json(
@@ -63,8 +73,9 @@ export async function POST(request: Request) {
     }
 
     // Check expiry
-    if (entry.expiresAt < Date.now()) {
-      resetCodes.delete(email);
+    const expiresAtMs = new Date(entry.expiresAt).getTime();
+    if (expiresAtMs < Date.now()) {
+      await db.delete(passwordResetCodes).where(eq(passwordResetCodes.id, entry.id));
       return NextResponse.json(
         {
           error:
@@ -76,7 +87,7 @@ export async function POST(request: Request) {
 
     // Check max attempts
     if (entry.attempts >= MAX_CODE_ATTEMPTS) {
-      resetCodes.delete(email);
+      await db.delete(passwordResetCodes).where(eq(passwordResetCodes.id, entry.id));
       return NextResponse.json(
         {
           error:
@@ -87,12 +98,17 @@ export async function POST(request: Request) {
     }
 
     // Verify code
-    if (entry.code !== String(code).trim()) {
-      entry.attempts++;
+    const incomingHash = hashResetCode(email, String(code).trim());
+    if (entry.codeHash !== incomingHash) {
+      const nextAttempts = entry.attempts + 1;
+      await db
+        .update(passwordResetCodes)
+        .set({ attempts: nextAttempts, updatedAt: new Date() })
+        .where(eq(passwordResetCodes.id, entry.id));
       return NextResponse.json(
         {
           error: "Gecersiz kod. Lutfen tekrar deneyin.",
-          attemptsRemaining: MAX_CODE_ATTEMPTS - entry.attempts,
+          attemptsRemaining: Math.max(0, MAX_CODE_ATTEMPTS - nextAttempts),
         },
         { status: 400 },
       );
@@ -115,7 +131,7 @@ export async function POST(request: Request) {
     }
 
     // Clean up used code
-    resetCodes.delete(email);
+    await db.delete(passwordResetCodes).where(eq(passwordResetCodes.id, entry.id));
 
     return NextResponse.json({
       success: true,
