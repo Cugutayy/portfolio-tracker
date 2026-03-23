@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
       totalDistanceM: sql<number>`COALESCE(SUM(${activities.distanceM}), 0)::real`,
       totalTimeSec: sql<number>`COALESCE(SUM(${activities.movingTimeSec}), 0)::int`,
       totalElevationM: sql<number>`COALESCE(SUM(${activities.elevationGainM}), 0)::real`,
-      avgPaceSecKm: sql<number>`COALESCE(AVG(${activities.avgPaceSecKm}), 0)::real`,
+      avgPaceSecKm: sql<number>`CASE WHEN SUM(${activities.distanceM}) > 0 THEN (SUM(${activities.movingTimeSec})::real / (SUM(${activities.distanceM})::real / 1000)) ELSE 0 END::real`,
     })
     .from(activities)
     .innerJoin(members, eq(activities.memberId, members.id))
