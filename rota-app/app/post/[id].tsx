@@ -198,7 +198,7 @@ export default function PostDetailScreen() {
               <Image source={{ uri: post.memberImage }} style={s.memberAvatarImage} />
             ) : (
               <Text style={s.memberAvatarText}>
-                {post.memberName.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+                {(post.memberName || "?").split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)}
               </Text>
             )}
           </View>
@@ -271,7 +271,7 @@ export default function PostDetailScreen() {
                     <Image source={{ uri: c.memberImage }} style={s.commentAvatarImage} />
                   ) : (
                     <Text style={s.commentAvatarText}>
-                      {c.memberName.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                      {(c.memberName || "?").split(" ").map((w) => w[0]).join("").slice(0, 2)}
                     </Text>
                   )}
                 </View>

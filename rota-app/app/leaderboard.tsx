@@ -65,7 +65,7 @@ export default function LeaderboardScreen() {
       </View>
       <View style={s.avatar}>
         <Text style={s.avatarText}>
-          {item.memberName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)}
+          {(item.memberName || "?").split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)}
         </Text>
       </View>
       <View style={s.info}>
