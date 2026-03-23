@@ -405,6 +405,14 @@ const GOZTEPE_ROUTE: [number, number][] = [
 
 // POST /api/admin/seed-demo — Create demo accounts + activities for İzmir
 export async function POST(request: NextRequest) {
+  // Block in production
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "Seed disabled in production" },
+      { status: 403 }
+    );
+  }
+
   // Auth check: admin OR seed secret
   const seedSecret = request.headers.get("x-seed-secret");
   if (seedSecret === process.env.AUTH_SECRET) {

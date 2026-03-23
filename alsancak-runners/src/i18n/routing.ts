@@ -17,6 +17,10 @@ export const routing = defineRouting({
       tr: '/etkinlikler/[slug]',
       en: '/events/[slug]'
     },
+    '/etkinlikler/olustur': {
+      tr: '/etkinlikler/olustur',
+      en: '/events/create'
+    },
     '/topluluk': {
       tr: '/topluluk',
       en: '/community'
