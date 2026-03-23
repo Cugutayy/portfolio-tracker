@@ -154,13 +154,17 @@ export default function CreateGroupScreen() {
 
         <View style={s.field}>
           <Text style={s.label}>SEHIR</Text>
-          <TextInput
-            style={s.input}
-            value={city}
-            onChangeText={setCity}
-            placeholder="orn: Izmir"
-            placeholderTextColor={brand.textDim}
-          />
+          <View style={s.chipsRow}>
+            {["Izmir", "Istanbul", "Ankara", "Antalya", "Bursa"].map((c) => (
+              <TouchableOpacity
+                key={c}
+                style={[s.chip, city === c && s.chipSelected]}
+                onPress={() => setCity(city === c ? "" : c)}
+              >
+                <Text style={[s.chipText, city === c && s.chipTextSelected]}>{c}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         <View style={s.field}>
