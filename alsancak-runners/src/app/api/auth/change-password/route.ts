@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     const rateLimited = await checkRateLimit(
       `change-password:${user.id}`,
-      { maxRequests: 5, windowSec: 300 },
+      { maxRequests: 5, windowSec: 300, strict: true },
     );
     if (rateLimited) return rateLimited;
 
