@@ -9,7 +9,7 @@ import { eq, sql, ilike, and } from "drizzle-orm";
 const createGroupSchema = z.object({
   name: z.string().min(1, "Grup adı gerekli").max(100, "Grup adı en fazla 100 karakter"),
   description: z.string().max(500, "Açıklama en fazla 500 karakter").optional().nullable(),
-  image: z.string().url().max(2000).optional().nullable(),
+  image: z.string().max(5_000_000).optional().nullable(),
   sportType: z.string().max(50).default("running"),
   city: z.string().max(100).optional().nullable(),
   visibility: z.enum(["public", "private"]).default("public"),
@@ -87,9 +87,11 @@ export async function POST(request: NextRequest) {
 
   const { name, description, image, sportType, city, visibility, postPolicy } = parsed.data;
 
-  // Generate slug
+  // Generate slug (Turkish char support)
   const baseSlug = name
     .toLowerCase()
+    .replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i")
+    .replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u")
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-")
