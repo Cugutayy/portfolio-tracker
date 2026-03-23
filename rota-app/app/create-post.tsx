@@ -69,8 +69,9 @@ export default function CreatePostScreen() {
       if (photos[2]) data.photoBase64_3 = `data:image/jpeg;base64,${photos[2].base64}`;
       await API.createPost(data);
       router.back();
-    } catch {
-      Alert.alert("Hata", "Gonderi paylasilamadi. Tekrar dene.");
+    } catch (err: unknown) {
+      const msg = err && typeof err === "object" && "message" in err ? (err as Error).message : "Bilinmeyen hata";
+      Alert.alert("Hata", `Gonderi paylasilamadi: ${msg}`);
     } finally {
       setPosting(false);
     }

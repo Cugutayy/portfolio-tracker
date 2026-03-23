@@ -5,6 +5,9 @@ import { posts, postKudos, postComments, members, follows } from "@/db/schema";
 import { sql, eq, and } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/rateLimit";
 
+// Increase body size limit for photo uploads
+export const maxDuration = 30; // seconds
+
 // GET /api/posts — list posts (paginated, newest first)
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -105,7 +108,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Validate photos
-  const MAX_PHOTO_SIZE = 1.4 * 1024 * 1024; // 1.4MB
+  const MAX_PHOTO_SIZE = 5 * 1024 * 1024; // 5MB
   const ALLOWED_FORMATS = /^data:image\/(jpeg|png|webp|gif);base64,/;
 
   function validatePhoto(photo: string | null, label: string): string | null {
