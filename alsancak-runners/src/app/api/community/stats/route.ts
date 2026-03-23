@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { members, activities, events } from "@/db/schema";
-import { sql, gte, eq } from "drizzle-orm";
+import { sql, gte, eq, and } from "drizzle-orm";
 import { cacheGet, cacheSet, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 
 // GET /api/community/stats — aggregate community stats (replaces hardcoded values)
@@ -43,11 +43,12 @@ export async function GET() {
     .from(activities)
     .where(gte(activities.startTime, monthStart));
 
-  // Upcoming events count
+  // Upcoming events count (must match events API: status='upcoming' AND date >= now)
+  const now = new Date();
   const [eventCount] = await db
     .select({ count: sql<number>`COUNT(*)::int` })
     .from(events)
-    .where(eq(events.status, "upcoming"));
+    .where(and(eq(events.status, "upcoming"), gte(events.date, now)));
 
   const result = {
     members: memberCount.count,
