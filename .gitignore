@@ -11,3 +11,4 @@ netlify.toml
 
 # Claude Code
 .claude/
+.vercel
