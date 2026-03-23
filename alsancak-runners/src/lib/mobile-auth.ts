@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
-import { db } from "@/db";
+import { db } from "@/lib/db";
 import { members } from "@/db/schema";
 
 if (!process.env.AUTH_SECRET) {
