@@ -300,7 +300,7 @@ export const API = {
   // Groups
   getMyGroups: () => api<{ groups: Group[] }>("/api/groups/my"),
   getGroups: (params: Record<string, string>) => api<{ groups: Group[]; hasMore: boolean }>(`/api/groups?${new URLSearchParams(params)}`),
-  createGroup: (data: { name: string; description?: string; image?: string; sportType?: string; city?: string; visibility?: string }) => api<{ id: string; slug: string }>("/api/groups", { method: "POST", body: JSON.stringify(data) }),
+  createGroup: (data: { name: string; description?: string; image?: string; sportType?: string; city?: string; visibility?: string }) => api<{ group: { id: string; slug: string; name: string } }>("/api/groups", { method: "POST", body: JSON.stringify(data) }),
   getGroup: (slug: string) => api<{ group: Group; stats: { totalMembers: number; totalRunsThisMonth: number; totalDistanceMThisMonth: number } }>(`/api/groups/${slug}`),
   joinGroup: (slug: string, code?: string) => api(`/api/groups/${slug}/join`, { method: "POST", body: JSON.stringify({ code }) }),
   leaveGroup: (slug: string) => api(`/api/groups/${slug}/leave`, { method: "POST" }),

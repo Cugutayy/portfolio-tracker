@@ -69,7 +69,7 @@ export default function CreateGroupScreen() {
       data.visibility = visibility;
 
       const res = await API.createGroup(data as any);
-      router.replace(`/group/${res.slug}` as never);
+      router.replace(`/group/${res.group.slug}` as never);
     } catch (err) {
       Alert.alert("Hata", err instanceof Error ? err.message : "Grup olusturulamadi");
     } finally {
