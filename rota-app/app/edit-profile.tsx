@@ -52,22 +52,18 @@ export default function EditProfileScreen() {
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
+    // First try quality 0.4 (handles most iPhone photos)
+    let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.7,
+      quality: 0.3,
       base64: true,
     });
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       setImageUri(asset.uri);
       if (asset.base64) {
-        // Check size (~1MB limit for base64)
-        if (asset.base64.length > 1_400_000) {
-          Alert.alert("Hata", "Fotograf cok buyuk. Daha kucuk bir fotograf secin.");
-          return;
-        }
         setImageBase64(asset.base64);
       }
     }

@@ -165,7 +165,7 @@ export async function PATCH(request: NextRequest) {
     if (image !== undefined) {
       if (image === null) {
         updateData.image = null;
-      } else if (typeof image === "string" && /^data:image\/(jpeg|png|webp|gif);base64,/.test(image) && image.length <= 1_400_000) {
+      } else if (typeof image === "string" && /^data:image\/(jpeg|png|webp|gif);base64,/.test(image) && image.length <= 5_000_000) {
         updateData.image = image;
       }
       // Silently ignore invalid image values

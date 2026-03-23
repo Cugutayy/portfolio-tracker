@@ -41,17 +41,13 @@ export default function CreatePostScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: false,
-      quality: 0.7,
+      quality: 0.3,
       base64: true,
     });
 
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
       if (!asset.base64) return;
-      if (asset.base64.length > 1_400_000) {
-        Alert.alert("Hata", "Fotograf cok buyuk. Daha kucuk bir fotograf secin.");
-        return;
-      }
       setPhotos((prev) => [...prev, { uri: asset.uri, base64: asset.base64! }]);
     }
   };

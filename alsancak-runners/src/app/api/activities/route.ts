@@ -22,7 +22,7 @@ const createActivitySchema = z.object({
   elapsedTimeSec: z.number().int().positive().max(86400).optional().nullable(),
   startLocation: z.string().max(500).optional().nullable(),
   endLocation: z.string().max(500).optional().nullable(),
-  photoBase64: z.string().max(1_400_000).optional().nullable(),
+  photoBase64: z.string().max(5_000_000).optional().nullable(),
   splits: z.array(z.object({
     splitIndex: z.number().int(),
     distanceM: z.number(),
@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
     if (photoBase64 && typeof photoBase64 === "string") {
       // Validate: must be a valid image data URI (jpeg, png, webp, gif only)
       const validImagePrefix = /^data:image\/(jpeg|png|webp|gif);base64,/;
-      if (validImagePrefix.test(photoBase64) && photoBase64.length <= 1_400_000) {
+      if (validImagePrefix.test(photoBase64) && photoBase64.length <= 5_000_000) {
         await tx.insert(activityPhotos).values({
           activityId: inserted.id,
           url: photoBase64,

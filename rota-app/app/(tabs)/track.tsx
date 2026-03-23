@@ -382,10 +382,6 @@ export default function TrackScreen() {
 
     if (!result.canceled && result.assets[0]) {
       const asset = result.assets[0];
-      if (asset.base64 && asset.base64.length > 1_000_000) {
-        Alert.alert("Cok Buyuk", "Fotograf boyutu cok buyuk. Daha kucuk bir fotograf secin.");
-        return;
-      }
       setPhotoUri(asset.uri);
       if (asset.base64) {
         const ext = asset.uri.split(".").pop()?.toLowerCase() || "jpeg";
