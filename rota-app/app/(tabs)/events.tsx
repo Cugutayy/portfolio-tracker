@@ -79,6 +79,16 @@ export default function EventsScreen() {
     }
   };
 
+  const eventTypeLabels: Record<string, string> = {
+    group_run: "Grup Kosusu",
+    tempo_run: "Tempo Kosusu",
+    long_run: "Uzun Kosu",
+    interval: "Interval",
+    trail_run: "Patika Kosusu",
+    social: "Sosyal Bulusma",
+    race: "Yaris",
+  };
+
   const formatDate = (iso: string) => {
     const d = new Date(iso);
     const months = [
@@ -107,6 +117,7 @@ export default function EventsScreen() {
       </View>
       <View style={s.cardBody}>
         <Text style={s.cardTitle}>{item.title}</Text>
+        <Text style={s.cardType}>{eventTypeLabels[item.eventType] || item.eventType}</Text>
         <View style={s.cardMeta}>
           {item.meetingPoint && (
             <View style={s.metaItem}>
@@ -241,7 +252,8 @@ const s = StyleSheet.create({
   dateDay: { fontSize: 22, fontWeight: "bold", color: brand.accent },
   dateMonth: { fontSize: 10, color: brand.textMuted, letterSpacing: 2, marginTop: 2 },
   cardBody: { flex: 1, padding: 12 },
-  cardTitle: { fontSize: 14, fontWeight: "700", color: brand.text, letterSpacing: 1, marginBottom: 6 },
+  cardTitle: { fontSize: 14, fontWeight: "700", color: brand.text, letterSpacing: 1, marginBottom: 2 },
+  cardType: { fontSize: 11, color: brand.accent, fontWeight: "600", letterSpacing: 1, marginBottom: 6 },
   cardMeta: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 10 },
   metaItem: { flexDirection: "row", alignItems: "center", gap: 3 },
   metaText: { fontSize: 11, color: brand.textDim },
