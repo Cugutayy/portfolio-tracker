@@ -130,7 +130,7 @@ function RouteCard({ route, index }: { route: Route; index: number }) {
           {/* Distance badge */}
           <div className="absolute top-4 left-4 bg-[#E6FF00] text-black px-3 py-1">
             <p className="text-xs font-bold">
-              {(route.distanceM / 1000).toFixed(0)} KM
+              {(route.distanceM / 1000).toFixed(1)} KM
             </p>
           </div>
           {/* Loop badge */}
