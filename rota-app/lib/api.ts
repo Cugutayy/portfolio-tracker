@@ -202,7 +202,8 @@ export const API = {
     }),
 
   // Events
-  getEvents: () => api("/api/events"),
+  getEvents: (params?: Record<string, string>) =>
+    api(`/api/events${params ? `?${new URLSearchParams(params)}` : ""}`),
   getEventDetail: (slug: string) =>
     api<{ event: any; rsvps: Array<{ id: string; memberName: string; memberImage: string | null; paceGroup: string | null; status: string }> }>(
       `/api/events/${slug}`
@@ -300,11 +301,11 @@ export const API = {
   getMyGroups: () => api<{ groups: Group[] }>("/api/groups/my"),
   getGroups: (params: Record<string, string>) => api<{ groups: Group[]; hasMore: boolean }>(`/api/groups?${new URLSearchParams(params)}`),
   createGroup: (data: { name: string; description?: string; image?: string; sportType?: string; city?: string; visibility?: string }) => api<{ id: string; slug: string }>("/api/groups", { method: "POST", body: JSON.stringify(data) }),
-  getGroup: (slug: string) => api<{ group: Group; stats: { totalMembers: number; totalRuns: number; totalDistanceM: number } }>(`/api/groups/${slug}`),
+  getGroup: (slug: string) => api<{ group: Group; stats: { totalMembers: number; totalRunsThisMonth: number; totalDistanceMThisMonth: number } }>(`/api/groups/${slug}`),
   joinGroup: (slug: string, code?: string) => api(`/api/groups/${slug}/join`, { method: "POST", body: JSON.stringify({ code }) }),
   leaveGroup: (slug: string) => api(`/api/groups/${slug}/leave`, { method: "POST" }),
   getGroupMembers: (slug: string) => api<{ members: Array<{ id: string; name: string; image: string | null; role: string; isOnline: boolean }> }>(`/api/groups/${slug}/members`),
-  getGroupFeed: (slug: string, params: Record<string, string>) => api<{ items: Array<{ type: string; data: any }>; hasMore: boolean }>(`/api/groups/${slug}/feed?${new URLSearchParams(params)}`),
+  getGroupFeed: (slug: string, params: Record<string, string>) => api<{ feed: Array<{ type: string; id: string; memberId: string; memberName: string; memberImage: string | null; text?: string | null; photoUrl?: string | null; distanceM?: number; movingTimeSec?: number; avgPaceSecKm?: number | null; createdAt: string; kudosCount: number; commentCount: number }>; hasMore: boolean }>(`/api/groups/${slug}/feed?${new URLSearchParams(params)}`),
   getGroupLeaderboard: (slug: string, period?: string) => api<{ leaderboard: LeaderboardEntry[] }>(`/api/groups/${slug}/leaderboard?period=${period || 'month'}`),
   createGroupInvite: (slug: string) => api<{ code: string }>(`/api/groups/${slug}/invite`, { method: "POST" }),
 
