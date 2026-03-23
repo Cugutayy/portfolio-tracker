@@ -19,7 +19,6 @@ export default function ForgotPasswordScreen() {
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
   const [loading, setLoading] = useState(false);
-  const [devCode, setDevCode] = useState<string | null>(null);
 
   const handleRequestCode = async () => {
     const trimmed = email.trim().toLowerCase();
@@ -30,15 +29,11 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     try {
-      const res = await API.forgotPassword(trimmed);
-      // Dev/beta: code is returned in response
-      if (res.code) {
-        setDevCode(res.code);
-      }
+      await API.forgotPassword(trimmed);
       setStep("code");
       Alert.alert(
         "Kod Gonderildi",
-        "Sifre sifirlama kodu olusturuldu. Lutfen kodu girin.",
+        "Kodunuz email adresinize gonderildi",
       );
     } catch (e: any) {
       Alert.alert("Hata", e.message || "Bir hata olustu");
@@ -77,14 +72,6 @@ export default function ForgotPasswordScreen() {
             ? "Hesabiniza bagli email adresini girin."
             : "Email adresinize gonderilen 6 haneli kodu girin."}
         </Text>
-
-        {/* Dev mode: show code */}
-        {devCode && step === "code" && (
-          <View style={s.devBanner}>
-            <Text style={s.devLabel}>BETA - Sifirlama Kodu:</Text>
-            <Text style={s.devCode}>{devCode}</Text>
-          </View>
-        )}
 
         {/* Form */}
         <View style={s.form}>
@@ -138,7 +125,6 @@ export default function ForgotPasswordScreen() {
                 style={s.resendButton}
                 onPress={() => {
                   setCode("");
-                  setDevCode(null);
                   handleRequestCode();
                 }}
                 disabled={loading}
@@ -185,28 +171,6 @@ const s = StyleSheet.create({
     textAlign: "center",
     marginBottom: 32,
     lineHeight: 20,
-  },
-  devBanner: {
-    backgroundColor: brand.surface,
-    borderWidth: 1,
-    borderColor: brand.accent,
-    borderRadius: 4,
-    padding: 12,
-    marginBottom: 16,
-    alignItems: "center",
-  },
-  devLabel: {
-    fontSize: 10,
-    color: brand.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 2,
-    marginBottom: 4,
-  },
-  devCode: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: brand.accent,
-    letterSpacing: 8,
   },
   form: { gap: 12 },
   input: {
