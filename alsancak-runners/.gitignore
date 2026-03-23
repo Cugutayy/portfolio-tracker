@@ -45,3 +45,4 @@ download-*.py
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.env*.local
