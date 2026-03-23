@@ -100,6 +100,12 @@ export default function EtkinliklerPage() {
             <p className="text-[15px] text-[#666] mt-6 max-w-lg">
               {t("subtitle")}
             </p>
+            <Link
+              href="/etkinlikler/olustur"
+              className="inline-block mt-8 text-[11px] tracking-[0.15em] uppercase font-bold bg-[#E6FF00] text-black px-6 py-3 hover:bg-white transition-colors"
+            >
+              Etkinlik Olustur
+            </Link>
           </motion.div>
 
           {/* Events List */}
