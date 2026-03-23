@@ -43,12 +43,18 @@ export default function FeedScreen() {
   const loadingMoreRef = useRef(false);
   const fabAnim = useRef(new Animated.Value(0)).current;
 
-  // Merge activities and posts into a single feed sorted by date
+  // Merge activities and posts into a single feed sorted by date (deduplicated)
   const feedItems: FeedItem[] = (() => {
-    const items: FeedItem[] = [
-      ...activities.map((a): FeedItem => ({ type: "activity", data: a })),
-      ...posts.map((p): FeedItem => ({ type: "post", data: p })),
-    ];
+    const seen = new Set<string>();
+    const items: FeedItem[] = [];
+    for (const a of activities) {
+      const key = `activity-${a.id}`;
+      if (!seen.has(key)) { seen.add(key); items.push({ type: "activity", data: a }); }
+    }
+    for (const p of posts) {
+      const key = `post-${p.id}`;
+      if (!seen.has(key)) { seen.add(key); items.push({ type: "post", data: p }); }
+    }
     items.sort((a, b) => {
       const dateA = a.type === "activity" ? a.data.startTime : a.data.createdAt;
       const dateB = b.type === "activity" ? b.data.startTime : b.data.createdAt;
@@ -66,7 +72,10 @@ export default function FeedScreen() {
       filter: activeTab,
     });
     if (append) {
-      setActivities((prev) => [...prev, ...res.activities]);
+      setActivities((prev) => {
+        const ids = new Set(prev.map(a => a.id));
+        return [...prev, ...res.activities.filter(a => !ids.has(a.id))];
+      });
     } else {
       setActivities(res.activities);
     }
@@ -82,7 +91,10 @@ export default function FeedScreen() {
         filter: activeTab,
       });
       if (append) {
-        setPosts((prev) => [...prev, ...res.posts]);
+        setPosts((prev) => {
+          const ids = new Set(prev.map(p => p.id));
+          return [...prev, ...res.posts.filter(p => !ids.has(p.id))];
+        });
       } else {
         setPosts(res.posts);
       }
