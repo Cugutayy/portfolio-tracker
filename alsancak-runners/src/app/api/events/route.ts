@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ events: annotated });
 }
 
-// POST /api/events — create event (admin/captain only)
+// POST /api/events — create event (any authenticated user)
 export async function POST(request: NextRequest) {
   const user = await getRequestUser(request);
   if (!user) {
@@ -119,20 +119,6 @@ export async function POST(request: NextRequest) {
   const rateLimited = await checkRateLimit(`event:${user.id}`, { maxRequests: 10, windowSec: 60 });
   if (rateLimited) return rateLimited;
   const session = { user: { id: user.id } };  // compatibility shim
-
-  // Check role: only admin or captain can create events
-  const [memberRow] = await db
-    .select({ role: members.role })
-    .from(members)
-    .where(eq(members.id, user.id))
-    .limit(1);
-
-  if (!memberRow || (memberRow.role !== "admin" && memberRow.role !== "captain")) {
-    return NextResponse.json(
-      { error: "Etkinlik olusturmak icin yetkiniz yok" },
-      { status: 403 }
-    );
-  }
 
   const body = await request.json();
 
