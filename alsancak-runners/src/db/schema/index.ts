@@ -361,6 +361,7 @@ export const events = pgTable(
     description: text("description"),
     eventType: text("event_type").notNull().default("group_run"),
     routeId: uuid("route_id").references(() => routes.id),
+    groupId: uuid("group_id").references(() => groups.id, { onDelete: "set null" }),
     date: timestamp("date", { withTimezone: true }).notNull(),
     meetingPoint: text("meeting_point"),
     meetingLat: real("meeting_lat"),
@@ -550,6 +551,7 @@ export const memberBadges = pgTable("member_badges", {
 export const posts = pgTable("posts", {
   id: uuid("id").defaultRandom().primaryKey(),
   memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  groupId: uuid("group_id").references(() => groups.id, { onDelete: "set null" }),
   text: text("text"),
   photoUrl: text("photo_url"),
   photoUrl2: text("photo_url_2"),
@@ -583,6 +585,49 @@ export const postComments = pgTable("post_comments", {
   index("idx_post_comments_post").on(table.postId),
   index("idx_post_comments_member").on(table.memberId),
 ]);
+
+// ============================================================
+// DOMAIN 7: GROUPS / CLUBS
+// ============================================================
+
+export const groups = pgTable("groups", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  image: text("image"),
+  sportType: text("sport_type").default("running").notNull(),
+  city: text("city"),
+  visibility: text("visibility").default("public").notNull(), // public, private
+  postPolicy: text("post_policy").default("everyone").notNull(), // everyone, admins
+  createdBy: uuid("created_by").notNull().references(() => members.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("groups_slug_idx").on(table.slug),
+  index("groups_city_idx").on(table.city),
+]);
+
+export const groupMembers = pgTable("group_members", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  groupId: uuid("group_id").notNull().references(() => groups.id, { onDelete: "cascade" }),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  role: text("role").default("member").notNull(), // owner, admin, member
+  joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  uniqueIndex("group_members_unique").on(table.groupId, table.memberId),
+]);
+
+export const groupInvites = pgTable("group_invites", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  groupId: uuid("group_id").notNull().references(() => groups.id, { onDelete: "cascade" }),
+  code: text("code").notNull().unique(),
+  createdBy: uuid("created_by").notNull().references(() => members.id),
+  usedBy: uuid("used_by").references(() => members.id),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
 
 export const inviteCodes = pgTable("invite_codes", {
   id: uuid().primaryKey().defaultRandom(),

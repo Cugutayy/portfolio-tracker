@@ -13,7 +13,7 @@ import {
   Platform,
   Image,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
@@ -28,6 +28,7 @@ interface PhotoAsset {
 }
 
 export default function CreatePostScreen() {
+  const { groupId } = useLocalSearchParams<{ groupId?: string }>();
   const [text, setText] = useState("");
   const [photos, setPhotos] = useState<PhotoAsset[]>([]);
   const [posting, setPosting] = useState(false);
@@ -67,6 +68,7 @@ export default function CreatePostScreen() {
       if (photos[0]) data.photoBase64 = `data:image/jpeg;base64,${photos[0].base64}`;
       if (photos[1]) data.photoBase64_2 = `data:image/jpeg;base64,${photos[1].base64}`;
       if (photos[2]) data.photoBase64_3 = `data:image/jpeg;base64,${photos[2].base64}`;
+      if (groupId) data.groupId = groupId;
       await API.createPost(data);
       router.back();
     } catch (err: unknown) {
