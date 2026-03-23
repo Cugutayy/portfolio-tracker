@@ -1,6 +1,8 @@
 import { SignJWT, jwtVerify } from "jose";
 import { NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
+import { db } from "@/db";
+import { members } from "@/db/schema";
 
 if (!process.env.AUTH_SECRET) {
   throw new Error("AUTH_SECRET environment variable is required");
@@ -93,15 +95,11 @@ function touchLastActive(userId: string) {
   if (now - last < ACTIVE_THROTTLE_MS) return;
   lastActiveCache.set(userId, now);
   // Fire-and-forget DB update
-  import("@/db").then(({ db }) => {
-    import("@/db/schema").then(({ members }) => {
-      db.update(members)
-        .set({ lastActiveAt: new Date() })
-        .where(eq(members.id, userId))
-        .execute()
-        .catch(() => {});
-    });
-  });
+  db.update(members)
+    .set({ lastActiveAt: new Date() })
+    .where(eq(members.id, userId))
+    .execute()
+    .catch(() => {});
 }
 
 /**
