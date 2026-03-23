@@ -128,6 +128,28 @@ function AuthGatedNavigation() {
         options={{ animation: "slide_from_right" }}
       />
       <Stack.Screen
+        name="group/[slug]"
+        options={{
+          headerShown: true,
+          headerTitle: "",
+          headerBackTitle: "Geri",
+          headerTintColor: brand.accent,
+          headerStyle: { backgroundColor: brand.bg },
+        }}
+      />
+      <Stack.Screen
+        name="create-group"
+        options={{ animation: "slide_from_bottom", presentation: "modal" }}
+      />
+      <Stack.Screen
+        name="group-settings"
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
+        name="search"
+        options={{ animation: "slide_from_right" }}
+      />
+      <Stack.Screen
         name="create-event"
         options={{ animation: "slide_from_bottom", presentation: "modal" }}
       />
