@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { db } from "@/lib/db";
-import { posts, postKudos, postComments, members, follows } from "@/db/schema";
+import { posts, postKudos, postComments, members, follows, groupMembers } from "@/db/schema";
 import { sql, eq, and } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/rateLimit";
 
@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
   const limit = Math.max(1, Math.min(50, parseInt(searchParams.get("limit") || "20") || 20));
   const filter = searchParams.get("filter") === "following" ? "following" : "everyone";
+  const groupId = searchParams.get("groupId");
   const offset = (page - 1) * limit;
 
   // Optional auth for hasKudosed + following filter
@@ -33,6 +34,11 @@ export async function GET(request: NextRequest) {
     );
   } else {
     conditions.push(eq(posts.privacy, "public"));
+  }
+
+  // Group filter
+  if (groupId) {
+    conditions.push(eq(posts.groupId, groupId));
   }
 
   // Following filter
@@ -96,6 +102,7 @@ export async function POST(request: NextRequest) {
   const photoBase64_3 = typeof body.photoBase64_3 === "string" ? body.photoBase64_3 : null;
   const privacy = typeof body.privacy === "string" && ["public", "members", "private"].includes(body.privacy) ? body.privacy : "public";
   const commentsEnabled = body.commentsEnabled !== false;
+  const postGroupId = typeof body.groupId === "string" ? body.groupId : null;
 
   // Must have at least text or photo
   if (!text && !photoBase64) {
@@ -125,6 +132,18 @@ export async function POST(request: NextRequest) {
     return null;
   }
 
+  // Validate group membership if groupId provided
+  if (postGroupId) {
+    const [gm] = await db
+      .select({ id: groupMembers.id })
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, postGroupId), eq(groupMembers.memberId, user.id)))
+      .limit(1);
+    if (!gm) {
+      return NextResponse.json({ error: "Bu grubun üyesi değilsiniz" }, { status: 403 });
+    }
+  }
+
   const photoErr1 = validatePhoto(photoBase64, "Fotograf 1");
   if (photoErr1) return NextResponse.json({ error: photoErr1 }, { status: 400 });
 
@@ -138,6 +157,7 @@ export async function POST(request: NextRequest) {
     .insert(posts)
     .values({
       memberId: user.id,
+      groupId: postGroupId,
       text: text || null,
       photoUrl: photoBase64 || null,
       photoUrl2: photoBase64_2 || null,
