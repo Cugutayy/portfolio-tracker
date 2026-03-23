@@ -35,14 +35,14 @@ const PERIOD_CHIPS = [
 export default function GroupDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [group, setGroup] = useState<Group | null>(null);
-  const [stats, setStats] = useState<{ totalMembers: number; totalRuns: number; totalDistanceM: number } | null>(null);
+  const [stats, setStats] = useState<{ totalMembers: number; totalRunsThisMonth: number; totalDistanceMThisMonth: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<InnerTab>("feed");
   const [refreshing, setRefreshing] = useState(false);
   const [joining, setJoining] = useState(false);
 
   // Feed state
-  const [feedItems, setFeedItems] = useState<Array<{ type: string; data: any }>>([]);
+  const [feedItems, setFeedItems] = useState<Array<any>>([]);
   const [feedLoading, setFeedLoading] = useState(false);
 
   // Members state
@@ -72,7 +72,7 @@ export default function GroupDetailScreen() {
     setFeedLoading(true);
     try {
       const res = await API.getGroupFeed(slug, { limit: "20" });
-      setFeedItems(res.items || []);
+      setFeedItems(res.feed || []);
     } catch {}
     setFeedLoading(false);
   }, [slug]);
@@ -101,7 +101,8 @@ export default function GroupDetailScreen() {
     if (!slug) return;
     setEventsLoading(true);
     try {
-      const res = (await API.getEvents()) as { events: any[] };
+      const groupId = group?.id;
+      const res = (await API.getEvents(groupId ? { groupId } : undefined)) as { events: any[] };
       setEvents(res.events || []);
     } catch {}
     setEventsLoading(false);
@@ -217,8 +218,8 @@ export default function GroupDetailScreen() {
         <View style={s.statsRow}>
           {[
             { v: stats.totalMembers, l: "UYE" },
-            { v: stats.totalRuns, l: "KOSU" },
-            { v: ((stats.totalDistanceM || 0) / 1000).toFixed(0), l: "KM" },
+            { v: stats.totalRunsThisMonth || 0, l: "KOSU" },
+            { v: ((stats.totalDistanceMThisMonth || 0) / 1000).toFixed(0), l: "KM" },
           ].map((st) => (
             <View key={st.l} style={s.statBox}>
               <Text style={s.statValue}>{st.v}</Text>
@@ -343,7 +344,7 @@ export default function GroupDetailScreen() {
       </View>
       <View style={s.lbAvatar}>
         <Text style={s.lbInitials}>
-          {item.memberName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)}
+          {(item.memberName || "?").split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)}
         </Text>
       </View>
       <View style={s.lbInfo}>
