@@ -8,6 +8,8 @@ interface RateLimitConfig {
   maxRequests: number;
   /** Window size in seconds */
   windowSec: number;
+  /** When false, deny requests if Redis is unavailable (default: true = allow) */
+  failOpen?: boolean;
 }
 
 interface RateLimitResult {
@@ -28,11 +30,17 @@ export async function rateLimit(
   identifier: string,
   config: RateLimitConfig
 ): Promise<RateLimitResult> {
-  // If Redis is not configured, fail open (allow all requests)
-  // Rate limiting requires Redis — without it, we rely on other security layers
+  const failOpen = config.failOpen !== false; // default true for backward compat
+
+  // If Redis is not configured, behavior depends on failOpen setting
   if (!redis) {
-    console.warn(`[RATE_LIMIT_BYPASS] Redis unavailable — rate limit skipped for: ${identifier}`);
-    return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
+    if (failOpen) {
+      console.warn(`[RATE_LIMIT_BYPASS] Redis unavailable — rate limit skipped for: ${identifier}`);
+      return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
+    } else {
+      console.warn(`[RATE_LIMIT_DENY] Redis unavailable — fail-closed for: ${identifier}`);
+      return { allowed: false, remaining: 0, resetAt: Math.ceil((Date.now() + 60000) / 1000) };
+    }
   }
 
   const key = `${PREFIX}${identifier}`;
@@ -49,9 +57,13 @@ export async function rateLimit(
 
     const results = await pipeline.exec();
     if (!results) {
-      // Redis pipeline failed — fail open (allow request)
-      console.warn(`[RATE_LIMIT_BYPASS] Redis pipeline failed for: ${identifier}`);
-      return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
+      if (failOpen) {
+        console.warn(`[RATE_LIMIT_BYPASS] Redis pipeline failed for: ${identifier}`);
+        return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
+      } else {
+        console.warn(`[RATE_LIMIT_DENY] Redis pipeline failed — fail-closed for: ${identifier}`);
+        return { allowed: false, remaining: 0, resetAt: Math.ceil((Date.now() + 60000) / 1000) };
+      }
     }
 
     const count = (results[2]?.[1] as number) ?? 0;
@@ -61,9 +73,13 @@ export async function rateLimit(
 
     return { allowed, remaining, resetAt };
   } catch (err) {
-    // Redis unavailable — fail open
-    console.warn(`[RATE_LIMIT_BYPASS] Redis error for ${identifier}:`, err);
-    return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
+    if (failOpen) {
+      console.warn(`[RATE_LIMIT_BYPASS] Redis error for ${identifier}:`, err);
+      return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
+    } else {
+      console.warn(`[RATE_LIMIT_DENY] Redis error — fail-closed for ${identifier}:`, err);
+      return { allowed: false, remaining: 0, resetAt: Math.ceil((Date.now() + 60000) / 1000) };
+    }
   }
 }
 
@@ -101,7 +117,11 @@ export async function checkRateLimit(
 
 export const RATE_LIMITS = {
   stravaSync: { maxRequests: 5, windowSec: 60 } as RateLimitConfig, // 5 per minute
-  authRegister: { maxRequests: 3, windowSec: 60 } as RateLimitConfig, // 3 per minute
+  authRegister: { maxRequests: 3, windowSec: 60, failOpen: false } as RateLimitConfig,
+  authLogin: { maxRequests: 10, windowSec: 60, failOpen: false } as RateLimitConfig,
+  authChangePassword: { maxRequests: 5, windowSec: 300, failOpen: false } as RateLimitConfig,
+  authResetPassword: { maxRequests: 10, windowSec: 300, failOpen: false } as RateLimitConfig,
+  authForgotPassword: { maxRequests: 5, windowSec: 300, failOpen: false } as RateLimitConfig,
   stravaWebhook: { maxRequests: 100, windowSec: 60 } as RateLimitConfig, // 100 per minute
   eventRsvp: { maxRequests: 10, windowSec: 60 } as RateLimitConfig, // 10 per minute
   communityActivities: { maxRequests: 30, windowSec: 60 } as RateLimitConfig, // 30 per minute

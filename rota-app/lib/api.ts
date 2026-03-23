@@ -69,8 +69,6 @@ export async function api<T = unknown>(
     const token = await getToken();
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
-      // Also send as cookie for NextAuth compatibility
-      headers["Cookie"] = `authjs.session-token=${token}`;
     }
   }
 
@@ -95,7 +93,6 @@ export async function api<T = unknown>(
         const newToken = await getToken();
         if (newToken) {
           headers["Authorization"] = `Bearer ${newToken}`;
-          headers["Cookie"] = `authjs.session-token=${newToken}`;
         }
         const retryController = new AbortController();
         const retryTimeout = setTimeout(() => retryController.abort(), REQUEST_TIMEOUT);

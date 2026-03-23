@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { members } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { members, passwordResetTokens } from "@/db/schema";
+import { eq, and, isNull, gt, desc } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/rateLimit";
-import { resetCodes } from "../forgot-password/route";
 
 const MAX_CODE_ATTEMPTS = 5;
 
 /**
  * POST /api/auth/reset-password
- * Verify reset code and set new password.
+ * Verify reset code (from DB) and set new password.
  * Body: { email, code, newPassword }
  */
 export async function POST(request: Request) {
@@ -22,6 +21,7 @@ export async function POST(request: Request) {
     const rateLimited = await checkRateLimit(`reset-password:${ip}`, {
       maxRequests: 10,
       windowSec: 300,
+      failOpen: false,
     });
     if (rateLimited) return rateLimited;
 
@@ -52,31 +52,43 @@ export async function POST(request: Request) {
       );
     }
 
-    // Look up reset code
-    const entry = resetCodes.get(email);
+    // Find the member
+    const [member] = await db
+      .select({ id: members.id })
+      .from(members)
+      .where(eq(members.email, email))
+      .limit(1);
 
-    if (!entry) {
+    if (!member) {
+      return NextResponse.json(
+        { error: "Kullanici bulunamadi" },
+        { status: 404 },
+      );
+    }
+
+    // Look up the latest non-expired, non-used token for this member
+    const [token] = await db
+      .select()
+      .from(passwordResetTokens)
+      .where(
+        and(
+          eq(passwordResetTokens.memberId, member.id),
+          isNull(passwordResetTokens.usedAt),
+          gt(passwordResetTokens.expiresAt, new Date()),
+        ),
+      )
+      .orderBy(desc(passwordResetTokens.createdAt))
+      .limit(1);
+
+    if (!token) {
       return NextResponse.json(
         { error: "Sifre sifirlama kodu bulunamadi. Lutfen yeni kod isteyin." },
         { status: 400 },
       );
     }
 
-    // Check expiry
-    if (entry.expiresAt < Date.now()) {
-      resetCodes.delete(email);
-      return NextResponse.json(
-        {
-          error:
-            "Sifre sifirlama kodunun suresi dolmus. Lutfen yeni kod isteyin.",
-        },
-        { status: 400 },
-      );
-    }
-
     // Check max attempts
-    if (entry.attempts >= MAX_CODE_ATTEMPTS) {
-      resetCodes.delete(email);
+    if (token.attempts >= MAX_CODE_ATTEMPTS) {
       return NextResponse.json(
         {
           error:
@@ -86,19 +98,32 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verify code
-    if (entry.code !== String(code).trim()) {
-      entry.attempts++;
+    // Verify code with bcrypt
+    const codeMatch = await bcrypt.compare(String(code).trim(), token.tokenHash);
+
+    if (!codeMatch) {
+      // Increment attempts
+      await db
+        .update(passwordResetTokens)
+        .set({ attempts: token.attempts + 1 })
+        .where(eq(passwordResetTokens.id, token.id));
+
       return NextResponse.json(
         {
           error: "Gecersiz kod. Lutfen tekrar deneyin.",
-          attemptsRemaining: MAX_CODE_ATTEMPTS - entry.attempts,
+          attemptsRemaining: MAX_CODE_ATTEMPTS - (token.attempts + 1),
         },
         { status: 400 },
       );
     }
 
-    // Code is valid — update password
+    // Code is valid — mark token as used
+    await db
+      .update(passwordResetTokens)
+      .set({ usedAt: new Date() })
+      .where(eq(passwordResetTokens.id, token.id));
+
+    // Update password
     const passwordHash = await bcrypt.hash(newPassword, 12);
 
     const result = await db
@@ -113,9 +138,6 @@ export async function POST(request: Request) {
         { status: 404 },
       );
     }
-
-    // Clean up used code
-    resetCodes.delete(email);
 
     return NextResponse.json({
       success: true,

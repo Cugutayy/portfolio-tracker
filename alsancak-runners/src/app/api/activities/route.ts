@@ -1,10 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { db } from "@/lib/db";
 import { activities, activitySplits, activityPhotos, members, follows } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { sendPushNotifications } from "@/lib/push";
+
+const createActivitySchema = z.object({
+  title: z.string().min(1).max(300),
+  distanceM: z.number().positive().max(500000),
+  movingTimeSec: z.number().int().positive().max(86400),
+  startTime: z.string().min(1),
+  activityType: z.string().max(50).optional().default("run"),
+  polylineEncoded: z.string().max(500000).optional().nullable(),
+  startLat: z.number().min(-90).max(90).optional().nullable(),
+  startLng: z.number().min(-180).max(180).optional().nullable(),
+  endLat: z.number().min(-90).max(90).optional().nullable(),
+  endLng: z.number().min(-180).max(180).optional().nullable(),
+  elevationGainM: z.number().min(0).max(30000).optional().nullable(),
+  elapsedTimeSec: z.number().int().positive().max(86400).optional().nullable(),
+  startLocation: z.string().max(500).optional().nullable(),
+  endLocation: z.string().max(500).optional().nullable(),
+  photoBase64: z.string().max(1_400_000).optional().nullable(),
+  splits: z.array(z.object({
+    splitIndex: z.number().int(),
+    distanceM: z.number(),
+    elapsedSec: z.number(),
+    paceSecKm: z.number(),
+  })).optional().nullable(),
+});
 
 /** Haversine distance in meters between two lat/lng points */
 function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -139,14 +164,17 @@ export async function POST(request: NextRequest) {
   if (rateLimited) return rateLimited;
 
   const body = await request.json();
-  const { title, distanceM, movingTimeSec, startTime, activityType, polylineEncoded, startLat, startLng, endLat, endLng, elevationGainM, splits: clientSplits, elapsedTimeSec, photoBase64, startLocation, endLocation } = body;
 
-  if (!title || !distanceM || !movingTimeSec || !startTime) {
+  // Zod validation
+  const parsed = createActivitySchema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: "Missing required fields: title, distanceM, movingTimeSec, startTime" },
+      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
       { status: 400 }
     );
   }
+
+  const { title, distanceM, movingTimeSec, startTime, activityType, polylineEncoded, startLat, startLng, endLat, endLng, elevationGainM, splits: clientSplits, elapsedTimeSec, photoBase64, startLocation, endLocation } = parsed.data;
 
   // Validate activity type
   const VALID_ACTIVITY_TYPES = ["run", "walk", "hike", "ride", "swim", "trailrun", "virtualrun"];
@@ -160,39 +188,40 @@ export async function POST(request: NextRequest) {
 
   const avgPaceSecKm = distanceM > 0 ? (movingTimeSec / (distanceM / 1000)) : null;
 
-  const [created] = await db
-    .insert(activities)
-    .values({
-      memberId: session.user.id,
-      source: polylineEncoded ? "gps" : "manual",
-      title,
-      // Normalize activity type to match Strava format (capitalized)
-      activityType: normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1),
-      startTime: new Date(startTime),
-      elapsedTimeSec: elapsedTimeSec || movingTimeSec,
-      movingTimeSec,
-      distanceM,
-      elevationGainM: elevationGainM || null,
-      avgPaceSecKm,
-      polylineEncoded: polylineEncoded || null,
-      startLat: startLat || null,
-      startLng: startLng || null,
-      endLat: endLat || null,
-      endLng: endLng || null,
-      startLocation: startLocation || null,
-      endLocation: endLocation || null,
-      privacy: "public",
-      sharedToBoard: true,
-    })
-    .returning({ id: activities.id });
+  // Wrap activity + splits + photo in a transaction
+  const created = await db.transaction(async (tx) => {
+    const [inserted] = await tx
+      .insert(activities)
+      .values({
+        memberId: session.user.id,
+        source: polylineEncoded ? "gps" : "manual",
+        title,
+        // Normalize activity type to match Strava format (capitalized)
+        activityType: normalizedType.charAt(0).toUpperCase() + normalizedType.slice(1),
+        startTime: new Date(startTime),
+        elapsedTimeSec: elapsedTimeSec || movingTimeSec,
+        movingTimeSec,
+        distanceM,
+        elevationGainM: elevationGainM || null,
+        avgPaceSecKm,
+        polylineEncoded: polylineEncoded || null,
+        startLat: startLat || null,
+        startLng: startLng || null,
+        endLat: endLat || null,
+        endLng: endLng || null,
+        startLocation: startLocation || null,
+        endLocation: endLocation || null,
+        privacy: "public",
+        sharedToBoard: true,
+      })
+      .returning({ id: activities.id });
 
-  // Store per-km splits: prefer client-provided (has real GPS timestamps) over server-computed (uniform pace)
-  try {
+    // Store per-km splits: prefer client-provided (has real GPS timestamps) over server-computed (uniform pace)
     if (clientSplits && Array.isArray(clientSplits) && clientSplits.length > 0) {
       // Client-provided splits with actual GPS-derived pace
-      await db.insert(activitySplits).values(
-        clientSplits.map((s: { splitIndex: number; distanceM: number; elapsedSec: number; paceSecKm: number }) => ({
-          activityId: created.id,
+      await tx.insert(activitySplits).values(
+        clientSplits.map((s) => ({
+          activityId: inserted.id,
           splitIndex: s.splitIndex,
           distanceM: s.distanceM,
           elapsedTimeSec: s.elapsedSec,
@@ -204,9 +233,9 @@ export async function POST(request: NextRequest) {
       // Fallback: compute from polyline with uniform pace (legacy behavior)
       const splits = computeSplits(polylineEncoded, movingTimeSec, distanceM);
       if (splits.length > 0) {
-        await db.insert(activitySplits).values(
+        await tx.insert(activitySplits).values(
           splits.map((s) => ({
-            activityId: created.id,
+            activityId: inserted.id,
             splitIndex: s.splitIndex,
             distanceM: s.distanceM,
             elapsedTimeSec: s.movingTimeSec,
@@ -216,19 +245,14 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-  } catch (e) {
-    // Non-critical: splits are best-effort
-    console.error("Split computation failed:", e);
-  }
 
-  // Store photo if provided (base64 data URI, max ~500KB)
-  try {
+    // Store photo if provided (base64 data URI, max ~500KB)
     if (photoBase64 && typeof photoBase64 === "string") {
       // Validate: must be a valid image data URI (jpeg, png, webp, gif only)
       const validImagePrefix = /^data:image\/(jpeg|png|webp|gif);base64,/;
       if (validImagePrefix.test(photoBase64) && photoBase64.length <= 1_400_000) {
-        await db.insert(activityPhotos).values({
-          activityId: created.id,
+        await tx.insert(activityPhotos).values({
+          activityId: inserted.id,
           url: photoBase64,
           caption: null,
           lat: startLat || null,
@@ -236,11 +260,11 @@ export async function POST(request: NextRequest) {
         });
       }
     }
-  } catch (e) {
-    console.error("Photo save failed:", e);
-  }
 
-  // Badge evaluation (best-effort)
+    return inserted;
+  });
+
+  // Badge evaluation (best-effort — OUTSIDE transaction)
   let newBadges: string[] = [];
   try {
     const { evaluateBadges } = await import("@/lib/badge-engine");

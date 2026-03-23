@@ -55,6 +55,16 @@ export const membersRelations = relations(members, ({ one, many }) => ({
   communityStats: many(communityStats),
 }));
 
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  attempts: integer("attempts").default(0).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const accounts = pgTable(
   "accounts",
   {

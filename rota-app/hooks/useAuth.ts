@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { router } from "expo-router";
-import { getToken, clearToken, setToken, setUser, getUser } from "@/lib/auth";
+import { getToken, clearToken, setToken, setRefreshToken, setUser, getUser } from "@/lib/auth";
 import { API, type Member } from "@/lib/api";
 
 export function useAuth() {
@@ -18,8 +18,8 @@ export function useAuth() {
 
     try {
       const resp = await API.getProfile();
-      const member = (resp as unknown as { id: string; name: string; email: string });
-      setUserState(member as unknown as Member);
+      const member = resp.member;
+      setUserState(member as Member);
       await setUser({ id: member.id, name: member.name, email: member.email });
       setIsAuthenticated(true);
     } catch {
@@ -41,42 +41,15 @@ export function useAuth() {
   }, [checkAuth]);
 
   const login = useCallback(async (email: string, password: string) => {
-    // Call the credentials login endpoint
-    const res = await fetch(
-      `${process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000"}/api/members/join`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name: email.split("@")[0] }),
-      }
-    );
+    const res = await API.login(email, password);
 
-    // Try to get a session by signing in
-    const signInRes = await fetch(
-      `${process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000"}/api/auth/callback/credentials`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          redirect: false,
-          csrfToken: "",
-        }),
-      }
-    );
+    await setToken(res.accessToken);
+    await setRefreshToken(res.refreshToken);
+    await setUser({ id: res.user.id, name: res.user.name, email: res.user.email });
 
-    // Extract session token from cookies
-    const cookies = signInRes.headers.get("set-cookie") || "";
-    const tokenMatch = cookies.match(/authjs\.session-token=([^;]+)/);
-    const token = tokenMatch?.[1];
-
-    if (!token) {
-      throw new Error("Login failed");
-    }
-
-    await setToken(token);
+    setUserState(res.user as unknown as Member);
     setIsAuthenticated(true);
+
     router.replace("/(tabs)");
   }, []);
 

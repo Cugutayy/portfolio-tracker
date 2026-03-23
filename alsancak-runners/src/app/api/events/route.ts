@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getRequestUser } from "@/lib/mobile-auth";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { db } from "@/lib/db";
 import { events, eventRsvps, members, follows } from "@/db/schema";
 import { eq, gte, asc, desc, sql, and } from "drizzle-orm";
 import { sendPushNotifications } from "@/lib/push";
+
+const createEventSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200),
+  description: z.string().max(2000).optional().nullable(),
+  eventType: z.string().default("group_run"),
+  date: z.string().min(1, "Date is required"),
+  meetingPoint: z.string().max(500).optional().nullable(),
+  meetingLat: z.number().min(-90).max(90).optional().nullable(),
+  meetingLng: z.number().min(-180).max(180).optional().nullable(),
+  distanceM: z.number().positive().max(200000).optional().nullable(),
+  paceGroups: z.any().optional().nullable(),
+  maxParticipants: z.number().int().positive().max(1000).optional().nullable(),
+  coverImageUrl: z.string().url().max(2000).optional().nullable(),
+  routeId: z.string().uuid().optional().nullable(),
+});
 
 // GET /api/events — list upcoming events (public) or all for admin
 export async function GET(request: NextRequest) {
@@ -104,9 +120,31 @@ export async function POST(request: NextRequest) {
   if (rateLimited) return rateLimited;
   const session = { user: { id: user.id } };  // compatibility shim
 
-  // All authenticated users can create events
+  // Check role: only admin or captain can create events
+  const [memberRow] = await db
+    .select({ role: members.role })
+    .from(members)
+    .where(eq(members.id, user.id))
+    .limit(1);
+
+  if (!memberRow || (memberRow.role !== "admin" && memberRow.role !== "captain")) {
+    return NextResponse.json(
+      { error: "Etkinlik olusturmak icin yetkiniz yok" },
+      { status: 403 }
+    );
+  }
 
   const body = await request.json();
+
+  // Zod validation
+  const parsed = createEventSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Validation failed", details: parsed.error.flatten().fieldErrors },
+      { status: 400 }
+    );
+  }
+
   const {
     title,
     description,
@@ -120,18 +158,7 @@ export async function POST(request: NextRequest) {
     maxParticipants,
     coverImageUrl,
     routeId,
-  } = body;
-
-  if (!title || title.trim().length === 0) {
-    return NextResponse.json({ error: "Title is required" }, { status: 400 });
-  }
-
-  if (!date) {
-    return NextResponse.json(
-      { error: "Title and date are required" },
-      { status: 400 }
-    );
-  }
+  } = parsed.data;
 
   // Validate date: must be valid and in the future (within 1 year)
   const eventDate = new Date(date);

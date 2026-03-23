@@ -1,31 +1,14 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { members } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { members, passwordResetTokens } from "@/db/schema";
+import { eq, and, isNull } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/rateLimit";
-
-// In-memory store for password reset codes (dev/beta)
-// In production, use Redis or DB + email delivery
-const resetCodes = new Map<
-  string,
-  { code: string; expiresAt: number; attempts: number }
->();
-
-// Clean expired codes periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of resetCodes) {
-    if (entry.expiresAt < now) resetCodes.delete(key);
-  }
-}, 60_000);
-
-export { resetCodes };
 
 /**
  * POST /api/auth/forgot-password
- * Generate a 6-digit reset code for the given email.
- * Dev/beta mode: returns the code in the response.
- * Production: would send via email instead.
+ * Generate a 6-digit reset code, hash it with bcrypt, store in DB.
+ * Production: does not return the code in the response.
  */
 export async function POST(request: Request) {
   try {
@@ -36,6 +19,7 @@ export async function POST(request: Request) {
     const rateLimited = await checkRateLimit(`forgot-password:${ip}`, {
       maxRequests: 5,
       windowSec: 300, // 5 requests per 5 minutes
+      failOpen: false,
     });
     if (rateLimited) return rateLimited;
 
@@ -73,22 +57,31 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate 6-digit code
+    // Delete any existing unused tokens for this user
+    await db
+      .delete(passwordResetTokens)
+      .where(
+        and(
+          eq(passwordResetTokens.memberId, member.id),
+          isNull(passwordResetTokens.usedAt),
+        ),
+      );
+
+    // Generate 6-digit code and hash it
     const code = String(Math.floor(100000 + Math.random() * 900000));
+    const tokenHash = await bcrypt.hash(code, 10);
 
     // Store with 10-minute expiry
-    resetCodes.set(email, {
-      code,
-      expiresAt: Date.now() + 10 * 60 * 1000,
-      attempts: 0,
+    await db.insert(passwordResetTokens).values({
+      memberId: member.id,
+      tokenHash,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
 
-    // Dev/beta: return code directly
-    // Production: send email and don't include code in response
+    // Production: don't return the code in the response
     return NextResponse.json({
       success: true,
-      message: "Sifre sifirlama kodu olusturuldu",
-      code, // DEV ONLY — remove in production
+      message: "Kod gonderildi",
       expiresInMinutes: 10,
     });
   } catch (error) {
