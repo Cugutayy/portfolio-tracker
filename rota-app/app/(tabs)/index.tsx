@@ -55,6 +55,8 @@ export default function FeedScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [stats, setStats] = useState<{ members: number; totalRuns: number; totalDistanceKm: number } | null>(null);
+  const [weeklyGoal, setWeeklyGoal] = useState<{ totalRuns: number; totalDistanceM: number; streak: number } | null>(null);
+  const [recentRunners, setRecentRunners] = useState<Array<{ id: string; name: string; image: string | null; isOnline: boolean }>>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [postPage, setPostPage] = useState(1);
@@ -132,18 +134,40 @@ export default function FeedScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [, , leaderboardRes, statsRes] = await Promise.allSettled([
+      const [, , leaderboardRes, statsRes, goalRes] = await Promise.allSettled([
         fetchActivities(1, false),
         fetchPosts(1, false),
         API.getLeaderboard("month"),
         API.getStats(),
+        API.getWeeklyGoal(),
       ]);
       setPage(1);
       setPostPage(1);
       if (leaderboardRes.status === "fulfilled") setLeaderboard((leaderboardRes.value.leaderboard || []).slice(0, 3));
       if (statsRes.status === "fulfilled") setStats(statsRes.value);
+      if (goalRes.status === "fulfilled") {
+        const g = goalRes.value;
+        setWeeklyGoal({ totalRuns: g.progress.totalRuns, totalDistanceM: g.progress.totalDistanceM, streak: g.goal.currentStreak });
+      }
     } catch {}
   }, [fetchActivities, fetchPosts]);
+
+  // Extract unique recent runners for story bar from activities
+  useEffect(() => {
+    const seen = new Set<string>();
+    const runners: typeof recentRunners = [];
+    for (const a of activities) {
+      if (seen.has(a.memberId) || runners.length >= 15) break;
+      seen.add(a.memberId);
+      runners.push({
+        id: a.memberId,
+        name: a.memberName,
+        image: a.memberImage || null,
+        isOnline: a.memberIsOnline || false,
+      });
+    }
+    setRecentRunners(runners);
+  }, [activities]);
 
   useFocusEffect(
     useCallback(() => {
@@ -305,10 +329,7 @@ export default function FeedScreen() {
   const MEDAL_COLORS: Record<number, string> = { 1: "#FFD700", 2: "#C0C0C0", 3: "#CD7F32" };
 
   const renderHeader = () => {
-    // Reorder leaderboard for podium: [2nd, 1st, 3rd]
-    const podiumOrder = leaderboard.length >= 3
-      ? [leaderboard[1], leaderboard[0], leaderboard[2]]
-      : leaderboard;
+    const weeklyKm = weeklyGoal ? (weeklyGoal.totalDistanceM / 1000).toFixed(1) : "0";
 
     return (
       <View>
@@ -320,91 +341,57 @@ export default function FeedScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── 1.1 Community Pulse Stats ── */}
-        {stats && (
-          <View style={s.statsRow}>
-            {([
-              { target: stats.members, label: "UYE", icon: "people" as const },
-              { target: stats.totalRuns, label: "KOSU", icon: "footsteps" as const },
-              { target: stats.totalDistanceKm, label: "KM", icon: "map" as const },
-            ]).map((item) => (
-              <View key={item.label} style={s.statCard}>
-                <View style={s.statAccentBar} />
-                <View style={s.statCardInner}>
-                  <View style={s.statIconCircle}>
-                    <Ionicons name={item.icon} size={14} color={brand.accent} />
-                  </View>
-                  <AnimatedCounter target={item.target} style={s.statValue} />
-                  <Text style={s.statLabel}>{item.label}</Text>
-                </View>
+        {/* ── 1.1 Weekly Summary Banner ── */}
+        {weeklyGoal && (
+          <TouchableOpacity style={s.weeklyBanner} activeOpacity={0.8} onPress={() => router.push("/(tabs)/profile" as never)}>
+            <View style={s.weeklyLeft}>
+              <Text style={s.weeklyTitle}>Bu hafta</Text>
+              <View style={s.weeklyStats}>
+                <Text style={s.weeklyStat}><Text style={s.weeklyValue}>{weeklyKm}</Text> km</Text>
+                <View style={s.weeklyDot} />
+                <Text style={s.weeklyStat}><Text style={s.weeklyValue}>{weeklyGoal.totalRuns}</Text> kosu</Text>
+                {weeklyGoal.streak > 0 && (
+                  <>
+                    <View style={s.weeklyDot} />
+                    <Text style={s.weeklyStat}><Text style={s.weeklyValue}>{weeklyGoal.streak}</Text> hafta seri</Text>
+                  </>
+                )}
               </View>
-            ))}
-          </View>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={brand.textDim} />
+          </TouchableOpacity>
         )}
 
-        {/* ── 1.2 Podium Leaderboard ── */}
-        {leaderboard.length >= 3 ? (
-          <Animated.View style={[
-            s.podiumSection,
-            {
-              opacity: podiumAnim,
-              transform: [{ scale: podiumAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }],
-            },
-          ]}>
-            <View style={s.leaderboardHeader}>
-              <Text style={s.sectionTitleInline}>LIDER TABLOSU</Text>
-              <TouchableOpacity onPress={() => router.push("/leaderboard" as never)} hitSlop={8}>
-                <Text style={s.seeAllLink}>TUMUNU GOR</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={s.podiumRow}>
-              {podiumOrder.map((entry) => {
-                const isFirst = entry.rank === 1;
-                const medalColor = MEDAL_COLORS[entry.rank] || brand.textDim;
-                const initials = (entry.memberName || "?").split(" ").filter(Boolean).map((w) => w[0]).join("").slice(0, 2) || "?";
-                const avatarSize = isFirst ? 56 : 44;
-
-                return (
-                  <TouchableOpacity
-                    key={entry.memberId}
-                    style={[s.podiumItem, isFirst && s.podiumItemFirst]}
-                    onPress={() => router.push(`/member/${entry.memberId}` as never)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[
-                      s.podiumAvatar,
-                      { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2, borderColor: medalColor },
-                    ]}>
-                      <Text style={[s.podiumInitials, { fontSize: isFirst ? 16 : 13 }]}>{initials}</Text>
+        {/* ── 1.2 Story/Highlight Bar ── */}
+        {recentRunners.length > 0 && (
+          <FlatList
+            data={recentRunners}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.storyBar}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={s.storyItem}
+                onPress={() => router.push(`/member/${item.id}` as never)}
+                activeOpacity={0.7}
+              >
+                <View style={[s.storyRing, item.isOnline && s.storyRingOnline]}>
+                  {item.image ? (
+                    <Image source={{ uri: item.image }} style={s.storyAvatar} />
+                  ) : (
+                    <View style={s.storyAvatarPlaceholder}>
+                      <Text style={s.storyInitials}>
+                        {(item.name || "?").split(" ").filter(Boolean).map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+                      </Text>
                     </View>
-                    <View style={[s.podiumBadge, { backgroundColor: medalColor }]}>
-                      <Text style={s.podiumBadgeText}>{entry.rank}</Text>
-                    </View>
-                    <Text style={s.podiumName} numberOfLines={1}>{entry.memberName.split(" ")[0]}</Text>
-                    <Text style={[s.podiumKm, isFirst && s.podiumKmFirst]}>{entry.totalDistanceKm} km</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </Animated.View>
-        ) : leaderboard.length > 0 ? (
-          /* Fallback for <3 entries */
-          <View style={s.podiumSection}>
-            <View style={s.leaderboardHeader}>
-              <Text style={s.sectionTitleInline}>LIDER TABLOSU</Text>
-              <TouchableOpacity onPress={() => router.push("/leaderboard" as never)} hitSlop={8}>
-                <Text style={s.seeAllLink}>TUMUNU GOR</Text>
+                  )}
+                </View>
+                <Text style={s.storyName} numberOfLines={1}>{(item.name || "").split(" ")[0]}</Text>
               </TouchableOpacity>
-            </View>
-            {leaderboard.map((entry) => (
-              <TouchableOpacity key={entry.memberId} style={s.lbRowFallback} onPress={() => router.push(`/member/${entry.memberId}` as never)}>
-                <Text style={[s.lbRankFallback, { color: MEDAL_COLORS[entry.rank] || brand.textDim }]}>{entry.rank}</Text>
-                <Text style={s.lbNameFallback}>{entry.memberName}</Text>
-                <Text style={s.lbKmFallback}>{entry.totalDistanceKm} km</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ) : null}
+            )}
+          />
+        )}
 
         {/* ── 1.3 Pill Toggle ── */}
         <View style={s.pillContainer}>
@@ -431,7 +418,7 @@ export default function FeedScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ── 1.4 Section Title with accent bar ── */}
+        {/* ── 1.4 Section Title ── */}
         <View style={s.sectionTitleRow}>
           <View style={s.sectionTitleDot} />
           <Text style={s.sectionTitleInline}>SON PAYLASIMLAR</Text>
@@ -671,41 +658,36 @@ const s = StyleSheet.create({
   list: { paddingHorizontal: 16, paddingBottom: 80 },
   header: { paddingTop: 16, paddingBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   logo: { fontSize: 24, fontWeight: "bold", color: brand.text, letterSpacing: 6 },
-  // ── Community Pulse Stats ──
-  statsRow: { flexDirection: "row", gap: 10, marginVertical: 16 },
-  statCard: {
-    flex: 1, backgroundColor: brand.surface, borderRadius: 12, overflow: "hidden", flexDirection: "row",
-    shadowColor: brand.accent, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4,
+  // ── Weekly Summary Banner ──
+  weeklyBanner: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    backgroundColor: brand.surface, borderRadius: 12, padding: 14, marginTop: 12, marginBottom: 4,
+    borderLeftWidth: 3, borderLeftColor: brand.accent,
   },
-  statAccentBar: { width: 3, backgroundColor: brand.accent },
-  statCardInner: { flex: 1, padding: 12, alignItems: "center" },
-  statIconCircle: {
-    width: 28, height: 28, borderRadius: 14, backgroundColor: "rgba(230,255,0,0.1)",
-    alignItems: "center", justifyContent: "center", marginBottom: 6,
-  },
-  statValue: { fontSize: 22, fontWeight: "800", color: brand.text },
-  statLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 2, fontWeight: "600" },
+  weeklyLeft: { flex: 1 },
+  weeklyTitle: { fontSize: 11, color: brand.textDim, fontWeight: "600", letterSpacing: 2, marginBottom: 4 },
+  weeklyStats: { flexDirection: "row", alignItems: "center", flexWrap: "wrap" },
+  weeklyStat: { fontSize: 13, color: brand.textMuted },
+  weeklyValue: { fontSize: 15, fontWeight: "800", color: brand.text },
+  weeklyDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: brand.textDim, marginHorizontal: 8 },
 
-  // ── Podium Leaderboard ──
-  podiumSection: { backgroundColor: brand.surface, borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: brand.border },
-  leaderboardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  seeAllLink: { fontSize: 11, color: brand.accent, fontWeight: "700", letterSpacing: 1 },
+  // ── Story/Highlight Bar ──
+  storyBar: { paddingVertical: 12, paddingHorizontal: 4, gap: 12 },
+  storyItem: { alignItems: "center", width: 64 },
+  storyRing: {
+    width: 52, height: 52, borderRadius: 26, borderWidth: 2, borderColor: brand.border,
+    alignItems: "center", justifyContent: "center", marginBottom: 4,
+  },
+  storyRingOnline: { borderColor: brand.accent },
+  storyAvatar: { width: 46, height: 46, borderRadius: 23 },
+  storyAvatarPlaceholder: {
+    width: 46, height: 46, borderRadius: 23, backgroundColor: brand.elevated,
+    alignItems: "center", justifyContent: "center",
+  },
+  storyInitials: { fontSize: 14, fontWeight: "700", color: brand.accent },
+  storyName: { fontSize: 10, color: brand.textDim, textAlign: "center" },
+
   sectionTitleInline: { fontSize: 11, color: brand.textMuted, letterSpacing: 3, fontWeight: "600" },
-  podiumRow: { flexDirection: "row", justifyContent: "center", alignItems: "flex-end", marginTop: 8, paddingBottom: 4 },
-  podiumItem: { flex: 1, alignItems: "center", paddingTop: 8 },
-  podiumItemFirst: { paddingTop: 0, marginTop: -12 },
-  podiumAvatar: { borderWidth: 3, backgroundColor: brand.elevated, alignItems: "center", justifyContent: "center" },
-  podiumInitials: { color: brand.text, fontWeight: "700" },
-  podiumBadge: { width: 20, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center", marginTop: -10 },
-  podiumBadgeText: { fontSize: 10, fontWeight: "800", color: brand.bg },
-  podiumName: { fontSize: 12, color: brand.text, fontWeight: "500", marginTop: 6, maxWidth: 80, textAlign: "center" },
-  podiumKm: { fontSize: 13, color: brand.textMuted, fontWeight: "600", marginTop: 2 },
-  podiumKmFirst: { color: brand.accent, fontSize: 15, fontWeight: "800" },
-  // Fallback leaderboard (< 3 entries)
-  lbRowFallback: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6 },
-  lbRankFallback: { fontSize: 14, fontWeight: "bold", width: 20, textAlign: "center" },
-  lbNameFallback: { flex: 1, fontSize: 13, color: brand.text },
-  lbKmFallback: { fontSize: 13, color: brand.accent, fontWeight: "600" },
 
   // ── Pill Toggle ──
   pillContainer: { flexDirection: "row", backgroundColor: brand.elevated, borderRadius: 24, padding: 2, marginBottom: 16, position: "relative" },
