@@ -150,11 +150,22 @@ export async function GET(request: NextRequest) {
   const trimmed = hasMore ? rows.slice(0, limit) : rows;
 
   const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
+  const obfuscateCoord = (value: number | null) => {
+    if (value === null || value === undefined) return value;
+    // ~110m precision for non-owner map points (3 decimals)
+    return Math.round(value * 1000) / 1000;
+  };
   const result = {
     activities: trimmed.map((row) => {
       const { memberLastActive, ...rest } = row;
+      const isOwner = currentUserId === row.memberId;
+      const safeStartLat = isOwner ? row.startLat : obfuscateCoord(row.startLat);
+      const safeStartLng = isOwner ? row.startLng : obfuscateCoord(row.startLng);
       return {
         ...rest,
+        startLat: safeStartLat,
+        startLng: safeStartLng,
+        isLocationObfuscated: !isOwner,
         memberInitials: row.memberName
           .split(" ")
           .map((w) => w[0])

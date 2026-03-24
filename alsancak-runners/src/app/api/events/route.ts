@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ events: annotated });
 }
 
-// POST /api/events — create event (admin/captain only)
+// POST /api/events — create event (authenticated users)
 export async function POST(request: NextRequest) {
   const user = await getRequestUser(request);
   if (!user) {
@@ -103,8 +103,6 @@ export async function POST(request: NextRequest) {
   const rateLimited = await checkRateLimit(`event:${user.id}`, { maxRequests: 10, windowSec: 60 });
   if (rateLimited) return rateLimited;
   const session = { user: { id: user.id } };  // compatibility shim
-
-  // All authenticated users can create events
 
   const body = await request.json();
   const {
