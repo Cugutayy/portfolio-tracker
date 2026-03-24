@@ -496,25 +496,31 @@ export default function TrackScreen() {
         }
       });
 
-      Alert.alert("Kaydedildi!", `${formatDistance(distanceM)} km kosu kaydedildi.`, [
-        {
-          text: "Tamam",
-          onPress: () => {
-            setState("idle");
-            setSeconds(0);
-            setDistanceM(0);
-            setCoords([]);
-            recentPaces.current = [];
-            lowSpeedSince.current = null;
-            autoPaused.current = false;
-            lastAnnouncedKm.current = 0;
-            setGpsLost(false);
-            setPhotoUri(null);
-            setPhotoBase64(null);
-            router.push("/(tabs)");
-          },
-        },
-      ]);
+      // Navigate to rich run summary
+      const summaryParams = {
+        distanceM: String(distanceM),
+        movingTimeSec: String(movingTimeSec),
+        elevationGainM: String(elevationGainM || 0),
+        gpsQuality: String(gpsQuality),
+        startLocation: startLoc || "",
+        endLocation: endLoc || "",
+        splits: JSON.stringify(splits),
+      };
+
+      // Reset state
+      setState("idle");
+      setSeconds(0);
+      setDistanceM(0);
+      setCoords([]);
+      recentPaces.current = [];
+      lowSpeedSince.current = null;
+      autoPaused.current = false;
+      lastAnnouncedKm.current = 0;
+      setGpsLost(false);
+      setPhotoUri(null);
+      setPhotoBase64(null);
+
+      router.push({ pathname: "/run-summary", params: summaryParams } as never);
     } catch {
       Alert.alert("Hata", "Kosu kaydedilemedi. Tekrar dene.");
     } finally {
