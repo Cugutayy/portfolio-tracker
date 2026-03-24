@@ -382,7 +382,8 @@ export interface CreateActivityInput {
   startLng?: number;
   endLat?: number;
   endLng?: number;
-  elevationGainM?: number;
+  elevationGainM?: number | null;
+  gpsQuality?: number;
   elapsedTimeSec?: number;
   photoBase64?: string;
   startLocation?: string;
