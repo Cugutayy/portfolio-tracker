@@ -16,7 +16,7 @@ import { Stack, router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 import { API, type Group, type LeaderboardEntry } from "@/lib/api";
-import { formatDistance, formatPace, formatRelativeTime } from "@/lib/format";
+import { formatDistance, formatPace, formatRelativeTime, getInitials } from "@/lib/format";
 
 type InnerTab = "feed" | "events" | "members" | "leaderboard";
 
@@ -146,8 +146,7 @@ export default function GroupDetailScreen() {
     setJoining(false);
   };
 
-  const getInitials = (name: string) =>
-    name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  // getInitials imported from @/lib/format
 
   const isAdmin = group?.myRole === "owner" || group?.myRole === "admin";
 

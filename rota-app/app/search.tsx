@@ -14,6 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
 import { API, type Group } from "@/lib/api";
+import { getInitials } from "@/lib/format";
 
 type SearchTab = "all" | "members" | "groups" | "events";
 
@@ -74,8 +75,7 @@ export default function SearchScreen() {
     }
   };
 
-  const getInitials = (name: string) =>
-    name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  // getInitials imported from @/lib/format
 
   // Combine results for "all" tab
   type ResultItem =

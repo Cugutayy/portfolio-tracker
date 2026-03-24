@@ -1,3 +1,9 @@
+/** Safe initials extractor — handles empty/null names without crashing */
+export function getInitials(name: string | null | undefined, maxLen = 2): string {
+  if (!name || !name.trim()) return "?";
+  return name.trim().split(" ").filter(Boolean).map(w => w[0]).join("").toUpperCase().slice(0, maxLen);
+}
+
 export function formatDistance(meters: number): string {
   if (!meters || !isFinite(meters) || meters < 0) return "0.0";
   return (meters / 1000).toFixed(1);
@@ -28,9 +34,11 @@ export function formatTime(iso: string): string {
   return d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
 }
 
-export function formatRelativeTime(iso: string): string {
+export function formatRelativeTime(iso: string | null | undefined): string {
+  if (!iso) return "";
   const now = Date.now();
   const then = new Date(iso).getTime();
+  if (isNaN(then)) return "";
   const diffSec = Math.floor((now - then) / 1000);
   if (diffSec < 60) return "az once";
   const diffMin = Math.floor(diffSec / 60);
