@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { members, activities, posts } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { members, activities, posts, kudos, comments, follows } from "@/db/schema";
+import { eq, sql, like } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 const AVATAR_BASE = "https://i.pravatar.cc/200?u=";
@@ -160,10 +160,87 @@ export async function POST(request: NextRequest) {
     } catch { /* skip */ }
   }
 
+  // Add cross-kudos between members (each member kudos 3-6 random activities)
+  let kudosCount = 0;
+  const allActivities = await db.select({ id: activities.id, memberId: activities.memberId })
+    .from(activities)
+    .where(sql`${activities.memberId} IN (${sql.join(memberIds.map(id => sql`${id}`), sql`, `)})`)
+    .limit(200);
+
+  for (const mid of memberIds) {
+    const othersActivities = allActivities.filter(a => a.memberId !== mid);
+    const toKudos = othersActivities.sort(() => Math.random() - 0.5).slice(0, 3 + Math.floor(Math.random() * 4));
+    for (const act of toKudos) {
+      try {
+        await db.insert(kudos).values({ activityId: act.id, memberId: mid }).onConflictDoNothing();
+        kudosCount++;
+      } catch { /* unique constraint */ }
+    }
+  }
+
+  // Add realistic comments on activities
+  const COMMENT_TEXTS = [
+    "Harika tempo! 💪", "Helal olsun!", "Ben de gelmek isterdim 🏃",
+    "Muhteşem rota 🌅", "Çok iyi koşmuşsun!", "Kordon'da hava nasıldı?",
+    "Birlikte koşalım bir gün!", "Bu pace çok iyi 🔥", "Aferin!",
+    "Beni de çağır bir dahakine", "Sabah koşusu en iyisi ☀️", "PB mi bu?",
+    "Fena değil!", "İzmir'in en güzel rotası", "Haftaya ben de geliyorum",
+  ];
+  let commentCount = 0;
+  for (const act of allActivities.slice(0, 30)) {
+    const numComments = Math.floor(Math.random() * 3); // 0-2 comments per activity
+    for (let c = 0; c < numComments; c++) {
+      const commenter = memberIds[Math.floor(Math.random() * memberIds.length)];
+      if (commenter === act.memberId) continue;
+      try {
+        await db.insert(comments).values({
+          activityId: act.id,
+          memberId: commenter,
+          text: COMMENT_TEXTS[Math.floor(Math.random() * COMMENT_TEXTS.length)],
+        });
+        commentCount++;
+      } catch { /* skip */ }
+    }
+  }
+
+  // Add follows between members (each follows 4-8 others)
+  let followCount = 0;
+  for (const mid of memberIds) {
+    const toFollow = memberIds.filter(id => id !== mid).sort(() => Math.random() - 0.5).slice(0, 4 + Math.floor(Math.random() * 5));
+    for (const fid of toFollow) {
+      try {
+        await db.insert(follows).values({ followerId: mid, followingId: fid }).onConflictDoNothing();
+        followCount++;
+      } catch { /* skip */ }
+    }
+  }
+
   return NextResponse.json({
     success: true,
     members: created,
     activities: actCount,
     posts: postCount,
+    kudos: kudosCount,
+    comments: commentCount,
+    follows: followCount,
+  });
+}
+
+// DELETE — Clean old demo data
+export async function DELETE(request: NextRequest) {
+  const authHeader = request.headers.get("x-seed-secret");
+  if (authHeader !== process.env.AUTH_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Delete old @demo.alsancak.run members (cascades to activities, kudos, comments)
+  const deleted = await db.delete(members)
+    .where(like(members.email, "%@demo.alsancak.run"))
+    .returning({ id: members.id, name: members.name });
+
+  return NextResponse.json({
+    success: true,
+    deleted: deleted.map(d => d.name),
+    count: deleted.length,
   });
 }
