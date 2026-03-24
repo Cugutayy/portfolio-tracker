@@ -98,15 +98,14 @@ export default function GroupDetailScreen() {
   }, [slug, lbPeriod]);
 
   const fetchEvents = useCallback(async () => {
-    if (!slug) return;
+    if (!slug || !group?.id) return;
     setEventsLoading(true);
     try {
-      const groupId = group?.id;
-      const res = (await API.getEvents(groupId ? { groupId } : undefined)) as { events: any[] };
+      const res = (await API.getEvents({ groupId: group.id })) as { events: any[] };
       setEvents(res.events || []);
     } catch {}
     setEventsLoading(false);
-  }, [slug]);
+  }, [slug, group?.id]);
 
   useEffect(() => {
     setLoading(true);
@@ -285,7 +284,7 @@ export default function GroupDetailScreen() {
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.cardRunnerName}>{item.data.memberName || "Bilinmeyen"}</Text>
-          <Text style={s.cardDate}>{formatRelativeTime(item.data.startTime || item.data.createdAt)}</Text>
+          <Text style={s.cardDate}>{formatRelativeTime(item.data.startTime || item.data.createdAt || new Date().toISOString())}</Text>
         </View>
       </View>
       {item.data.title && <Text style={s.cardTitle}>{item.data.title}</Text>}
@@ -406,7 +405,7 @@ export default function GroupDetailScreen() {
 
   const getKeyExtractor = () => {
     switch (activeTab) {
-      case "feed": return (item: any, index: number) => `feed-${index}`;
+      case "feed": return (item: any) => `feed-${item?.id || Math.random()}`;
       case "events": return (item: any) => item.id || item.slug;
       case "members": return (item: any) => item.id;
       case "leaderboard": return (item: any) => item.memberId;
