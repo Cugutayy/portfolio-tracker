@@ -12,6 +12,10 @@
     {
       "path": "/api/strava/webhook/process",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/comeback",
+      "schedule": "0 10 * * *"
     }
   ]
 }
