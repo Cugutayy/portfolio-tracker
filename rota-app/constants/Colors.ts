@@ -1,22 +1,22 @@
 export const brand = {
-  // Warm dark palette (inspired by Strava dark mode — not pure black)
-  bg: "#0F1418",           // deep warm charcoal (was #0A0A0A pure black)
-  surface: "#1A2128",      // card background — visible lift from bg
-  elevated: "#243038",     // elevated panels, modals
-  accent: "#E6FF00",       // our signature lime-yellow
-  accentDim: "rgba(230,255,0,0.12)", // subtle accent background
+  // Turkuaz ferah palette — modern, clean, refreshing
+  bg: "#0D1117",           // GitHub dark — deep but not harsh
+  surface: "#161B22",      // card background — subtle lift
+  elevated: "#21262D",     // elevated panels, modals
+  accent: "#00D4AA",       // turkuaz — fresh, nature, clean air
+  accentDim: "rgba(0,212,170,0.10)", // subtle accent background
   strava: "#FC4C02",
   // Text hierarchy
-  text: "#F1F5F9",         // warm white (not pure #FFF — easier on eyes)
-  textMuted: "#94A3B8",    // readable secondary (Strava-style blue-gray)
-  textDim: "#64748B",      // tertiary, timestamps, captions
+  text: "#E6EDF3",         // soft white — easy on eyes
+  textMuted: "#8B949E",    // readable secondary
+  textDim: "#6E7681",      // tertiary, timestamps, captions
   // Borders & dividers
-  border: "#1E2A32",       // subtle, warm
-  borderLight: "#2A3840",  // for card outlines
+  border: "#21262D",       // subtle
+  borderLight: "#30363D",  // for card outlines
   // Social colors
   kudos: "#FF6B35",        // warm orange for kudos/likes
-  success: "#10B981",      // green for online, goals met
-  danger: "#EF4444",       // red for delete, errors
+  success: "#3FB950",      // GitHub green — online, goals met
+  danger: "#F85149",       // red for delete, errors
 };
 
 export default {
