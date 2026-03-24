@@ -3,8 +3,8 @@ export const brand = {
   bg: "#0D1117",           // GitHub dark — deep but not harsh
   surface: "#161B22",      // card background — subtle lift
   elevated: "#21262D",     // elevated panels, modals
-  accent: "#00D4AA",       // turkuaz — fresh, nature, clean air
-  accentDim: "rgba(0,212,170,0.10)", // subtle accent background
+  accent: "#10B981",       // zümrüt yeşil — premium, doğal
+  accentDim: "rgba(16,185,129,0.10)", // subtle accent background
   strava: "#FC4C02",
   // Text hierarchy
   text: "#E6EDF3",         // soft white — easy on eyes
