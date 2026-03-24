@@ -642,3 +642,21 @@ export const inviteCodes = pgTable("invite_codes", {
   expiresAt: timestamp("expires_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+// ============================================================
+// DOMAIN 9: WEEKLY GOALS & STREAKS
+// ============================================================
+
+export const weeklyGoals = pgTable("weekly_goals", {
+  id: uuid().primaryKey().defaultRandom(),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  distanceGoalM: integer("distance_goal_m").notNull().default(10000), // 10km default
+  runsGoal: integer("runs_goal").notNull().default(3), // 3 runs/week default
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
+  lastCompletedWeek: text("last_completed_week"), // ISO week "2026-W12"
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("weekly_goals_member_unique").on(t.memberId),
+]);
