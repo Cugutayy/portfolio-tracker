@@ -65,13 +65,7 @@ export default function PostDetailScreen() {
       console.error("Post fetch error:", err);
       setError((err as Error).message || "Gonderi yuklenemedi");
     }
-    // Also load kudos and comments separately as fallback
-    API.getPostKudos(id).then((res) => {
-      if (res) setKudosData(res);
-    }).catch(() => {});
-    API.getPostComments(id).then((res) => {
-      if (res?.comments) setComments(res.comments);
-    }).catch(() => {});
+    // Kudos and comments already loaded from getPost — no separate calls needed
   }, [id]);
 
   useEffect(() => {
@@ -175,13 +169,13 @@ export default function PostDetailScreen() {
                   onPress={handleDeletePost}
                   hitSlop={12}
                   style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 18,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
                     backgroundColor: "rgba(255,82,82,0.12)",
                     justifyContent: "center",
                     alignItems: "center",
-                    marginRight: 4,
+                    marginRight: 8,
                   }}
                 >
                   <Ionicons name="trash-outline" size={18} color="#FF5252" />
@@ -257,9 +251,9 @@ export default function PostDetailScreen() {
               {visibleKudos.map((k) => (
                 <Text key={k.id} style={s.kudosName}>{k.memberName}</Text>
               ))}
-              {!showAllKudos && kudosData.kudos.length > 3 && (
+              {!showAllKudos && (kudosData.kudos || []).length > 3 && (
                 <TouchableOpacity onPress={() => setShowAllKudos(true)}>
-                  <Text style={s.kudosMore}>+{kudosData.kudos.length - 3} daha</Text>
+                  <Text style={s.kudosMore}>+{(kudosData.kudos || []).length - 3} daha</Text>
                 </TouchableOpacity>
               )}
             </View>
