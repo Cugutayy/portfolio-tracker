@@ -3,6 +3,7 @@ import {
   View,
   Text,
   TouchableOpacity,
+  ScrollView,
   StyleSheet,
   SafeAreaView,
   Alert,
@@ -651,11 +652,12 @@ export default function TrackScreen() {
         </View>
       )}
 
-      {/* State: FINISHED */}
+      {/* State: FINISHED — Rich Post-Run Summary */}
       {state === "finished" && (
-        <View style={s.finishedContainer}>
-          <Text style={s.finishedTitle}>KOSU TAMAMLANDI!</Text>
+        <ScrollView contentContainerStyle={s.finishedContainer}>
+          <Text style={s.finishedTitle}>KOSU TAMAMLANDI</Text>
 
+          {/* Primary stats */}
           <View style={s.summaryGrid}>
             <View style={s.summaryItem}>
               <Text style={s.summaryValue}>{formatDistance(distanceM)}</Text>
@@ -671,6 +673,37 @@ export default function TrackScreen() {
             </View>
           </View>
 
+          {/* Secondary stats row */}
+          <View style={s.secondaryStatsRow}>
+            {(() => {
+              const elev = computeElevationGain(coords);
+              if (elev && elev > 0) return (
+                <View style={s.secondaryStat}>
+                  <Ionicons name="trending-up" size={14} color={brand.accent} />
+                  <Text style={s.secondaryStatValue}>{elev}m</Text>
+                  <Text style={s.secondaryStatLabel}>yukselti</Text>
+                </View>
+              );
+              return null;
+            })()}
+            <View style={s.secondaryStat}>
+              <Ionicons name="location" size={14} color={brand.accent} />
+              <Text style={s.secondaryStatValue}>{coords.length}</Text>
+              <Text style={s.secondaryStatLabel}>GPS noktasi</Text>
+            </View>
+            {(() => {
+              const total = acceptedPoints.current + rejectedPoints.current;
+              const quality = total > 0 ? Math.round((acceptedPoints.current / total) * 100) : 100;
+              return (
+                <View style={s.secondaryStat}>
+                  <Ionicons name="pulse" size={14} color={quality >= 80 ? "#4CAF50" : quality >= 50 ? "#FF9800" : "#FF5252"} />
+                  <Text style={s.secondaryStatValue}>{quality}%</Text>
+                  <Text style={s.secondaryStatLabel}>GPS kalite</Text>
+                </View>
+              );
+            })()}
+          </View>
+
           {/* Photo picker */}
           {photoUri ? (
             <View style={s.photoPreviewContainer}>
@@ -681,7 +714,7 @@ export default function TrackScreen() {
             </View>
           ) : (
             <TouchableOpacity style={s.photoAddButton} onPress={pickPhoto} activeOpacity={0.8}>
-              <Text style={s.photoAddIcon}>📷</Text>
+              <Ionicons name="camera-outline" size={20} color={brand.textDim} />
               <Text style={s.photoAddText}>FOTOGRAF EKLE</Text>
             </TouchableOpacity>
           )}
@@ -692,13 +725,13 @@ export default function TrackScreen() {
             disabled={saving}
             activeOpacity={0.8}
           >
-            <Text style={s.saveButtonText}>{saving ? "KAYDEDILIYOR..." : "KAYDET"}</Text>
+            <Text style={s.saveButtonText}>{saving ? "KAYDEDILIYOR..." : "KAYDET VE PAYLAS"}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={s.discardButton} onPress={discardRun} activeOpacity={0.8}>
             <Text style={s.discardButtonText}>IPTAL ET</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       )}
     </SafeAreaView>
   );
@@ -733,9 +766,13 @@ const s = StyleSheet.create({
   stopButtonText: { fontSize: 14, fontWeight: "bold", color: "#fff", letterSpacing: 4 },
 
   // FINISHED
-  finishedContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
+  finishedContainer: { flexGrow: 1, justifyContent: "center", alignItems: "center", padding: 32 },
   finishedTitle: { fontSize: 20, fontWeight: "bold", color: brand.accent, letterSpacing: 4, marginBottom: 32 },
-  summaryGrid: { flexDirection: "row", gap: 24, marginBottom: 48 },
+  summaryGrid: { flexDirection: "row", gap: 24, marginBottom: 20 },
+  secondaryStatsRow: { flexDirection: "row", gap: 16, marginBottom: 32, flexWrap: "wrap", justifyContent: "center" },
+  secondaryStat: { flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: brand.surface, borderRadius: 16, paddingHorizontal: 10, paddingVertical: 6 },
+  secondaryStatValue: { fontSize: 12, fontWeight: "600", color: brand.text },
+  secondaryStatLabel: { fontSize: 10, color: brand.textDim },
   summaryItem: { alignItems: "center", backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 8, padding: 20, minWidth: 90 },
   summaryValue: { fontSize: 24, fontWeight: "bold", color: brand.text },
   summaryLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 3, marginTop: 4 },
