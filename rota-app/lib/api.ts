@@ -181,8 +181,12 @@ export const API = {
 
   // Community
   getCommunityActivities: (params: Record<string, string>) =>
-    api<{ activities: CommunityActivity[]; total: number; hasMore: boolean }>(
+    api<{ activities: CommunityActivity[]; total: number; hasMore: boolean; educationCards?: EducationCard[] }>(
       `/api/community/activities?${new URLSearchParams(params)}`
+    ),
+  getFeed: (limit = 20) =>
+    api<{ feed: FeedItem[]; ranking: { version: string; formula: string; lookbackDays: number } }>(
+      `/api/feed?limit=${limit}`
     ),
   getLeaderboard: (period = "month") =>
     api<{ leaderboard: LeaderboardEntry[] }>(
@@ -292,6 +296,28 @@ export const API = {
   deleteAccount: () =>
     api("/api/members/me", { method: "DELETE" }),
 
+  // Onboarding
+  getOnboardingProgress: () =>
+    api<{ progress: OnboardingProgress; completedMilestones: number; totalMilestones: number; completionPercent: number }>(
+      "/api/onboarding/progress"
+    ),
+  trackOnboardingEvent: (eventName: string, metadata?: Record<string, unknown>) =>
+    api<{ success: boolean }>("/api/onboarding/events", {
+      method: "POST",
+      body: JSON.stringify({ eventName, metadata }),
+    }),
+
+  // Club admin
+  getClubWeeklyGoal: (clubId: string) =>
+    api<{ weekStart: string; goal: { id: string; targetDistanceM: number } | null; progress: { distanceM: number; runsCount: number; activeRunners: number; targetDistanceM: number; completionPercent: number } }>(
+      `/api/clubs/${clubId}/weekly-goal`
+    ),
+  setClubWeeklyGoal: (clubId: string, targetDistanceM: number) =>
+    api<{ success: boolean; weekStart: string; targetDistanceM: number }>(
+      `/api/clubs/${clubId}/weekly-goal`,
+      { method: "POST", body: JSON.stringify({ targetDistanceM }) }
+    ),
+
   logout: () =>
     api("/api/auth/logout", { method: "POST" }).catch(() => {}),
 };
@@ -337,15 +363,14 @@ export interface CreateActivityInput {
   endLat?: number;
   endLng?: number;
   elevationGainM?: number;
+  gpsQuality?: number;
   elapsedTimeSec?: number;
   photoBase64?: string;
   splits?: Array<{
     splitIndex: number;
     distanceM: number;
-    movingTimeSec: number;
-    avgPaceSecKm: number;
-    elevationDiffM: number | null;
-    avgHeartrate: number | null;
+    elapsedSec: number;
+    paceSecKm: number;
   }>;
 }
 
@@ -367,6 +392,35 @@ export interface CommunityActivity {
   hasKudosed?: boolean;
   commentCount?: number;
   photoUrl?: string | null;
+  isLocationObfuscated?: boolean;
+  memberIsOnline?: boolean;
+}
+
+export interface EducationCard {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  cta: string;
+  eventNameOnAcknowledge?: string;
+}
+
+export interface FeedItem {
+  id: string;
+  itemType: string;
+  actor: { id: string; name: string; relationship: string };
+  createdAt: string;
+  score: number;
+  payload: { activityId: string; distanceM: number; movingTimeSec: number; activityType: string };
+}
+
+export interface OnboardingProgress {
+  firstRunCompleted: boolean;
+  profileCompleted: boolean;
+  socialSeedCompleted: boolean;
+  firstInteractionCompleted: boolean;
+  completedAt: string | null;
+  updatedAt: string | null;
 }
 
 export interface LeaderboardEntry {

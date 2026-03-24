@@ -19,26 +19,11 @@ export async function POST(
   // Rate limit: 10 RSVPs per minute per user
   const rateLimited = await checkRateLimit(
     `rsvp:${session.user.id}`,
-    RATE_LIMITS.eventRsvp
+    { ...RATE_LIMITS.eventRsvp, strict: true }
   );
   if (rateLimited) return rateLimited;
 
   const { slug } = await params;
-
-  // Get event
-  const [event] = await db
-    .select({ id: events.id, maxParticipants: events.maxParticipants, status: events.status })
-    .from(events)
-    .where(eq(events.slug, slug))
-    .limit(1);
-
-  if (!event) {
-    return NextResponse.json({ error: "Event not found" }, { status: 404 });
-  }
-
-  if (event.status !== "upcoming") {
-    return NextResponse.json({ error: "Event is not accepting RSVPs" }, { status: 400 });
-  }
 
   let paceGroup: string | undefined;
   try {
@@ -48,62 +33,81 @@ export async function POST(
     // Body is optional — RSVP without pace group is fine
   }
 
-  // Check existing RSVP
-  const [existing] = await db
-    .select({ id: eventRsvps.id, status: eventRsvps.status })
-    .from(eventRsvps)
-    .where(
-      and(
-        eq(eventRsvps.eventId, event.id),
-        eq(eventRsvps.memberId, session.user.id)
+  const result = await db.transaction(async (tx) => {
+    // Lock event row to serialize capacity-sensitive RSVP writes
+    const lockedEvents = await tx.execute(sql`
+      SELECT id, max_participants, status
+      FROM events
+      WHERE slug = ${slug}
+      FOR UPDATE
+    `);
+
+    const event = lockedEvents.rows[0] as
+      | { id: string; max_participants: number | null; status: string }
+      | undefined;
+
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+    if (event.status !== "upcoming") {
+      return NextResponse.json({ error: "Event is not accepting RSVPs" }, { status: 400 });
+    }
+
+    // Check existing RSVP
+    const [existing] = await tx
+      .select({ id: eventRsvps.id, status: eventRsvps.status })
+      .from(eventRsvps)
+      .where(
+        and(
+          eq(eventRsvps.eventId, event.id),
+          eq(eventRsvps.memberId, session.user.id)
+        )
       )
-    )
-    .limit(1);
+      .limit(1);
 
-  if (existing) {
-    // Toggle: if already going → cancel, if cancelled → re-going
-    const newStatus = existing.status === "going" ? "cancelled" : "going";
+    if (existing) {
+      const newStatus = existing.status === "going" ? "cancelled" : "going";
 
-    // Check capacity when re-joining
-    if (newStatus === "going" && event.maxParticipants) {
-      const [{ value: currentCount }] = await db
+      if (newStatus === "going" && event.max_participants) {
+        const [{ value: currentCount }] = await tx
+          .select({ value: count() })
+          .from(eventRsvps)
+          .where(and(eq(eventRsvps.eventId, event.id), eq(eventRsvps.status, "going")));
+        if (Number(currentCount) >= event.max_participants) {
+          return NextResponse.json({ error: "Etkinlik kapasitesi dolu" }, { status: 400 });
+        }
+      }
+
+      await tx
+        .update(eventRsvps)
+        .set({ status: newStatus, paceGroup })
+        .where(eq(eventRsvps.id, existing.id));
+
+      return NextResponse.json({ status: newStatus, action: newStatus === "going" ? "joined" : "left" });
+    }
+
+    if (event.max_participants) {
+      const [{ value: currentCount }] = await tx
         .select({ value: count() })
         .from(eventRsvps)
         .where(and(eq(eventRsvps.eventId, event.id), eq(eventRsvps.status, "going")));
-      if (Number(currentCount) >= event.maxParticipants) {
+      if (Number(currentCount) >= event.max_participants) {
         return NextResponse.json({ error: "Etkinlik kapasitesi dolu" }, { status: 400 });
       }
     }
 
-    await db
-      .update(eventRsvps)
-      .set({ status: newStatus, paceGroup })
-      .where(eq(eventRsvps.id, existing.id));
+    const [rsvp] = await tx
+      .insert(eventRsvps)
+      .values({
+        eventId: event.id,
+        memberId: session.user.id,
+        paceGroup,
+        status: "going",
+      })
+      .returning();
 
-    return NextResponse.json({ status: newStatus, action: newStatus === "going" ? "joined" : "left" });
-  }
+    return NextResponse.json({ status: "going", action: "joined", rsvp }, { status: 201 });
+  });
 
-  // Check capacity for new RSVP
-  if (event.maxParticipants) {
-    const [{ value: currentCount }] = await db
-      .select({ value: count() })
-      .from(eventRsvps)
-      .where(and(eq(eventRsvps.eventId, event.id), eq(eventRsvps.status, "going")));
-    if (Number(currentCount) >= event.maxParticipants) {
-      return NextResponse.json({ error: "Etkinlik kapasitesi dolu" }, { status: 400 });
-    }
-  }
-
-  // New RSVP
-  const [rsvp] = await db
-    .insert(eventRsvps)
-    .values({
-      eventId: event.id,
-      memberId: session.user.id,
-      paceGroup,
-      status: "going",
-    })
-    .returning();
-
-  return NextResponse.json({ status: "going", action: "joined", rsvp }, { status: 201 });
+  return result;
 }

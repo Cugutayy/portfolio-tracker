@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { activities, members, kudos, comments, activityPhotos, follows } from "@/db/schema";
+import { activities, members, kudos, comments, activityPhotos, follows, onboardingEvents } from "@/db/schema";
 import { sql, eq, and, gte, lte } from "drizzle-orm";
 import { cacheGet, cacheSet, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
@@ -49,6 +49,21 @@ export async function GET(request: NextRequest) {
   const cached = await cacheGet<Record<string, unknown>>(cacheKey);
   if (cached) {
     return NextResponse.json(cached, { headers: { "X-Cache": "HIT" } });
+  }
+
+  let showPrivacyEducationCard = !!currentUserId;
+  if (currentUserId) {
+    const [ack] = await db
+      .select({ id: onboardingEvents.id })
+      .from(onboardingEvents)
+      .where(
+        and(
+          eq(onboardingEvents.memberId, currentUserId),
+          eq(onboardingEvents.eventName, "privacy_education_acknowledged"),
+        ),
+      )
+      .limit(1);
+    showPrivacyEducationCard = !ack;
   }
 
   // Period start calculation
@@ -150,11 +165,22 @@ export async function GET(request: NextRequest) {
   const trimmed = hasMore ? rows.slice(0, limit) : rows;
 
   const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
+  const obfuscateCoord = (value: number | null) => {
+    if (value === null || value === undefined) return value;
+    // ~110m precision for non-owner map points (3 decimals)
+    return Math.round(value * 1000) / 1000;
+  };
   const result = {
     activities: trimmed.map((row) => {
       const { memberLastActive, ...rest } = row;
+      const isOwner = currentUserId === row.memberId;
+      const safeStartLat = isOwner ? row.startLat : obfuscateCoord(row.startLat);
+      const safeStartLng = isOwner ? row.startLng : obfuscateCoord(row.startLng);
       return {
         ...rest,
+        startLat: safeStartLat,
+        startLng: safeStartLng,
+        isLocationObfuscated: !isOwner,
         memberInitials: row.memberName
           .split(" ")
           .map((w) => w[0])
@@ -168,6 +194,18 @@ export async function GET(request: NextRequest) {
     }),
     total: trimmed.length,
     hasMore,
+    educationCards: showPrivacyEducationCard
+      ? [
+          {
+            id: "safe-sharing-101",
+            type: "privacy_education",
+            title: "Share safely",
+            body: "Use members/private visibility and review map start-point sharing before posting.",
+            cta: "Got it",
+            eventNameOnAcknowledge: "privacy_education_acknowledged",
+          },
+        ]
+      : [],
   };
 
   await cacheSet(cacheKey, result, CACHE_TTL.communityActivities);

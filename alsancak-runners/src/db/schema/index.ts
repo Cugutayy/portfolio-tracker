@@ -13,7 +13,7 @@ import {
   index,
   primaryKey,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // ============================================================
 // DOMAIN 1: IDENTITY (Auth.js compatible + extensions)
@@ -540,3 +540,104 @@ export const inviteCodes = pgTable("invite_codes", {
   expiresAt: timestamp("expires_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const passwordResetCodes = pgTable("password_reset_codes", {
+  id: uuid().primaryKey().defaultRandom(),
+  email: text("email").notNull(),
+  codeHash: text("code_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("password_reset_codes_email_unique").on(t.email),
+  index("idx_password_reset_codes_expires_at").on(t.expiresAt),
+]);
+
+export const clubs = pgTable("clubs", {
+  id: uuid().primaryKey().defaultRandom(),
+  name: text().notNull(),
+  slug: text().notNull().unique(),
+  description: text(),
+  visibility: text().notNull().default("public"), // public | members
+  city: text().default("Izmir"),
+  coverImageUrl: text("cover_image_url"),
+  createdBy: uuid("created_by").notNull().references(() => members.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("idx_clubs_visibility").on(t.visibility),
+  index("idx_clubs_city").on(t.city),
+]);
+
+export const clubMembers = pgTable("club_members", {
+  id: uuid().primaryKey().defaultRandom(),
+  clubId: uuid("club_id").notNull().references(() => clubs.id, { onDelete: "cascade" }),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  role: text().notNull().default("member"), // owner | admin | member
+  status: text().notNull().default("active"), // active | left
+  joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("club_members_unique").on(t.clubId, t.memberId),
+  index("idx_club_members_club").on(t.clubId),
+  index("idx_club_members_member").on(t.memberId),
+  index("idx_club_members_status").on(t.status),
+]);
+
+export const onboardingProgress = pgTable("onboarding_progress", {
+  id: uuid().primaryKey().defaultRandom(),
+  memberId: uuid("member_id").notNull().unique().references(() => members.id, { onDelete: "cascade" }),
+  firstRunCompleted: boolean("first_run_completed").notNull().default(false),
+  profileCompleted: boolean("profile_completed").notNull().default(false),
+  socialSeedCompleted: boolean("social_seed_completed").notNull().default(false), // follows club join etc.
+  firstInteractionCompleted: boolean("first_interaction_completed").notNull().default(false), // like/comment/follow
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("idx_onboarding_member").on(t.memberId),
+]);
+
+export const onboardingEvents = pgTable("onboarding_events", {
+  id: uuid().primaryKey().defaultRandom(),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  eventName: text("event_name").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("idx_onboarding_events_member").on(t.memberId),
+  index("idx_onboarding_events_event").on(t.eventName),
+  index("idx_onboarding_events_member_event_time").on(t.memberId, t.eventName, t.createdAt),
+]);
+
+export const feedItems = pgTable("feed_items", {
+  id: uuid().primaryKey().defaultRandom(),
+  actorMemberId: uuid("actor_member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  itemType: text("item_type").notNull(), // run_post | badge_earned | event_joined | club_joined | weekly_recap
+  visibility: text("visibility").notNull().default("members"), // private | members | public
+  activityId: uuid("activity_id").references(() => activities.id, { onDelete: "cascade" }),
+  eventId: uuid("event_id").references(() => events.id, { onDelete: "cascade" }),
+  clubId: uuid("club_id").references(() => clubs.id, { onDelete: "cascade" }),
+  qualityScore: real("quality_score").notNull().default(0),
+  antiSpamFlags: jsonb("anti_spam_flags").notNull().default(sql`'[]'::jsonb`),
+  payload: jsonb("payload"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("idx_feed_items_created").on(t.createdAt),
+  index("idx_feed_items_actor_created").on(t.actorMemberId, t.createdAt),
+  index("idx_feed_items_type_created").on(t.itemType, t.createdAt),
+]);
+
+export const clubWeeklyGoals = pgTable("club_weekly_goals", {
+  id: uuid().primaryKey().defaultRandom(),
+  clubId: uuid("club_id").notNull().references(() => clubs.id, { onDelete: "cascade" }),
+  weekStart: date("week_start").notNull(),
+  targetDistanceM: integer("target_distance_m").notNull(),
+  createdBy: uuid("created_by").notNull().references(() => members.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("club_weekly_goals_club_week_unique").on(t.clubId, t.weekStart),
+  index("idx_club_weekly_goals_week").on(t.weekStart),
+]);

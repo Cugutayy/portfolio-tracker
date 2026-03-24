@@ -14,7 +14,7 @@ import {
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { brand } from "@/constants/Colors";
-import { API, type CommunityActivity, type LeaderboardEntry } from "@/lib/api";
+import { API, type CommunityActivity, type EducationCard, type FeedItem, type LeaderboardEntry } from "@/lib/api";
 import { Ionicons } from "@expo/vector-icons";
 import { formatDistance, formatPace, formatDate } from "@/lib/format";
 
@@ -29,6 +29,8 @@ export default function FeedScreen() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [activeTab, setActiveTab] = useState<"following" | "everyone">("everyone");
+  const [educationCards, setEducationCards] = useState<EducationCard[]>([]);
+  const [smartFeed, setSmartFeed] = useState<FeedItem[]>([]);
   const loadingMoreRef = useRef(false);
 
   const fetchActivities = useCallback(async (pageNum: number, append: boolean) => {
@@ -43,20 +45,23 @@ export default function FeedScreen() {
       setActivities((prev) => [...prev, ...res.activities]);
     } else {
       setActivities(res.activities);
+      setEducationCards(res.educationCards || []);
     }
     setHasMore(res.hasMore);
   }, [activeTab]);
 
   const loadData = useCallback(async () => {
     try {
-      const [, leaderboardRes, statsRes] = await Promise.allSettled([
+      const [, leaderboardRes, statsRes, smartFeedRes] = await Promise.allSettled([
         fetchActivities(1, false),
         API.getLeaderboard("month"),
         API.getStats(),
+        API.getFeed(3),
       ]);
       setPage(1);
       if (leaderboardRes.status === "fulfilled") setLeaderboard(leaderboardRes.value.leaderboard.slice(0, 3));
       if (statsRes.status === "fulfilled") setStats(statsRes.value as typeof stats);
+      if (smartFeedRes.status === "fulfilled") setSmartFeed(smartFeedRes.value.feed || []);
     } catch {}
   }, [fetchActivities]);
 
@@ -203,6 +208,36 @@ export default function FeedScreen() {
       </View>
 
       <Text style={s.sectionTitle}>SON KOSULAR</Text>
+
+      {smartFeed.length > 0 && (
+        <View style={s.smartFeedWrap}>
+          <Text style={s.smartFeedTitle}>SANA OZEL</Text>
+          {smartFeed.map((item) => (
+            <TouchableOpacity key={item.id} style={s.smartFeedCard} onPress={() => router.push(`/activity/${item.payload.activityId}` as never)}>
+              <Text style={s.smartFeedActor}>{item.actor.name}</Text>
+              <Text style={s.smartFeedMeta}>{formatDistance(item.payload.distanceM)} km · skor {item.score.toFixed(2)}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
+      {educationCards.map((card) => (
+        <View key={card.id} style={s.educationCard}>
+          <Text style={s.educationTitle}>{card.title.toUpperCase()}</Text>
+          <Text style={s.educationBody}>{card.body}</Text>
+          <TouchableOpacity
+            style={s.educationBtn}
+            onPress={async () => {
+              if (card.eventNameOnAcknowledge) {
+                await API.trackOnboardingEvent(card.eventNameOnAcknowledge).catch(() => null);
+              }
+              setEducationCards((prev) => prev.filter((c) => c.id !== card.id));
+            }}
+          >
+            <Text style={s.educationBtnText}>{card.cta.toUpperCase()}</Text>
+          </TouchableOpacity>
+        </View>
+      ))}
     </View>
   );
 
@@ -318,6 +353,16 @@ const s = StyleSheet.create({
   statLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 4 },
   leaderboard: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, marginBottom: 16 },
   sectionTitle: { fontSize: 11, color: brand.textMuted, letterSpacing: 3, fontWeight: "600", marginBottom: 12 },
+  smartFeedWrap: { marginBottom: 14 },
+  smartFeedTitle: { fontSize: 11, color: brand.accent, letterSpacing: 2, fontWeight: "700", marginBottom: 8 },
+  smartFeedCard: { backgroundColor: "#1A1A1F", borderWidth: 1, borderColor: "#2D2D35", borderRadius: 8, padding: 10, marginBottom: 6 },
+  smartFeedActor: { color: brand.text, fontSize: 13, fontWeight: "700" },
+  smartFeedMeta: { color: brand.textDim, fontSize: 12, marginTop: 2 },
+  educationCard: { backgroundColor: "#141B22", borderWidth: 1, borderColor: "#2E3E50", borderRadius: 8, padding: 12, marginBottom: 14 },
+  educationTitle: { color: brand.accent, fontSize: 10, letterSpacing: 1.5, fontWeight: "800", marginBottom: 6 },
+  educationBody: { color: brand.text, fontSize: 13, lineHeight: 19 },
+  educationBtn: { marginTop: 10, alignSelf: "flex-start", borderWidth: 1, borderColor: brand.accent, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 },
+  educationBtnText: { color: brand.accent, fontSize: 11, fontWeight: "700" },
   lbRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6 },
   lbRank: { fontSize: 14, fontWeight: "bold", width: 20, textAlign: "center" },
   lbAvatar: { width: 28, height: 28, borderRadius: 14, backgroundColor: brand.elevated, alignItems: "center", justifyContent: "center" },

@@ -1,31 +1,21 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { members } from "@/db/schema";
+import { members, passwordResetCodes } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/rateLimit";
+import { createHash } from "crypto";
 
-// In-memory store for password reset codes (dev/beta)
-// In production, use Redis or DB + email delivery
-const resetCodes = new Map<
-  string,
-  { code: string; expiresAt: number; attempts: number }
->();
-
-// Clean expired codes periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of resetCodes) {
-    if (entry.expiresAt < now) resetCodes.delete(key);
-  }
-}, 60_000);
-
-export { resetCodes };
+export function hashResetCode(email: string, code: string): string {
+  const pepper = process.env.AUTH_SECRET || "fallback";
+  return createHash("sha256")
+    .update(`${email}:${code}:${pepper}`)
+    .digest("hex");
+}
 
 /**
  * POST /api/auth/forgot-password
  * Generate a 6-digit reset code for the given email.
- * Dev/beta mode: returns the code in the response.
- * Production: would send via email instead.
+ * Always returns a generic success response to avoid account enumeration.
  */
 export async function POST(request: Request) {
   try {
@@ -36,6 +26,7 @@ export async function POST(request: Request) {
     const rateLimited = await checkRateLimit(`forgot-password:${ip}`, {
       maxRequests: 5,
       windowSec: 300, // 5 requests per 5 minutes
+      strict: true,
     });
     if (rateLimited) return rateLimited;
 
@@ -58,7 +49,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check if user exists
+    // Check if user exists (but keep response generic either way)
     const [member] = await db
       .select({ id: members.id })
       .from(members)
@@ -66,30 +57,54 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (!member) {
-      // Don't reveal whether email exists — but in dev mode we can be more helpful
-      return NextResponse.json(
-        { error: "Bu email adresiyle kayitli bir hesap bulunamadi" },
-        { status: 404 },
-      );
+      return NextResponse.json({
+        success: true,
+        message: "Eger hesap mevcutsa sifre sifirlama kodu gonderildi",
+      });
     }
 
     // Generate 6-digit code
     const code = String(Math.floor(100000 + Math.random() * 900000));
 
-    // Store with 10-minute expiry
-    resetCodes.set(email, {
-      code,
-      expiresAt: Date.now() + 10 * 60 * 1000,
-      attempts: 0,
-    });
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const codeHash = hashResetCode(email, code);
 
-    // Dev/beta: return code directly
-    // Production: send email and don't include code in response
+    // Upsert one active code per email
+    const [existing] = await db
+      .select({ id: passwordResetCodes.id })
+      .from(passwordResetCodes)
+      .where(eq(passwordResetCodes.email, email))
+      .limit(1);
+
+    if (existing) {
+      await db
+        .update(passwordResetCodes)
+        .set({
+          codeHash,
+          expiresAt,
+          attempts: 0,
+          updatedAt: new Date(),
+        })
+        .where(eq(passwordResetCodes.id, existing.id));
+    } else {
+      await db.insert(passwordResetCodes).values({
+        email,
+        codeHash,
+        expiresAt,
+        attempts: 0,
+      });
+    }
+
+    // TODO: deliver `code` over email/SMS provider.
+    // Intentionally not returned in API response.
+    const exposeDebugCode =
+      process.env.NODE_ENV !== "production" &&
+      request.headers.get("x-debug-reset-code") === "1";
+
     return NextResponse.json({
       success: true,
-      message: "Sifre sifirlama kodu olusturuldu",
-      code, // DEV ONLY — remove in production
-      expiresInMinutes: 10,
+      message: "Eger hesap mevcutsa sifre sifirlama kodu gonderildi",
+      ...(exposeDebugCode ? { debugCode: code, expiresInMinutes: 10 } : {}),
     });
   } catch (error) {
     console.error("Forgot password error:", error);
