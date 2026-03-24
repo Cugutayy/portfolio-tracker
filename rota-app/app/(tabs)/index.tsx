@@ -12,7 +12,30 @@ import {
   AppState,
   Animated,
   Dimensions,
+  Easing,
 } from "react-native";
+
+const SCREEN_WIDTH = Dimensions.get("window").width;
+
+/** Animated counter that counts up from 0 to target */
+function AnimatedCounter({ target, style }: { target: number; style: any }) {
+  const anim = useRef(new Animated.Value(0)).current;
+  const [display, setDisplay] = useState(0);
+
+  useEffect(() => {
+    anim.setValue(0);
+    Animated.timing(anim, {
+      toValue: target,
+      duration: 800,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start();
+    const id = anim.addListener(({ value }) => setDisplay(Math.round(value)));
+    return () => anim.removeListener(id);
+  }, [target]);
+
+  return <Text style={style}>{display}</Text>;
+}
 import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { brand } from "@/constants/Colors";
@@ -42,6 +65,8 @@ export default function FeedScreen() {
   const [fabOpen, setFabOpen] = useState(false);
   const loadingMoreRef = useRef(false);
   const fabAnim = useRef(new Animated.Value(0)).current;
+  const pillAnim = useRef(new Animated.Value(1)).current; // 0=following, 1=everyone
+  const podiumAnim = useRef(new Animated.Value(0)).current;
 
   // Merge activities and posts into a single feed sorted by date (deduplicated)
   const feedItems: FeedItem[] = (() => {
@@ -122,7 +147,16 @@ export default function FeedScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadData();
+      loadData().then(() => {
+        podiumAnim.setValue(0);
+        Animated.timing(podiumAnim, {
+          toValue: 1,
+          duration: 600,
+          delay: 200,
+          easing: Easing.out(Easing.back(1.2)),
+          useNativeDriver: true,
+        }).start();
+      });
 
       const appStateRef = { current: true };
       const appStateSub = AppState.addEventListener("change", (state) => {
@@ -185,6 +219,11 @@ export default function FeedScreen() {
     setPostPage(1);
     setHasMore(true);
     setHasMorePosts(true);
+    Animated.spring(pillAnim, {
+      toValue: tab === "following" ? 0 : 1,
+      useNativeDriver: false,
+      friction: 8,
+    }).start();
   };
 
   useEffect(() => {
@@ -263,73 +302,144 @@ export default function FeedScreen() {
     setFabOpen(!fabOpen);
   };
 
-  const MEDAL = ["#E6FF00", "#C0C0C0", "#CD7F32"];
+  const MEDAL_COLORS: Record<number, string> = { 1: "#FFD700", 2: "#C0C0C0", 3: "#CD7F32" };
 
-  const renderHeader = () => (
-    <View>
-      <View style={s.header}>
-        <Text style={s.logo}>ROTA<Text style={{ color: brand.accent }}>.</Text></Text>
-        <TouchableOpacity onPress={() => router.push("/search" as never)} hitSlop={8}>
-          <Ionicons name="search-outline" size={22} color={brand.textMuted} />
-        </TouchableOpacity>
-      </View>
+  const renderHeader = () => {
+    // Reorder leaderboard for podium: [2nd, 1st, 3rd]
+    const podiumOrder = leaderboard.length >= 3
+      ? [leaderboard[1], leaderboard[0], leaderboard[2]]
+      : leaderboard;
 
-      {stats && (
-        <View style={s.statsRow}>
-          {[
-            { v: stats.members, l: "UYE" },
-            { v: stats.totalRuns, l: "KOSU" },
-            { v: stats.totalDistanceKm, l: "KM" },
-          ].map((s2) => (
-            <View key={s2.l} style={s.statBox}>
-              <Text style={s.statValue}>{s2.v}</Text>
-              <Text style={s.statLabel}>{s2.l}</Text>
-            </View>
-          ))}
+    return (
+      <View>
+        {/* ── Logo + Search ── */}
+        <View style={s.header}>
+          <Text style={s.logo}>ROTA<Text style={{ color: brand.accent }}>.</Text></Text>
+          <TouchableOpacity onPress={() => router.push("/search" as never)} hitSlop={8}>
+            <Ionicons name="search-outline" size={22} color={brand.textMuted} />
+          </TouchableOpacity>
         </View>
-      )}
 
-      {leaderboard.length > 0 && (
-        <View style={s.leaderboard}>
-          <View style={s.leaderboardHeader}>
-            <Text style={[s.sectionTitle, { marginBottom: 0 }]}>LIDER TABLOSU</Text>
-            <TouchableOpacity onPress={() => router.push("/leaderboard" as never)} hitSlop={8}>
-              <Text style={s.seeAllLink}>TUMUNU GOR</Text>
-            </TouchableOpacity>
-          </View>
-          {leaderboard.map((entry, i) => (
-            <View key={entry.memberId} style={s.lbRow}>
-              <Text style={[s.lbRank, { color: MEDAL[i] || brand.textDim }]}>{entry.rank}</Text>
-              <View style={s.lbAvatar}>
-                <Text style={s.lbInitials}>
-                  {entry.memberName.split(" ").map((w) => w[0]).join("").slice(0, 2)}
-                </Text>
+        {/* ── 1.1 Community Pulse Stats ── */}
+        {stats && (
+          <View style={s.statsRow}>
+            {([
+              { target: stats.members, label: "UYE", icon: "people" as const },
+              { target: stats.totalRuns, label: "KOSU", icon: "footsteps" as const },
+              { target: stats.totalDistanceKm, label: "KM", icon: "map" as const },
+            ]).map((item) => (
+              <View key={item.label} style={s.statCard}>
+                <View style={s.statAccentBar} />
+                <View style={s.statCardInner}>
+                  <View style={s.statIconCircle}>
+                    <Ionicons name={item.icon} size={14} color={brand.accent} />
+                  </View>
+                  <AnimatedCounter target={item.target} style={s.statValue} />
+                  <Text style={s.statLabel}>{item.label}</Text>
+                </View>
               </View>
-              <Text style={s.lbName}>{entry.memberName}</Text>
-              <Text style={s.lbKm}>{entry.totalDistanceKm} km</Text>
+            ))}
+          </View>
+        )}
+
+        {/* ── 1.2 Podium Leaderboard ── */}
+        {leaderboard.length >= 3 ? (
+          <Animated.View style={[
+            s.podiumSection,
+            {
+              opacity: podiumAnim,
+              transform: [{ scale: podiumAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }],
+            },
+          ]}>
+            <View style={s.leaderboardHeader}>
+              <Text style={s.sectionTitleInline}>LIDER TABLOSU</Text>
+              <TouchableOpacity onPress={() => router.push("/leaderboard" as never)} hitSlop={8}>
+                <Text style={s.seeAllLink}>TUMUNU GOR</Text>
+              </TouchableOpacity>
             </View>
-          ))}
+            <View style={s.podiumRow}>
+              {podiumOrder.map((entry) => {
+                const isFirst = entry.rank === 1;
+                const medalColor = MEDAL_COLORS[entry.rank] || brand.textDim;
+                const initials = entry.memberName.split(" ").map((w) => w[0]).join("").slice(0, 2);
+                const avatarSize = isFirst ? 56 : 44;
+
+                return (
+                  <TouchableOpacity
+                    key={entry.memberId}
+                    style={[s.podiumItem, isFirst && s.podiumItemFirst]}
+                    onPress={() => router.push(`/member/${entry.memberId}` as never)}
+                    activeOpacity={0.7}
+                  >
+                    {isFirst && <Text style={s.crownIcon}>👑</Text>}
+                    <View style={[
+                      s.podiumAvatar,
+                      { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2, borderColor: medalColor },
+                    ]}>
+                      <Text style={[s.podiumInitials, { fontSize: isFirst ? 16 : 13 }]}>{initials}</Text>
+                    </View>
+                    <View style={[s.podiumBadge, { backgroundColor: medalColor }]}>
+                      <Text style={s.podiumBadgeText}>{entry.rank}</Text>
+                    </View>
+                    <Text style={s.podiumName} numberOfLines={1}>{entry.memberName.split(" ")[0]}</Text>
+                    <Text style={[s.podiumKm, isFirst && s.podiumKmFirst]}>{entry.totalDistanceKm} km</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </Animated.View>
+        ) : leaderboard.length > 0 ? (
+          /* Fallback for <3 entries */
+          <View style={s.podiumSection}>
+            <View style={s.leaderboardHeader}>
+              <Text style={s.sectionTitleInline}>LIDER TABLOSU</Text>
+              <TouchableOpacity onPress={() => router.push("/leaderboard" as never)} hitSlop={8}>
+                <Text style={s.seeAllLink}>TUMUNU GOR</Text>
+              </TouchableOpacity>
+            </View>
+            {leaderboard.map((entry) => (
+              <TouchableOpacity key={entry.memberId} style={s.lbRowFallback} onPress={() => router.push(`/member/${entry.memberId}` as never)}>
+                <Text style={[s.lbRankFallback, { color: MEDAL_COLORS[entry.rank] || brand.textDim }]}>{entry.rank}</Text>
+                <Text style={s.lbNameFallback}>{entry.memberName}</Text>
+                <Text style={s.lbKmFallback}>{entry.totalDistanceKm} km</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
+
+        {/* ── 1.3 Pill Toggle ── */}
+        <View style={s.pillContainer}>
+          <Animated.View style={[
+            s.pillIndicator,
+            {
+              left: pillAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [2, (SCREEN_WIDTH - 36) / 2],
+              }),
+            },
+          ]} />
+          <TouchableOpacity style={s.pillTab} onPress={() => switchTab("following")} activeOpacity={0.7}>
+            <Animated.Text style={[
+              s.pillText,
+              { color: pillAnim.interpolate({ inputRange: [0, 1], outputRange: [brand.bg, brand.textDim] }) },
+            ]}>TAKIP</Animated.Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={s.pillTab} onPress={() => switchTab("everyone")} activeOpacity={0.7}>
+            <Animated.Text style={[
+              s.pillText,
+              { color: pillAnim.interpolate({ inputRange: [0, 1], outputRange: [brand.textDim, brand.bg] }) },
+            ]}>HERKES</Animated.Text>
+          </TouchableOpacity>
         </View>
-      )}
 
-      <View style={s.tabRow}>
-        <TouchableOpacity
-          style={[s.tabButton, activeTab === "following" && s.tabButtonActive]}
-          onPress={() => switchTab("following")}
-        >
-          <Text style={[s.tabText, activeTab === "following" && s.tabTextActive]}>TAKIP</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[s.tabButton, activeTab === "everyone" && s.tabButtonActive]}
-          onPress={() => switchTab("everyone")}
-        >
-          <Text style={[s.tabText, activeTab === "everyone" && s.tabTextActive]}>HERKES</Text>
-        </TouchableOpacity>
+        {/* ── 1.4 Section Title with accent bar ── */}
+        <View style={s.sectionTitleRow}>
+          <View style={s.sectionTitleDot} />
+          <Text style={s.sectionTitleInline}>SON PAYLASIMLAR</Text>
+        </View>
       </View>
-
-      <Text style={s.sectionTitle}>SON PAYLASIMLAR</Text>
-    </View>
-  );
+    );
+  };
 
   const renderActivityCard = (item: CommunityActivity) => (
     <TouchableOpacity style={s.card} onPress={() => router.push(`/activity/${item.id}` as never)} activeOpacity={0.7}>
@@ -562,25 +672,52 @@ const s = StyleSheet.create({
   list: { paddingHorizontal: 16, paddingBottom: 80 },
   header: { paddingTop: 16, paddingBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   logo: { fontSize: 24, fontWeight: "bold", color: brand.text, letterSpacing: 6 },
-  statsRow: { flexDirection: "row", gap: 8, marginVertical: 16 },
-  statBox: { flex: 1, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, padding: 16, borderRadius: 4, alignItems: "center" },
-  statValue: { fontSize: 24, fontWeight: "bold", color: brand.text },
-  statLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 4 },
-  leaderboard: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, marginBottom: 16 },
+  // ── Community Pulse Stats ──
+  statsRow: { flexDirection: "row", gap: 10, marginVertical: 16 },
+  statCard: {
+    flex: 1, backgroundColor: brand.surface, borderRadius: 12, overflow: "hidden", flexDirection: "row",
+    shadowColor: brand.accent, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4,
+  },
+  statAccentBar: { width: 3, backgroundColor: brand.accent },
+  statCardInner: { flex: 1, padding: 12, alignItems: "center" },
+  statIconCircle: {
+    width: 28, height: 28, borderRadius: 14, backgroundColor: "rgba(230,255,0,0.1)",
+    alignItems: "center", justifyContent: "center", marginBottom: 6,
+  },
+  statValue: { fontSize: 22, fontWeight: "800", color: brand.text },
+  statLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 2, fontWeight: "600" },
+
+  // ── Podium Leaderboard ──
+  podiumSection: { backgroundColor: brand.surface, borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: brand.border },
   leaderboardHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
   seeAllLink: { fontSize: 11, color: brand.accent, fontWeight: "700", letterSpacing: 1 },
-  sectionTitle: { fontSize: 11, color: brand.textMuted, letterSpacing: 3, fontWeight: "600", marginBottom: 12 },
-  lbRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6 },
-  lbRank: { fontSize: 14, fontWeight: "bold", width: 20, textAlign: "center" },
-  lbAvatar: { width: 28, height: 28, borderRadius: 14, backgroundColor: brand.elevated, alignItems: "center", justifyContent: "center" },
-  lbInitials: { fontSize: 10, color: brand.accent, fontWeight: "600" },
-  lbName: { flex: 1, fontSize: 13, color: brand.text },
-  lbKm: { fontSize: 13, color: brand.accent, fontWeight: "600" },
-  tabRow: { flexDirection: "row", gap: 0, marginBottom: 16 },
-  tabButton: { flex: 1, paddingVertical: 8, alignItems: "center", borderWidth: 1, borderColor: brand.border, borderRadius: 0 },
-  tabButtonActive: { backgroundColor: brand.accent, borderColor: brand.accent },
-  tabText: { fontSize: 11, fontWeight: "600", color: brand.textDim, letterSpacing: 2 },
-  tabTextActive: { color: brand.bg },
+  sectionTitleInline: { fontSize: 11, color: brand.textMuted, letterSpacing: 3, fontWeight: "600" },
+  podiumRow: { flexDirection: "row", justifyContent: "center", alignItems: "flex-end", marginTop: 8, paddingBottom: 4 },
+  podiumItem: { flex: 1, alignItems: "center", paddingTop: 8 },
+  podiumItemFirst: { paddingTop: 0, marginTop: -12 },
+  crownIcon: { fontSize: 20, marginBottom: 4 },
+  podiumAvatar: { borderWidth: 3, backgroundColor: brand.elevated, alignItems: "center", justifyContent: "center" },
+  podiumInitials: { color: brand.text, fontWeight: "700" },
+  podiumBadge: { width: 20, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center", marginTop: -10 },
+  podiumBadgeText: { fontSize: 10, fontWeight: "800", color: brand.bg },
+  podiumName: { fontSize: 12, color: brand.text, fontWeight: "500", marginTop: 6, maxWidth: 80, textAlign: "center" },
+  podiumKm: { fontSize: 13, color: brand.textMuted, fontWeight: "600", marginTop: 2 },
+  podiumKmFirst: { color: brand.accent, fontSize: 15, fontWeight: "800" },
+  // Fallback leaderboard (< 3 entries)
+  lbRowFallback: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 6 },
+  lbRankFallback: { fontSize: 14, fontWeight: "bold", width: 20, textAlign: "center" },
+  lbNameFallback: { flex: 1, fontSize: 13, color: brand.text },
+  lbKmFallback: { fontSize: 13, color: brand.accent, fontWeight: "600" },
+
+  // ── Pill Toggle ──
+  pillContainer: { flexDirection: "row", backgroundColor: brand.elevated, borderRadius: 24, padding: 2, marginBottom: 16, position: "relative" },
+  pillIndicator: { position: "absolute", top: 2, bottom: 2, width: "49%", backgroundColor: brand.accent, borderRadius: 22 },
+  pillTab: { flex: 1, paddingVertical: 10, alignItems: "center", zIndex: 1 },
+  pillText: { fontSize: 12, fontWeight: "700", letterSpacing: 2 },
+
+  // ── Section Title ──
+  sectionTitleRow: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
+  sectionTitleDot: { width: 4, height: 14, borderRadius: 2, backgroundColor: brand.accent, marginRight: 8 },
   card: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, marginBottom: 8 },
   cardHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
   cardAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: brand.elevated, alignItems: "center", justifyContent: "center" },
