@@ -109,6 +109,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Yazi veya fotograf gerekli" }, { status: 400 });
   }
 
+  // Anti-spam: block duplicate posts within 5 minutes (same user, same text)
+  if (text) {
+    const [recent] = await db
+      .select({ id: posts.id })
+      .from(posts)
+      .where(and(
+        eq(posts.memberId, user.id),
+        eq(posts.text, text),
+        sql`${posts.createdAt} > NOW() - INTERVAL '5 minutes'`,
+      ))
+      .limit(1);
+    if (recent) {
+      return NextResponse.json({ error: "Bu gonderiyi zaten paylastiniz" }, { status: 429 });
+    }
+  }
+
   // Validate text length
   if (text && text.length > 2000) {
     return NextResponse.json({ error: "Yazi en fazla 2000 karakter olabilir" }, { status: 400 });
