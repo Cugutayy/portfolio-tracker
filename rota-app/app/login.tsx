@@ -12,11 +12,12 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
-import { setToken, setUser, setRefreshToken } from "@/lib/auth";
+import { useAuthContext } from "@/lib/auth-context";
 
 const API_BASE = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 
 export default function LoginScreen() {
+  const { login: authLogin } = useAuthContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -46,10 +47,12 @@ export default function LoginScreen() {
         return;
       }
 
-      // Store tokens + user data
-      await setToken(data.accessToken || data.token);
-      if (data.refreshToken) await setRefreshToken(data.refreshToken);
-      if (data.user) await setUser(data.user);
+      // Login through auth context (stores tokens + sets state)
+      await authLogin(
+        data.accessToken || data.token,
+        data.refreshToken,
+        data.user,
+      );
       router.replace("/(tabs)");
     } catch (e: any) {
       clearTimeout(timeout);
