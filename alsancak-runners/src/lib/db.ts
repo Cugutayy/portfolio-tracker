@@ -1,10 +1,16 @@
 import { Pool, neonConfig } from "@neondatabase/serverless";
 import { drizzle, NeonDatabase } from "drizzle-orm/neon-serverless";
 import * as schema from "@/db/schema";
-import ws from "ws";
 
-// Enable WebSocket for serverless environments (needed for transactions + FOR UPDATE)
-neonConfig.webSocketConstructor = ws;
+// Use ws in Node.js serverless (Vercel), native WebSocket in edge/browser
+if (typeof WebSocket === "undefined") {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    neonConfig.webSocketConstructor = require("ws");
+  } catch {
+    // ws not available — neon-serverless will fall back to HTTP
+  }
+}
 
 let _db: NeonDatabase<typeof schema> | null = null;
 let _pool: Pool | null = null;
