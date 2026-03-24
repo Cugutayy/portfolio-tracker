@@ -309,6 +309,11 @@ export const API = {
   getGroupLeaderboard: (slug: string, period?: string) => api<{ leaderboard: LeaderboardEntry[] }>(`/api/groups/${slug}/leaderboard?period=${period || 'month'}`),
   createGroupInvite: (slug: string) => api<{ code: string }>(`/api/groups/${slug}/invite`, { method: "POST" }),
 
+  // Weekly goals
+  getWeeklyGoal: () => api<WeeklyGoalResponse>("/api/members/me/goals"),
+  updateWeeklyGoal: (data: { distanceGoalM?: number; runsGoal?: number }) =>
+    api("/api/members/me/goals", { method: "PATCH", body: JSON.stringify(data) }),
+
   // Search
   search: (q: string, type?: string) => api<{ members: Array<{ id: string; name: string; image: string | null }>; groups: Group[]; events: Array<{ id: string; title: string; slug: string; date: string }> }>(`/api/search?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`),
 
@@ -514,4 +519,22 @@ export interface Post {
   commentCount: number;
   hasKudosed: boolean;
   createdAt: string;
+}
+
+export interface WeeklyGoalResponse {
+  goal: {
+    distanceGoalM: number;
+    runsGoal: number;
+    currentStreak: number;
+    longestStreak: number;
+  };
+  progress: {
+    totalRuns: number;
+    totalDistanceM: number;
+    totalTimeSec: number;
+    distanceGoalMet: boolean;
+    runsGoalMet: boolean;
+    weekComplete: boolean;
+  };
+  currentWeek: string;
 }

@@ -16,7 +16,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
-import { API, type Badge, type Member } from "@/lib/api";
+import { API, type Badge, type Member, type WeeklyGoalResponse } from "@/lib/api";
 import { getUser, setUser as cacheUser } from "@/lib/auth";
 import { formatPace } from "@/lib/format";
 
@@ -35,6 +35,7 @@ export default function ProfileScreen() {
   const [badges, setBadges] = useState<Array<{ badge: Badge; earnedAt: string }>>([]);
   const [inviting, setInviting] = useState(false);
   const [weeklyStats, setWeeklyStats] = useState<{ totalRuns: number; totalDistanceM: number; totalTimeSec: number; avgPaceSecKm: number | null; distanceChange: number | null } | null>(null);
+  const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoalResponse | null>(null);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -82,11 +83,19 @@ export default function ProfileScreen() {
     } catch {}
   }, []);
 
+  const loadWeeklyGoal = useCallback(async () => {
+    try {
+      const res = await API.getWeeklyGoal();
+      setWeeklyGoal(res);
+    } catch {}
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadProfile();
       loadBadges();
-    }, [loadProfile, loadBadges])
+      loadWeeklyGoal();
+    }, [loadProfile, loadBadges, loadWeeklyGoal])
   );
 
   const handleSync = async () => {
@@ -208,6 +217,50 @@ export default function ProfileScreen() {
             </View>
           );
         })()}
+
+        {/* Weekly Goal + Streak */}
+        {weeklyGoal && (
+          <View style={s.goalCard}>
+            <View style={s.goalHeader}>
+              <Text style={s.goalTitle}>HAFTALIK HEDEF</Text>
+              {weeklyGoal.goal.currentStreak > 0 && (
+                <View style={s.streakBadge}>
+                  <Ionicons name="flame" size={12} color={brand.bg} />
+                  <Text style={s.streakText}>{weeklyGoal.goal.currentStreak} hafta</Text>
+                </View>
+              )}
+            </View>
+            {/* Distance progress */}
+            <View style={s.goalRow}>
+              <View style={s.goalInfo}>
+                <Text style={s.goalMetric}>{(weeklyGoal.progress.totalDistanceM / 1000).toFixed(1)} / {(weeklyGoal.goal.distanceGoalM / 1000).toFixed(0)} km</Text>
+                <Text style={s.goalLabel}>Mesafe</Text>
+              </View>
+              <View style={s.goalBarOuter}>
+                <View style={[s.goalBarInner, {
+                  width: `${Math.min(100, (weeklyGoal.progress.totalDistanceM / weeklyGoal.goal.distanceGoalM) * 100)}%`,
+                  backgroundColor: weeklyGoal.progress.distanceGoalMet ? "#4CAF50" : brand.accent,
+                }]} />
+              </View>
+            </View>
+            {/* Runs progress */}
+            <View style={s.goalRow}>
+              <View style={s.goalInfo}>
+                <Text style={s.goalMetric}>{weeklyGoal.progress.totalRuns} / {weeklyGoal.goal.runsGoal} kosu</Text>
+                <Text style={s.goalLabel}>Kosu sayisi</Text>
+              </View>
+              <View style={s.goalBarOuter}>
+                <View style={[s.goalBarInner, {
+                  width: `${Math.min(100, (weeklyGoal.progress.totalRuns / weeklyGoal.goal.runsGoal) * 100)}%`,
+                  backgroundColor: weeklyGoal.progress.runsGoalMet ? "#4CAF50" : brand.accent,
+                }]} />
+              </View>
+            </View>
+            {weeklyGoal.progress.weekComplete && (
+              <Text style={s.goalComplete}>Bu haftaki hedefini tamamladin!</Text>
+            )}
+          </View>
+        )}
 
         {/* Weekly Summary */}
         {weeklyStats && (
@@ -341,6 +394,19 @@ const s = StyleSheet.create({
   followCount: { fontSize: 18, fontWeight: "bold", color: brand.text },
   followLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 2 },
 
+  // Weekly goal card
+  goalCard: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 12, padding: 16, marginBottom: 16 },
+  goalHeader: { flexDirection: "row" as const, justifyContent: "space-between" as const, alignItems: "center" as const, marginBottom: 14 },
+  goalTitle: { fontSize: 11, fontWeight: "600" as const, color: brand.textMuted, letterSpacing: 3 },
+  streakBadge: { flexDirection: "row" as const, alignItems: "center" as const, gap: 4, backgroundColor: "#FF6B35", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
+  streakText: { fontSize: 11, fontWeight: "700" as const, color: brand.bg },
+  goalRow: { marginBottom: 12 },
+  goalInfo: { flexDirection: "row" as const, justifyContent: "space-between" as const, marginBottom: 6 },
+  goalMetric: { fontSize: 14, fontWeight: "600" as const, color: brand.text },
+  goalLabel: { fontSize: 11, color: brand.textDim },
+  goalBarOuter: { height: 6, backgroundColor: brand.border, borderRadius: 3, overflow: "hidden" as const },
+  goalBarInner: { height: 6, borderRadius: 3 },
+  goalComplete: { fontSize: 13, color: "#4CAF50", fontWeight: "600" as const, textAlign: "center" as const, marginTop: 4 },
   // Activation milestones
   milestonesCard: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 12, padding: 16, marginBottom: 16 },
   milestonesHeader: { flexDirection: "row" as const, justifyContent: "space-between" as const, alignItems: "center" as const, marginBottom: 10 },
