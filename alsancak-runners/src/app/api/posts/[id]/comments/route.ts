@@ -8,7 +8,13 @@ import { sendPushNotification } from "@/lib/push";
 
 // GET /api/posts/:id/comments — list comments on post
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+  const rateLimited = await checkRateLimit(`post-comments-get:${ip}`, { maxRequests: 60, windowSec: 60 });
+  if (rateLimited) return rateLimited;
+
   const { id: postId } = await params;
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "50")));
 
   const list = await db
     .select({
@@ -23,7 +29,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .innerJoin(members, eq(postComments.memberId, members.id))
     .where(eq(postComments.postId, postId))
     .orderBy(postComments.createdAt)
-    .limit(200);
+    .limit(limit);
 
   return NextResponse.json({ comments: list });
 }
@@ -60,8 +66,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Yorum 1-500 karakter olmali" }, { status: 400 });
   }
 
-  // Strip HTML tags
-  const cleanText = rawText.replace(/<[^>]*>/g, "").trim();
+  // Strip HTML tags and escape dangerous characters
+  const cleanText = rawText
+    .replace(/<[^>]*>/g, "")
+    .replace(/[<>"'&]/g, (c: string) => ({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c] || c))
+    .trim();
 
   if (!cleanText || cleanText.length < 1) {
     return NextResponse.json({ error: "Yorum bos olamaz" }, { status: 400 });
