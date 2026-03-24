@@ -18,6 +18,7 @@ import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
 import { formatDuration, formatDistance, formatPace } from "@/lib/format";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type TrackState = "idle" | "running" | "paused" | "finished";
 
@@ -482,6 +483,16 @@ export default function TrackScreen() {
         ...(startLoc ? { startLocation: startLoc } : {}),
         ...(endLoc ? { endLocation: endLoc } : {}),
         ...(photoBase64 ? { photoBase64 } : {}),
+      });
+
+      // Request notification permission after first successful run (progressive permission)
+      AsyncStorage.getItem("notifPermAsked").then((asked) => {
+        if (!asked) {
+          AsyncStorage.setItem("notifPermAsked", "1");
+          import("@/lib/notifications").then(({ registerForPushNotifications }) => {
+            registerForPushNotifications().catch(() => {});
+          });
+        }
       });
 
       Alert.alert("Kaydedildi!", `${formatDistance(distanceM)} km kosu kaydedildi.`, [
