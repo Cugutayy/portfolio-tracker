@@ -38,7 +38,8 @@ export default function EditProfileScreen() {
   const loadProfile = async () => {
     try {
       const profile = await API.getProfile();
-      const m = (profile as { member: Member }).member;
+      const m = (profile as { member?: Member }).member;
+      if (!m) { Alert.alert("Hata", "Profil yuklenemedi."); return; }
       setName(m.name || "");
       setBio(m.bio || "");
       setPaceGroup(m.paceGroup || null);
