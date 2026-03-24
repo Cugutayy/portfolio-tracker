@@ -38,6 +38,8 @@ interface Coordinate {
   latitude: number;
   longitude: number;
   timestamp: number;
+  altitude?: number | null;
+  accuracy?: number | null;
 }
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -73,6 +75,8 @@ export default function TrackScreen() {
   const lastLocationTime = useRef<number>(Date.now());
   // Voice announcement ref
   const lastAnnouncedKm = useRef(0);
+  const rejectedPoints = useRef(0);
+  const acceptedPoints = useRef(0);
 
   // Prevent accidental back during active run
   useEffect(() => {
@@ -129,10 +133,14 @@ export default function TrackScreen() {
   // Shared location update handler
   const handleLocationUpdate = useCallback((location: Location.LocationObject) => {
     const { latitude, longitude, accuracy } = location.coords;
+    const altitude = location.coords.altitude ?? null;
     const timestamp = location.timestamp;
 
     // 1.1 GPS Accuracy Filtering
-    if (accuracy && accuracy > GPS_CONFIG.MIN_ACCURACY_M) return;
+    if (accuracy && accuracy > GPS_CONFIG.MIN_ACCURACY_M) {
+      rejectedPoints.current++;
+      return;
+    }
 
     // Update GPS signal tracking
     lastLocationTime.current = Date.now();
@@ -167,6 +175,7 @@ export default function TrackScreen() {
         const d = haversineDistance(last.latitude, last.longitude, latitude, longitude);
         // Filter GPS noise and spikes
         if (d < GPS_CONFIG.MIN_DISTANCE_M || d > GPS_CONFIG.MAX_DISTANCE_M) {
+          rejectedPoints.current++;
           return prev; // discard noisy point
         }
 
@@ -174,7 +183,10 @@ export default function TrackScreen() {
 
         // Speed sanity check: reject GPS spikes
         const speedMs = d / timeDiff;
-        if (speedMs > GPS_CONFIG.MAX_SPEED_MS) return prev;
+        if (speedMs > GPS_CONFIG.MAX_SPEED_MS) {
+          rejectedPoints.current++;
+          return prev;
+        }
 
         // 1.2 Auto-pause: check speed
         const speedKmH = timeDiff > 0 ? (d / timeDiff) * 3.6 : 0;
@@ -211,7 +223,8 @@ export default function TrackScreen() {
         }
       }
 
-      return [...prev, { latitude, longitude, timestamp }];
+      acceptedPoints.current++;
+      return [...prev, { latitude, longitude, timestamp, altitude, accuracy: accuracy ?? null }];
     });
   }, []);
 
@@ -246,6 +259,8 @@ export default function TrackScreen() {
     autoPaused.current = false;
     manuallyPaused.current = false;
     lastAnnouncedKm.current = 0;
+    rejectedPoints.current = 0;
+    acceptedPoints.current = 0;
     lastLocationTime.current = Date.now();
     setGpsLost(false);
     startTimeRef.current = new Date();
@@ -255,8 +270,11 @@ export default function TrackScreen() {
     locationSub.current = await Location.watchPositionAsync(
       {
         accuracy: Location.Accuracy.BestForNavigation,
-        timeInterval: 3000,
+        timeInterval: GPS_CONFIG.LOCATION_INTERVAL_MS,
         distanceInterval: 5,
+        mayShowUserSettingsDialog: true,
+        activityType: Location.ActivityType.Fitness,
+        pausesUpdatesAutomatically: false,
       },
       (location) => handleLocationUpdate(location),
     );
@@ -282,8 +300,11 @@ export default function TrackScreen() {
     locationSub.current = await Location.watchPositionAsync(
       {
         accuracy: Location.Accuracy.BestForNavigation,
-        timeInterval: 3000,
+        timeInterval: GPS_CONFIG.LOCATION_INTERVAL_MS,
         distanceInterval: 5,
+        mayShowUserSettingsDialog: true,
+        activityType: Location.ActivityType.Fitness,
+        pausesUpdatesAutomatically: false,
       },
       (location) => handleLocationUpdate(location),
     );
@@ -350,6 +371,32 @@ export default function TrackScreen() {
     return splits;
   }, []);
 
+  /** Compute moving time from GPS timestamps to reduce timer drift on Expo background throttling. */
+  const computeMovingTimeFromCoords = useCallback((pts: Coordinate[]) => {
+    if (pts.length < 2) return seconds;
+    let totalSec = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const dt = (pts[i].timestamp - pts[i - 1].timestamp) / 1000;
+      // ignore large gaps (signal loss/background throttling)
+      if (dt > 0 && dt <= 15) totalSec += dt;
+    }
+    return Math.max(1, Math.round(totalSec));
+  }, [seconds]);
+
+  /** Compute positive elevation gain from altitude samples; ignore 1m jitter. */
+  const computeElevationGain = useCallback((pts: Coordinate[]) => {
+    if (pts.length < 2) return null;
+    let gain = 0;
+    for (let i = 1; i < pts.length; i++) {
+      const prevAlt = pts[i - 1].altitude;
+      const alt = pts[i].altitude;
+      if (prevAlt == null || alt == null) continue;
+      const diff = alt - prevAlt;
+      if (diff > 1) gain += diff;
+    }
+    return gain > 0 ? Math.round(gain) : null;
+  }, []);
+
   const pickPhoto = useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -390,23 +437,31 @@ export default function TrackScreen() {
     try {
       const encoded = polyline.encode(coords.map((c) => [c.latitude, c.longitude]));
       const splits = computeClientSplits(coords);
+      const movingTimeSec = computeMovingTimeFromCoords(coords);
       const elapsedTimeSec = startTimeRef.current
         ? Math.round((Date.now() - startTimeRef.current.getTime()) / 1000)
-        : seconds;
+        : movingTimeSec;
+      const elevationGainM = computeElevationGain(coords);
+      const gpsQuality =
+        acceptedPoints.current + rejectedPoints.current > 0
+          ? acceptedPoints.current / (acceptedPoints.current + rejectedPoints.current)
+          : 1;
 
       await API.createActivity({
         title: `Kosu — ${formatDistance(distanceM)} km`,
         distanceM,
-        movingTimeSec: seconds,
+        movingTimeSec,
         elapsedTimeSec,
         startTime: startTimeRef.current?.toISOString() || new Date().toISOString(),
         activityType: "run",
         polylineEncoded: encoded,
         splits,
+        elevationGainM,
         startLat: coords[0].latitude,
         startLng: coords[0].longitude,
         endLat: coords[coords.length - 1].latitude,
         endLng: coords[coords.length - 1].longitude,
+        gpsQuality,
         ...(photoBase64 ? { photoBase64 } : {}),
       });
 
@@ -434,7 +489,7 @@ export default function TrackScreen() {
     } finally {
       setSaving(false);
     }
-  }, [coords, distanceM, seconds, computeClientSplits, photoBase64]);
+  }, [coords, distanceM, computeClientSplits, computeMovingTimeFromCoords, computeElevationGain, photoBase64]);
 
   const discardRun = useCallback(() => {
     Alert.alert("Iptal et?", "Bu kosu kaydedilmeyecek.", [

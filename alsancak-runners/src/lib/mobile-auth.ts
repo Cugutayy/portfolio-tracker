@@ -93,7 +93,7 @@ function touchLastActive(userId: string) {
   if (now - last < ACTIVE_THROTTLE_MS) return;
   lastActiveCache.set(userId, now);
   // Fire-and-forget DB update
-  import("@/db").then(({ db }) => {
+  import("@/lib/db").then(({ db }) => {
     import("@/db/schema").then(({ members }) => {
       db.update(members)
         .set({ lastActiveAt: new Date() })

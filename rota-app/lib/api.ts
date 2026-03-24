@@ -337,15 +337,14 @@ export interface CreateActivityInput {
   endLat?: number;
   endLng?: number;
   elevationGainM?: number;
+  gpsQuality?: number;
   elapsedTimeSec?: number;
   photoBase64?: string;
   splits?: Array<{
     splitIndex: number;
     distanceM: number;
-    movingTimeSec: number;
-    avgPaceSecKm: number;
-    elevationDiffM: number | null;
-    avgHeartrate: number | null;
+    elapsedSec: number;
+    paceSecKm: number;
   }>;
 }
 
