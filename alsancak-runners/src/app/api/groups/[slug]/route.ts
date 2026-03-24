@@ -20,6 +20,7 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
+  try {
   const { slug } = await params;
 
   const [group] = await db
@@ -93,6 +94,10 @@ export async function GET(
       isMember: !!membership,
     },
   });
+  } catch (err) {
+    console.error("Route error:", err);
+    return NextResponse.json({ error: "Sunucu hatasi" }, { status: 500 });
+  }
 }
 
 // PATCH /api/groups/[slug] — update group (admin/owner only)

@@ -9,7 +9,13 @@ import { checkRateLimit } from "@/lib/rateLimit";
 
 // GET /api/activities/:id/comments
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+  const rateLimited = await checkRateLimit(`comments-get:${ip}`, { maxRequests: 60, windowSec: 60 });
+  if (rateLimited) return rateLimited;
+
   const { id: activityId } = await params;
+  const { searchParams } = new URL(request.url);
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "50")));
 
   const list = await db
     .select({
@@ -24,7 +30,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .innerJoin(members, eq(comments.memberId, members.id))
     .where(eq(comments.activityId, activityId))
     .orderBy(comments.createdAt)
-    .limit(200);
+    .limit(limit);
 
   return NextResponse.json({ comments: list });
 }
@@ -45,8 +51,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Yorum 1-500 karakter olmali" }, { status: 400 });
   }
 
-  // Strip any HTML tags, then re-validate
-  const cleanText = rawText.replace(/<[^>]*>/g, '').trim();
+  // Strip any HTML tags, escape dangerous characters, then re-validate
+  const cleanText = rawText
+    .replace(/<[^>]*>/g, '')
+    .replace(/[<>"'&]/g, (c: string) => ({'<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','&':'&amp;'}[c] || c))
+    .trim();
 
   if (!cleanText || cleanText.length < 1) {
     return NextResponse.json({ error: "Yorum bos olamaz" }, { status: 400 });

@@ -6,6 +6,7 @@ import { cacheGet, cacheSet, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 
 // GET /api/community/stats — aggregate community stats (replaces hardcoded values)
 export async function GET() {
+  try {
   // Try cache first
   const cached = await cacheGet<Record<string, number>>(
     CACHE_KEYS.communityStats
@@ -66,4 +67,8 @@ export async function GET() {
   return NextResponse.json(result, {
     headers: { "X-Cache": "MISS" },
   });
+  } catch (err) {
+    console.error("Route error:", err);
+    return NextResponse.json({ error: "Sunucu hatasi" }, { status: 500 });
+  }
 }
