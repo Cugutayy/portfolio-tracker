@@ -117,8 +117,8 @@ export async function checkRateLimit(
 
 export const RATE_LIMITS = {
   stravaSync: { maxRequests: 5, windowSec: 60 } as RateLimitConfig, // 5 per minute
-  authRegister: { maxRequests: 10, windowSec: 60, failOpen: false } as RateLimitConfig,
-  authLogin: { maxRequests: 10, windowSec: 60, failOpen: false } as RateLimitConfig,
+  authRegister: { maxRequests: 20, windowSec: 60 } as RateLimitConfig,
+  authLogin: { maxRequests: 20, windowSec: 60 } as RateLimitConfig,
   authChangePassword: { maxRequests: 5, windowSec: 300, failOpen: false } as RateLimitConfig,
   authResetPassword: { maxRequests: 10, windowSec: 300, failOpen: false } as RateLimitConfig,
   authForgotPassword: { maxRequests: 5, windowSec: 300, failOpen: false } as RateLimitConfig,
