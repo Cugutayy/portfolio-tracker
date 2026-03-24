@@ -22,18 +22,8 @@ export async function POST(
 
   if (!group) return NextResponse.json({ error: "Grup bulunamadı" }, { status: 404 });
 
-  // Check already a member
-  const [existing] = await db
-    .select({ id: groupMembers.id })
-    .from(groupMembers)
-    .where(and(eq(groupMembers.groupId, group.id), eq(groupMembers.memberId, user.id)))
-    .limit(1);
-
-  if (existing) {
-    return NextResponse.json({ error: "Zaten bu grubun üyesisiniz" }, { status: 409 });
-  }
-
-  // Private group: require invite code
+  // Private group: parse invite code before transaction
+  let inviteCode: string | null = null;
   if (group.visibility === "private") {
     let body: Record<string, unknown>;
     try {
@@ -42,42 +32,80 @@ export async function POST(
       return NextResponse.json({ error: "Davet kodu gerekli" }, { status: 400 });
     }
 
-    const code = typeof body.code === "string" ? body.code.trim() : null;
-    if (!code) {
+    inviteCode = typeof body.code === "string" ? body.code.trim() : null;
+    if (!inviteCode) {
       return NextResponse.json({ error: "Davet kodu gerekli" }, { status: 400 });
     }
-
-    const [invite] = await db
-      .select()
-      .from(groupInvites)
-      .where(and(eq(groupInvites.groupId, group.id), eq(groupInvites.code, code)))
-      .limit(1);
-
-    if (!invite) {
-      return NextResponse.json({ error: "Geçersiz davet kodu" }, { status: 400 });
-    }
-
-    if (invite.usedBy) {
-      return NextResponse.json({ error: "Bu davet kodu zaten kullanılmış" }, { status: 400 });
-    }
-
-    if (new Date(invite.expiresAt) < new Date()) {
-      return NextResponse.json({ error: "Davet kodu süresi dolmuş" }, { status: 400 });
-    }
-
-    // Mark invite as used
-    await db
-      .update(groupInvites)
-      .set({ usedBy: user.id, usedAt: new Date() })
-      .where(eq(groupInvites.id, invite.id));
   }
 
-  // Add member
-  await db.insert(groupMembers).values({
-    groupId: group.id,
-    memberId: user.id,
-    role: "member",
-  });
+  // Wrap check-then-insert in a transaction to prevent race conditions
+  try {
+    await db.transaction(async (tx) => {
+      // Check already a member
+      const [existing] = await tx
+        .select({ id: groupMembers.id })
+        .from(groupMembers)
+        .where(and(eq(groupMembers.groupId, group.id), eq(groupMembers.memberId, user.id)))
+        .limit(1);
+
+      if (existing) {
+        throw new Error("ALREADY_MEMBER");
+      }
+
+      // Private group: validate and consume invite code inside transaction
+      if (group.visibility === "private" && inviteCode) {
+        const [invite] = await tx
+          .select()
+          .from(groupInvites)
+          .where(and(eq(groupInvites.groupId, group.id), eq(groupInvites.code, inviteCode)))
+          .limit(1);
+
+        if (!invite) {
+          throw new Error("INVALID_INVITE");
+        }
+
+        if (invite.usedBy) {
+          throw new Error("INVITE_USED");
+        }
+
+        if (new Date(invite.expiresAt) < new Date()) {
+          throw new Error("INVITE_EXPIRED");
+        }
+
+        // Mark invite as used
+        await tx
+          .update(groupInvites)
+          .set({ usedBy: user.id, usedAt: new Date() })
+          .where(eq(groupInvites.id, invite.id));
+      }
+
+      // Add member
+      await tx.insert(groupMembers).values({
+        groupId: group.id,
+        memberId: user.id,
+        role: "member",
+      });
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "";
+    if (message === "ALREADY_MEMBER") {
+      return NextResponse.json({ error: "Zaten bu grubun üyesisiniz" }, { status: 409 });
+    }
+    if (message === "INVALID_INVITE") {
+      return NextResponse.json({ error: "Geçersiz davet kodu" }, { status: 400 });
+    }
+    if (message === "INVITE_USED") {
+      return NextResponse.json({ error: "Bu davet kodu zaten kullanılmış" }, { status: 400 });
+    }
+    if (message === "INVITE_EXPIRED") {
+      return NextResponse.json({ error: "Davet kodu süresi dolmuş" }, { status: 400 });
+    }
+    // Unique constraint violation (concurrent insert)
+    if (message.includes("unique") || message.includes("duplicate")) {
+      return NextResponse.json({ error: "Zaten bu grubun üyesisiniz" }, { status: 409 });
+    }
+    throw err;
+  }
 
   // Notify group owner (fire and forget)
   (async () => {

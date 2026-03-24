@@ -5,7 +5,7 @@ import {
   groups, groupMembers, posts, postKudos, postComments,
   activities, kudos, comments, members,
 } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 
 // GET /api/groups/[slug]/feed — mixed feed of posts + activities from group members
 export async function GET(
@@ -71,7 +71,9 @@ export async function GET(
     })
     .from(posts)
     .innerJoin(members, eq(posts.memberId, members.id))
-    .where(eq(posts.groupId, group.id));
+    .where(eq(posts.groupId, group.id))
+    .orderBy(desc(posts.createdAt))
+    .limit(limit + 1);
 
   // Activities from group members
   const groupActivities = await db
@@ -103,12 +105,14 @@ export async function GET(
         eq(activities.sharedToBoard, true),
         sql`${activities.memberId} IN ${memberSubquery}`,
       ),
-    );
+    )
+    .orderBy(desc(activities.createdAt))
+    .limit(limit + 1);
 
-  // Merge and sort by createdAt DESC
+  // Merge and sort by createdAt DESC (at most 2*(limit+1) items)
   const feed = [...groupPosts, ...groupActivities]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(offset, offset + limit + 1);
+    .slice(0, limit + 1);
 
   const hasMore = feed.length > limit;
   const trimmed = hasMore ? feed.slice(0, limit) : feed;

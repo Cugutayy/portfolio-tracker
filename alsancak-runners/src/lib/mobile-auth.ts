@@ -88,12 +88,26 @@ export async function verifyMobileToken(
 // Throttle lastActiveAt updates to once per 60s per user (in-memory)
 const lastActiveCache = new Map<string, number>();
 const ACTIVE_THROTTLE_MS = 60_000;
+const CACHE_MAX_SIZE = 5000;
+const CACHE_EVICT_COUNT = 1000;
 
 function touchLastActive(userId: string) {
   const now = Date.now();
   const last = lastActiveCache.get(userId) || 0;
   if (now - last < ACTIVE_THROTTLE_MS) return;
+  // Delete first so re-insertion moves to end of Map iteration order
+  lastActiveCache.delete(userId);
   lastActiveCache.set(userId, now);
+
+  // LRU eviction: Map maintains insertion order, oldest entries first
+  if (lastActiveCache.size > CACHE_MAX_SIZE) {
+    const keys = lastActiveCache.keys();
+    for (let i = 0; i < CACHE_EVICT_COUNT; i++) {
+      const k = keys.next().value;
+      if (k) lastActiveCache.delete(k);
+    }
+  }
+
   // Fire-and-forget DB update
   db.update(members)
     .set({ lastActiveAt: new Date() })
