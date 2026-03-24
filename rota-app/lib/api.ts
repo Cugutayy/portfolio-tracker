@@ -185,7 +185,7 @@ export const API = {
     api<{ leaderboard: LeaderboardEntry[] }>(
       `/api/community/leaderboard?period=${period}`
     ),
-  getStats: () => api("/api/community/stats"),
+  getStats: () => api<{ members: number; totalRuns: number; totalDistanceKm: number }>("/api/community/stats"),
 
   // Strava
   getStravaAuthUrl: () =>

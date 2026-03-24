@@ -238,7 +238,7 @@ export default function ProfileScreen() {
               </View>
               <View style={s.goalBarOuter}>
                 <View style={[s.goalBarInner, {
-                  width: `${Math.min(100, (weeklyGoal.progress.totalDistanceM / weeklyGoal.goal.distanceGoalM) * 100)}%`,
+                  width: `${weeklyGoal.goal.distanceGoalM > 0 ? Math.min(100, (weeklyGoal.progress.totalDistanceM / weeklyGoal.goal.distanceGoalM) * 100) : 0}%`,
                   backgroundColor: weeklyGoal.progress.distanceGoalMet ? "#4CAF50" : brand.accent,
                 }]} />
               </View>
@@ -251,7 +251,7 @@ export default function ProfileScreen() {
               </View>
               <View style={s.goalBarOuter}>
                 <View style={[s.goalBarInner, {
-                  width: `${Math.min(100, (weeklyGoal.progress.totalRuns / weeklyGoal.goal.runsGoal) * 100)}%`,
+                  width: `${weeklyGoal.goal.runsGoal > 0 ? Math.min(100, (weeklyGoal.progress.totalRuns / weeklyGoal.goal.runsGoal) * 100) : 0}%`,
                   backgroundColor: weeklyGoal.progress.runsGoalMet ? "#4CAF50" : brand.accent,
                 }]} />
               </View>

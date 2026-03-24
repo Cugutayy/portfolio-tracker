@@ -140,8 +140,8 @@ export default function FeedScreen() {
       ]);
       setPage(1);
       setPostPage(1);
-      if (leaderboardRes.status === "fulfilled") setLeaderboard(leaderboardRes.value.leaderboard.slice(0, 3));
-      if (statsRes.status === "fulfilled") setStats(statsRes.value as typeof stats);
+      if (leaderboardRes.status === "fulfilled") setLeaderboard((leaderboardRes.value.leaderboard || []).slice(0, 3));
+      if (statsRes.status === "fulfilled") setStats(statsRes.value);
     } catch {}
   }, [fetchActivities, fetchPosts]);
 
@@ -361,7 +361,7 @@ export default function FeedScreen() {
               {podiumOrder.map((entry) => {
                 const isFirst = entry.rank === 1;
                 const medalColor = MEDAL_COLORS[entry.rank] || brand.textDim;
-                const initials = entry.memberName.split(" ").map((w) => w[0]).join("").slice(0, 2);
+                const initials = (entry.memberName || "?").split(" ").filter(Boolean).map((w) => w[0]).join("").slice(0, 2) || "?";
                 const avatarSize = isFirst ? 56 : 44;
 
                 return (
