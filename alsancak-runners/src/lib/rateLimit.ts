@@ -8,6 +8,8 @@ interface RateLimitConfig {
   maxRequests: number;
   /** Window size in seconds */
   windowSec: number;
+  /** If true, do not bypass limits when Redis is down. */
+  strict?: boolean;
 }
 
 interface RateLimitResult {
@@ -28,9 +30,12 @@ export async function rateLimit(
   identifier: string,
   config: RateLimitConfig
 ): Promise<RateLimitResult> {
+  const strictFallback = () => strictInMemoryRateLimit(identifier, config);
+
   // If Redis is not configured, fail open (allow all requests)
-  // Rate limiting requires Redis — without it, we rely on other security layers
+  // Strict mode uses in-memory fallback for sensitive endpoints.
   if (!redis) {
+    if (config.strict) return strictFallback();
     console.warn(`[RATE_LIMIT_BYPASS] Redis unavailable — rate limit skipped for: ${identifier}`);
     return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
   }
@@ -49,7 +54,8 @@ export async function rateLimit(
 
     const results = await pipeline.exec();
     if (!results) {
-      // Redis pipeline failed — fail open (allow request)
+      // Redis pipeline failed
+      if (config.strict) return strictFallback();
       console.warn(`[RATE_LIMIT_BYPASS] Redis pipeline failed for: ${identifier}`);
       return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
     }
@@ -61,9 +67,48 @@ export async function rateLimit(
 
     return { allowed, remaining, resetAt };
   } catch (err) {
-    // Redis unavailable — fail open
+    // Redis unavailable
+    if (config.strict) return strictFallback();
     console.warn(`[RATE_LIMIT_BYPASS] Redis error for ${identifier}:`, err);
     return { allowed: true, remaining: config.maxRequests - 1, resetAt: 0 };
+  }
+}
+
+const strictBuckets = new Map<string, number[]>();
+let strictCallCount = 0;
+
+function strictInMemoryRateLimit(
+  identifier: string,
+  config: RateLimitConfig,
+): RateLimitResult {
+  strictCallCount++;
+  if (strictCallCount % 100 === 0) {
+    pruneStrictBuckets(config.windowSec);
+  }
+
+  const now = Date.now();
+  const windowStart = now - config.windowSec * 1000;
+  const current = (strictBuckets.get(identifier) || []).filter((ts) => ts > windowStart);
+  current.push(now);
+  strictBuckets.set(identifier, current);
+  const allowed = current.length <= config.maxRequests;
+  const remaining = Math.max(0, config.maxRequests - current.length);
+  return {
+    allowed,
+    remaining,
+    resetAt: Math.ceil((now + config.windowSec * 1000) / 1000),
+  };
+}
+
+function pruneStrictBuckets(windowSec: number) {
+  const threshold = Date.now() - windowSec * 1000;
+  for (const [key, timestamps] of strictBuckets) {
+    const active = timestamps.filter((ts) => ts > threshold);
+    if (active.length === 0) {
+      strictBuckets.delete(key);
+    } else if (active.length !== timestamps.length) {
+      strictBuckets.set(key, active);
+    }
   }
 }
 

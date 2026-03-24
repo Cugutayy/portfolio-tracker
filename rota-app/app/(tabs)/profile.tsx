@@ -34,6 +34,8 @@ export default function ProfileScreen() {
   const [badges, setBadges] = useState<Array<{ badge: Badge; earnedAt: string }>>([]);
   const [inviting, setInviting] = useState(false);
   const [weeklyStats, setWeeklyStats] = useState<{ totalRuns: number; totalDistanceM: number; totalTimeSec: number; avgPaceSecKm: number | null; distanceChange: number | null } | null>(null);
+  const [onboardingPercent, setOnboardingPercent] = useState(0);
+  const [role, setRole] = useState<string>("member");
 
   const loadProfile = useCallback(async () => {
     try {
@@ -41,8 +43,8 @@ export default function ProfileScreen() {
       if (cached) setUser(cached);
 
       const profile = await API.getProfile() as {
-        member?: { id: string; name: string; email: string };
-        id?: string; name?: string; email?: string;
+        member?: { id: string; name: string; email: string; role?: string };
+        id?: string; name?: string; email?: string; role?: string;
         stravaConnected?: boolean;
         stats?: { totalRuns?: number; totalDistanceM?: number; avgPaceSecKm?: number };
         followerCount?: number;
@@ -53,6 +55,7 @@ export default function ProfileScreen() {
       if (m.id && m.name && m.email) {
         setUser({ id: m.id, name: m.name, email: m.email });
       }
+      if (profile.member?.role || profile.role) setRole((profile.member?.role || profile.role) as string);
       const st = profile.stats;
       setStats({
         totalRuns: st?.totalRuns || 0,
@@ -63,6 +66,9 @@ export default function ProfileScreen() {
       setFollowerCount(profile.followerCount || 0);
       setFollowingCount(profile.followingCount || 0);
       if (profile.weeklyStats) setWeeklyStats(profile.weeklyStats);
+
+      const onboarding = await API.getOnboardingProgress().catch(() => null);
+      if (onboarding) setOnboardingPercent(onboarding.completionPercent || 0);
     } catch {
       const cached = await getUser();
       if (cached) setUser(cached);
@@ -185,6 +191,29 @@ export default function ProfileScreen() {
           </View>
         )}
 
+        {/* Onboarding progress narrative */}
+        <View style={s.onboardingCard}>
+          <View style={s.onboardingHeader}>
+            <Text style={s.onboardingTitle}>AKTIVASYON iLERLEMEN</Text>
+            <Text style={s.onboardingPercent}>{onboardingPercent}%</Text>
+          </View>
+          <View style={s.onboardingTrack}>
+            <View style={[s.onboardingFill, { width: `${Math.max(4, onboardingPercent)}%` }]} />
+          </View>
+          <TouchableOpacity style={s.onboardingBtn} onPress={() => router.push("/onboarding") }>
+            <Text style={s.onboardingBtnText}>ONBOARDING ADIMLARINI GOR</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Company/Club admin quick access */}
+        {role === "admin" && (
+          <TouchableOpacity style={s.adminButton} onPress={() => router.push("/club-admin") }>
+            <Ionicons name="business-outline" size={18} color={brand.accent} />
+            <Text style={s.adminButtonText}>CLUB / COMPANY ADMIN</Text>
+            <Ionicons name="chevron-forward" size={16} color={brand.textDim} />
+          </TouchableOpacity>
+        )}
+
         {/* Stats */}
         <View style={s.statsRow}>
           <View style={s.statBox}>
@@ -302,6 +331,18 @@ const s = StyleSheet.create({
   weeklyStats: { fontSize: 14, color: brand.text, marginBottom: 4 },
   weeklyChange: { fontSize: 12, fontWeight: "600" as const },
   weeklyEmpty: { fontSize: 12, color: brand.textMuted, fontStyle: "italic" as const },
+
+  onboardingCard: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 8, padding: 14, marginBottom: 16 },
+  onboardingHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  onboardingTitle: { color: brand.textMuted, fontSize: 10, fontWeight: "700", letterSpacing: 2 },
+  onboardingPercent: { color: brand.accent, fontSize: 18, fontWeight: "900" },
+  onboardingTrack: { height: 8, borderRadius: 4, backgroundColor: "#2A2A2F", overflow: "hidden", marginBottom: 10 },
+  onboardingFill: { height: 8, borderRadius: 4, backgroundColor: brand.accent },
+  onboardingBtn: { alignItems: "center", justifyContent: "center", height: 36, borderWidth: 1, borderColor: brand.accent, borderRadius: 6 },
+  onboardingBtnText: { color: brand.accent, fontSize: 11, fontWeight: "700", letterSpacing: 1.2 },
+
+  adminButton: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 14, marginBottom: 16 },
+  adminButtonText: { flex: 1, fontSize: 12, fontWeight: "700", color: brand.text, letterSpacing: 1.2 },
 
   statsRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
   statBox: { flex: 1, backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, padding: 16, borderRadius: 4, alignItems: "center" },

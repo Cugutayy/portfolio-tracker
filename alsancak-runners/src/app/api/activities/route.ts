@@ -179,7 +179,8 @@ export async function POST(request: NextRequest) {
       startLng: startLng || null,
       endLat: endLat || null,
       endLng: endLng || null,
-      privacy: "public",
+      // Safer default for manually created runs: visible to members, not globally public.
+      privacy: "members",
       sharedToBoard: true,
     })
     .returning({ id: activities.id });
