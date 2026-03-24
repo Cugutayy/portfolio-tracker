@@ -140,11 +140,37 @@ export async function GET(request: NextRequest) {
       photoUrl: sql<string | null>`(SELECT ${activityPhotos.url} FROM ${activityPhotos} WHERE ${activityPhotos.activityId} = ${activities.id} LIMIT 1)`,
       startLocation: activities.startLocation,
       memberLastActive: members.lastActiveAt,
+      // Feed ranking score: 0.40 recency + 0.30 relationship + 0.20 quality + 0.10 diversity
+      feedScore: sql<number>`(
+        0.40 * GREATEST(0, 1.0 - EXTRACT(EPOCH FROM (NOW() - ${activities.startTime})) / 604800.0)
+        + 0.30 * CASE WHEN ${currentUserId ? sql`EXISTS(SELECT 1 FROM ${follows} WHERE ${follows.followerId} = ${currentUserId} AND ${follows.followingId} = ${activities.memberId})` : sql`false`} THEN 1.0 ELSE 0.0 END
+        + 0.20 * (
+          LEAST(1.0, COALESCE(${activities.distanceM}, 0) / 10000.0) * 0.4
+          + CASE WHEN ${activities.polylineEncoded} IS NOT NULL THEN 0.3 ELSE 0.0 END
+          + CASE WHEN EXISTS(SELECT 1 FROM ${activityPhotos} WHERE ${activityPhotos.activityId} = ${activities.id}) THEN 0.3 ELSE 0.0 END
+        )
+        + 0.10 * (
+          LEAST(1.0, (SELECT COUNT(*)::float FROM ${kudos} WHERE ${kudos.activityId} = ${activities.id}) / 5.0) * 0.5
+          + LEAST(1.0, (SELECT COUNT(*)::float FROM ${comments} WHERE ${comments.activityId} = ${activities.id}) / 3.0) * 0.5
+        )
+      )`,
     })
     .from(activities)
     .innerJoin(members, eq(activities.memberId, members.id))
     .where(and(...conditions))
-    .orderBy(sql`${activities.startTime} DESC`)
+    .orderBy(sql`(
+      0.40 * GREATEST(0, 1.0 - EXTRACT(EPOCH FROM (NOW() - ${activities.startTime})) / 604800.0)
+      + 0.30 * CASE WHEN ${currentUserId ? sql`EXISTS(SELECT 1 FROM ${follows} WHERE ${follows.followerId} = ${currentUserId} AND ${follows.followingId} = ${activities.memberId})` : sql`false`} THEN 1.0 ELSE 0.0 END
+      + 0.20 * (
+        LEAST(1.0, COALESCE(${activities.distanceM}, 0) / 10000.0) * 0.4
+        + CASE WHEN ${activities.polylineEncoded} IS NOT NULL THEN 0.3 ELSE 0.0 END
+        + CASE WHEN EXISTS(SELECT 1 FROM ${activityPhotos} WHERE ${activityPhotos.activityId} = ${activities.id}) THEN 0.3 ELSE 0.0 END
+      )
+      + 0.10 * (
+        LEAST(1.0, (SELECT COUNT(*)::float FROM ${kudos} WHERE ${kudos.activityId} = ${activities.id}) / 5.0) * 0.5
+        + LEAST(1.0, (SELECT COUNT(*)::float FROM ${comments} WHERE ${comments.activityId} = ${activities.id}) / 3.0) * 0.5
+      )
+    ) DESC, ${activities.startTime} DESC`)
     .offset(offset)
     .limit(limit + 1); // +1 to check hasMore
 
@@ -154,7 +180,7 @@ export async function GET(request: NextRequest) {
   const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
   const result = {
     activities: trimmed.map((row) => {
-      const { memberLastActive, memberImage, ...rest } = row;
+      const { memberLastActive, memberImage, feedScore: _score, ...rest } = row;
       return {
         ...rest,
         memberImage: memberImage || null,
