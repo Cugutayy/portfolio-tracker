@@ -660,3 +660,32 @@ export const weeklyGoals = pgTable("weekly_goals", {
 }, (t) => [
   uniqueIndex("weekly_goals_member_unique").on(t.memberId),
 ]);
+
+// ============================================================
+// DOMAIN 10: ONBOARDING ANALYTICS
+// ============================================================
+
+export const onboardingProgress = pgTable("onboarding_progress", {
+  id: uuid().primaryKey().defaultRandom(),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  firstRunCompleted: boolean("first_run_completed").notNull().default(false),
+  profileCompleted: boolean("profile_completed").notNull().default(false),
+  socialSeedCompleted: boolean("social_seed_completed").notNull().default(false),
+  firstInteractionCompleted: boolean("first_interaction_completed").notNull().default(false),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("onboarding_progress_member_unique").on(t.memberId),
+]);
+
+export const onboardingEvents = pgTable("onboarding_events", {
+  id: uuid().primaryKey().defaultRandom(),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  eventName: text("event_name").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("idx_onboarding_events_member").on(t.memberId),
+  index("idx_onboarding_events_event").on(t.eventName),
+]);
