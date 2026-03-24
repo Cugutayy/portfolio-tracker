@@ -2,7 +2,8 @@ import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack, router } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { brand } from "@/constants/Colors";
 import { AuthProvider, useAuthContext } from "@/lib/auth-context";
 
@@ -30,23 +31,38 @@ const RotaDark = {
 
 function AuthGatedNavigation() {
   const { isLoading, isAuthenticated } = useAuthContext();
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(true);
+
+  // Check onboarding flag
+  useEffect(() => {
+    AsyncStorage.getItem("hasSeenOnboarding").then((v) => {
+      setHasSeenOnboarding(v === "1");
+      setOnboardingChecked(true);
+    });
+  }, []);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace("/login");
+    if (!isLoading && onboardingChecked) {
+      if (!hasSeenOnboarding) {
+        router.replace("/onboarding");
+      } else if (!isAuthenticated) {
+        router.replace("/login");
+      }
     }
-  }, [isLoading, isAuthenticated]);
+  }, [isLoading, isAuthenticated, onboardingChecked, hasSeenOnboarding]);
 
-  // Keep splash visible while checking auth
+  // Keep splash visible while checking auth + onboarding
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && onboardingChecked) {
       SplashScreen.hideAsync();
     }
-  }, [isLoading]);
+  }, [isLoading, onboardingChecked]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="onboarding" options={{ animation: "fade" }} />
       <Stack.Screen name="login" options={{ animation: "fade" }} />
       <Stack.Screen name="register" options={{ animation: "slide_from_right" }} />
       <Stack.Screen name="strava-callback" options={{ animation: "fade" }} />
