@@ -371,7 +371,6 @@ export default function FeedScreen() {
                     onPress={() => router.push(`/member/${entry.memberId}` as never)}
                     activeOpacity={0.7}
                   >
-                    {isFirst && <Text style={s.crownIcon}>👑</Text>}
                     <View style={[
                       s.podiumAvatar,
                       { width: avatarSize, height: avatarSize, borderRadius: avatarSize / 2, borderColor: medalColor },
@@ -695,7 +694,6 @@ const s = StyleSheet.create({
   podiumRow: { flexDirection: "row", justifyContent: "center", alignItems: "flex-end", marginTop: 8, paddingBottom: 4 },
   podiumItem: { flex: 1, alignItems: "center", paddingTop: 8 },
   podiumItemFirst: { paddingTop: 0, marginTop: -12 },
-  crownIcon: { fontSize: 20, marginBottom: 4 },
   podiumAvatar: { borderWidth: 3, backgroundColor: brand.elevated, alignItems: "center", justifyContent: "center" },
   podiumInitials: { color: brand.text, fontWeight: "700" },
   podiumBadge: { width: 20, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center", marginTop: -10 },
