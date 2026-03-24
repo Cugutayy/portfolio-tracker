@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { router } from "expo-router";
-import { getToken, clearToken, setToken, setUser, getUser } from "./auth";
+import { getToken, clearToken, setToken, setRefreshToken, setUser, getUser } from "./auth";
 import { API, type Member } from "./api";
 
 interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   user: Member | null;
-  login: (token: string) => Promise<void>;
+  login: (accessToken: string, refreshToken?: string, userData?: { id: string; name: string; email: string }) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -16,7 +16,7 @@ const AuthContext = createContext<AuthState>({
   isLoading: true,
   isAuthenticated: false,
   user: null,
-  login: async () => {},
+  login: async (_a: string, _r?: string, _u?: { id: string; name: string; email: string }) => {},
   logout: async () => {},
   refreshProfile: async () => {},
 });
@@ -63,10 +63,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (token: string) => {
-      await setToken(token);
+    async (accessToken: string, refreshToken?: string, userData?: { id: string; name: string; email: string }) => {
+      await setToken(accessToken);
+      if (refreshToken) await setRefreshToken(refreshToken);
+      if (userData) {
+        await setUser(userData);
+        setUserState(userData as unknown as Member);
+      }
       setIsAuthenticated(true);
-      await refreshProfile();
+      // Fetch full profile in background (non-blocking)
+      refreshProfile();
     },
     [refreshProfile],
   );
