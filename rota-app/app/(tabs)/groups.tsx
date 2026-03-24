@@ -16,6 +16,7 @@ import { router } from "expo-router";
 import { useFocusEffect } from "@react-navigation/native";
 import { brand } from "@/constants/Colors";
 import { API, type Group } from "@/lib/api";
+import { getInitials } from "@/lib/format";
 
 const SPORT_LABELS: Record<string, string> = {
   running: "Kosu",
@@ -97,8 +98,7 @@ export default function GroupsScreen() {
     }
   };
 
-  const getInitials = (name: string) =>
-    name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  // getInitials imported from @/lib/format
 
   const renderGroupCard = (item: Group, showJoin: boolean) => (
     <TouchableOpacity
