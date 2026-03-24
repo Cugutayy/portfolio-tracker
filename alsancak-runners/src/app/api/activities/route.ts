@@ -211,7 +211,7 @@ export async function POST(request: NextRequest) {
         endLng: endLng || null,
         startLocation: startLocation || null,
         endLocation: endLocation || null,
-        privacy: "public",
+        privacy: "members",
         sharedToBoard: true,
       })
       .returning({ id: activities.id });
