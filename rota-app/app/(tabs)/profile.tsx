@@ -174,6 +174,41 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Activation Milestones — shown until all complete */}
+        {(() => {
+          const milestones = [
+            { key: "run", label: "Ilk kosunu tamamla", done: (stats?.totalRuns || 0) > 0, icon: "footsteps" as const },
+            { key: "profile", label: "Profilini doldur", done: !!(user?.name && user.name.trim().length > 2), icon: "person" as const },
+            { key: "follow", label: "3 kisiyi takip et", done: followingCount >= 3, icon: "people" as const },
+            { key: "social", label: "Bir kudos veya yorum yap", done: badges.length > 0 || (stats?.totalRuns || 0) > 1, icon: "heart" as const },
+          ];
+          const doneCount = milestones.filter((m) => m.done).length;
+          if (doneCount >= milestones.length) return null;
+          return (
+            <View style={s.milestonesCard}>
+              <View style={s.milestonesHeader}>
+                <Text style={s.milestonesTitle}>BASLANGIC HEDEFLERI</Text>
+                <Text style={s.milestonesProgress}>{doneCount}/{milestones.length}</Text>
+              </View>
+              <View style={s.milestonesBar}>
+                <View style={[s.milestonesBarFill, { width: `${(doneCount / milestones.length) * 100}%` }]} />
+              </View>
+              {milestones.map((m) => (
+                <View key={m.key} style={s.milestoneRow}>
+                  <View style={[s.milestoneCheck, m.done && s.milestoneCheckDone]}>
+                    {m.done ? (
+                      <Ionicons name="checkmark" size={12} color={brand.bg} />
+                    ) : (
+                      <Ionicons name={m.icon} size={12} color={brand.textDim} />
+                    )}
+                  </View>
+                  <Text style={[s.milestoneLabel, m.done && s.milestoneLabelDone]}>{m.label}</Text>
+                </View>
+              ))}
+            </View>
+          );
+        })()}
+
         {/* Weekly Summary */}
         {weeklyStats && (
           <View style={s.weeklyCard}>
@@ -306,6 +341,18 @@ const s = StyleSheet.create({
   followCount: { fontSize: 18, fontWeight: "bold", color: brand.text },
   followLabel: { fontSize: 9, color: brand.textDim, letterSpacing: 2, marginTop: 2 },
 
+  // Activation milestones
+  milestonesCard: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 12, padding: 16, marginBottom: 16 },
+  milestonesHeader: { flexDirection: "row" as const, justifyContent: "space-between" as const, alignItems: "center" as const, marginBottom: 10 },
+  milestonesTitle: { fontSize: 11, fontWeight: "600" as const, color: brand.textMuted, letterSpacing: 3 },
+  milestonesProgress: { fontSize: 12, fontWeight: "700" as const, color: brand.accent },
+  milestonesBar: { height: 4, backgroundColor: brand.border, borderRadius: 2, marginBottom: 14, overflow: "hidden" as const },
+  milestonesBarFill: { height: 4, backgroundColor: brand.accent, borderRadius: 2 },
+  milestoneRow: { flexDirection: "row" as const, alignItems: "center" as const, gap: 10, paddingVertical: 6 },
+  milestoneCheck: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: brand.border, alignItems: "center" as const, justifyContent: "center" as const },
+  milestoneCheckDone: { backgroundColor: brand.accent, borderColor: brand.accent },
+  milestoneLabel: { fontSize: 13, color: brand.textMuted, fontWeight: "500" as const },
+  milestoneLabelDone: { color: brand.textDim, textDecorationLine: "line-through" as const },
   weeklyCard: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 8, padding: 16, marginBottom: 16, alignItems: "center" as const },
   weeklyTitle: { fontSize: 11, fontWeight: "bold" as const, color: brand.textDim, letterSpacing: 3, marginBottom: 8 },
   weeklyStats: { fontSize: 14, color: brand.text, marginBottom: 4 },
