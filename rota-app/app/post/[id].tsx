@@ -171,8 +171,20 @@ export default function PostDetailScreen() {
         options={{
           headerRight: isOwnPost
             ? () => (
-                <TouchableOpacity onPress={handleDeletePost} hitSlop={8} style={{ justifyContent: "center", alignItems: "center", paddingRight: 4 }}>
-                  <Ionicons name="trash-outline" size={20} color="#FF5252" />
+                <TouchableOpacity
+                  onPress={handleDeletePost}
+                  hitSlop={12}
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: "rgba(255,82,82,0.12)",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginRight: 4,
+                  }}
+                >
+                  <Ionicons name="trash-outline" size={18} color="#FF5252" />
                 </TouchableOpacity>
               )
             : undefined,
