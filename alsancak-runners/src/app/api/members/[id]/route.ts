@@ -5,6 +5,7 @@ import { members, activities, follows } from "@/db/schema";
 import { eq, and, count, sum, avg } from "drizzle-orm";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
   const { id } = await params;
 
   // Validate UUID format to prevent DB errors
@@ -88,4 +89,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     followingCount: Number(followingCount),
     isFollowing,
   });
+  } catch (err) {
+    console.error("Route error:", err);
+    return NextResponse.json({ error: "Sunucu hatasi" }, { status: 500 });
+  }
 }

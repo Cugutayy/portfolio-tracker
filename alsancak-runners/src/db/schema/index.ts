@@ -616,6 +616,8 @@ export const groupMembers = pgTable("group_members", {
   joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [
   uniqueIndex("group_members_unique").on(table.groupId, table.memberId),
+  index("idx_group_members_group").on(table.groupId),
+  index("idx_group_members_member").on(table.memberId),
 ]);
 
 export const groupInvites = pgTable("group_invites", {
@@ -627,7 +629,9 @@ export const groupInvites = pgTable("group_invites", {
   usedAt: timestamp("used_at", { withTimezone: true }),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => [
+  index("idx_group_invites_group_code").on(table.groupId, table.code),
+]);
 
 export const inviteCodes = pgTable("invite_codes", {
   id: uuid().primaryKey().defaultRandom(),
