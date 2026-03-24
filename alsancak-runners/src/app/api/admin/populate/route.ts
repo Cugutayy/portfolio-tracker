@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { members, activities, posts, kudos, comments, follows } from "@/db/schema";
+import { members, activities, posts, kudos, comments, follows, postKudos, postComments } from "@/db/schema";
 import { eq, sql, like } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
@@ -147,17 +147,67 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Create posts for some members
+  // Running/nature photos from Unsplash (free, no auth needed for small sizes)
+  const PHOTO_URLS = [
+    "https://images.unsplash.com/photo-1571008887538-b36bb32f4571?w=600&q=80", // runner sunset
+    "https://images.unsplash.com/photo-1461896836934-bd45ba8fcf9b?w=600&q=80", // running shoes trail
+    "https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=600&q=80", // runner road
+    "https://images.unsplash.com/photo-1486218119243-13883505764c?w=600&q=80", // runner silhouette
+    "https://images.unsplash.com/photo-1594882645126-14020914d58d?w=600&q=80", // coastal run
+    "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=600&q=80", // morning jog
+    "https://images.unsplash.com/photo-1513593771513-7b58b6c4af38?w=600&q=80", // park running
+    "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=600&q=80", // athlete stretching
+  ];
+
+  // Create posts for some members (with photos!)
   let postCount = 0;
-  for (let i = 0; i < Math.min(8, memberIds.length); i++) {
+  const postIds: string[] = [];
+  for (let i = 0; i < Math.min(10, memberIds.length); i++) {
     const text = POST_TEXTS[Math.floor(Math.random() * POST_TEXTS.length)];
+    const hasPhoto = Math.random() > 0.3; // 70% chance of photo
     try {
-      await db.insert(posts).values({
+      const [created] = await db.insert(posts).values({
         memberId: memberIds[i],
         text,
-      });
+        photoUrl: hasPhoto ? PHOTO_URLS[Math.floor(Math.random() * PHOTO_URLS.length)] : null,
+      }).returning({ id: posts.id });
+      postIds.push(created.id);
       postCount++;
     } catch { /* skip */ }
+  }
+
+  // Add kudos to posts
+  let postKudosCount = 0;
+  for (const pid of postIds) {
+    const kudosGivers = memberIds.sort(() => Math.random() - 0.5).slice(0, 2 + Math.floor(Math.random() * 5));
+    for (const mid of kudosGivers) {
+      try {
+        await db.insert(postKudos).values({ postId: pid, memberId: mid }).onConflictDoNothing();
+        postKudosCount++;
+      } catch { /* skip */ }
+    }
+  }
+
+  // Add comments to posts
+  const POST_COMMENT_TEXTS = [
+    "Cok guzel! 🔥", "Harika paylasim!", "Ben de oradaydim!",
+    "Mukemmel manzara 😍", "Ilham verici!", "Bravo 👏",
+    "Bir dahakine beraber!", "Bu rota cok guzel",
+  ];
+  let postCommentCount = 0;
+  for (const pid of postIds.slice(0, 6)) {
+    const numC = 1 + Math.floor(Math.random() * 3);
+    for (let c = 0; c < numC; c++) {
+      const commenter = memberIds[Math.floor(Math.random() * memberIds.length)];
+      try {
+        await db.insert(postComments).values({
+          postId: pid,
+          memberId: commenter,
+          text: POST_COMMENT_TEXTS[Math.floor(Math.random() * POST_COMMENT_TEXTS.length)],
+        });
+        postCommentCount++;
+      } catch { /* skip */ }
+    }
   }
 
   // Add cross-kudos between members (each member kudos 3-6 random activities)
@@ -220,6 +270,8 @@ export async function POST(request: NextRequest) {
     members: created,
     activities: actCount,
     posts: postCount,
+    postKudos: postKudosCount,
+    postComments: postCommentCount,
     kudos: kudosCount,
     comments: commentCount,
     follows: followCount,
