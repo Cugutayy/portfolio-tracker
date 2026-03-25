@@ -679,6 +679,58 @@ export const onboardingProgress = pgTable("onboarding_progress", {
   uniqueIndex("onboarding_progress_member_unique").on(t.memberId),
 ]);
 
+// ============================================================
+// DOMAIN 11: PERSONAL RECORDS
+// ============================================================
+
+export const personalRecords = pgTable("personal_records", {
+  id: uuid().primaryKey().defaultRandom(),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  distance: text("distance").notNull(), // "1K", "5K", "10K", "HM", "MARATHON"
+  timeSec: integer("time_sec").notNull(),
+  activityId: uuid("activity_id").notNull().references(() => activities.id, { onDelete: "cascade" }),
+  previousBestSec: integer("previous_best_sec"),
+  improvement: real("improvement"), // percentage improvement
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("personal_records_member_distance").on(t.memberId, t.distance),
+  index("idx_personal_records_member").on(t.memberId),
+]);
+
+// ============================================================
+// DOMAIN 12: CHALLENGES
+// ============================================================
+
+export const challenges = pgTable("challenges", {
+  id: uuid().primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  description: text("description"),
+  type: text("type").notNull(), // distance_total, run_count, elevation_total, streak_days
+  goalValue: real("goal_value").notNull(),
+  startDate: timestamp("start_date", { withTimezone: true }).notNull(),
+  endDate: timestamp("end_date", { withTimezone: true }).notNull(),
+  groupId: uuid("group_id").references(() => groups.id, { onDelete: "cascade" }),
+  createdBy: uuid("created_by").notNull().references(() => members.id),
+  visibility: text("visibility").notNull().default("public"), // public, group
+  status: text("status").notNull().default("active"), // active, completed, upcoming
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("idx_challenges_status").on(t.status),
+  index("idx_challenges_group").on(t.groupId),
+]);
+
+export const challengeParticipants = pgTable("challenge_participants", {
+  id: uuid().primaryKey().defaultRandom(),
+  challengeId: uuid("challenge_id").notNull().references(() => challenges.id, { onDelete: "cascade" }),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  progress: real("progress").notNull().default(0),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("challenge_participants_unique").on(t.challengeId, t.memberId),
+  index("idx_challenge_participants_challenge").on(t.challengeId),
+]);
+
 export const onboardingEvents = pgTable("onboarding_events", {
   id: uuid().primaryKey().defaultRandom(),
   memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
