@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
   const rateLimited = await checkRateLimit(`onboarding:event:${user.id}`, {
     maxRequests: 120,
     windowSec: 60,
-    strict: true,
+    failOpen: false,
   });
   if (rateLimited) return rateLimited;
 
