@@ -262,7 +262,9 @@ export default function GroupDetailScreen() {
   );
 
   // Feed content
-  const renderFeedItem = ({ item }: { item: { type: string; data: any } }) => (
+  const renderFeedItem = ({ item }: { item: { type: string; data: any } }) => {
+    if (!item?.data) return null;
+    return (
     <TouchableOpacity
       style={s.card}
       activeOpacity={0.7}
@@ -300,6 +302,7 @@ export default function GroupDetailScreen() {
       )}
     </TouchableOpacity>
   );
+  };
 
   // Members content
   const renderMember = ({ item }: { item: { id: string; name: string; image: string | null; role: string; isOnline: boolean } }) => (
