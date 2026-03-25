@@ -7,11 +7,11 @@
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0A0A0A; overflow: hidden; }
+body { background: #0D1117; overflow: hidden; }
 #map { width: 100vw; height: 100vh; }
 
 .mapboxgl-popup-content {
-  background: #111 !important;
+  background: #161B22 !important;
   color: #fff;
   border-radius: 8px;
   padding: 10px 14px;
@@ -24,10 +24,10 @@ body { background: #0A0A0A; overflow: hidden; }
 .mapboxgl-popup-tip { border-top-color: #111 !important; }
 .mapboxgl-popup-close-button { color: #888; font-size: 18px; }
 
-.popup-name { font-weight: 700; color: #E6FF00; margin-bottom: 4px; cursor: pointer; }
+.popup-name { font-weight: 700; color: #10B981; margin-bottom: 4px; cursor: pointer; }
 .popup-title { color: #ccc; margin-bottom: 4px; cursor: pointer; }
 .popup-stats { display: flex; gap: 12px; font-size: 11px; color: #888; }
-.popup-stats span { color: #E6FF00; font-weight: 600; }
+.popup-stats span { color: #10B981; font-weight: 600; }
 
 #leaderboard {
   position: absolute; bottom: 16px; left: 12px; right: 12px;
@@ -40,9 +40,9 @@ body { background: #0A0A0A; overflow: hidden; }
 #leaderboard .lb-title { font-size: 10px; color: #555; letter-spacing: 2px; margin-bottom: 6px; }
 .lb-row { display: flex; align-items: center; padding: 4px 0; gap: 8px; }
 .lb-rank { width: 18px; font-size: 11px; color: #555; font-weight: 700; text-align: center; }
-.lb-rank.gold { color: #E6FF00; }
+.lb-rank.gold { color: #10B981; }
 .lb-name { flex: 1; font-size: 12px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lb-km { font-size: 12px; color: #E6FF00; font-weight: 600; }
+.lb-km { font-size: 12px; color: #10B981; font-weight: 600; }
 .lb-runs { font-size: 10px; color: #555; }
 
 .mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right { display: none !important; }
@@ -95,7 +95,7 @@ function decodePoly(str) {
 
 // Deterministic color from memberId
 function memberColor(id) {
-  const colors = ['#E6FF00','#00E5FF','#FF6B6B','#7C4DFF','#FF9100','#00E676','#FF4081','#448AFF','#EEFF41','#18FFFF'];
+  const colors = ['#10B981','#00E5FF','#FF6B6B','#7C4DFF','#FF9100','#00E676','#FF4081','#448AFF','#EEFF41','#18FFFF'];
   let h = 0;
   for (let i = 0; i < id.length; i++) h = ((h << 5) - h + id.charCodeAt(i)) | 0;
   return colors[Math.abs(h) % colors.length];
@@ -180,6 +180,28 @@ function setActivities(activities) {
 
     map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+
+    // Start point marker (small dot)
+    const startSrcId = 'start-' + i;
+    const startLayerId = 'start-dot-' + i;
+    map.addSource(startSrcId, {
+      type: 'geojson',
+      data: { type: 'Feature', geometry: { type: 'Point', coordinates: coords[0] }, properties: { name: act.memberName, id: act.memberId } }
+    });
+    map.addLayer({
+      id: startLayerId,
+      type: 'circle',
+      source: startSrcId,
+      paint: { 'circle-radius': 5, 'circle-color': color, 'circle-stroke-width': 2, 'circle-stroke-color': '#0D1117' }
+    });
+    sourceIds.push(startSrcId);
+    layerIds.push(startLayerId);
+
+    map.on('click', startLayerId, () => {
+      postNav('member', act.memberId);
+    });
+    map.on('mouseenter', startLayerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', startLayerId, () => { map.getCanvas().style.cursor = ''; });
   });
 
   if (hasCoords) {

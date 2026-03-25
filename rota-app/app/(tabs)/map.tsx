@@ -211,7 +211,7 @@ const s = StyleSheet.create({
   },
   filterActive: {
     borderColor: brand.accent,
-    backgroundColor: "rgba(230, 255, 0, 0.1)",
+    backgroundColor: brand.accentDim,
   },
   filterText: {
     fontSize: 11,
