@@ -271,6 +271,13 @@ export async function POST(request: NextRequest) {
     newBadges = await evaluateBadges(session.user.id, created.id);
   } catch {}
 
+  // Personal record detection (best-effort)
+  let newPRs: Array<{ distance: string; timeSec: number; previousBestSec: number | null; improvement: number | null }> = [];
+  try {
+    const { detectPersonalRecords } = await import("@/lib/pr-detector");
+    newPRs = await detectPersonalRecords(session.user.id, created.id, distanceM, movingTimeSec);
+  } catch {}
+
   // Notify followers about new activity (fire and forget)
   (async () => {
     try {
@@ -304,9 +311,9 @@ export async function POST(request: NextRequest) {
     }
   })();
 
-  if (newBadges.length > 0) {
-    return NextResponse.json({ id: created.id, newBadges }, { status: 201 });
-  }
+  const response: Record<string, unknown> = { id: created.id };
+  if (newBadges.length > 0) response.newBadges = newBadges;
+  if (newPRs.length > 0) response.newPRs = newPRs;
 
-  return NextResponse.json({ id: created.id }, { status: 201 });
+  return NextResponse.json(response, { status: 201 });
 }
