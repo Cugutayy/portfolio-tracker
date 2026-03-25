@@ -16,9 +16,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as WebBrowser from "expo-web-browser";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
-import { API, type Badge, type Member, type WeeklyGoalResponse } from "@/lib/api";
+import { API, type Badge, type Member, type WeeklyGoalResponse, type PersonalRecord } from "@/lib/api";
 import { getUser, setUser as cacheUser } from "@/lib/auth";
-import { formatPace } from "@/lib/format";
+import { formatPace, formatDuration } from "@/lib/format";
 
 export default function ProfileScreen() {
   const [user, setUser] = useState<{ id: string; name: string; email: string; image?: string | null } | null>(null);
@@ -36,6 +36,7 @@ export default function ProfileScreen() {
   const [inviting, setInviting] = useState(false);
   const [weeklyStats, setWeeklyStats] = useState<{ totalRuns: number; totalDistanceM: number; totalTimeSec: number; avgPaceSecKm: number | null; distanceChange: number | null } | null>(null);
   const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoalResponse | null>(null);
+  const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([]);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -90,12 +91,20 @@ export default function ProfileScreen() {
     } catch {}
   }, []);
 
+  const loadRecords = useCallback(async () => {
+    try {
+      const res = await API.getMyRecords();
+      setPersonalRecords(res.records || []);
+    } catch {}
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadProfile();
       loadBadges();
       loadWeeklyGoal();
-    }, [loadProfile, loadBadges, loadWeeklyGoal])
+      loadRecords();
+    }, [loadProfile, loadBadges, loadWeeklyGoal, loadRecords])
   );
 
   const handleSync = async () => {
@@ -305,6 +314,28 @@ export default function ProfileScreen() {
           </Text>
         </TouchableOpacity>
 
+        {/* Personal Records Section */}
+        {personalRecords.length > 0 && (
+          <View style={s.section}>
+            <Text style={s.sectionTitle}>KISISEL REKORLAR</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.prScroll}>
+              {personalRecords.map((pr) => (
+                <View key={pr.distance} style={s.prCard}>
+                  <Ionicons name="trophy" size={16} color="#FFD700" />
+                  <Text style={s.prDistance}>{pr.distance}</Text>
+                  <Text style={s.prTime}>{formatDuration(pr.timeSec)}</Text>
+                  {pr.improvement != null && pr.improvement > 0 && (
+                    <View style={s.prImpRow}>
+                      <Ionicons name="arrow-up" size={10} color={brand.success} />
+                      <Text style={s.prImpText}>{pr.improvement.toFixed(1)}%</Text>
+                    </View>
+                  )}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         {/* Badges Section */}
         {badges.length > 0 && (
           <View style={s.section}>
@@ -433,6 +464,17 @@ const s = StyleSheet.create({
   // Invite
   inviteButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: brand.accent, paddingVertical: 14, borderRadius: 4, marginBottom: 16 },
   inviteButtonText: { fontSize: 12, fontWeight: "700", color: brand.bg, letterSpacing: 2 },
+
+  // Personal Records
+  prScroll: { gap: 10, paddingRight: 16 },
+  prCard: {
+    backgroundColor: brand.elevated, borderRadius: 12, padding: 14, alignItems: "center",
+    minWidth: 90, borderWidth: 1, borderColor: "rgba(255,215,0,0.15)",
+  },
+  prDistance: { fontSize: 13, fontWeight: "800", color: "#FFD700", marginTop: 6, letterSpacing: 1 },
+  prTime: { fontSize: 16, fontWeight: "700", color: brand.text, marginTop: 4 },
+  prImpRow: { flexDirection: "row", alignItems: "center", gap: 2, marginTop: 4 },
+  prImpText: { fontSize: 11, fontWeight: "600", color: brand.success },
 
   // Badges
   badgesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
