@@ -278,6 +278,31 @@ export async function POST(request: NextRequest) {
     newPRs = await detectPersonalRecords(session.user.id, created.id, distanceM, movingTimeSec);
   } catch {}
 
+  // Update challenge progress (best-effort, fire and forget)
+  try {
+    const { challengeParticipants, challenges: challengesTable } = await import("@/db/schema");
+    const { and: andOp, eq: eqOp, gte: gteOp, lte: lteOp } = await import("drizzle-orm");
+    const now = new Date();
+    const myActiveChallenges = await db
+      .select({ id: challengeParticipants.id, challengeId: challengeParticipants.challengeId, progress: challengeParticipants.progress, type: challengesTable.type, goalValue: challengesTable.goalValue })
+      .from(challengeParticipants)
+      .innerJoin(challengesTable, eqOp(challengeParticipants.challengeId, challengesTable.id))
+      .where(andOp(eqOp(challengeParticipants.memberId, session.user.id), eqOp(challengesTable.status, "active"), lteOp(challengesTable.startDate, now), gteOp(challengesTable.endDate, now)));
+    for (const cp of myActiveChallenges) {
+      let increment = 0;
+      if (cp.type === "distance_total") increment = distanceM;
+      else if (cp.type === "run_count") increment = 1;
+      else if (cp.type === "elevation_total") increment = elevationGainM || 0;
+      if (increment > 0) {
+        const newProgress = cp.progress + increment;
+        await db.update(challengeParticipants).set({
+          progress: newProgress,
+          completedAt: newProgress >= cp.goalValue ? now : null,
+        }).where(eqOp(challengeParticipants.id, cp.id));
+      }
+    }
+  } catch {}
+
   // Notify followers about new activity (fire and forget)
   (async () => {
     try {
