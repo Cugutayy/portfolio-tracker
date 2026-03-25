@@ -89,6 +89,7 @@ export default function EventsScreen() {
     long_run: "Uzun Kosu",
     interval: "Interval",
     trail_run: "Patika Kosusu",
+    recovery_run: "Recovery Kosu",
     social: "Sosyal Bulusma",
     race: "Yaris",
   };
