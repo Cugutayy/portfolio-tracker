@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { activities, members, kudos, comments, activityPhotos, follows } from "@/db/schema";
+import { activities, members, kudos, comments, activityPhotos, follows, personalRecords } from "@/db/schema";
 import { sql, eq, and, gte, lte } from "drizzle-orm";
 import { cacheGet, cacheSet, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
@@ -140,6 +140,7 @@ export async function GET(request: NextRequest) {
       photoUrl: sql<string | null>`(SELECT ${activityPhotos.url} FROM ${activityPhotos} WHERE ${activityPhotos.activityId} = ${activities.id} LIMIT 1)`,
       startLocation: activities.startLocation,
       memberLastActive: members.lastActiveAt,
+      prBadgesRaw: sql<string | null>`(SELECT string_agg(${personalRecords.distance}, ',') FROM ${personalRecords} WHERE ${personalRecords.activityId} = ${activities.id})`,
       // Feed ranking score: 0.40 recency + 0.30 relationship + 0.20 quality + 0.10 diversity
       feedScore: sql<number>`(
         0.40 * GREATEST(0, 1.0 - EXTRACT(EPOCH FROM (NOW() - ${activities.startTime})) / 604800.0)
@@ -180,10 +181,11 @@ export async function GET(request: NextRequest) {
   const ONLINE_THRESHOLD_MS = 5 * 60 * 1000;
   const result = {
     activities: trimmed.map((row) => {
-      const { memberLastActive, memberImage, feedScore: _score, ...rest } = row;
+      const { memberLastActive, memberImage, feedScore: _score, prBadgesRaw, ...rest } = row;
       return {
         ...rest,
         memberImage: memberImage || null,
+        prBadges: prBadgesRaw ? prBadgesRaw.split(",") : [],
         memberInitials: row.memberName
           .split(" ")
           .map((w) => w[0])
