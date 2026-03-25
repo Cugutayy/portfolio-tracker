@@ -424,6 +424,7 @@ export interface CommunityActivity {
   startLng: number | null;
   startLocation?: string | null;
   memberIsOnline?: boolean;
+  prBadges?: string[];
   kudosCount?: number;
   hasKudosed?: boolean;
   commentCount?: number;
