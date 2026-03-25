@@ -353,7 +353,8 @@ export default function FeedScreen() {
                 {weeklyGoal.streak > 0 && (
                   <>
                     <View style={s.weeklyDot} />
-                    <Text style={s.weeklyStat}><Text style={s.weeklyValue}>{weeklyGoal.streak}</Text> hafta seri</Text>
+                    <Ionicons name="flame" size={14} color="#FF6B35" />
+                    <Text style={s.weeklyStat}><Text style={[s.weeklyValue, { color: "#FF6B35" }]}>{weeklyGoal.streak}</Text> hafta seri</Text>
                   </>
                 )}
               </View>
@@ -450,6 +451,19 @@ export default function FeedScreen() {
         </View>
       </View>
       <Text style={s.cardTitle}>{item.title}</Text>
+
+      {/* PR Badges */}
+      {(item.prBadges || []).length > 0 && (
+        <View style={s.prBadgeRow}>
+          {(item.prBadges || []).map((d) => (
+            <View key={d} style={s.prBadgePill}>
+              <Ionicons name="trophy" size={10} color="#FFD700" />
+              <Text style={s.prBadgeText}>PB {d}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       <View style={s.cardStats}>
         <Text style={s.cardStat}><Text style={s.cardStatValue}>{formatDistance(item.distanceM)}</Text> km</Text>
         <Text style={s.cardStat}><Text style={s.cardStatValue}>{formatPace(item.avgPaceSecKm)}</Text> /km</Text>
@@ -716,6 +730,13 @@ const s = StyleSheet.create({
   cardRunner: { fontSize: 14, color: brand.text, fontWeight: "600" },
   cardDate: { fontSize: 11, color: brand.textDim },
   cardTitle: { fontSize: 16, color: brand.text, fontWeight: "700", marginBottom: 10 },
+  prBadgeRow: { flexDirection: "row", gap: 6, marginBottom: 8 },
+  prBadgePill: {
+    flexDirection: "row", alignItems: "center", gap: 4,
+    backgroundColor: "rgba(255,215,0,0.12)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10,
+    borderWidth: 1, borderColor: "rgba(255,215,0,0.25)",
+  },
+  prBadgeText: { fontSize: 10, fontWeight: "700", color: "#FFD700", letterSpacing: 0.5 },
   cardStats: { flexDirection: "row", gap: 20 },
   cardStat: { fontSize: 13, color: brand.textMuted },
   cardStatValue: { color: brand.accent, fontWeight: "700", fontSize: 15 },
