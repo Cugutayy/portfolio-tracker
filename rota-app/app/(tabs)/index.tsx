@@ -455,9 +455,15 @@ export default function FeedScreen() {
         <Text style={s.cardStat}><Text style={s.cardStatValue}>{formatPace(item.avgPaceSecKm)}</Text> /km</Text>
       </View>
 
-      {item.photoUrl && (
+      {item.photoUrl ? (
         <Image source={{ uri: item.photoUrl }} style={s.cardPhoto} resizeMode="cover" />
-      )}
+      ) : item.polylineEncoded ? (
+        <Image
+          source={{ uri: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/path-2+10B981(${encodeURIComponent(item.polylineEncoded)})/auto/300x150@2x?access_token=${process.env.EXPO_PUBLIC_MAPBOX_TOKEN || ""}&padding=30` }}
+          style={s.cardMapImage}
+          resizeMode="cover"
+        />
+      ) : null}
 
       <View style={s.cardFooter}>
         <TouchableOpacity
@@ -714,6 +720,7 @@ const s = StyleSheet.create({
   cardStat: { fontSize: 13, color: brand.textMuted },
   cardStatValue: { color: brand.accent, fontWeight: "700", fontSize: 15 },
   cardPhoto: { width: "100%", height: 220, borderRadius: 8, marginTop: 12 },
+  cardMapImage: { width: "100%", height: 140, borderRadius: 8, marginTop: 12, backgroundColor: brand.elevated },
   cardFooter: { flexDirection: "row", alignItems: "center", marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: brand.border },
   kudosButton: { flexDirection: "row", alignItems: "center", gap: 4 },
   kudosEmoji: { fontSize: 16, opacity: 0.6 },
