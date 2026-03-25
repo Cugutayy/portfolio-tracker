@@ -314,6 +314,10 @@ export const API = {
   updateWeeklyGoal: (data: { distanceGoalM?: number; runsGoal?: number }) =>
     api("/api/members/me/goals", { method: "PATCH", body: JSON.stringify(data) }),
 
+  // Personal Records
+  getMyRecords: () => api<{ records: PersonalRecord[] }>("/api/members/me/records"),
+  getMemberRecords: (id: string) => api<{ records: PersonalRecord[] }>(`/api/members/${id}/records`),
+
   // Search
   search: (q: string, type?: string) => api<{ members: Array<{ id: string; name: string; image: string | null }>; groups: Group[]; events: Array<{ id: string; title: string; slug: string; date: string }> }>(`/api/search?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`),
 
@@ -537,4 +541,16 @@ export interface WeeklyGoalResponse {
     weekComplete: boolean;
   };
   currentWeek: string;
+}
+
+export interface PersonalRecord {
+  id: string;
+  distance: string; // "1K" | "5K" | "10K" | "HM" | "MARATHON"
+  timeSec: number;
+  activityId: string;
+  previousBestSec: number | null;
+  improvement: number | null;
+  createdAt: string;
+  activityTitle?: string | null;
+  activityDate?: string | null;
 }

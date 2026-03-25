@@ -14,6 +14,7 @@ export default function RunSummaryScreen() {
     startLocation: string;
     endLocation: string;
     splits: string;
+    newPRs: string;
   }>();
 
   const distanceM = Number(params.distanceM) || 0;
@@ -34,13 +35,43 @@ export default function RunSummaryScreen() {
     ? splits.reduce((best, s) => s.avgPaceSecKm > 0 && (best.avgPaceSecKm === 0 || s.avgPaceSecKm < best.avgPaceSecKm) ? s : best, splits[0])
     : null;
 
+  // Parse new PRs
+  const newPRs: Array<{ distance: string; timeSec: number; previousBestSec: number | null; improvement: number | null }> = (() => {
+    try { return JSON.parse(params.newPRs || "[]"); } catch { return []; }
+  })();
+
   return (
     <SafeAreaView style={s.container}>
       <ScrollView contentContainerStyle={s.content}>
+        {/* PR Celebration */}
+        {newPRs.length > 0 && (
+          <View style={s.prSection}>
+            <View style={s.prHeader}>
+              <Ionicons name="trophy" size={28} color="#FFD700" />
+              <Text style={s.prTitle}>Yeni Kisisel Rekor!</Text>
+            </View>
+            {newPRs.map((pr) => (
+              <View key={pr.distance} style={s.prCard}>
+                <Text style={s.prDistance}>{pr.distance}</Text>
+                <Text style={s.prTime}>{formatDuration(pr.timeSec)}</Text>
+                {pr.improvement != null && pr.improvement > 0 && (
+                  <View style={s.prImprovement}>
+                    <Ionicons name="arrow-up" size={12} color="#4CAF50" />
+                    <Text style={s.prImprovementText}>{pr.improvement.toFixed(1)}%</Text>
+                  </View>
+                )}
+                {pr.previousBestSec && (
+                  <Text style={s.prPrevious}>Onceki: {formatDuration(pr.previousBestSec)}</Text>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Header */}
         <View style={s.header}>
           <Ionicons name="checkmark-circle" size={48} color={brand.accent} />
-          <Text style={s.title}>Kosu Tamamlandi!</Text>
+          <Text style={s.title}>{newPRs.length > 0 ? "Muhtesem Kosu!" : "Kosu Tamamlandi!"}</Text>
           {(startLocation || endLocation) && (
             <Text style={s.location}>
               {startLocation}{startLocation && endLocation ? " → " : ""}{endLocation}
@@ -132,6 +163,23 @@ export default function RunSummaryScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: brand.bg },
   content: { padding: 24, paddingBottom: 100 },
+
+  // PR Celebration
+  prSection: {
+    backgroundColor: "rgba(255,215,0,0.08)", borderRadius: 16, padding: 20, marginBottom: 24,
+    borderWidth: 1, borderColor: "rgba(255,215,0,0.25)",
+  },
+  prHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16 },
+  prTitle: { fontSize: 20, fontWeight: "800", color: "#FFD700", letterSpacing: 1 },
+  prCard: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: "rgba(255,215,0,0.06)", borderRadius: 10, padding: 14, marginBottom: 8,
+  },
+  prDistance: { fontSize: 14, fontWeight: "800", color: "#FFD700", minWidth: 60, letterSpacing: 1 },
+  prTime: { fontSize: 18, fontWeight: "700", color: brand.text },
+  prImprovement: { flexDirection: "row", alignItems: "center", gap: 2, backgroundColor: "rgba(76,175,80,0.15)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 },
+  prImprovementText: { fontSize: 12, fontWeight: "700", color: "#4CAF50" },
+  prPrevious: { fontSize: 11, color: brand.textDim, marginLeft: "auto" },
 
   header: { alignItems: "center", marginBottom: 32 },
   title: { fontSize: 22, fontWeight: "800", color: brand.text, marginTop: 12, letterSpacing: 1 },
