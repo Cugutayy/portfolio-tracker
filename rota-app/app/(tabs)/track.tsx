@@ -466,7 +466,7 @@ export default function TrackScreen() {
         reverseGeocode(coords[coords.length - 1].latitude, coords[coords.length - 1].longitude),
       ]);
 
-      await API.createActivity({
+      const createResult = await API.createActivity({
         title: `Kosu — ${formatDistance(distanceM)} km`,
         distanceM,
         movingTimeSec,
@@ -497,6 +497,7 @@ export default function TrackScreen() {
       });
 
       // Navigate to rich run summary
+      const resultData = createResult as { id: string; newPRs?: Array<{ distance: string; timeSec: number; previousBestSec: number | null; improvement: number | null }> };
       const summaryParams = {
         distanceM: String(distanceM),
         movingTimeSec: String(movingTimeSec),
@@ -505,6 +506,7 @@ export default function TrackScreen() {
         startLocation: startLoc || "",
         endLocation: endLoc || "",
         splits: JSON.stringify(splits),
+        newPRs: JSON.stringify(resultData.newPRs || []),
       };
 
       // Reset state
