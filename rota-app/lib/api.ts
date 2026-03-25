@@ -318,6 +318,15 @@ export const API = {
   getMyRecords: () => api<{ records: PersonalRecord[] }>("/api/members/me/records"),
   getMemberRecords: (id: string) => api<{ records: PersonalRecord[] }>(`/api/members/${id}/records`),
 
+  // Calendar
+  getCalendar: (month?: string) => api<{ days: Array<{ date: string; count: number; totalDistanceM: number }>; month: string }>(`/api/members/me/calendar${month ? `?month=${month}` : ""}`),
+
+  // Challenges
+  getChallenges: (status?: string) => api<{ challenges: unknown[] }>(`/api/challenges${status ? `?status=${status}` : ""}`),
+  getChallenge: (id: string) => api<{ challenge: unknown; leaderboard: unknown[]; hasJoined: boolean; myProgress: number | null }>(`/api/challenges/${id}`),
+  joinChallenge: (id: string) => api(`/api/challenges/${id}`, { method: "POST" }),
+  createChallenge: (data: { title: string; description?: string; type: string; goalValue: number; startDate: string; endDate: string; groupId?: string }) => api<{ id: string }>("/api/challenges", { method: "POST", body: JSON.stringify(data) }),
+
   // Search
   search: (q: string, type?: string) => api<{ members: Array<{ id: string; name: string; image: string | null }>; groups: Group[]; events: Array<{ id: string; title: string; slug: string; date: string }> }>(`/api/search?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`),
 
