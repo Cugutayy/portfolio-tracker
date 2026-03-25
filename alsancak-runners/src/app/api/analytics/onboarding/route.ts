@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
   const rateLimited = await checkRateLimit(`analytics:onboarding:${user.id}`, {
     maxRequests: 30,
     windowSec: 60,
-    strict: true,
+    failOpen: false,
   });
   if (rateLimited) return rateLimited;
 
