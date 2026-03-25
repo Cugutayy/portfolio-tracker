@@ -279,8 +279,9 @@ const s = StyleSheet.create({
     backgroundColor: brand.surface,
     borderWidth: 1,
     borderColor: brand.border,
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 14,
+    padding: 14,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 4,
   },
   cardRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   groupAvatar: {
@@ -294,7 +295,7 @@ const s = StyleSheet.create({
   groupAvatarImg: { width: 48, height: 48, borderRadius: 24 },
   groupInitials: { fontSize: 16, fontWeight: "bold", color: brand.accent },
   cardInfo: { flex: 1 },
-  groupName: { fontSize: 14, fontWeight: "700", color: brand.text, letterSpacing: 1, marginBottom: 4 },
+  groupName: { fontSize: 15, fontWeight: "700", color: brand.text, letterSpacing: 0.5, marginBottom: 4 },
   cardMeta: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
   memberCount: { fontSize: 11, color: brand.textDim },
   sportBadge: {
