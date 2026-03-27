@@ -57,6 +57,7 @@ export default function FeedScreen() {
   const [stats, setStats] = useState<{ members: number; totalRuns: number; totalDistanceKm: number } | null>(null);
   const [weeklyGoal, setWeeklyGoal] = useState<{ totalRuns: number; totalDistanceM: number; streak: number } | null>(null);
   const [recentRunners, setRecentRunners] = useState<Array<{ id: string; name: string; image: string | null; isOnline: boolean }>>([]);
+  const [followSuggestions, setFollowSuggestions] = useState<Array<{ id: string; name: string; image: string | null; bio: string | null; activityCount: number }>>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -135,12 +136,13 @@ export default function FeedScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [, , leaderboardRes, statsRes, goalRes] = await Promise.allSettled([
+      const [, , leaderboardRes, statsRes, goalRes, suggestionsRes] = await Promise.allSettled([
         fetchActivities(1, false),
         fetchPosts(1, false),
         API.getLeaderboard("month"),
         API.getStats(),
         API.getWeeklyGoal(),
+        API.getFollowSuggestions(),
       ]);
       setPage(1);
       setPostPage(1);
@@ -150,6 +152,7 @@ export default function FeedScreen() {
         const g = goalRes.value;
         setWeeklyGoal({ totalRuns: g.progress.totalRuns, totalDistanceM: g.progress.totalDistanceM, streak: g.goal.currentStreak });
       }
+      if (suggestionsRes.status === "fulfilled") setFollowSuggestions((suggestionsRes.value.suggestions || []).slice(0, 5));
     } catch {}
   }, [fetchActivities, fetchPosts]);
 
@@ -403,7 +406,58 @@ export default function FeedScreen() {
           />
         )}
 
-        {/* ── 1.3 Pill Toggle ── */}
+        {/* ── 1.3 Follow Suggestions (Strava: "Kimleri Takip Etmeli?") ── */}
+        {followSuggestions.length > 0 && (
+          <View style={s.suggestSection}>
+            <View style={s.suggestHeader}>
+              <Text style={s.suggestTitle}>Kimleri Takip Etmeli?</Text>
+              <TouchableOpacity onPress={() => router.push("/search" as never)}>
+                <Text style={s.suggestLink}>Tumunu Gor</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={followSuggestions}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={s.suggestList}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={s.suggestCard}
+                  onPress={() => router.push(`/member/${item.id}` as never)}
+                  activeOpacity={0.7}
+                >
+                  {item.image ? (
+                    <Image source={{ uri: item.image }} style={s.suggestAvatar} />
+                  ) : (
+                    <View style={s.suggestAvatarPlaceholder}>
+                      <Text style={s.suggestInitials}>
+                        {(item.name || "?").split(" ").filter(Boolean).map(w => w[0]).join("").toUpperCase().slice(0, 2)}
+                      </Text>
+                    </View>
+                  )}
+                  <Text style={s.suggestName} numberOfLines={1}>{item.name}</Text>
+                  {item.bio ? (
+                    <Text style={s.suggestBio} numberOfLines={1}>{item.bio}</Text>
+                  ) : (
+                    <Text style={s.suggestBio}>{item.activityCount} kosu</Text>
+                  )}
+                  <TouchableOpacity
+                    style={s.suggestFollowBtn}
+                    onPress={() => {
+                      API.toggleFollow(item.id).catch(() => {});
+                      setFollowSuggestions(prev => prev.filter(s => s.id !== item.id));
+                    }}
+                  >
+                    <Text style={s.suggestFollowText}>Takip Et</Text>
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
+
+        {/* ── 1.4 Pill Toggle ── */}
         <View style={s.pillContainer}>
           <Animated.View style={[
             s.pillIndicator,
@@ -516,6 +570,14 @@ export default function FeedScreen() {
   );
 
   const failedPhotosRef = useRef(new Set<string>());
+  const [failedPhotoCount, setFailedPhotoCount] = useState(0);
+
+  const markPhotoFailed = useCallback((url: string) => {
+    if (!failedPhotosRef.current.has(url)) {
+      failedPhotosRef.current.add(url);
+      setFailedPhotoCount(c => c + 1); // trigger re-render to hide broken image
+    }
+  }, []);
 
   const renderPostCard = (item: Post) => {
     const photos = [item.photoUrl, item.photoUrl2, item.photoUrl3].filter((u): u is string => !!u && !failedPhotosRef.current.has(u));
@@ -546,7 +608,7 @@ export default function FeedScreen() {
               source={{ uri: photos[0] }}
               style={s.cardPhoto}
               resizeMode="cover"
-              onError={() => { failedPhotosRef.current.add(photos[0]); }}
+              onError={() => markPhotoFailed(photos[0])}
             />
           </View>
         )}
@@ -554,7 +616,7 @@ export default function FeedScreen() {
         {photos.length > 1 && (
           <View style={s.multiPhotoRow}>
             {photos.map((url, i) => (
-              <Image key={i} source={{ uri: url }} style={s.multiPhotoThumb} resizeMode="cover" />
+              <Image key={i} source={{ uri: url }} style={s.multiPhotoThumb} resizeMode="cover" onError={() => markPhotoFailed(url)} />
             ))}
           </View>
         )}
@@ -733,6 +795,29 @@ const s = StyleSheet.create({
   },
   storyInitials: { fontSize: 14, fontWeight: "700", color: brand.accent },
   storyName: { fontSize: 10, color: brand.textDim, textAlign: "center" },
+
+  // Follow Suggestions
+  suggestSection: { marginBottom: 12 },
+  suggestHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, marginBottom: 10 },
+  suggestTitle: { fontSize: 16, fontWeight: "700", color: brand.text },
+  suggestLink: { fontSize: 13, fontWeight: "600", color: brand.accent },
+  suggestList: { paddingHorizontal: 12, gap: 10 },
+  suggestCard: {
+    width: 150, backgroundColor: brand.surface, borderRadius: 14, padding: 16,
+    alignItems: "center", borderWidth: 1, borderColor: brand.border,
+  },
+  suggestAvatar: { width: 56, height: 56, borderRadius: 28, marginBottom: 10 },
+  suggestAvatarPlaceholder: {
+    width: 56, height: 56, borderRadius: 28, backgroundColor: brand.elevated,
+    alignItems: "center", justifyContent: "center", marginBottom: 10,
+  },
+  suggestInitials: { fontSize: 18, fontWeight: "700", color: brand.accent },
+  suggestName: { fontSize: 14, fontWeight: "700", color: brand.text, textAlign: "center", marginBottom: 2 },
+  suggestBio: { fontSize: 11, color: brand.textDim, textAlign: "center", marginBottom: 10 },
+  suggestFollowBtn: {
+    backgroundColor: brand.accent, borderRadius: 8, paddingVertical: 7, paddingHorizontal: 20,
+  },
+  suggestFollowText: { fontSize: 12, fontWeight: "700", color: brand.bg },
 
   sectionTitleInline: { fontSize: 11, color: brand.textMuted, letterSpacing: 3, fontWeight: "600" },
 
