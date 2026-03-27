@@ -307,6 +307,8 @@ export const API = {
   getGroupMembers: (slug: string) => api<{ members: Array<{ id: string; name: string; image: string | null; role: string; isOnline: boolean }> }>(`/api/groups/${slug}/members`),
   getGroupFeed: (slug: string, params: Record<string, string>) => api<{ feed: Array<{ type: string; id: string; memberId: string; memberName: string; memberImage: string | null; text?: string | null; photoUrl?: string | null; distanceM?: number; movingTimeSec?: number; avgPaceSecKm?: number | null; createdAt: string; kudosCount: number; commentCount: number }>; hasMore: boolean }>(`/api/groups/${slug}/feed?${new URLSearchParams(params)}`),
   getGroupLeaderboard: (slug: string, period?: string) => api<{ leaderboard: LeaderboardEntry[] }>(`/api/groups/${slug}/leaderboard?period=${period || 'month'}`),
+  updateGroup: (slug: string, data: { name?: string; description?: string | null; image?: string | null; sportType?: string; city?: string | null; visibility?: string }) =>
+    api(`/api/groups/${slug}`, { method: "PATCH", body: JSON.stringify(data) }),
   createGroupInvite: (slug: string) => api<{ code: string }>(`/api/groups/${slug}/invite`, { method: "POST" }),
 
   // Weekly goals
