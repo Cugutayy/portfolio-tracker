@@ -13,6 +13,7 @@ import {
   Alert,
   RefreshControl,
   Image,
+  Modal,
 } from "react-native";
 import { useLocalSearchParams, Stack, router } from "expo-router";
 import { WebView } from "react-native-webview";
@@ -59,6 +60,10 @@ export default function ActivityDetailScreen() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState("");
   const [sendingComment, setSendingComment] = useState(false);
+
+  // Edit title state (cross-platform, Alert.prompt is iOS-only)
+  const [editTitleVisible, setEditTitleVisible] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState("");
 
   // Current user
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -151,28 +156,23 @@ export default function ActivityDetailScreen() {
 
   const handleEditTitle = useCallback(() => {
     if (!activity) return;
-    Alert.prompt(
-      "Baslik Duzenle",
-      "Yeni baslik girin:",
-      [
-        { text: "Iptal", style: "cancel" },
-        {
-          text: "Kaydet",
-          onPress: async (newTitle?: string) => {
-            if (!newTitle?.trim() || newTitle.trim() === activity.title) return;
-            try {
-              await API.updateActivity(id!, { title: newTitle.trim() });
-              setActivity((prev) => prev ? { ...prev, title: newTitle.trim() } : prev);
-            } catch {
-              Alert.alert("Hata", "Baslik guncellenemedi.");
-            }
-          },
-        },
-      ],
-      "plain-text",
-      activity.title
-    );
-  }, [id, activity]);
+    setEditTitleValue(activity.title);
+    setEditTitleVisible(true);
+  }, [activity]);
+
+  const saveEditTitle = useCallback(async () => {
+    if (!editTitleValue.trim() || editTitleValue.trim() === activity?.title) {
+      setEditTitleVisible(false);
+      return;
+    }
+    try {
+      await API.updateActivity(id!, { title: editTitleValue.trim() });
+      setActivity((prev) => prev ? { ...prev, title: editTitleValue.trim() } : prev);
+    } catch {
+      Alert.alert("Hata", "Baslik guncellenemedi.");
+    }
+    setEditTitleVisible(false);
+  }, [id, activity, editTitleValue]);
 
   const handleShare = useCallback(async () => {
     if (!shareCardRef.current) return;
@@ -483,6 +483,33 @@ map.on('load',function(){
         </View>
       </ScrollView>
 
+      {/* Edit title modal (cross-platform) */}
+      <Modal visible={editTitleVisible} transparent animationType="fade" onRequestClose={() => setEditTitleVisible(false)}>
+        <TouchableOpacity style={s.editModalOverlay} activeOpacity={1} onPress={() => setEditTitleVisible(false)}>
+          <View style={s.editModalCard}>
+            <Text style={s.editModalTitle}>Baslik Duzenle</Text>
+            <TextInput
+              style={s.editModalInput}
+              value={editTitleValue}
+              onChangeText={setEditTitleValue}
+              placeholder="Yeni baslik..."
+              placeholderTextColor={brand.textDim}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={saveEditTitle}
+            />
+            <View style={s.editModalButtons}>
+              <TouchableOpacity onPress={() => setEditTitleVisible(false)} style={s.editModalCancelBtn}>
+                <Text style={s.editModalCancelText}>Iptal</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={saveEditTitle} style={s.editModalSaveBtn}>
+                <Text style={s.editModalSaveText}>Kaydet</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {/* Hidden share card for capture */}
       <View style={s.shareCardHidden}>
         <ShareCard
@@ -570,6 +597,17 @@ const s = StyleSheet.create({
   sendButton: { backgroundColor: brand.accent, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 4 },
   sendButtonDisabled: { opacity: 0.4 },
   sendButtonText: { fontSize: 11, fontWeight: "700", color: brand.bg, letterSpacing: 1 },
+
+  // Edit title modal
+  editModalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", padding: 32 },
+  editModalCard: { backgroundColor: brand.surface, borderRadius: 16, padding: 24 },
+  editModalTitle: { fontSize: 16, fontWeight: "700", color: brand.text, marginBottom: 16, textAlign: "center" },
+  editModalInput: { backgroundColor: brand.elevated, borderRadius: 8, padding: 12, fontSize: 15, color: brand.text, borderWidth: 1, borderColor: brand.border },
+  editModalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 12, marginTop: 16 },
+  editModalCancelBtn: { paddingHorizontal: 16, paddingVertical: 10 },
+  editModalCancelText: { fontSize: 14, color: brand.textMuted },
+  editModalSaveBtn: { backgroundColor: brand.accent, borderRadius: 8, paddingHorizontal: 20, paddingVertical: 10 },
+  editModalSaveText: { fontSize: 14, fontWeight: "700", color: brand.bg },
 
   // Hidden share card
   shareCardHidden: { position: "absolute", left: -9999, top: -9999 },

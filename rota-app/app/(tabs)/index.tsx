@@ -58,6 +58,7 @@ export default function FeedScreen() {
   const [weeklyGoal, setWeeklyGoal] = useState<{ totalRuns: number; totalDistanceM: number; streak: number } | null>(null);
   const [recentRunners, setRecentRunners] = useState<Array<{ id: string; name: string; image: string | null; isOnline: boolean }>>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [postPage, setPostPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -172,6 +173,7 @@ export default function FeedScreen() {
   useFocusEffect(
     useCallback(() => {
       loadData().then(() => {
+        setInitialLoading(false);
         podiumAnim.setValue(0);
         Animated.timing(podiumAnim, {
           toValue: 1,
@@ -624,8 +626,11 @@ export default function FeedScreen() {
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         ListEmptyComponent={
-          !refreshing ? (
+          initialLoading ? (
+            <ActivityIndicator color={brand.accent} size="large" style={{ marginTop: 60 }} />
+          ) : !refreshing ? (
             <View style={s.empty}>
+              <Ionicons name="fitness-outline" size={48} color={brand.textDim} style={{ marginBottom: 12 }} />
               <Text style={s.emptyText}>
                 {activeTab === "following" ? "Henuz kimseyi takip etmiyorsun" : "Henuz paylasim yok"}
               </Text>
