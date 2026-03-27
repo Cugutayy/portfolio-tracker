@@ -39,6 +39,10 @@ export default function ProfileScreen() {
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([]);
   const [profileTab, setProfileTab] = useState<"progress" | "activities" | "achievements">("progress");
   const [myActivities, setMyActivities] = useState<Array<{ id: string; title: string; distanceM: number; movingTimeSec: number; startTime: string; avgPaceSecKm: number | null }>>([]);
+  const [weeklyHistory, setWeeklyHistory] = useState<{
+    weeks: Array<{ weekStart: string; totalDistanceM: number; runCount: number }>;
+    currentMonth: { name: string; totalDistanceM: number; totalTimeSec: number; runCount: number; streak: number; streakActivities: number };
+  } | null>(null);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -100,6 +104,13 @@ export default function ProfileScreen() {
     } catch {}
   }, []);
 
+  const loadWeeklyHistory = useCallback(async () => {
+    try {
+      const res = await API.getWeeklyHistory();
+      setWeeklyHistory(res);
+    } catch {}
+  }, []);
+
   const loadMyActivities = useCallback(async () => {
     try {
       const res = await API.getActivities(1, 20);
@@ -117,7 +128,8 @@ export default function ProfileScreen() {
       loadWeeklyGoal();
       loadRecords();
       loadMyActivities();
-    }, [loadProfile, loadBadges, loadWeeklyGoal, loadRecords, loadMyActivities])
+      loadWeeklyHistory();
+    }, [loadProfile, loadBadges, loadWeeklyGoal, loadRecords, loadMyActivities, loadWeeklyHistory])
   );
 
   const handleSync = async () => {
@@ -340,6 +352,85 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* ── Strava-style "Bu hafta" + 12-week chart ── */}
+        {weeklyHistory && (
+          <View style={s.trendCard}>
+            {/* Sport pill */}
+            <View style={s.sportPill}>
+              <Ionicons name="footsteps" size={14} color={brand.accent} />
+              <Text style={s.sportPillText}>Kosu</Text>
+            </View>
+
+            {/* This week summary */}
+            <Text style={s.trendSectionTitle}>Bu hafta</Text>
+            <View style={s.trendStatsRow}>
+              <View style={s.trendStatItem}>
+                <Text style={s.trendStatLabel}>Mesafe</Text>
+                <Text style={s.trendStatValue}>
+                  {((weeklyHistory.weeks[weeklyHistory.weeks.length - 1]?.totalDistanceM || 0) / 1000).toFixed(1)} km
+                </Text>
+              </View>
+              <View style={s.trendStatItem}>
+                <Text style={s.trendStatLabel}>Sure</Text>
+                <Text style={s.trendStatValue}>
+                  {Math.floor((weeklyHistory.weeks[weeklyHistory.weeks.length - 1]?.totalDistanceM || 0) / 60000)}dk
+                </Text>
+              </View>
+              <View style={s.trendStatItem}>
+                <Text style={s.trendStatLabel}>Irtifa Kazanimi</Text>
+                <Text style={s.trendStatValue}>0 m</Text>
+              </View>
+            </View>
+
+            {/* 12-week bar chart */}
+            <Text style={s.trendChartLabel}>Son 12 hafta</Text>
+            <View style={s.trendChart}>
+              {weeklyHistory.weeks.map((w, i) => {
+                const maxDist = Math.max(1, ...weeklyHistory.weeks.map(wk => wk.totalDistanceM));
+                const height = maxDist > 0 ? Math.max(3, (w.totalDistanceM / maxDist) * 80) : 3;
+                const isLast = i === weeklyHistory.weeks.length - 1;
+                return (
+                  <View key={w.weekStart} style={s.trendBarWrap}>
+                    <Text style={s.trendBarLabel}>
+                      {(w.totalDistanceM / 1000).toFixed(0) !== "0" ? `${(w.totalDistanceM / 1000).toFixed(0)} km` : ""}
+                    </Text>
+                    <View style={[s.trendBar, { height }, isLast && { backgroundColor: brand.accent }]} />
+                    {/* Dot at bottom */}
+                    <View style={[s.trendDot, isLast && { backgroundColor: brand.accent, width: 8, height: 8 }]} />
+                  </View>
+                );
+              })}
+            </View>
+            {/* Month labels */}
+            <View style={s.trendMonthRow}>
+              {weeklyHistory.weeks.filter((_, i) => i % 4 === 0).map((w) => (
+                <Text key={w.weekStart} style={s.trendMonthLabel}>
+                  {new Date(w.weekStart).toLocaleString("tr-TR", { month: "short" }).toUpperCase()}
+                </Text>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* ── Monthly summary (Strava: "Mart 2026") ── */}
+        {weeklyHistory?.currentMonth && (
+          <View style={s.monthCard}>
+            <View style={s.monthHeader}>
+              <Text style={s.monthTitle}>{weeklyHistory.currentMonth.name}</Text>
+            </View>
+            <View style={s.monthStatsRow}>
+              <View style={s.monthStatItem}>
+                <Text style={s.monthStatLabel}>Seriniz</Text>
+                <Text style={s.monthStatValue}>{weeklyHistory.currentMonth.streak} Hafta</Text>
+              </View>
+              <View style={s.monthStatItem}>
+                <Text style={s.monthStatLabel}>Seri Aktiviteler</Text>
+                <Text style={s.monthStatValue}>{weeklyHistory.currentMonth.streakActivities}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         {/* Invite Button */}
         <TouchableOpacity style={s.inviteButton} onPress={handleInvite} disabled={inviting}>
           <Ionicons name="person-add-outline" size={18} color={brand.bg} />
@@ -537,6 +628,42 @@ const s = StyleSheet.create({
   // Invite
   inviteButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: brand.accent, paddingVertical: 14, borderRadius: 4, marginBottom: 16 },
   inviteButtonText: { fontSize: 12, fontWeight: "700", color: brand.bg, letterSpacing: 2 },
+
+  // 12-week Trend Card (Strava-style)
+  trendCard: {
+    backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 14,
+    padding: 20, marginBottom: 16,
+  },
+  sportPill: {
+    flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start",
+    borderWidth: 1, borderColor: brand.accent, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, marginBottom: 16,
+  },
+  sportPillText: { fontSize: 13, fontWeight: "600", color: brand.accent },
+  trendSectionTitle: { fontSize: 16, fontWeight: "700", color: brand.text, marginBottom: 12 },
+  trendStatsRow: { flexDirection: "row", gap: 24, marginBottom: 20 },
+  trendStatItem: {},
+  trendStatLabel: { fontSize: 12, color: brand.textDim, marginBottom: 2 },
+  trendStatValue: { fontSize: 18, fontWeight: "700", color: brand.text },
+  trendChartLabel: { fontSize: 13, color: brand.textDim, marginBottom: 12 },
+  trendChart: { flexDirection: "row", alignItems: "flex-end", gap: 4, height: 100, marginBottom: 4 },
+  trendBarWrap: { flex: 1, alignItems: "center", justifyContent: "flex-end" },
+  trendBarLabel: { fontSize: 8, color: brand.textDim, marginBottom: 2 },
+  trendBar: { width: "80%", backgroundColor: brand.accent + "50", borderRadius: 2, minHeight: 3 },
+  trendDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: brand.accent + "60", marginTop: 6 },
+  trendMonthRow: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 4, marginTop: 4 },
+  trendMonthLabel: { fontSize: 10, color: brand.textDim, letterSpacing: 1 },
+
+  // Monthly Summary Card (Strava: "Mart 2026")
+  monthCard: {
+    backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 14,
+    padding: 20, marginBottom: 16,
+  },
+  monthHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  monthTitle: { fontSize: 18, fontWeight: "700", color: brand.text },
+  monthStatsRow: { flexDirection: "row", gap: 32 },
+  monthStatItem: {},
+  monthStatLabel: { fontSize: 12, color: brand.textDim, marginBottom: 2 },
+  monthStatValue: { fontSize: 18, fontWeight: "700", color: brand.text },
 
   // Profile Tabs (Strava-style)
   profileTabs: { flexDirection: "row", borderBottomWidth: 2, borderBottomColor: brand.border, marginBottom: 20 },
