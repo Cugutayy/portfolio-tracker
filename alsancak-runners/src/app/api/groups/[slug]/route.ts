@@ -8,7 +8,10 @@ import { eq, sql, and, gte } from "drizzle-orm";
 const updateGroupSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   description: z.string().max(500).optional().nullable(),
-  image: z.string().url().max(2000).optional().nullable(),
+  image: z.string().max(1_500_000).optional().nullable().refine(
+    (v) => !v || v.startsWith("http") || /^data:image\/(jpeg|png|webp|gif);base64,/.test(v),
+    { message: "Must be URL or data URI" }
+  ),
   sportType: z.string().max(50).optional(),
   city: z.string().max(100).optional().nullable(),
   visibility: z.enum(["public", "private"]).optional(),
