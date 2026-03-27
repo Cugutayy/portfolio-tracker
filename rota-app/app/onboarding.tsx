@@ -39,6 +39,20 @@ const SLIDES: Slide[] = [
       "Gruplara katil, etkinliklere RSVP ver, arkadaslarinin kosularini gor. Kudos gonder, yorum yap, motive ol.",
   },
   {
+    icon: "location-outline",
+    title: "Konum Izni Gerekli",
+    subtitle: "Neden konum istiyoruz?",
+    description:
+      "Kosunu haritada gostermek, mesafe ve tempo hesaplamak icin konumuna ihtiyacimiz var. Veriler sadece senin cihazinda islenir, ucuncu taraflarla paylasilmaz.",
+  },
+  {
+    icon: "trophy-outline",
+    title: "Hedefini Belirle",
+    subtitle: "Ilk adim en onemlisi",
+    description:
+      "Haftalik mesafe veya kosu hedefi koy, seri olustur, rozet kazan. Kucuk adimlar buyuk basarilara goturur.",
+  },
+  {
     icon: "shield-checkmark-outline",
     title: "Guvenle Paylas",
     subtitle: "Gizlilik senin elinde",
