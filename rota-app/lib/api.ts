@@ -329,6 +329,9 @@ export const API = {
   joinChallenge: (id: string) => api(`/api/challenges/${id}`, { method: "POST" }),
   createChallenge: (data: { title: string; description?: string; type: string; goalValue: number; startDate: string; endDate: string; groupId?: string }) => api<{ id: string }>("/api/challenges", { method: "POST", body: JSON.stringify(data) }),
 
+  // Suggestions
+  getFollowSuggestions: () => api<{ suggestions: Array<{ id: string; name: string; image: string | null; bio: string | null; paceGroup: string | null; activityCount: number }> }>("/api/members/suggestions"),
+
   // Search
   search: (q: string, type?: string) => api<{ members: Array<{ id: string; name: string; image: string | null }>; groups: Group[]; events: Array<{ id: string; title: string; slug: string; date: string }> }>(`/api/search?q=${encodeURIComponent(q)}${type ? `&type=${type}` : ''}`),
 
