@@ -320,6 +320,12 @@ export const API = {
   getMyRecords: () => api<{ records: PersonalRecord[] }>("/api/members/me/records"),
   getMemberRecords: (id: string) => api<{ records: PersonalRecord[] }>(`/api/members/${id}/records`),
 
+  // Weekly History (12-week trend)
+  getWeeklyHistory: () => api<{
+    weeks: Array<{ weekStart: string; totalDistanceM: number; totalTimeSec: number; totalElevationM: number; runCount: number }>;
+    currentMonth: { name: string; totalDistanceM: number; totalTimeSec: number; runCount: number; streak: number; streakActivities: number };
+  }>("/api/members/me/weekly-history"),
+
   // Calendar
   getCalendar: (month?: string) => api<{ days: Array<{ date: string; count: number; totalDistanceM: number }>; month: string }>(`/api/members/me/calendar${month ? `?month=${month}` : ""}`),
 
