@@ -336,20 +336,35 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Badges Section */}
-        {badges.length > 0 && (
-          <View style={s.section}>
-            <Text style={s.sectionTitle}>ROZETLER</Text>
+        {/* Trophy Case — Strava/Garmin style */}
+        <View style={s.section}>
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>KUPA DOLABI</Text>
+            {badges.length > 4 && (
+              <TouchableOpacity onPress={() => router.push("/badges" as never)}>
+                <Text style={s.seeAll}>Tumunu Gor ({badges.length})</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          {badges.length > 0 ? (
             <View style={s.badgesGrid}>
-              {badges.map(({ badge }) => (
+              {badges.slice(0, 8).map(({ badge, earnedAt }) => (
                 <View key={badge.id} style={s.badgeItem}>
-                  <Text style={s.badgeEmoji}>{badge.iconEmoji}</Text>
-                  <Text style={s.badgeName}>{badge.name}</Text>
+                  <View style={s.badgeIconWrap}>
+                    <Text style={s.badgeEmoji}>{badge.iconEmoji}</Text>
+                  </View>
+                  <Text style={s.badgeName} numberOfLines={1}>{badge.name}</Text>
                 </View>
               ))}
             </View>
-          </View>
-        )}
+          ) : (
+            <View style={s.emptyBadges}>
+              <Ionicons name="trophy-outline" size={32} color={brand.textDim} />
+              <Text style={s.emptyBadgesText}>Henuz rozet kazanilmadi</Text>
+              <Text style={s.emptyBadgesHint}>Kosu yap, hedef tamamla, rozet kazan!</Text>
+            </View>
+          )}
+        </View>
 
         {/* Health Data Import */}
         <TouchableOpacity
@@ -476,11 +491,22 @@ const s = StyleSheet.create({
   prImpRow: { flexDirection: "row", alignItems: "center", gap: 2, marginTop: 4 },
   prImpText: { fontSize: 11, fontWeight: "600", color: brand.success },
 
-  // Badges
-  badgesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  // Trophy Case
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  seeAll: { fontSize: 12, color: brand.accent, fontWeight: "600" },
+  badgesGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   badgeItem: { alignItems: "center", width: 72 },
-  badgeEmoji: { fontSize: 28 },
-  badgeName: { fontSize: 10, color: brand.textDim, textAlign: "center", marginTop: 4 },
+  badgeIconWrap: {
+    width: 56, height: 56, borderRadius: 28, backgroundColor: brand.elevated,
+    alignItems: "center", justifyContent: "center",
+    borderWidth: 2, borderColor: "rgba(255,215,0,0.2)",
+    shadowColor: "#FFD700", shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 8,
+  },
+  badgeEmoji: { fontSize: 26 },
+  badgeName: { fontSize: 10, color: brand.textDim, textAlign: "center", marginTop: 6 },
+  emptyBadges: { alignItems: "center", padding: 24, gap: 8 },
+  emptyBadgesText: { fontSize: 14, fontWeight: "600", color: brand.textMuted },
+  emptyBadgesHint: { fontSize: 12, color: brand.textDim },
 
   section: { backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 4, padding: 16, marginBottom: 16 },
   sectionTitle: { fontSize: 11, color: brand.textMuted, letterSpacing: 3, fontWeight: "600", marginBottom: 12 },
