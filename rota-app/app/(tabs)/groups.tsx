@@ -17,6 +17,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { brand } from "@/constants/Colors";
 import { API, type Group } from "@/lib/api";
 import { getInitials } from "@/lib/format";
+import { ChallengeCard } from "@/components/cards";
 
 const SPORT_LABELS: Record<string, string> = {
   running: "Kosu",
@@ -249,37 +250,24 @@ export default function GroupsScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={brand.accent} />
           }
-          renderItem={({ item }) => {
+          renderItem={({ item, index }) => {
             const daysLeft = Math.max(0, Math.ceil((new Date(item.endDate).getTime() - Date.now()) / 86400000));
-            const progressPct = item.goalValue > 0 ? Math.min(100, ((item.myProgress || 0) / item.goalValue) * 100) : 0;
-            const goalDisplay = item.type === "distance_total" ? `${(item.goalValue / 1000).toFixed(0)} km` : `${item.goalValue}`;
-            const progressDisplay = item.type === "distance_total" ? `${((item.myProgress || 0) / 1000).toFixed(1)} km` : `${Math.round(item.myProgress || 0)}`;
             return (
-              <TouchableOpacity style={s.challengeCard} activeOpacity={0.7} onPress={() => router.push(`/challenges` as never)}>
-                <View style={s.challengeHeader}>
-                  <Ionicons name="trophy-outline" size={20} color="#FFD700" />
-                  <View style={{ flex: 1, marginLeft: 10 }}>
-                    <Text style={s.challengeTitle}>{item.title}</Text>
-                    <Text style={s.challengeMeta}>{item.participantCount} katilimci · {daysLeft} gun kaldi</Text>
-                  </View>
-                </View>
-                {item.description && <Text style={s.challengeDesc}>{item.description}</Text>}
-                {item.hasJoined ? (
-                  <View style={s.challengeProgress}>
-                    <View style={s.challengeBarOuter}>
-                      <View style={[s.challengeBarInner, { width: `${progressPct}%` }]} />
-                    </View>
-                    <Text style={s.challengeProgressText}>{progressDisplay} / {goalDisplay}</Text>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={s.challengeJoinBtn}
-                    onPress={() => { API.joinChallenge(item.id).then(() => fetchChallenges()).catch(() => {}); }}
-                  >
-                    <Text style={s.challengeJoinText}>Katil</Text>
-                  </TouchableOpacity>
-                )}
-              </TouchableOpacity>
+              <View style={{ marginBottom: 14 }}>
+                <ChallengeCard
+                  title={item.title}
+                  description={item.description}
+                  type={item.type as any}
+                  goalValue={item.goalValue}
+                  progress={item.myProgress}
+                  participantCount={item.participantCount}
+                  daysLeft={daysLeft}
+                  hasJoined={item.hasJoined}
+                  variant={index === 0 ? "featured" : "default"}
+                  onJoin={() => { API.joinChallenge(item.id).then(() => fetchChallenges()).catch(() => {}); }}
+                  onPress={() => router.push("/challenges" as never)}
+                />
+              </View>
             );
           }}
           ListEmptyComponent={
