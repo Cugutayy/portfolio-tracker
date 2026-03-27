@@ -470,7 +470,9 @@ export default function FeedScreen() {
       </View>
 
       {item.photoUrl ? (
-        <Image source={{ uri: item.photoUrl }} style={s.cardPhoto} resizeMode="cover" />
+        <View style={s.cardPhotoWrap}>
+          <Image source={{ uri: item.photoUrl }} style={s.cardPhoto} resizeMode="cover" />
+        </View>
       ) : item.polylineEncoded ? (
         <Image
           source={{ uri: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/path-2+10B981(${encodeURIComponent(item.polylineEncoded)})/auto/300x150@2x?access_token=${process.env.EXPO_PUBLIC_MAPBOX_TOKEN || ""}&padding=30` }}
@@ -528,7 +530,14 @@ export default function FeedScreen() {
         {item.text && <Text style={s.postText}>{item.text}</Text>}
 
         {photos.length === 1 && (
-          <Image source={{ uri: photos[0] }} style={s.cardPhoto} resizeMode="cover" />
+          <View style={s.cardPhotoWrap}>
+            <Image
+              source={{ uri: photos[0] }}
+              style={s.cardPhoto}
+              resizeMode="cover"
+              defaultSource={require("@/assets/images/icon.png")}
+            />
+          </View>
         )}
 
         {photos.length > 1 && (
@@ -741,7 +750,8 @@ const s = StyleSheet.create({
   cardStats: { flexDirection: "row", gap: 24, marginBottom: 4 },
   cardStat: { fontSize: 12, color: brand.textMuted },
   cardStatValue: { color: brand.accent, fontWeight: "800", fontSize: 18 },
-  cardPhoto: { width: "100%", height: 220, borderRadius: 8, marginTop: 12 },
+  cardPhotoWrap: { marginTop: 12, borderRadius: 10, overflow: "hidden", backgroundColor: brand.elevated },
+  cardPhoto: { width: "100%", height: 220, borderRadius: 10 },
   cardMapImage: { width: "100%", height: 170, borderRadius: 10, marginTop: 12, backgroundColor: brand.elevated },
   cardFooter: { flexDirection: "row", alignItems: "center", marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: brand.border },
   kudosButton: { flexDirection: "row", alignItems: "center", gap: 4 },
