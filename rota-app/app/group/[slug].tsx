@@ -407,7 +407,7 @@ export default function GroupDetailScreen() {
 
   const getKeyExtractor = () => {
     switch (activeTab) {
-      case "feed": return (item: any) => `feed-${item?.id || Math.random()}`;
+      case "feed": return (item: any, index: number) => `feed-${item?.id || index}`;
       case "events": return (item: any) => item.id || item.slug;
       case "members": return (item: any) => item.id;
       case "leaderboard": return (item: any) => item.memberId;
