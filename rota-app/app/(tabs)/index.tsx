@@ -508,8 +508,10 @@ export default function FeedScreen() {
     </TouchableOpacity>
   );
 
+  const [failedPhotos, setFailedPhotos] = useState<Set<string>>(new Set());
+
   const renderPostCard = (item: Post) => {
-    const photos = [item.photoUrl, item.photoUrl2, item.photoUrl3].filter(Boolean) as string[];
+    const photos = [item.photoUrl, item.photoUrl2, item.photoUrl3].filter((u): u is string => !!u && !failedPhotos.has(u));
     return (
       <TouchableOpacity style={s.card} activeOpacity={0.7} onPress={() => router.push(`/post/${item.id}` as never)}>
         <View style={s.cardHeader}>
@@ -537,7 +539,7 @@ export default function FeedScreen() {
               source={{ uri: photos[0] }}
               style={s.cardPhoto}
               resizeMode="cover"
-              defaultSource={require("@/assets/images/icon.png")}
+              onError={() => setFailedPhotos(prev => new Set(prev).add(photos[0]))}
             />
           </View>
         )}
