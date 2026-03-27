@@ -345,12 +345,17 @@ export default function FeedScreen() {
 
     return (
       <View>
-        {/* ── Logo + Search ── */}
+        {/* ── Logo + Search + Notifications ── */}
         <View style={s.header}>
           <Text style={s.logo}>ROTA<Text style={{ color: brand.accent }}>.</Text></Text>
-          <TouchableOpacity onPress={() => router.push("/search" as never)} hitSlop={8}>
-            <Ionicons name="search-outline" size={22} color={brand.textMuted} />
-          </TouchableOpacity>
+          <View style={s.headerRight}>
+            <TouchableOpacity onPress={() => router.push("/search" as never)} hitSlop={8}>
+              <Ionicons name="search-outline" size={22} color={brand.textMuted} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/notifications" as never)} hitSlop={8}>
+              <Ionicons name="notifications-outline" size={22} color={brand.textMuted} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── 1.1 Weekly Summary Banner ── */}
@@ -767,6 +772,7 @@ const s = StyleSheet.create({
   list: { paddingHorizontal: 16, paddingBottom: 80 },
   header: { paddingTop: 16, paddingBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   logo: { fontSize: 24, fontWeight: "bold", color: brand.text, letterSpacing: 6 },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 16 },
   // ── Weekly Summary Banner ──
   weeklyBanner: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",

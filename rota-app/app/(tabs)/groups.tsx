@@ -32,10 +32,24 @@ const ROLE_LABELS: Record<string, string> = {
   member: "UYE",
 };
 
+interface Challenge {
+  id: string;
+  title: string;
+  description: string | null;
+  type: string;
+  goalValue: number;
+  startDate: string;
+  endDate: string;
+  participantCount: number;
+  myProgress: number | null;
+  hasJoined: boolean;
+}
+
 export default function GroupsScreen() {
-  const [activeTab, setActiveTab] = useState<"my" | "discover">("my");
+  const [activeTab, setActiveTab] = useState<"clubs" | "challenges" | "discover">("clubs");
   const [myGroups, setMyGroups] = useState<Group[]>([]);
   const [discoverGroups, setDiscoverGroups] = useState<Group[]>([]);
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -56,23 +70,28 @@ export default function GroupsScreen() {
       if (q && q.trim().length >= 2) params.q = q.trim();
       const res = await API.getGroups(params);
       setDiscoverGroups(res.groups || []);
-    } catch {
-      // silently fail
-    }
+    } catch {}
+  }, []);
+
+  const fetchChallenges = useCallback(async () => {
+    try {
+      const res = await API.getChallenges("active") as { challenges: Challenge[] };
+      setChallenges(res.challenges || []);
+    } catch {}
   }, []);
 
   useFocusEffect(
     useCallback(() => {
       setLoading(true);
-      Promise.allSettled([fetchMyGroups(), fetchDiscoverGroups()]).finally(() =>
+      Promise.allSettled([fetchMyGroups(), fetchDiscoverGroups(), fetchChallenges()]).finally(() =>
         setLoading(false)
       );
-    }, [fetchMyGroups, fetchDiscoverGroups])
+    }, [fetchMyGroups, fetchDiscoverGroups, fetchChallenges])
   );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    if (activeTab === "my") {
+    if (activeTab === "clubs") {
       await fetchMyGroups();
     } else {
       await fetchDiscoverGroups(searchText);
@@ -165,20 +184,21 @@ export default function GroupsScreen() {
         <Text style={s.title}>GRUPLAR</Text>
       </View>
 
-      {/* Segment control */}
+      {/* Strava-style 3-tab (Kulüpler / Meydan Oku / Keşfet) */}
       <View style={s.tabRow}>
-        <TouchableOpacity
-          style={[s.tabButton, activeTab === "my" && s.tabButtonActive]}
-          onPress={() => setActiveTab("my")}
-        >
-          <Text style={[s.tabText, activeTab === "my" && s.tabTextActive]}>GRUPLARIM</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[s.tabButton, activeTab === "discover" && s.tabButtonActive]}
-          onPress={() => setActiveTab("discover")}
-        >
-          <Text style={[s.tabText, activeTab === "discover" && s.tabTextActive]}>KESFET</Text>
-        </TouchableOpacity>
+        {([
+          { key: "clubs" as const, label: "Kulupler" },
+          { key: "challenges" as const, label: "Meydan Oku" },
+          { key: "discover" as const, label: "Kesfet" },
+        ]).map(t => (
+          <TouchableOpacity
+            key={t.key}
+            style={[s.tabButton, activeTab === t.key && s.tabButtonActive]}
+            onPress={() => setActiveTab(t.key)}
+          >
+            <Text style={[s.tabText, activeTab === t.key && s.tabTextActive]}>{t.label}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {activeTab === "discover" && (
@@ -199,7 +219,7 @@ export default function GroupsScreen() {
         </View>
       )}
 
-      {activeTab === "my" ? (
+      {activeTab === "clubs" ? (
         <FlatList
           data={myGroups}
           renderItem={({ item }) => renderGroupCard(item, false)}
@@ -218,6 +238,55 @@ export default function GroupsScreen() {
               >
                 <Text style={s.discoverBtnText}>GRUPLARI KESFET</Text>
               </TouchableOpacity>
+            </View>
+          }
+        />
+      ) : activeTab === "challenges" ? (
+        <FlatList
+          data={challenges}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={s.list}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={brand.accent} />
+          }
+          renderItem={({ item }) => {
+            const daysLeft = Math.max(0, Math.ceil((new Date(item.endDate).getTime() - Date.now()) / 86400000));
+            const progressPct = item.goalValue > 0 ? Math.min(100, ((item.myProgress || 0) / item.goalValue) * 100) : 0;
+            const goalDisplay = item.type === "distance_total" ? `${(item.goalValue / 1000).toFixed(0)} km` : `${item.goalValue}`;
+            const progressDisplay = item.type === "distance_total" ? `${((item.myProgress || 0) / 1000).toFixed(1)} km` : `${Math.round(item.myProgress || 0)}`;
+            return (
+              <TouchableOpacity style={s.challengeCard} activeOpacity={0.7} onPress={() => router.push(`/challenges` as never)}>
+                <View style={s.challengeHeader}>
+                  <Ionicons name="trophy-outline" size={20} color="#FFD700" />
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text style={s.challengeTitle}>{item.title}</Text>
+                    <Text style={s.challengeMeta}>{item.participantCount} katilimci · {daysLeft} gun kaldi</Text>
+                  </View>
+                </View>
+                {item.description && <Text style={s.challengeDesc}>{item.description}</Text>}
+                {item.hasJoined ? (
+                  <View style={s.challengeProgress}>
+                    <View style={s.challengeBarOuter}>
+                      <View style={[s.challengeBarInner, { width: `${progressPct}%` }]} />
+                    </View>
+                    <Text style={s.challengeProgressText}>{progressDisplay} / {goalDisplay}</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={s.challengeJoinBtn}
+                    onPress={() => { API.joinChallenge(item.id).then(() => fetchChallenges()).catch(() => {}); }}
+                  >
+                    <Text style={s.challengeJoinText}>Katil</Text>
+                  </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+            );
+          }}
+          ListEmptyComponent={
+            <View style={s.empty}>
+              <Ionicons name="flag-outline" size={48} color={brand.textDim} />
+              <Text style={s.emptyText}>Aktif meydan okuma yok</Text>
+              <Text style={s.emptyHint}>Yakinda yeni challenge'lar gelecek!</Text>
             </View>
           }
         />
@@ -326,6 +395,26 @@ const s = StyleSheet.create({
   joinBtnText: { fontSize: 10, fontWeight: "700", color: brand.bg, letterSpacing: 1 },
   empty: { alignItems: "center", padding: 48, gap: 12 },
   emptyText: { fontSize: 15, color: brand.textMuted },
+  emptyHint: { fontSize: 12, color: brand.textDim, textAlign: "center" },
+
+  // Challenge cards
+  challengeCard: {
+    backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border, borderRadius: 14,
+    padding: 16, marginBottom: 12,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 4,
+  },
+  challengeHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  challengeTitle: { fontSize: 15, fontWeight: "700", color: brand.text },
+  challengeMeta: { fontSize: 11, color: brand.textDim, marginTop: 2 },
+  challengeDesc: { fontSize: 13, color: brand.textMuted, marginBottom: 12 },
+  challengeProgress: { marginTop: 8 },
+  challengeBarOuter: { height: 8, backgroundColor: brand.border, borderRadius: 4, overflow: "hidden" },
+  challengeBarInner: { height: 8, backgroundColor: brand.accent, borderRadius: 4 },
+  challengeProgressText: { fontSize: 12, color: brand.textMuted, marginTop: 6, fontWeight: "600" },
+  challengeJoinBtn: {
+    marginTop: 8, backgroundColor: brand.accent, borderRadius: 10, paddingVertical: 10, alignItems: "center",
+  },
+  challengeJoinText: { fontSize: 13, fontWeight: "700", color: brand.bg, letterSpacing: 1 },
   discoverBtn: {
     marginTop: 8,
     paddingHorizontal: 20,
