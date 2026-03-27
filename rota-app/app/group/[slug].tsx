@@ -13,6 +13,7 @@ import {
   Alert,
 } from "react-native";
 import { Stack, router, useLocalSearchParams } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 import { API, type Group, type LeaderboardEntry } from "@/lib/api";
@@ -40,6 +41,28 @@ export default function GroupDetailScreen() {
   const [activeTab, setActiveTab] = useState<InnerTab>("feed");
   const [refreshing, setRefreshing] = useState(false);
   const [joining, setJoining] = useState(false);
+
+  const isAdmin = group?.myRole === "owner" || group?.myRole === "admin";
+
+  const handleChangeGroupPhoto = async () => {
+    if (!group || !slug) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.4,
+      base64: true,
+    });
+    if (!result.canceled && result.assets[0]?.base64) {
+      try {
+        const dataUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
+        await API.updateGroup(slug, { image: dataUri });
+        setGroup(prev => prev ? { ...prev, image: result.assets[0].uri } : prev);
+      } catch {
+        Alert.alert("Hata", "Grup fotografi guncellenemedi.");
+      }
+    }
+  };
 
   // Feed state
   const [feedItems, setFeedItems] = useState<Array<any>>([]);
@@ -173,13 +196,22 @@ export default function GroupDetailScreen() {
     <View>
       {/* Group header */}
       <View style={s.groupHeader}>
-        <View style={s.groupAvatarLarge}>
+        <TouchableOpacity
+          style={s.groupAvatarLarge}
+          activeOpacity={isAdmin ? 0.7 : 1}
+          onPress={isAdmin ? handleChangeGroupPhoto : undefined}
+        >
           {group.image ? (
             <Image source={{ uri: group.image }} style={s.groupAvatarLargeImg} />
           ) : (
             <Text style={s.groupInitialsLarge}>{getInitials(group.name)}</Text>
           )}
-        </View>
+          {isAdmin && (
+            <View style={s.cameraOverlay}>
+              <Ionicons name="camera" size={14} color={brand.bg} />
+            </View>
+          )}
+        </TouchableOpacity>
         <Text style={s.groupName}>{group.name}</Text>
         {group.description && (
           <Text style={s.groupDesc}>{group.description}</Text>
@@ -489,6 +521,11 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   groupAvatarLargeImg: { width: 80, height: 80, borderRadius: 40 },
+  cameraOverlay: {
+    position: "absolute", bottom: 0, right: 0, width: 26, height: 26, borderRadius: 13,
+    backgroundColor: brand.accent, justifyContent: "center", alignItems: "center",
+    borderWidth: 2, borderColor: brand.bg,
+  },
   groupInitialsLarge: { fontSize: 28, fontWeight: "bold", color: brand.accent },
   groupName: { fontSize: 20, fontWeight: "bold", color: brand.text, letterSpacing: 2, textAlign: "center" },
   groupDesc: { fontSize: 13, color: brand.textMuted, textAlign: "center", marginTop: 6, paddingHorizontal: 20 },
