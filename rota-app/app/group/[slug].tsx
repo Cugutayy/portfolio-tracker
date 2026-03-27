@@ -171,8 +171,6 @@ export default function GroupDetailScreen() {
 
   // getInitials imported from @/lib/format
 
-  const isAdmin = group?.myRole === "owner" || group?.myRole === "admin";
-
   if (loading || !group) {
     return (
       <SafeAreaView style={s.container}>
