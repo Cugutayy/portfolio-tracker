@@ -18,7 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 import { API, type Badge, type Member, type WeeklyGoalResponse, type PersonalRecord } from "@/lib/api";
 import { getUser, setUser as cacheUser } from "@/lib/auth";
-import { formatPace, formatDuration } from "@/lib/format";
+import { formatPace, formatDuration, formatDistance, formatDate } from "@/lib/format";
 
 export default function ProfileScreen() {
   const [user, setUser] = useState<{ id: string; name: string; email: string; image?: string | null } | null>(null);
@@ -37,6 +37,8 @@ export default function ProfileScreen() {
   const [weeklyStats, setWeeklyStats] = useState<{ totalRuns: number; totalDistanceM: number; totalTimeSec: number; avgPaceSecKm: number | null; distanceChange: number | null } | null>(null);
   const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoalResponse | null>(null);
   const [personalRecords, setPersonalRecords] = useState<PersonalRecord[]>([]);
+  const [profileTab, setProfileTab] = useState<"progress" | "activities" | "achievements">("progress");
+  const [myActivities, setMyActivities] = useState<Array<{ id: string; title: string; distanceM: number; movingTimeSec: number; startTime: string; avgPaceSecKm: number | null }>>([]);
 
   const loadProfile = useCallback(async () => {
     try {
@@ -98,13 +100,24 @@ export default function ProfileScreen() {
     } catch {}
   }, []);
 
+  const loadMyActivities = useCallback(async () => {
+    try {
+      const res = await API.getActivities(1, 20);
+      setMyActivities((res.activities || []).map((a: any) => ({
+        id: a.id, title: a.title, distanceM: a.distanceM, movingTimeSec: a.movingTimeSec,
+        startTime: a.startTime, avgPaceSecKm: a.avgPaceSecKm,
+      })));
+    } catch {}
+  }, []);
+
   useFocusEffect(
     useCallback(() => {
       loadProfile();
       loadBadges();
       loadWeeklyGoal();
       loadRecords();
-    }, [loadProfile, loadBadges, loadWeeklyGoal, loadRecords])
+      loadMyActivities();
+    }, [loadProfile, loadBadges, loadWeeklyGoal, loadRecords, loadMyActivities])
   );
 
   const handleSync = async () => {
@@ -191,6 +204,27 @@ export default function ProfileScreen() {
             <Text style={s.followLabel}>TAKIP</Text>
           </TouchableOpacity>
         </View>
+
+        {/* ── 3-Tab Bar (Strava: İlerleme/Egzersizler/Aktiviteler) ── */}
+        <View style={s.profileTabs}>
+          {([
+            { key: "progress", label: "ILERLEME" },
+            { key: "activities", label: "AKTIVITELER" },
+            { key: "achievements", label: "BASARILAR" },
+          ] as const).map(t => (
+            <TouchableOpacity
+              key={t.key}
+              style={[s.profileTab, profileTab === t.key && s.profileTabActive]}
+              onPress={() => setProfileTab(t.key)}
+            >
+              <Text style={[s.profileTabText, profileTab === t.key && s.profileTabTextActive]}>{t.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* ═══ ILERLEME TAB ═══ */}
+        {profileTab === "progress" && (
+          <View>
 
         {/* Activation Milestones — shown until all complete */}
         {(() => {
@@ -314,58 +348,6 @@ export default function ProfileScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Personal Records Section */}
-        {personalRecords.length > 0 && (
-          <View style={s.section}>
-            <Text style={s.sectionTitle}>KISISEL REKORLAR</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.prScroll}>
-              {personalRecords.map((pr) => (
-                <View key={pr.distance} style={s.prCard}>
-                  <Ionicons name="trophy" size={16} color="#FFD700" />
-                  <Text style={s.prDistance}>{pr.distance}</Text>
-                  <Text style={s.prTime}>{formatDuration(pr.timeSec)}</Text>
-                  {pr.improvement != null && pr.improvement > 0 && (
-                    <View style={s.prImpRow}>
-                      <Ionicons name="arrow-up" size={10} color={brand.success} />
-                      <Text style={s.prImpText}>{pr.improvement.toFixed(1)}%</Text>
-                    </View>
-                  )}
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Trophy Case — Strava/Garmin style */}
-        <View style={s.section}>
-          <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>KUPA DOLABI</Text>
-            {badges.length > 4 && (
-              <TouchableOpacity onPress={() => router.push("/badges" as never)}>
-                <Text style={s.seeAll}>Tumunu Gor ({badges.length})</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          {badges.length > 0 ? (
-            <View style={s.badgesGrid}>
-              {badges.slice(0, 8).map(({ badge, earnedAt }) => (
-                <View key={badge.id} style={s.badgeItem}>
-                  <View style={s.badgeIconWrap}>
-                    <Text style={s.badgeEmoji}>{badge.iconEmoji}</Text>
-                  </View>
-                  <Text style={s.badgeName} numberOfLines={1}>{badge.name}</Text>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <View style={s.emptyBadges}>
-              <Ionicons name="trophy-outline" size={32} color={brand.textDim} />
-              <Text style={s.emptyBadgesText}>Henuz rozet kazanilmadi</Text>
-              <Text style={s.emptyBadgesHint}>Kosu yap, hedef tamamla, rozet kazan!</Text>
-            </View>
-          )}
-        </View>
-
         {/* Health Data Import */}
         <TouchableOpacity
           style={s.healthButton}
@@ -413,7 +395,83 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Settings shortcut — logout moved to settings */}
+          </View>
+        )}
+
+        {/* ═══ AKTIVITELER TAB ═══ */}
+        {profileTab === "activities" && (
+          <View>
+            <Text style={s.sectionTitle}>SON AKTIVITELER</Text>
+            {myActivities.length > 0 ? myActivities.map((a) => (
+              <TouchableOpacity key={a.id} style={s.activityRow} onPress={() => router.push(`/activity/${a.id}` as never)} activeOpacity={0.7}>
+                <View style={s.activityIcon}>
+                  <Ionicons name="footsteps-outline" size={18} color={brand.accent} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.activityTitle}>{a.title}</Text>
+                  <Text style={s.activityMeta}>
+                    {formatDate(a.startTime)} · {formatDistance(a.distanceM)} km · {formatPace(a.avgPaceSecKm)} /km
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={brand.textDim} />
+              </TouchableOpacity>
+            )) : (
+              <View style={s.emptyBadges}>
+                <Ionicons name="walk-outline" size={32} color={brand.textDim} />
+                <Text style={s.emptyBadgesText}>Henuz aktivite yok</Text>
+                <Text style={s.emptyBadgesHint}>Bir kosu baslat veya Strava'dan senkronize et</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* ═══ BASARILAR TAB ═══ */}
+        {profileTab === "achievements" && (
+          <View>
+            {/* Personal Records */}
+            {personalRecords.length > 0 && (
+              <View style={s.section}>
+                <Text style={s.sectionTitle}>KISISEL REKORLAR</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.prScroll}>
+                  {personalRecords.map((pr) => (
+                    <View key={pr.distance} style={s.prCard}>
+                      <Ionicons name="trophy" size={16} color="#FFD700" />
+                      <Text style={s.prDistance}>{pr.distance}</Text>
+                      <Text style={s.prTime}>{formatDuration(pr.timeSec)}</Text>
+                      {pr.improvement != null && pr.improvement > 0 && (
+                        <View style={s.prImpRow}>
+                          <Ionicons name="arrow-up" size={10} color={brand.success} />
+                          <Text style={s.prImpText}>{pr.improvement.toFixed(1)}%</Text>
+                        </View>
+                      )}
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Badges */}
+            {badges.length > 0 ? (
+              <View style={s.section}>
+                <Text style={s.sectionTitle}>ROZETLER</Text>
+                <View style={s.badgesGrid}>
+                  {badges.map(({ badge }) => (
+                    <View key={badge.id} style={s.badgeItem}>
+                      <Text style={s.badgeEmoji}>{badge.iconEmoji}</Text>
+                      <Text style={s.badgeName}>{badge.name}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : (
+              <View style={s.emptyBadges}>
+                <Ionicons name="trophy-outline" size={32} color={brand.textDim} />
+                <Text style={s.emptyBadgesText}>Henuz basari yok</Text>
+                <Text style={s.emptyBadgesHint}>Kosu yap, hedef tamamla, rozet kazan!</Text>
+              </View>
+            )}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -479,6 +537,25 @@ const s = StyleSheet.create({
   // Invite
   inviteButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: brand.accent, paddingVertical: 14, borderRadius: 4, marginBottom: 16 },
   inviteButtonText: { fontSize: 12, fontWeight: "700", color: brand.bg, letterSpacing: 2 },
+
+  // Profile Tabs (Strava-style)
+  profileTabs: { flexDirection: "row", borderBottomWidth: 2, borderBottomColor: brand.border, marginBottom: 20 },
+  profileTab: { flex: 1, alignItems: "center", paddingVertical: 12 },
+  profileTabActive: { borderBottomWidth: 2, borderBottomColor: brand.accent, marginBottom: -2 },
+  profileTabText: { fontSize: 11, fontWeight: "600", color: brand.textDim, letterSpacing: 2 },
+  profileTabTextActive: { color: brand.accent },
+
+  // Activity rows (Aktiviteler tab)
+  activityRow: {
+    flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14,
+    borderBottomWidth: 1, borderBottomColor: brand.border,
+  },
+  activityIcon: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: brand.accentDim,
+    alignItems: "center", justifyContent: "center",
+  },
+  activityTitle: { fontSize: 14, fontWeight: "600", color: brand.text },
+  activityMeta: { fontSize: 12, color: brand.textDim, marginTop: 2 },
 
   // Personal Records
   prScroll: { gap: 10, paddingRight: 16 },
