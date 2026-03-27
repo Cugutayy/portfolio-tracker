@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from "react-native";
+import { useEffect, useRef } from "react";
+import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Animated, Vibration, Share } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
@@ -40,14 +41,46 @@ export default function RunSummaryScreen() {
     try { return JSON.parse(params.newPRs || "[]"); } catch { return []; }
   })();
 
+  // Celebration animation
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const prBounce = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Fade in + scale
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, friction: 5, tension: 60, useNativeDriver: true }),
+    ]).start();
+
+    // PR celebration: haptic + bounce
+    if (newPRs.length > 0) {
+      Vibration.vibrate([0, 100, 50, 100, 50, 200]);
+      Animated.sequence([
+        Animated.delay(300),
+        Animated.spring(prBounce, { toValue: 1, friction: 3, tension: 100, useNativeDriver: true }),
+      ]).start();
+    }
+  }, []);
+
+  const handleShare = async () => {
+    const prText = newPRs.length > 0
+      ? `\nYeni PB: ${newPRs.map(p => `${p.distance} ${formatDuration(p.timeSec)}`).join(", ")}`
+      : "";
+    const message = `${formatDistance(distanceM)} km kosdum! Tempo: ${formatPace(avgPaceSecKm)}/km, Sure: ${formatDuration(movingTimeSec)}${prText}\n\nRota App ile kostu`;
+    try {
+      await Share.share({ message });
+    } catch {}
+  };
+
   return (
     <SafeAreaView style={s.container}>
-      <ScrollView contentContainerStyle={s.content}>
+      <Animated.ScrollView contentContainerStyle={s.content} style={{ opacity: fadeAnim, transform: [{ scale: scaleAnim }] }}>
         {/* PR Celebration */}
         {newPRs.length > 0 && (
-          <View style={s.prSection}>
+          <Animated.View style={[s.prSection, { transform: [{ scale: prBounce.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) }] }]}>
             <View style={s.prHeader}>
-              <Ionicons name="trophy" size={28} color="#FFD700" />
+              <Ionicons name="trophy" size={32} color="#FFD700" />
               <Text style={s.prTitle}>Yeni Kisisel Rekor!</Text>
             </View>
             {newPRs.map((pr) => (
@@ -65,7 +98,7 @@ export default function RunSummaryScreen() {
                 )}
               </View>
             ))}
-          </View>
+          </Animated.View>
         )}
 
         {/* Header */}
@@ -144,10 +177,14 @@ export default function RunSummaryScreen() {
             })}
           </View>
         )}
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Bottom Actions */}
       <View style={s.actions}>
+        <TouchableOpacity style={s.shareButton} onPress={handleShare} activeOpacity={0.7}>
+          <Ionicons name="share-outline" size={18} color={brand.text} />
+          <Text style={s.shareButtonText}>PAYLAS</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={s.doneButton}
           onPress={() => router.replace("/(tabs)" as never)}
@@ -211,9 +248,15 @@ const s = StyleSheet.create({
   splitPace: { fontSize: 13, color: brand.textMuted, fontWeight: "600", width: 50, textAlign: "right" },
   splitPaceBest: { color: brand.accent, fontWeight: "800" },
 
-  actions: { position: "absolute", bottom: 0, left: 0, right: 0, padding: 20, paddingBottom: 36, backgroundColor: brand.bg },
+  actions: { position: "absolute", bottom: 0, left: 0, right: 0, padding: 20, paddingBottom: 36, backgroundColor: brand.bg, flexDirection: "row", gap: 12 },
+  shareButton: {
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    backgroundColor: brand.surface, borderRadius: 12, paddingVertical: 16,
+    borderWidth: 1, borderColor: brand.border,
+  },
+  shareButtonText: { fontSize: 13, fontWeight: "700", color: brand.text, letterSpacing: 1 },
   doneButton: {
-    backgroundColor: brand.accent, borderRadius: 12, paddingVertical: 16, alignItems: "center",
+    flex: 2, backgroundColor: brand.accent, borderRadius: 12, paddingVertical: 16, alignItems: "center",
   },
   doneButtonText: { fontSize: 14, fontWeight: "800", color: brand.bg, letterSpacing: 2 },
 });
