@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -72,7 +72,7 @@ export default function FeedScreen() {
   const podiumAnim = useRef(new Animated.Value(0)).current;
 
   // Merge activities and posts into a single feed sorted by date (deduplicated)
-  const feedItems: FeedItem[] = (() => {
+  const feedItems = useMemo<FeedItem[]>(() => {
     const seen = new Set<string>();
     const items: FeedItem[] = [];
     for (const a of activities) {
@@ -89,7 +89,7 @@ export default function FeedScreen() {
       return new Date(dateB).getTime() - new Date(dateA).getTime();
     });
     return items;
-  })();
+  }, [activities, posts]);
 
   const fetchActivities = useCallback(async (pageNum: number, append: boolean) => {
     const offset = (pageNum - 1) * PAGE_SIZE;
@@ -252,9 +252,16 @@ export default function FeedScreen() {
     }).start();
   };
 
+  // Tab switch triggers refetch via switchTab clearing data + fetchActivities/fetchPosts
+  // having activeTab in their deps. useFocusEffect handles initial load.
+  // Only refetch explicitly on tab switch (not on every dep change):
+  const prevTab = useRef(activeTab);
   useEffect(() => {
-    fetchActivities(1, false);
-    fetchPosts(1, false);
+    if (prevTab.current !== activeTab) {
+      prevTab.current = activeTab;
+      fetchActivities(1, false);
+      fetchPosts(1, false);
+    }
   }, [activeTab, fetchActivities, fetchPosts]);
 
   // Optimistic kudos toggle for activities
@@ -508,10 +515,10 @@ export default function FeedScreen() {
     </TouchableOpacity>
   );
 
-  const [failedPhotos, setFailedPhotos] = useState<Set<string>>(new Set());
+  const failedPhotosRef = useRef(new Set<string>());
 
   const renderPostCard = (item: Post) => {
-    const photos = [item.photoUrl, item.photoUrl2, item.photoUrl3].filter((u): u is string => !!u && !failedPhotos.has(u));
+    const photos = [item.photoUrl, item.photoUrl2, item.photoUrl3].filter((u): u is string => !!u && !failedPhotosRef.current.has(u));
     return (
       <TouchableOpacity style={s.card} activeOpacity={0.7} onPress={() => router.push(`/post/${item.id}` as never)}>
         <View style={s.cardHeader}>
@@ -539,7 +546,7 @@ export default function FeedScreen() {
               source={{ uri: photos[0] }}
               style={s.cardPhoto}
               resizeMode="cover"
-              onError={() => setFailedPhotos(prev => new Set(prev).add(photos[0]))}
+              onError={() => { failedPhotosRef.current.add(photos[0]); }}
             />
           </View>
         )}
@@ -627,6 +634,10 @@ export default function FeedScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={brand.accent} />}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
+        removeClippedSubviews
+        windowSize={5}
+        maxToRenderPerBatch={5}
+        initialNumToRender={7}
         ListEmptyComponent={
           initialLoading ? (
             <ActivityIndicator color={brand.accent} size="large" style={{ marginTop: 60 }} />
