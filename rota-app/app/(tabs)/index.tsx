@@ -88,7 +88,18 @@ export default function MapHomeScreen() {
         // Fallback: use regular events endpoint (for backends without /nearby)
         try {
           const res = await API.getEvents() as any;
-          return (res.events || []).map((e: any) => ({ ...e, lat: e.lat || null, lng: e.lng || null }));
+          // Assign user's location + small random offset to events without coordinates
+          return (res.events || []).map((e: any, i: number) => {
+            if (e.lat && e.lng) return e;
+            // Spread events in ~500m radius around user so they don't stack
+            const angle = (i / ((res.events || []).length || 1)) * Math.PI * 2;
+            const spread = 0.002 + Math.random() * 0.003; // ~200-500m
+            return {
+              ...e,
+              lat: userLat! + Math.sin(angle) * spread,
+              lng: userLng! + Math.cos(angle) * spread,
+            };
+          });
         } catch { return []; }
       }
     };
