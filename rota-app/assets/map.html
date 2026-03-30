@@ -130,7 +130,11 @@ function initMap() {
 }
 
 function resolveCat(e) {
+  // 1. Direct category field
   if (e.category && CAT[e.category]) return e.category;
+  // 2. eventType IS a new category name (spor, kosu, kafe, etc.)
+  if (e.eventType && CAT[e.eventType]) return e.eventType;
+  // 3. eventType is an old running type (group_run, tempo_run, etc.)
   if (e.eventType && TYPE_TO_CAT[e.eventType]) return TYPE_TO_CAT[e.eventType];
   return 'diger';
 }
