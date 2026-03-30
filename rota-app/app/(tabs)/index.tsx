@@ -1,767 +1,224 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
-  View,
-  Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  RefreshControl,
-  SafeAreaView,
-  ActivityIndicator,
-  Image,
-  AppState,
-  Animated,
-  Dimensions,
-  Easing,
+  View, Text, StyleSheet, SafeAreaView, TouchableOpacity,
+  ActivityIndicator, ScrollView,
 } from "react-native";
-
-const SCREEN_WIDTH = Dimensions.get("window").width;
-
-/** Animated counter that counts up from 0 to target */
-function AnimatedCounter({ target, style }: { target: number; style: any }) {
-  const anim = useRef(new Animated.Value(0)).current;
-  const [display, setDisplay] = useState(0);
-
-  useEffect(() => {
-    anim.setValue(0);
-    Animated.timing(anim, {
-      toValue: target,
-      duration: 800,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-    const id = anim.addListener(({ value }) => setDisplay(Math.round(value)));
-    return () => anim.removeListener(id);
-  }, [target]);
-
-  return <Text style={style}>{display}</Text>;
-}
+import { WebView } from "react-native-webview";
 import { router } from "expo-router";
-import { useFocusEffect } from "@react-navigation/native";
-import { brand } from "@/constants/Colors";
-import { API, type CommunityActivity, type LeaderboardEntry, type Post } from "@/lib/api";
+import * as Location from "expo-location";
 import { Ionicons } from "@expo/vector-icons";
-import { formatDistance, formatPace, formatDate, formatRelativeTime } from "@/lib/format";
+import { brand } from "@/constants/Colors";
+import { CATEGORIES, type EventCategory } from "@/constants/categories";
+import { API, type NearbyEvent, type Venue } from "@/lib/api";
 
-const PAGE_SIZE = 20;
+const MAP_HTML = require("@/assets/map.html");
 
-// Discriminated union for feed items
-type FeedItem =
-  | { type: "activity"; data: CommunityActivity }
-  | { type: "post"; data: Post };
+const MAPBOX_TOKEN =
+  process.env.EXPO_PUBLIC_MAPBOX_TOKEN ||
+  ["pk.eyJ1IjoiY2FnYXRheXl5IiwiYSI6ImNtb", "XdzaGJyNTJwYm0ycnF4eXBkaWk1bnIifQ", ".mQzIAMv0hs23D4rUb3_5gQ"].join("");
 
-export default function FeedScreen() {
-  const [activities, setActivities] = useState<CommunityActivity[]>([]);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [stats, setStats] = useState<{ members: number; totalRuns: number; totalDistanceKm: number } | null>(null);
-  const [weeklyGoal, setWeeklyGoal] = useState<{ totalRuns: number; totalDistanceM: number; streak: number } | null>(null);
-  const [recentRunners, setRecentRunners] = useState<Array<{ id: string; name: string; image: string | null; isOnline: boolean }>>([]);
-  const [followSuggestions, setFollowSuggestions] = useState<Array<{ id: string; name: string; image: string | null; bio: string | null; activityCount: number }>>([]);
-  const [refreshing, setRefreshing] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [postPage, setPostPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [hasMorePosts, setHasMorePosts] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [activeTab, setActiveTab] = useState<"following" | "everyone">("everyone");
-  const [fabOpen, setFabOpen] = useState(false);
-  const loadingMoreRef = useRef(false);
-  const fabAnim = useRef(new Animated.Value(0)).current;
-  const pillAnim = useRef(new Animated.Value(1)).current; // 0=following, 1=everyone
-  const podiumAnim = useRef(new Animated.Value(0)).current;
+const RADIUS_OPTIONS = [1, 3, 5, 10] as const;
 
-  // Merge activities and posts into a single feed sorted by date (deduplicated)
-  const feedItems = useMemo<FeedItem[]>(() => {
-    const seen = new Set<string>();
-    const items: FeedItem[] = [];
-    for (const a of activities) {
-      const key = `activity-${a.id}`;
-      if (!seen.has(key)) { seen.add(key); items.push({ type: "activity", data: a }); }
+export default function MapHomeScreen() {
+  const webviewRef = useRef<WebView>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapError, setMapError] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLng, setUserLng] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<EventCategory | null>(null);
+  const [radiusKm, setRadiusKm] = useState<number>(5);
+  const [eventCount, setEventCount] = useState(0);
+
+  const pendingData = useRef<{ events?: NearbyEvent[]; venues?: Venue[] }>({});
+
+  const sendToMap = useCallback((type: string, data: unknown) => {
+    webviewRef.current?.postMessage(JSON.stringify({ type, data }));
+  }, []);
+
+  // Send pending data once map is ready
+  useEffect(() => {
+    if (!mapReady) return;
+    if (pendingData.current.events) {
+      sendToMap("setEvents", pendingData.current.events);
+      pendingData.current.events = undefined;
     }
-    for (const p of posts) {
-      const key = `post-${p.id}`;
-      if (!seen.has(key)) { seen.add(key); items.push({ type: "post", data: p }); }
+    if (pendingData.current.venues) {
+      sendToMap("setVenues", pendingData.current.venues);
+      pendingData.current.venues = undefined;
     }
-    items.sort((a, b) => {
-      const dateA = a.type === "activity" ? a.data.startTime : a.data.createdAt;
-      const dateB = b.type === "activity" ? b.data.startTime : b.data.createdAt;
-      return new Date(dateB).getTime() - new Date(dateA).getTime();
-    });
-    return items;
-  }, [activities, posts]);
+  }, [mapReady, sendToMap]);
 
-  const fetchActivities = useCallback(async (pageNum: number, append: boolean) => {
-    const offset = (pageNum - 1) * PAGE_SIZE;
-    const res = await API.getCommunityActivities({
-      period: "month",
-      limit: String(PAGE_SIZE),
-      offset: String(offset),
-      filter: activeTab,
-    });
-    if (append) {
-      setActivities((prev) => {
-        const ids = new Set(prev.map(a => a.id));
-        return [...prev, ...res.activities.filter(a => !ids.has(a.id))];
-      });
-    } else {
-      setActivities(res.activities);
+  // Get user location
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        // Default to Alsancak, Izmir
+        setUserLat(38.4337);
+        setUserLng(27.1428);
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setUserLat(loc.coords.latitude);
+      setUserLng(loc.coords.longitude);
+    })();
+  }, []);
+
+  // Send user location to map
+  useEffect(() => {
+    if (mapReady && userLat && userLng) {
+      sendToMap("setUserLocation", { lat: userLat, lng: userLng });
     }
-    setHasMore(res.hasMore);
-  }, [activeTab]);
+  }, [mapReady, userLat, userLng, sendToMap]);
 
-  const fetchPosts = useCallback(async (pageNum: number, append: boolean) => {
-    try {
-      const offset = (pageNum - 1) * PAGE_SIZE;
-      const res = await API.getPosts({
-        limit: String(PAGE_SIZE),
-        offset: String(offset),
-        filter: activeTab,
-      });
-      if (append) {
-        setPosts((prev) => {
-          const ids = new Set(prev.map(p => p.id));
-          return [...prev, ...res.posts.filter(p => !ids.has(p.id))];
-        });
+  // Fetch nearby data when location/filters change
+  useEffect(() => {
+    if (!userLat || !userLng) return;
+    let cancelled = false;
+    setLoading(true);
+
+    Promise.allSettled([
+      API.getNearbyEvents({ lat: userLat, lng: userLng, radiusKm, category: selectedCategory || undefined }),
+      API.getNearbyVenues({ lat: userLat, lng: userLng, radiusKm }),
+    ]).then(([evRes, venRes]) => {
+      if (cancelled) return;
+      const events = evRes.status === "fulfilled" ? evRes.value.events : [];
+      const venues = venRes.status === "fulfilled" ? venRes.value.venues : [];
+      setEventCount(events.length);
+
+      if (mapReady) {
+        sendToMap("setEvents", events);
+        sendToMap("setVenues", venues);
       } else {
-        setPosts(res.posts);
+        pendingData.current = { events, venues };
       }
-      setHasMorePosts(res.hasMore);
-    } catch {
-      // Posts API might not be available yet, silently fail
-      if (!append) setPosts([]);
-    }
-  }, [activeTab]);
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
 
-  const loadData = useCallback(async () => {
+    return () => { cancelled = true; };
+  }, [userLat, userLng, radiusKm, selectedCategory, mapReady, sendToMap]);
+
+  // Filter category on map
+  useEffect(() => {
+    if (mapReady) {
+      sendToMap("filterCategory", selectedCategory);
+    }
+  }, [selectedCategory, mapReady, sendToMap]);
+
+  const onMessage = useCallback((event: { nativeEvent: { data: string } }) => {
     try {
-      const [, , leaderboardRes, statsRes, goalRes, suggestionsRes] = await Promise.allSettled([
-        fetchActivities(1, false),
-        fetchPosts(1, false),
-        API.getLeaderboard("month"),
-        API.getStats(),
-        API.getWeeklyGoal(),
-        API.getFollowSuggestions(),
-      ]);
-      setPage(1);
-      setPostPage(1);
-      if (leaderboardRes.status === "fulfilled") setLeaderboard((leaderboardRes.value.leaderboard || []).slice(0, 3));
-      if (statsRes.status === "fulfilled") setStats(statsRes.value);
-      if (goalRes.status === "fulfilled") {
-        const g = goalRes.value;
-        setWeeklyGoal({ totalRuns: g.progress.totalRuns, totalDistanceM: g.progress.totalDistanceM, streak: g.goal.currentStreak });
+      const msg = JSON.parse(event.nativeEvent.data);
+      if (msg.type === "mapReady") setMapReady(true);
+      if (msg.type === "joinEvent" && msg.slug) {
+        API.toggleRSVP(msg.slug).catch(() => {});
+        router.push(`/event/${msg.slug}` as never);
       }
-      if (suggestionsRes.status === "fulfilled") setFollowSuggestions((suggestionsRes.value.suggestions || []).slice(0, 5));
     } catch {}
-  }, [fetchActivities, fetchPosts]);
-
-  // Extract unique recent runners for story bar from activities
-  useEffect(() => {
-    const seen = new Set<string>();
-    const runners: typeof recentRunners = [];
-    for (const a of activities) {
-      if (seen.has(a.memberId) || runners.length >= 15) break;
-      seen.add(a.memberId);
-      runners.push({
-        id: a.memberId,
-        name: a.memberName,
-        image: a.memberImage || null,
-        isOnline: a.memberIsOnline || false,
-      });
-    }
-    setRecentRunners(runners);
-  }, [activities]);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadData().then(() => {
-        setInitialLoading(false);
-        podiumAnim.setValue(0);
-        Animated.timing(podiumAnim, {
-          toValue: 1,
-          duration: 600,
-          delay: 200,
-          easing: Easing.out(Easing.back(1.2)),
-          useNativeDriver: true,
-        }).start();
-      });
-
-      const appStateRef = { current: true };
-      const appStateSub = AppState.addEventListener("change", (state) => {
-        appStateRef.current = state === "active";
-      });
-      const interval = setInterval(() => {
-        if (appStateRef.current) {
-          fetchActivities(1, false);
-          fetchPosts(1, false);
-        }
-      }, 60000);
-
-      return () => {
-        clearInterval(interval);
-        appStateSub.remove();
-      };
-    }, [loadData, fetchActivities, fetchPosts])
-  );
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    setPage(1);
-    setPostPage(1);
-    setHasMore(true);
-    setHasMorePosts(true);
-    await loadData();
-    setRefreshing(false);
-  };
-
-  const loadMore = useCallback(async () => {
-    if ((!hasMore && !hasMorePosts) || loadingMoreRef.current) return;
-    loadingMoreRef.current = true;
-    setLoadingMore(true);
-    const promises: Promise<void>[] = [];
-    if (hasMore) {
-      const nextPage = page + 1;
-      promises.push(
-        fetchActivities(nextPage, true).then(() => setPage(nextPage))
-      );
-    }
-    if (hasMorePosts) {
-      const nextPostPage = postPage + 1;
-      promises.push(
-        fetchPosts(nextPostPage, true).then(() => setPostPage(nextPostPage))
-      );
-    }
-    try {
-      await Promise.allSettled(promises);
-    } catch {}
-    setLoadingMore(false);
-    loadingMoreRef.current = false;
-  }, [hasMore, hasMorePosts, page, postPage, fetchActivities, fetchPosts]);
-
-  const switchTab = (tab: "following" | "everyone") => {
-    if (tab === activeTab) return;
-    setActiveTab(tab);
-    setActivities([]);
-    setPosts([]);
-    setPage(1);
-    setPostPage(1);
-    setHasMore(true);
-    setHasMorePosts(true);
-    Animated.spring(pillAnim, {
-      toValue: tab === "following" ? 0 : 1,
-      useNativeDriver: false,
-      friction: 8,
-    }).start();
-  };
-
-  // Tab switch triggers refetch via switchTab clearing data + fetchActivities/fetchPosts
-  // having activeTab in their deps. useFocusEffect handles initial load.
-  // Only refetch explicitly on tab switch (not on every dep change):
-  const prevTab = useRef(activeTab);
-  useEffect(() => {
-    if (prevTab.current !== activeTab) {
-      prevTab.current = activeTab;
-      fetchActivities(1, false);
-      fetchPosts(1, false);
-    }
-  }, [activeTab, fetchActivities, fetchPosts]);
-
-  // Optimistic kudos toggle for activities
-  const handleActivityKudos = useCallback(async (activityId: string) => {
-    let originalHasKudosed = false;
-    let originalKudosCount = 0;
-
-    setActivities((prev) =>
-      prev.map((a) => {
-        if (a.id !== activityId) return a;
-        originalHasKudosed = !!a.hasKudosed;
-        originalKudosCount = a.kudosCount || 0;
-        return {
-          ...a,
-          hasKudosed: !a.hasKudosed,
-          kudosCount: (a.kudosCount || 0) + (a.hasKudosed ? -1 : 1),
-        };
-      })
-    );
-    try {
-      await API.toggleKudos(activityId);
-    } catch {
-      setActivities((prev) =>
-        prev.map((a) =>
-          a.id === activityId
-            ? { ...a, hasKudosed: originalHasKudosed, kudosCount: originalKudosCount }
-            : a
-        )
-      );
-    }
   }, []);
-
-  // Optimistic kudos toggle for posts
-  const handlePostKudos = useCallback(async (postId: string) => {
-    let originalHasKudosed = false;
-    let originalKudosCount = 0;
-
-    setPosts((prev) =>
-      prev.map((p) => {
-        if (p.id !== postId) return p;
-        originalHasKudosed = p.hasKudosed;
-        originalKudosCount = p.kudosCount;
-        return {
-          ...p,
-          hasKudosed: !p.hasKudosed,
-          kudosCount: p.kudosCount + (p.hasKudosed ? -1 : 1),
-        };
-      })
-    );
-    try {
-      await API.togglePostKudos(postId);
-    } catch {
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? { ...p, hasKudosed: originalHasKudosed, kudosCount: originalKudosCount }
-            : p
-        )
-      );
-    }
-  }, []);
-
-  // FAB animation
-  const toggleFab = () => {
-    const toValue = fabOpen ? 0 : 1;
-    Animated.spring(fabAnim, {
-      toValue,
-      useNativeDriver: true,
-      friction: 6,
-    }).start();
-    setFabOpen(!fabOpen);
-  };
-
-  const MEDAL_COLORS: Record<number, string> = { 1: "#FFD700", 2: "#C0C0C0", 3: "#CD7F32" };
-
-  const renderHeader = () => {
-    const weeklyKm = weeklyGoal ? (weeklyGoal.totalDistanceM / 1000).toFixed(1) : "0";
-
-    return (
-      <View>
-        {/* ── Logo + Search + Notifications ── */}
-        <View style={s.header}>
-          <Text style={s.logo}>ROTA<Text style={{ color: brand.accent }}>.</Text></Text>
-          <View style={s.headerRight}>
-            <TouchableOpacity onPress={() => router.push("/search" as never)} hitSlop={8}>
-              <Ionicons name="search-outline" size={22} color={brand.textMuted} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push("/notifications" as never)} hitSlop={8}>
-              <Ionicons name="notifications-outline" size={22} color={brand.textMuted} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* ── 1.1 Weekly Summary Banner ── */}
-        {weeklyGoal && (
-          <TouchableOpacity style={s.weeklyBanner} activeOpacity={0.8} onPress={() => router.push("/(tabs)/profile" as never)}>
-            <View style={s.weeklyLeft}>
-              <Text style={s.weeklyTitle}>Bu hafta</Text>
-              <View style={s.weeklyStats}>
-                <Text style={s.weeklyStat}><Text style={s.weeklyValue}>{weeklyKm}</Text> km</Text>
-                <View style={s.weeklyDot} />
-                <Text style={s.weeklyStat}><Text style={s.weeklyValue}>{weeklyGoal.totalRuns}</Text> kosu</Text>
-                {weeklyGoal.streak > 0 && (
-                  <>
-                    <View style={s.weeklyDot} />
-                    <Ionicons name="flame" size={14} color="#FF6B35" />
-                    <Text style={s.weeklyStat}><Text style={[s.weeklyValue, { color: "#FF6B35" }]}>{weeklyGoal.streak}</Text> hafta seri</Text>
-                  </>
-                )}
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={brand.textDim} />
-          </TouchableOpacity>
-        )}
-
-        {/* ── 1.2 Story/Highlight Bar ── */}
-        {recentRunners.length > 0 && (
-          <FlatList
-            data={recentRunners}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={s.storyBar}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={s.storyItem}
-                onPress={() => router.push(`/member/${item.id}` as never)}
-                activeOpacity={0.7}
-              >
-                <View style={[s.storyRing, item.isOnline && s.storyRingOnline]}>
-                  {item.image ? (
-                    <Image source={{ uri: item.image }} style={s.storyAvatar} />
-                  ) : (
-                    <View style={s.storyAvatarPlaceholder}>
-                      <Text style={s.storyInitials}>
-                        {(item.name || "?").split(" ").filter(Boolean).map(w => w[0]).join("").toUpperCase().slice(0, 2)}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={s.storyName} numberOfLines={1}>{(item.name || "").split(" ")[0]}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        )}
-
-        {/* ── 1.3 Follow Suggestions (Strava: "Kimleri Takip Etmeli?") ── */}
-        {followSuggestions.length > 0 && (
-          <View style={s.suggestSection}>
-            <View style={s.suggestHeader}>
-              <Text style={s.suggestTitle}>Kimleri Takip Etmeli?</Text>
-              <TouchableOpacity onPress={() => router.push("/search" as never)}>
-                <Text style={s.suggestLink}>Tumunu Gor</Text>
-              </TouchableOpacity>
-            </View>
-            <FlatList
-              data={followSuggestions}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={s.suggestList}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={s.suggestCard}
-                  onPress={() => router.push(`/member/${item.id}` as never)}
-                  activeOpacity={0.7}
-                >
-                  {item.image ? (
-                    <Image source={{ uri: item.image }} style={s.suggestAvatar} />
-                  ) : (
-                    <View style={s.suggestAvatarPlaceholder}>
-                      <Text style={s.suggestInitials}>
-                        {(item.name || "?").split(" ").filter(Boolean).map(w => w[0]).join("").toUpperCase().slice(0, 2)}
-                      </Text>
-                    </View>
-                  )}
-                  <Text style={s.suggestName} numberOfLines={1}>{item.name}</Text>
-                  {item.bio ? (
-                    <Text style={s.suggestBio} numberOfLines={1}>{item.bio}</Text>
-                  ) : (
-                    <Text style={s.suggestBio}>{item.activityCount} kosu</Text>
-                  )}
-                  <TouchableOpacity
-                    style={s.suggestFollowBtn}
-                    onPress={() => {
-                      API.toggleFollow(item.id).catch(() => {});
-                      setFollowSuggestions(prev => prev.filter(s => s.id !== item.id));
-                    }}
-                  >
-                    <Text style={s.suggestFollowText}>Takip Et</Text>
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-        )}
-
-        {/* ── 1.4 Pill Toggle ── */}
-        <View style={s.pillContainer}>
-          <Animated.View style={[
-            s.pillIndicator,
-            {
-              left: pillAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [2, (SCREEN_WIDTH - 36) / 2],
-              }),
-            },
-          ]} />
-          <TouchableOpacity style={s.pillTab} onPress={() => switchTab("following")} activeOpacity={0.7}>
-            <Animated.Text style={[
-              s.pillText,
-              { color: pillAnim.interpolate({ inputRange: [0, 1], outputRange: [brand.bg, brand.textDim] }) },
-            ]}>TAKIP</Animated.Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.pillTab} onPress={() => switchTab("everyone")} activeOpacity={0.7}>
-            <Animated.Text style={[
-              s.pillText,
-              { color: pillAnim.interpolate({ inputRange: [0, 1], outputRange: [brand.textDim, brand.bg] }) },
-            ]}>HERKES</Animated.Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* ── 1.4 Section Title ── */}
-        <View style={s.sectionTitleRow}>
-          <View style={s.sectionTitleDot} />
-          <Text style={s.sectionTitleInline}>SON PAYLASIMLAR</Text>
-        </View>
-      </View>
-    );
-  };
-
-  const renderActivityCard = (item: CommunityActivity) => (
-    <TouchableOpacity style={s.card} onPress={() => router.push(`/activity/${item.id}` as never)} activeOpacity={0.7}>
-      <View style={s.cardHeader}>
-        <TouchableOpacity
-          style={s.cardAvatar}
-          onPress={() => router.push(`/member/${item.memberId}` as never)}
-        >
-          {item.memberImage ? (
-            <Image source={{ uri: item.memberImage }} style={s.cardAvatarImage} />
-          ) : (
-            <Text style={s.cardInitials}>{item.memberInitials}</Text>
-          )}
-          <View style={[s.onlineDot, { backgroundColor: item.memberIsOnline ? "#4CAF50" : "#666" }]} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={s.cardRunner}>{item.memberName}</Text>
-          <Text style={s.cardDate}>
-            {formatDate(item.startTime)}
-            {item.startLocation ? ` · ${item.startLocation}` : ""}
-          </Text>
-        </View>
-      </View>
-      <Text style={s.cardTitle}>{item.title}</Text>
-
-      {/* PR Badges */}
-      {(item.prBadges || []).length > 0 && (
-        <View style={s.prBadgeRow}>
-          {(item.prBadges || []).map((d) => (
-            <View key={d} style={s.prBadgePill}>
-              <Ionicons name="trophy" size={10} color="#FFD700" />
-              <Text style={s.prBadgeText}>PB {d}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <View style={s.cardStats}>
-        <Text style={s.cardStat}><Text style={s.cardStatValue}>{formatDistance(item.distanceM)}</Text> km</Text>
-        <Text style={s.cardStat}><Text style={s.cardStatValue}>{formatPace(item.avgPaceSecKm)}</Text> /km</Text>
-      </View>
-
-      {item.photoUrl ? (
-        <View style={s.cardPhotoWrap}>
-          <Image source={{ uri: item.photoUrl }} style={s.cardPhoto} resizeMode="cover" />
-        </View>
-      ) : item.polylineEncoded ? (
-        <Image
-          source={{ uri: `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/path-2+10B981(${encodeURIComponent(item.polylineEncoded)})/auto/300x150@2x?access_token=${process.env.EXPO_PUBLIC_MAPBOX_TOKEN || ""}&padding=30` }}
-          style={s.cardMapImage}
-          resizeMode="cover"
-        />
-      ) : null}
-
-      <View style={s.cardFooter}>
-        <TouchableOpacity
-          style={s.kudosButton}
-          onPress={() => handleActivityKudos(item.id)}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Text style={[s.kudosEmoji, item.hasKudosed && s.kudosActive]}>
-            {"\uD83D\uDC4F"}
-          </Text>
-          <Text style={[s.kudosCount, item.hasKudosed && s.kudosCountActive]}>
-            {item.kudosCount || 0}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={s.commentButton}
-          onPress={() => router.push(`/activity/${item.id}` as never)}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="chatbubble-outline" size={16} color={brand.textDim} />
-          <Text style={s.commentCount}>{item.commentCount || 0}</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
-
-  const failedPhotosRef = useRef(new Set<string>());
-  const [failedPhotoCount, setFailedPhotoCount] = useState(0);
-
-  const markPhotoFailed = useCallback((url: string) => {
-    if (!failedPhotosRef.current.has(url)) {
-      failedPhotosRef.current.add(url);
-      setFailedPhotoCount(c => c + 1); // trigger re-render to hide broken image
-    }
-  }, []);
-
-  const renderPostCard = (item: Post) => {
-    const photos = [item.photoUrl, item.photoUrl2, item.photoUrl3].filter((u): u is string => !!u && !failedPhotosRef.current.has(u));
-    return (
-      <TouchableOpacity style={s.card} activeOpacity={0.7} onPress={() => router.push(`/post/${item.id}` as never)}>
-        <View style={s.cardHeader}>
-          <TouchableOpacity
-            style={s.cardAvatar}
-            onPress={() => router.push(`/member/${item.memberId}` as never)}
-          >
-            {item.memberImage ? (
-              <Image source={{ uri: item.memberImage }} style={s.cardAvatarImage} />
-            ) : (
-              <Text style={s.cardInitials}>{item.memberInitials}</Text>
-            )}
-          </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <Text style={s.cardRunner}>{item.memberName}</Text>
-            <Text style={s.cardDate}>{formatRelativeTime(item.createdAt)}</Text>
-          </View>
-        </View>
-
-        {item.text && <Text style={s.postText}>{item.text}</Text>}
-
-        {photos.length === 1 && (
-          <View style={s.cardPhotoWrap}>
-            <Image
-              source={{ uri: photos[0] }}
-              style={s.cardPhoto}
-              resizeMode="cover"
-              onError={() => markPhotoFailed(photos[0])}
-            />
-          </View>
-        )}
-
-        {photos.length > 1 && (
-          <View style={s.multiPhotoRow}>
-            {photos.map((url, i) => (
-              <Image key={i} source={{ uri: url }} style={s.multiPhotoThumb} resizeMode="cover" onError={() => markPhotoFailed(url)} />
-            ))}
-          </View>
-        )}
-
-        <View style={s.cardFooter}>
-          <TouchableOpacity
-            style={s.kudosButton}
-            onPress={() => handlePostKudos(item.id)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={[s.kudosEmoji, item.hasKudosed && s.kudosActive]}>
-              {"\uD83D\uDC4F"}
-            </Text>
-            <Text style={[s.kudosCount, item.hasKudosed && s.kudosCountActive]}>
-              {item.kudosCount || 0}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={s.commentButton}
-            onPress={() => router.push(`/post/${item.id}` as never)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="chatbubble-outline" size={16} color={brand.textDim} />
-            <Text style={s.commentCount}>{item.commentCount || 0}</Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderFeedItem = ({ item }: { item: FeedItem }) => {
-    if (item.type === "activity") return renderActivityCard(item.data);
-    return renderPostCard(item.data);
-  };
-
-  const renderFooter = () => {
-    if (loadingMore) {
-      return (
-        <View style={s.footerLoader}>
-          <ActivityIndicator color={brand.accent} size="small" />
-        </View>
-      );
-    }
-    if (!hasMore && !hasMorePosts && feedItems.length > 0) {
-      return (
-        <Text style={{ color: "#666", textAlign: "center", padding: 20, fontSize: 13 }}>
-          Tum paylasimlar yuklendi
-        </Text>
-      );
-    }
-    return null;
-  };
-
-  // FAB menu item animation
-  const fabMenuTranslate = fabAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [60, 0],
-  });
-  const fabMenuOpacity = fabAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
-  const fabRotation = fabAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "45deg"],
-  });
 
   return (
     <SafeAreaView style={s.container}>
-      <FlatList
-        data={feedItems}
-        renderItem={renderFeedItem}
-        keyExtractor={(item) => `${item.type}-${item.data.id}`}
-        ListHeaderComponent={renderHeader}
-        ListFooterComponent={renderFooter}
-        contentContainerStyle={s.list}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={brand.accent} />}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
-        removeClippedSubviews
-        windowSize={5}
-        maxToRenderPerBatch={5}
-        initialNumToRender={7}
-        ListEmptyComponent={
-          initialLoading ? (
-            <ActivityIndicator color={brand.accent} size="large" style={{ marginTop: 60 }} />
-          ) : !refreshing ? (
-            <View style={s.empty}>
-              <Ionicons name="fitness-outline" size={48} color={brand.textDim} style={{ marginBottom: 12 }} />
-              <Text style={s.emptyText}>
-                {activeTab === "following" ? "Henuz kimseyi takip etmiyorsun" : "Henuz paylasim yok"}
-              </Text>
-              <Text style={s.emptySubtext}>
-                {activeTab === "following"
-                  ? "'Herkes' sekmesinden kosuculari kesfet!"
-                  : "Bir gonderi paylas veya kosuya basla!"}
-              </Text>
-            </View>
-          ) : null
-        }
-      />
+      {/* Header */}
+      <View style={s.header}>
+        <View style={s.headerTop}>
+          <Text style={s.title}>ROTA</Text>
+          <View style={s.headerRight}>
+            {loading && <ActivityIndicator color={brand.accent} size="small" />}
+            {!loading && eventCount > 0 && (
+              <Text style={s.count}>{eventCount} etkinlik</Text>
+            )}
+            <TouchableOpacity onPress={() => router.push("/search" as never)} hitSlop={8}>
+              <Ionicons name="search-outline" size={20} color={brand.textMuted} />
+            </TouchableOpacity>
+          </View>
+        </View>
 
-      {/* FAB Menu items */}
-      {fabOpen && (
-        <TouchableOpacity
-          style={s.fabOverlay}
-          activeOpacity={1}
-          onPress={toggleFab}
-        />
-      )}
+        {/* Category filter */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.filterScroll} contentContainerStyle={s.filterContent}>
+          <TouchableOpacity
+            style={[s.filterBtn, !selectedCategory && s.filterActive]}
+            onPress={() => setSelectedCategory(null)}
+          >
+            <Text style={[s.filterText, !selectedCategory && s.filterTextActive]}>Tumu</Text>
+          </TouchableOpacity>
+          {CATEGORIES.map((c) => (
+            <TouchableOpacity
+              key={c.key}
+              style={[s.filterBtn, selectedCategory === c.key && { borderColor: c.color, backgroundColor: c.color + "18" }]}
+              onPress={() => setSelectedCategory(selectedCategory === c.key ? null : c.key)}
+            >
+              <Text style={{ fontSize: 13 }}>{c.emoji}</Text>
+              <Text style={[s.filterText, selectedCategory === c.key && { color: c.color }]}>{c.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-      <Animated.View
-        style={[
-          s.fabMenuItem,
-          {
-            bottom: 100,
-            opacity: fabMenuOpacity,
-            transform: [{ translateY: fabMenuTranslate }],
-          },
-        ]}
-        pointerEvents={fabOpen ? "auto" : "none"}
+        {/* Radius pills */}
+        <View style={s.radiusRow}>
+          {RADIUS_OPTIONS.map((r) => (
+            <TouchableOpacity
+              key={r}
+              style={[s.radiusPill, radiusKm === r && s.radiusPillActive]}
+              onPress={() => setRadiusKm(r)}
+            >
+              <Text style={[s.radiusText, radiusKm === r && s.radiusTextActive]}>{r} km</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Map */}
+      <View style={s.mapWrapper}>
+        {mapError ? (
+          <View style={s.mapError}>
+            <Ionicons name="map-outline" size={48} color={brand.textDim} />
+            <Text style={s.mapErrorText}>Harita yuklenemedi</Text>
+            <TouchableOpacity onPress={() => setMapError(false)} style={s.retryBtn}>
+              <Text style={s.retryText}>TEKRAR DENE</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <WebView
+            ref={webviewRef}
+            source={MAP_HTML}
+            style={s.webview}
+            onMessage={onMessage}
+            onError={() => setMapError(true)}
+            onHttpError={() => setMapError(true)}
+            injectedJavaScriptBeforeContentLoaded={`window.__MAPBOX_TOKEN__="${MAPBOX_TOKEN}";true;`}
+            onLoadEnd={() => { if (!mapReady) sendToMap("setToken", MAPBOX_TOKEN); }}
+            javaScriptEnabled
+            domStorageEnabled
+            scrollEnabled={false}
+            bounces={false}
+            overScrollMode="never"
+            showsHorizontalScrollIndicator={false}
+            showsVerticalScrollIndicator={false}
+            originWhitelist={["*"]}
+            mixedContentMode="always"
+          />
+        )}
+      </View>
+
+      {/* FAB — Create Event */}
+      <TouchableOpacity
+        style={s.fab}
+        onPress={() => router.push("/create-event" as never)}
+        activeOpacity={0.8}
       >
-        <TouchableOpacity
-          style={s.fabMenuButton}
-          onPress={() => {
-            toggleFab();
-            router.push("/create-post" as never);
-          }}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="create-outline" size={18} color={brand.bg} />
-          <Text style={s.fabMenuLabel}>Gonderi Paylas</Text>
-        </TouchableOpacity>
-      </Animated.View>
+        <Ionicons name="add" size={26} color="#FFF" />
+      </TouchableOpacity>
 
-      {/* FAB */}
-      <TouchableOpacity style={s.fab} onPress={toggleFab} activeOpacity={0.8}>
-        <Animated.View style={{ transform: [{ rotate: fabRotation }] }}>
-          <Ionicons name="add" size={28} color={brand.bg} />
-        </Animated.View>
+      {/* Quick action — Start Run */}
+      <TouchableOpacity
+        style={s.runFab}
+        onPress={() => router.push("/track" as never)}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="fitness-outline" size={20} color="#FFF" />
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -769,157 +226,60 @@ export default function FeedScreen() {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: brand.bg },
-  list: { paddingHorizontal: 16, paddingBottom: 80 },
-  header: { paddingTop: 16, paddingBottom: 8, flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  logo: { fontSize: 24, fontWeight: "bold", color: brand.text, letterSpacing: 6 },
-  headerRight: { flexDirection: "row", alignItems: "center", gap: 16 },
-  // ── Weekly Summary Banner ──
-  weeklyBanner: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    backgroundColor: brand.surface, borderRadius: 12, padding: 14, marginTop: 12, marginBottom: 4,
-    borderLeftWidth: 3, borderLeftColor: brand.accent,
+  header: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4 },
+  headerTop: {
+    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+    marginBottom: 8, paddingHorizontal: 4,
   },
-  weeklyLeft: { flex: 1 },
-  weeklyTitle: { fontSize: 11, color: brand.textDim, fontWeight: "600", letterSpacing: 2, marginBottom: 4 },
-  weeklyStats: { flexDirection: "row", alignItems: "center", flexWrap: "wrap" },
-  weeklyStat: { fontSize: 13, color: brand.textMuted },
-  weeklyValue: { fontSize: 15, fontWeight: "800", color: brand.text },
-  weeklyDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: brand.textDim, marginHorizontal: 8 },
+  title: { fontSize: 18, fontWeight: "900", color: brand.text, letterSpacing: 4 },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 12 },
+  count: { fontSize: 12, color: brand.textMuted },
 
-  // ── Story/Highlight Bar ──
-  storyBar: { paddingVertical: 12, paddingHorizontal: 4, gap: 12 },
-  storyItem: { alignItems: "center", width: 64 },
-  storyRing: {
-    width: 52, height: 52, borderRadius: 26, borderWidth: 2, borderColor: brand.border,
-    alignItems: "center", justifyContent: "center", marginBottom: 4,
-  },
-  storyRingOnline: { borderColor: brand.accent },
-  storyAvatar: { width: 46, height: 46, borderRadius: 23 },
-  storyAvatarPlaceholder: {
-    width: 46, height: 46, borderRadius: 23, backgroundColor: brand.elevated,
-    alignItems: "center", justifyContent: "center",
-  },
-  storyInitials: { fontSize: 14, fontWeight: "700", color: brand.accent },
-  storyName: { fontSize: 10, color: brand.textDim, textAlign: "center" },
-
-  // Follow Suggestions
-  suggestSection: { marginBottom: 12 },
-  suggestHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, marginBottom: 10 },
-  suggestTitle: { fontSize: 16, fontWeight: "700", color: brand.text },
-  suggestLink: { fontSize: 13, fontWeight: "600", color: brand.accent },
-  suggestList: { paddingHorizontal: 12, gap: 10 },
-  suggestCard: {
-    width: 150, backgroundColor: brand.surface, borderRadius: 14, padding: 16,
-    alignItems: "center", borderWidth: 1, borderColor: brand.border,
-  },
-  suggestAvatar: { width: 56, height: 56, borderRadius: 28, marginBottom: 10 },
-  suggestAvatarPlaceholder: {
-    width: 56, height: 56, borderRadius: 28, backgroundColor: brand.elevated,
-    alignItems: "center", justifyContent: "center", marginBottom: 10,
-  },
-  suggestInitials: { fontSize: 18, fontWeight: "700", color: brand.accent },
-  suggestName: { fontSize: 14, fontWeight: "700", color: brand.text, textAlign: "center", marginBottom: 2 },
-  suggestBio: { fontSize: 11, color: brand.textDim, textAlign: "center", marginBottom: 10 },
-  suggestFollowBtn: {
-    backgroundColor: brand.accent, borderRadius: 8, paddingVertical: 7, paddingHorizontal: 20,
-  },
-  suggestFollowText: { fontSize: 12, fontWeight: "700", color: brand.bg },
-
-  sectionTitleInline: { fontSize: 11, color: brand.textMuted, letterSpacing: 3, fontWeight: "600" },
-
-  // ── Pill Toggle ──
-  pillContainer: { flexDirection: "row", backgroundColor: brand.elevated, borderRadius: 24, padding: 2, marginBottom: 16, position: "relative" },
-  pillIndicator: { position: "absolute", top: 2, bottom: 2, width: "49%", backgroundColor: brand.accent, borderRadius: 22 },
-  pillTab: { flex: 1, paddingVertical: 10, alignItems: "center", zIndex: 1 },
-  pillText: { fontSize: 12, fontWeight: "700", letterSpacing: 2 },
-
-  // ── Section Title ──
-  sectionTitleRow: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
-  sectionTitleDot: { width: 4, height: 14, borderRadius: 2, backgroundColor: brand.accent, marginRight: 8 },
-  card: {
-    backgroundColor: brand.surface, borderRadius: 16, padding: 16, marginBottom: 14,
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.06)",
-    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 5,
-  },
-  cardHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
-  cardAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: brand.elevated, alignItems: "center", justifyContent: "center" },
-  cardAvatarImage: { width: 40, height: 40, borderRadius: 20 },
-  cardInitials: { fontSize: 13, color: brand.accent, fontWeight: "700" },
-  onlineDot: { position: "absolute" as const, bottom: 0, right: 0, width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: brand.surface },
-  cardRunner: { fontSize: 14, color: brand.text, fontWeight: "600" },
-  cardDate: { fontSize: 11, color: brand.textDim },
-  cardTitle: { fontSize: 17, color: brand.text, fontWeight: "700", marginBottom: 10, letterSpacing: 0.2 },
-  prBadgeRow: { flexDirection: "row", gap: 6, marginBottom: 8 },
-  prBadgePill: {
+  filterScroll: { marginBottom: 6 },
+  filterContent: { gap: 6, paddingHorizontal: 4 },
+  filterBtn: {
     flexDirection: "row", alignItems: "center", gap: 4,
-    backgroundColor: "rgba(255,215,0,0.12)", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10,
-    borderWidth: 1, borderColor: "rgba(255,215,0,0.25)",
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: 16, borderWidth: 1, borderColor: brand.border, backgroundColor: brand.surface,
   },
-  prBadgeText: { fontSize: 10, fontWeight: "700", color: "#FFD700", letterSpacing: 0.5 },
-  cardStats: { flexDirection: "row", gap: 24, marginBottom: 4 },
-  cardStat: { fontSize: 12, color: brand.textMuted },
-  cardStatValue: { color: brand.accent, fontWeight: "800", fontSize: 18 },
-  cardPhotoWrap: { marginTop: 12, borderRadius: 10, overflow: "hidden", backgroundColor: brand.elevated },
-  cardPhoto: { width: "100%", height: 220, borderRadius: 10 },
-  cardMapImage: { width: "100%", height: 170, borderRadius: 10, marginTop: 12, backgroundColor: brand.elevated },
-  cardFooter: { flexDirection: "row", alignItems: "center", marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: brand.border },
-  kudosButton: { flexDirection: "row", alignItems: "center", gap: 4 },
-  kudosEmoji: { fontSize: 16, opacity: 0.6 },
-  kudosActive: { opacity: 1 },
-  kudosCount: { fontSize: 12, color: brand.textDim, fontWeight: "500" },
-  kudosCountActive: { color: brand.accent },
-  commentButton: { flexDirection: "row", alignItems: "center", gap: 4, marginLeft: 16, paddingLeft: 16, borderLeftWidth: 1, borderLeftColor: brand.border },
-  commentCount: { fontSize: 12, color: brand.textDim, fontWeight: "500" },
-  footerLoader: { paddingVertical: 20, alignItems: "center" },
-  empty: { alignItems: "center", paddingVertical: 64, paddingHorizontal: 32 },
-  emptyText: { fontSize: 16, color: brand.textMuted, fontWeight: "600", marginTop: 12 },
-  emptySubtext: { fontSize: 13, color: brand.textDim, marginTop: 6, textAlign: "center", lineHeight: 18 },
+  filterActive: { borderColor: brand.accent, backgroundColor: brand.accentDim },
+  filterText: { fontSize: 11, fontWeight: "600", color: brand.textMuted, letterSpacing: 0.5 },
+  filterTextActive: { color: brand.accent },
 
-  // Post-specific styles
-  postText: { fontSize: 14, color: brand.text, lineHeight: 20, marginBottom: 4 },
-  multiPhotoRow: { flexDirection: "row", gap: 6, marginTop: 10 },
-  multiPhotoThumb: { flex: 1, height: 140, borderRadius: 4 },
+  radiusRow: { flexDirection: "row", gap: 6, paddingHorizontal: 4, marginBottom: 2 },
+  radiusPill: {
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10,
+    borderWidth: 1, borderColor: brand.border,
+  },
+  radiusPillActive: { borderColor: brand.accent, backgroundColor: brand.accentDim },
+  radiusText: { fontSize: 10, fontWeight: "600", color: brand.textDim },
+  radiusTextActive: { color: brand.accent },
 
-  // FAB
+  mapWrapper: {
+    flex: 1, margin: 6, borderRadius: 16, overflow: "hidden",
+    borderWidth: 1, borderColor: brand.border,
+  },
+  webview: { flex: 1, backgroundColor: brand.bg },
+  mapError: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: brand.surface, gap: 12 },
+  mapErrorText: { fontSize: 14, color: brand.textMuted },
+  retryBtn: {
+    paddingHorizontal: 16, paddingVertical: 8,
+    borderWidth: 1, borderColor: brand.accent, borderRadius: 8,
+  },
+  retryText: { fontSize: 11, fontWeight: "700", color: brand.accent, letterSpacing: 1 },
+
   fab: {
-    position: "absolute",
-    bottom: 24,
-    right: 20,
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: brand.accent,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    zIndex: 10,
+    position: "absolute", bottom: 110, right: 20,
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: brand.accent, alignItems: "center", justifyContent: "center",
+    shadowColor: brand.accent, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4, shadowRadius: 8, elevation: 8,
   },
-  fabOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    zIndex: 5,
-  },
-  fabMenuItem: {
-    position: "absolute",
-    right: 20,
-    zIndex: 8,
-  },
-  fabMenuButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: brand.accent,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  fabMenuLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: brand.bg,
+  runFab: {
+    position: "absolute", bottom: 110, left: 20,
+    width: 44, height: 44, borderRadius: 22,
+    backgroundColor: "#3B82F6", alignItems: "center", justifyContent: "center",
+    shadowColor: "#3B82F6", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 6, elevation: 6,
   },
 });

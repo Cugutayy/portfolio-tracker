@@ -210,15 +210,28 @@ export const API = {
     ),
   rsvpEvent: (slug: string) =>
     api(`/api/events/${slug}/rsvp`, { method: "POST" }),
-  createEvent: (data: {
-    title: string;
-    description?: string | null;
-    meetingPoint?: string | null;
-    distanceM?: number | null;
-    maxParticipants?: number | null;
-    date: string;
-    eventType?: string;
-  }) => api("/api/events", { method: "POST", body: JSON.stringify(data) }),
+  toggleRSVP: (slug: string) =>
+    api(`/api/events/${slug}/rsvp`, { method: "POST" }),
+  createEvent: (data: CreateEventInput) =>
+    api("/api/events", { method: "POST", body: JSON.stringify(data) }),
+
+  // Nearby (location-based)
+  getNearbyEvents: (params: { lat: number; lng: number; radiusKm?: number; category?: string }) =>
+    api<{ events: NearbyEvent[] }>(
+      `/api/events/nearby?lat=${params.lat}&lng=${params.lng}&radiusKm=${params.radiusKm || 5}${params.category ? `&category=${params.category}` : ""}`
+    ),
+  getNearbyVenues: (params: { lat: number; lng: number; radiusKm?: number }) =>
+    api<{ venues: Venue[] }>(
+      `/api/venues/nearby?lat=${params.lat}&lng=${params.lng}&radiusKm=${params.radiusKm || 5}`
+    ),
+  getEventHistory: (params: { lat: number; lng: number; days?: number }) =>
+    api<{ events: NearbyEvent[] }>(
+      `/api/events/history?lat=${params.lat}&lng=${params.lng}&days=${params.days || 7}`
+    ),
+  approveEventMember: (eventId: string, memberId: string) =>
+    api(`/api/events/${eventId}/approve/${memberId}`, { method: "PATCH" }),
+  rejectEventMember: (eventId: string, memberId: string) =>
+    api(`/api/events/${eventId}/reject/${memberId}`, { method: "PATCH" }),
 
   // Kudos
   getKudos: (activityId: string) =>
@@ -577,4 +590,59 @@ export interface PersonalRecord {
   createdAt: string;
   activityTitle?: string | null;
   activityDate?: string | null;
+}
+
+// ── Location-based types ──
+
+export type EventCategory = "spor" | "kosu" | "kafe" | "kitap" | "oyun" | "muzik" | "saglik" | "diger";
+
+export interface NearbyEvent {
+  id: string;
+  slug: string;
+  title: string;
+  category: EventCategory;
+  lat: number;
+  lng: number;
+  date: string;
+  endDate: string | null;
+  durationMinutes: number | null;
+  creatorId: string;
+  creatorName: string;
+  creatorImage: string | null;
+  attendeeCount: number;
+  maxParticipants: number | null;
+  approvalRequired: boolean;
+  isGoing: boolean;
+  distanceKm: number | null;
+  meetingPoint: string | null;
+  status: string;
+}
+
+export interface Venue {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  type: string;
+  recentEventCount: number;
+  lastEventDate: string | null;
+}
+
+export interface CreateEventInput {
+  title: string;
+  description?: string | null;
+  meetingPoint?: string | null;
+  distanceM?: number | null;
+  maxParticipants?: number | null;
+  date: string;
+  endDate?: string | null;
+  eventType?: string;
+  category?: EventCategory;
+  lat?: number | null;
+  lng?: number | null;
+  durationMinutes?: number | null;
+  approvalRequired?: boolean;
+  repeatConfig?: string | null;
+  feeTL?: number | null;
+  photoBase64?: string | null;
 }
