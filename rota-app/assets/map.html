@@ -10,236 +10,334 @@
 body { background: #0D1117; overflow: hidden; }
 #map { width: 100vw; height: 100vh; }
 
+/* Popup */
 .mapboxgl-popup-content {
   background: #161B22 !important;
   color: #fff;
-  border-radius: 8px;
-  padding: 10px 14px;
+  border-radius: 14px;
+  padding: 0;
   font-family: -apple-system, system-ui, sans-serif;
-  font-size: 13px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-  border: 1px solid #333;
-  max-width: 200px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  border: 1px solid #30363D;
+  max-width: 240px;
+  overflow: hidden;
 }
-.mapboxgl-popup-tip { border-top-color: #111 !important; }
-.mapboxgl-popup-close-button { color: #888; font-size: 18px; }
+.mapboxgl-popup-tip { border-top-color: #161B22 !important; }
+.mapboxgl-popup-close-button { color: #888; font-size: 18px; padding: 8px; z-index: 1; }
 
-.popup-name { font-weight: 700; color: #10B981; margin-bottom: 4px; cursor: pointer; }
-.popup-title { color: #ccc; margin-bottom: 4px; cursor: pointer; }
-.popup-stats { display: flex; gap: 12px; font-size: 11px; color: #888; }
-.popup-stats span { color: #10B981; font-weight: 600; }
-
-#leaderboard {
-  position: absolute; bottom: 16px; left: 12px; right: 12px;
-  background: rgba(10,10,10,0.92); border: 1px solid #222;
-  border-radius: 10px; padding: 10px 12px;
-  font-family: -apple-system, system-ui, sans-serif;
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  display: none;
+.popup-card { padding: 14px; }
+.popup-cat { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 8px; margin-bottom: 8px; }
+.popup-title { font-weight: 700; font-size: 15px; color: #E6EDF3; margin-bottom: 6px; line-height: 1.3; }
+.popup-meta { display: flex; gap: 10px; font-size: 11px; color: #8B949E; margin-bottom: 10px; }
+.popup-meta span { display: flex; align-items: center; gap: 3px; }
+.popup-join {
+  width: 100%; padding: 10px; border: none; border-radius: 10px;
+  font-size: 13px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
+  background: #10B981; color: #fff;
 }
-#leaderboard .lb-title { font-size: 10px; color: #555; letter-spacing: 2px; margin-bottom: 6px; }
-.lb-row { display: flex; align-items: center; padding: 4px 0; gap: 8px; }
-.lb-rank { width: 18px; font-size: 11px; color: #555; font-weight: 700; text-align: center; }
-.lb-rank.gold { color: #10B981; }
-.lb-name { flex: 1; font-size: 12px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lb-km { font-size: 12px; color: #10B981; font-weight: 600; }
-.lb-runs { font-size: 10px; color: #555; }
+.popup-join.joined { background: #21262D; color: #8B949E; }
 
+/* Venue popup */
+.venue-popup { padding: 10px 14px; }
+.venue-name { font-weight: 700; font-size: 13px; color: #E6EDF3; margin-bottom: 4px; }
+.venue-meta { font-size: 11px; color: #8B949E; }
+
+/* User location pulse */
+.user-marker {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #3B82F6; border: 3px solid #FFF;
+  box-shadow: 0 0 0 6px rgba(59,130,246,0.25);
+  animation: pulse 2s ease-out infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
+  100% { box-shadow: 0 0 0 20px rgba(59,130,246,0); }
+}
+
+/* Hide Mapbox branding */
 .mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right { display: none !important; }
 </style>
 </head>
 <body>
 <div id="map"></div>
-<div id="leaderboard">
-  <div class="lb-title">LIDER TABLOSU</div>
-  <div id="lb-rows"></div>
-</div>
 
 <script>
-// Token injected from React Native via postMessage
 mapboxgl.accessToken = window.__MAPBOX_TOKEN__ || '';
 
-let map;
+const CATEGORY_COLORS = {
+  spor: '#FF6B35', kosu: '#10B981', kafe: '#A78BFA', kitap: '#60A5FA',
+  oyun: '#F472B6', muzik: '#FBBF24', saglik: '#34D399', diger: '#8B949E'
+};
+const CATEGORY_EMOJI = {
+  spor: '\u{1F3D0}', kosu: '\u{1F3C3}', kafe: '\u2615', kitap: '\u{1F4DA}',
+  oyun: '\u{1F3AE}', muzik: '\u{1F3B5}', saglik: '\u{1F9D8}', diger: '\u{1F3AF}'
+};
+
+let map, userMarker, currentPopup;
+
 function initMap() {
   if (map || !mapboxgl.accessToken) return;
   map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v11',
     center: [27.1428, 38.4237],
-    zoom: 12.5,
+    zoom: 13,
     attributionControl: false
   });
+
   map.on('load', () => {
-    window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'mapReady' }));
-  });
-}
-
-// Try to init immediately if token was injected before page load
-if (window.__MAPBOX_TOKEN__) initMap();
-
-// Polyline decode (Google's algorithm)
-function decodePoly(str) {
-  const coords = [];
-  let index = 0, lat = 0, lng = 0;
-  while (index < str.length) {
-    let b, shift = 0, result = 0;
-    do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
-    shift = 0; result = 0;
-    do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
-    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
-    coords.push([lng / 1e5, lat / 1e5]);
-  }
-  return coords;
-}
-
-// Deterministic color from memberId
-function memberColor(id) {
-  const colors = ['#10B981','#00E5FF','#FF6B6B','#7C4DFF','#FF9100','#00E676','#FF4081','#448AFF','#EEFF41','#18FFFF'];
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = ((h << 5) - h + id.charCodeAt(i)) | 0;
-  return colors[Math.abs(h) % colors.length];
-}
-
-function formatPace(secKm) {
-  if (!secKm) return '--:--';
-  const m = Math.floor(secKm / 60);
-  const s = Math.floor(secKm % 60);
-  return m + ':' + String(s).padStart(2, '0');
-}
-
-let currentPopup = null;
-
-function postNav(type, id) {
-  if (window.ReactNativeWebView) {
-    window.ReactNativeWebView.postMessage(JSON.stringify({
-      type: type === 'activity' ? 'activityClick' : 'memberClick',
-      id: id
-    }));
-  }
-}
-const layerIds = [];
-const sourceIds = [];
-
-function setActivities(activities) {
-  // Remove old layers/sources
-  layerIds.forEach(id => { if (map.getLayer(id)) map.removeLayer(id); });
-  sourceIds.forEach(id => { if (map.getSource(id)) map.removeSource(id); });
-  layerIds.length = 0;
-  sourceIds.length = 0;
-  if (currentPopup) { currentPopup.remove(); currentPopup = null; }
-
-  const bounds = new mapboxgl.LngLatBounds();
-  let hasCoords = false;
-
-  activities.forEach((act, i) => {
-    if (!act.polylineEncoded) return;
-    const coords = decodePoly(act.polylineEncoded);
-    if (coords.length < 2) return;
-
-    const srcId = 'route-' + i;
-    const layerId = 'line-' + i;
-    const color = memberColor(act.memberId);
-
-    map.addSource(srcId, {
+    // Event source with clustering
+    map.addSource('events', {
       type: 'geojson',
-      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: coords }, properties: {} }
+      data: { type: 'FeatureCollection', features: [] },
+      cluster: true,
+      clusterMaxZoom: 14,
+      clusterRadius: 50
     });
 
+    // Cluster circles
     map.addLayer({
-      id: layerId,
-      type: 'line',
-      source: srcId,
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint: { 'line-color': color, 'line-width': 3, 'line-opacity': 0.7 }
-    });
-
-    sourceIds.push(srcId);
-    layerIds.push(layerId);
-
-    coords.forEach(c => { bounds.extend(c); hasCoords = true; });
-
-    // Click handler
-    map.on('click', layerId, (e) => {
-      if (currentPopup) currentPopup.remove();
-      const km = (act.distanceM / 1000).toFixed(1);
-      const pace = formatPace(act.avgPaceSecKm);
-      currentPopup = new mapboxgl.Popup({ closeOnClick: true, offset: 10 })
-        .setLngLat(e.lngLat)
-        .setHTML(`
-          <div class="popup-name" onclick="postNav('member','${act.memberId}')">${act.memberName}</div>
-          <div class="popup-title" onclick="postNav('activity','${act.id}')">${act.title}</div>
-          <div class="popup-stats">${km} km <span>${pace}/km</span></div>
-        `)
-        .addTo(map);
-      // Notify React Native of activity click
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'activityClick', id: act.id }));
+      id: 'event-clusters',
+      type: 'circle',
+      source: 'events',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-color': ['step', ['get', 'point_count'], '#10B981', 5, '#FF6B35', 15, '#A78BFA'],
+        'circle-radius': ['step', ['get', 'point_count'], 22, 5, 28, 15, 34],
+        'circle-opacity': 0.85,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#0D1117'
       }
     });
 
-    map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
-
-    // Start point marker (small dot)
-    const startSrcId = 'start-' + i;
-    const startLayerId = 'start-dot-' + i;
-    map.addSource(startSrcId, {
-      type: 'geojson',
-      data: { type: 'Feature', geometry: { type: 'Point', coordinates: coords[0] }, properties: { name: act.memberName, id: act.memberId } }
-    });
+    // Cluster count labels
     map.addLayer({
-      id: startLayerId,
+      id: 'event-cluster-count',
+      type: 'symbol',
+      source: 'events',
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': '{point_count_abbreviated}',
+        'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+        'text-size': 13
+      },
+      paint: { 'text-color': '#ffffff' }
+    });
+
+    // Individual event markers
+    map.addLayer({
+      id: 'event-points',
       type: 'circle',
-      source: startSrcId,
-      paint: { 'circle-radius': 5, 'circle-color': color, 'circle-stroke-width': 2, 'circle-stroke-color': '#0D1117' }
+      source: 'events',
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-color': ['match', ['get', 'category'],
+          'spor', '#FF6B35', 'kosu', '#10B981', 'kafe', '#A78BFA',
+          'kitap', '#60A5FA', 'oyun', '#F472B6', 'muzik', '#FBBF24',
+          'saglik', '#34D399', '#8B949E'],
+        'circle-radius': 10,
+        'circle-stroke-width': 2.5,
+        'circle-stroke-color': '#0D1117'
+      }
     });
-    sourceIds.push(startSrcId);
-    layerIds.push(startLayerId);
 
-    map.on('click', startLayerId, () => {
-      postNav('member', act.memberId);
+    // Event emoji labels
+    map.addLayer({
+      id: 'event-labels',
+      type: 'symbol',
+      source: 'events',
+      filter: ['!', ['has', 'point_count']],
+      layout: {
+        'text-field': ['get', 'emoji'],
+        'text-size': 14,
+        'text-allow-overlap': true
+      }
     });
-    map.on('mouseenter', startLayerId, () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', startLayerId, () => { map.getCanvas().style.cursor = ''; });
+
+    // Venue source
+    map.addSource('venues', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+
+    map.addLayer({
+      id: 'venue-points',
+      type: 'circle',
+      source: 'venues',
+      paint: {
+        'circle-color': '#6E7681',
+        'circle-radius': 5,
+        'circle-opacity': 0.5,
+        'circle-stroke-width': 1,
+        'circle-stroke-color': '#30363D'
+      }
+    });
+
+    // Click: event point
+    map.on('click', 'event-points', (e) => {
+      if (!e.features || !e.features[0]) return;
+      const p = e.features[0].properties;
+      showEventPopup(e.lngLat, p);
+    });
+
+    // Click: cluster — zoom in
+    map.on('click', 'event-clusters', (e) => {
+      const features = map.queryRenderedFeatures(e.point, { layers: ['event-clusters'] });
+      if (!features.length) return;
+      const clusterId = features[0].properties.cluster_id;
+      map.getSource('events').getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err) return;
+        map.easeTo({ center: features[0].geometry.coordinates, zoom: zoom + 1 });
+      });
+    });
+
+    // Click: venue
+    map.on('click', 'venue-points', (e) => {
+      if (!e.features || !e.features[0]) return;
+      const p = e.features[0].properties;
+      if (currentPopup) currentPopup.remove();
+      currentPopup = new mapboxgl.Popup({ closeOnClick: true, offset: 8 })
+        .setLngLat(e.lngLat)
+        .setHTML(`
+          <div class="venue-popup">
+            <div class="venue-name">${esc(p.name)}</div>
+            <div class="venue-meta">${p.recentEventCount || 0} etkinlik bu hafta</div>
+          </div>
+        `)
+        .addTo(map);
+    });
+
+    // Cursor changes
+    ['event-points', 'event-clusters', 'venue-points'].forEach(layer => {
+      map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
+    });
+
+    postRN({ type: 'mapReady' });
   });
+}
 
-  if (hasCoords) {
-    map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 800 });
+function showEventPopup(lngLat, p) {
+  if (currentPopup) currentPopup.remove();
+  const cat = p.category || 'diger';
+  const color = CATEGORY_COLORS[cat] || '#8B949E';
+  const emoji = CATEGORY_EMOJI[cat] || '\u{1F3AF}';
+  const isGoing = p.isGoing === true || p.isGoing === 'true';
+  const d = new Date(p.date);
+  const timeStr = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+
+  currentPopup = new mapboxgl.Popup({ closeOnClick: true, offset: 12, maxWidth: '240px' })
+    .setLngLat(lngLat)
+    .setHTML(`
+      <div class="popup-card">
+        <div class="popup-cat" style="background:${color}20;color:${color}">${emoji} ${esc(cat.charAt(0).toUpperCase() + cat.slice(1))}</div>
+        <div class="popup-title">${esc(p.title)}</div>
+        <div class="popup-meta">
+          <span>\u{1F552} ${timeStr}</span>
+          <span>\u{1F465} ${p.attendeeCount || 0}${p.maxParticipants ? '/' + p.maxParticipants : ''}</span>
+        </div>
+        <button class="popup-join ${isGoing ? 'joined' : ''}" onclick="onJoinClick('${p.id}','${p.slug}')">${isGoing ? 'KATILDIN' : 'KATIL'}</button>
+      </div>
+    `)
+    .addTo(map);
+}
+
+function onJoinClick(id, slug) {
+  postRN({ type: 'joinEvent', id, slug });
+}
+
+function esc(s) { return String(s || '').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function postRN(data) {
+  if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify(data));
+}
+
+// ── Data handlers ──
+
+function setEvents(events) {
+  if (!map || !map.getSource('events')) return;
+  const features = (events || []).map(e => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [e.lng, e.lat] },
+    properties: {
+      id: e.id, slug: e.slug, title: e.title, category: e.category || 'diger',
+      emoji: CATEGORY_EMOJI[e.category] || '\u{1F3AF}',
+      date: e.date, attendeeCount: e.attendeeCount || 0,
+      maxParticipants: e.maxParticipants, isGoing: e.isGoing,
+      meetingPoint: e.meetingPoint, creatorName: e.creatorName
+    }
+  }));
+  map.getSource('events').setData({ type: 'FeatureCollection', features });
+
+  // Fit bounds if events exist
+  if (features.length > 0) {
+    const bounds = new mapboxgl.LngLatBounds();
+    features.forEach(f => bounds.extend(f.geometry.coordinates));
+    // Only fit if no user location (user location centering takes priority)
+    if (!userMarker) {
+      map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 800 });
+    }
   }
 }
 
-function setLeaderboard(entries) {
-  const el = document.getElementById('leaderboard');
-  const rows = document.getElementById('lb-rows');
-  if (!entries || entries.length === 0) { el.style.display = 'none'; return; }
-
-  rows.innerHTML = entries.slice(0, 5).map((e, i) => `
-    <div class="lb-row" onclick="postNav('member','${e.memberId}')" style="cursor:pointer">
-      <div class="lb-rank ${i === 0 ? 'gold' : ''}">${i + 1}</div>
-      <div class="lb-name">${e.memberName}</div>
-      <div class="lb-km">${e.totalDistanceKm.toFixed(1)} km</div>
-      <div class="lb-runs">${e.totalRuns} kosu</div>
-    </div>
-  `).join('');
-  el.style.display = 'block';
+function setVenues(venues) {
+  if (!map || !map.getSource('venues')) return;
+  const features = (venues || []).map(v => ({
+    type: 'Feature',
+    geometry: { type: 'Point', coordinates: [v.lng, v.lat] },
+    properties: { id: v.id, name: v.name, type: v.type, recentEventCount: v.recentEventCount || 0 }
+  }));
+  map.getSource('venues').setData({ type: 'FeatureCollection', features });
 }
 
-// Listen for messages from React Native
+function setUserLocation(loc) {
+  if (!map) return;
+  const coords = [loc.lng, loc.lat];
+  if (!userMarker) {
+    const el = document.createElement('div');
+    el.className = 'user-marker';
+    userMarker = new mapboxgl.Marker({ element: el }).setLngLat(coords).addTo(map);
+    map.flyTo({ center: coords, zoom: 14, duration: 1000 });
+  } else {
+    userMarker.setLngLat(coords);
+  }
+}
+
+function filterCategory(category) {
+  if (!map) return;
+  if (!category) {
+    map.setFilter('event-points', ['!', ['has', 'point_count']]);
+    map.setFilter('event-labels', ['!', ['has', 'point_count']]);
+  } else {
+    map.setFilter('event-points', ['all', ['!', ['has', 'point_count']], ['==', ['get', 'category'], category]]);
+    map.setFilter('event-labels', ['all', ['!', ['has', 'point_count']], ['==', ['get', 'category'], category]]);
+  }
+}
+
+// ── Message bridge ──
+
+if (window.__MAPBOX_TOKEN__) initMap();
+
 document.addEventListener('message', handleMessage);
 window.addEventListener('message', handleMessage);
 
 function handleMessage(event) {
   try {
     const msg = JSON.parse(event.data);
-    if (msg.type === 'setToken') {
-      window.__MAPBOX_TOKEN__ = msg.data;
-      mapboxgl.accessToken = msg.data;
-      initMap();
+    switch (msg.type) {
+      case 'setToken':
+        window.__MAPBOX_TOKEN__ = msg.data;
+        mapboxgl.accessToken = msg.data;
+        initMap();
+        break;
+      case 'setEvents': setEvents(msg.data); break;
+      case 'setVenues': setVenues(msg.data); break;
+      case 'setUserLocation': setUserLocation(msg.data); break;
+      case 'filterCategory': filterCategory(msg.data); break;
+      case 'flyTo':
+        if (map) map.flyTo({ center: [msg.data.lng, msg.data.lat], zoom: msg.data.zoom || 14 });
+        break;
     }
-    if (msg.type === 'setActivities') setActivities(msg.data);
-    if (msg.type === 'setLeaderboard') setLeaderboard(msg.data);
-    if (msg.type === 'fitBounds' && map) map.flyTo({ center: [27.1428, 38.4237], zoom: 12.5 });
   } catch (e) {}
 }
 </script>
