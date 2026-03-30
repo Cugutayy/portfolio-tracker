@@ -68,9 +68,19 @@ const CATEGORY_COLORS = {
   spor: '#FF6B35', kosu: '#10B981', kafe: '#A78BFA', kitap: '#60A5FA',
   oyun: '#F472B6', muzik: '#FBBF24', saglik: '#34D399', diger: '#8B949E'
 };
-const CATEGORY_EMOJI = {
-  spor: '\u{1F3D0}', kosu: '\u{1F3C3}', kafe: '\u2615', kitap: '\u{1F4DA}',
-  oyun: '\u{1F3AE}', muzik: '\u{1F3B5}', saglik: '\u{1F9D8}', diger: '\u{1F3AF}'
+const CATEGORY_ICONS = {
+  spor: '\u{1F3C0}', kosu: '\u{1F3C3}\u200D\u2642\uFE0F', kafe: '\u2615',
+  kitap: '\u{1F4D6}', oyun: '\u{1F3AE}', muzik: '\u{1F3B6}',
+  saglik: '\u{1F33F}', diger: '\u2728'
+};
+const CATEGORY_LABELS = {
+  spor: 'Spor', kosu: 'Kosu', kafe: 'Kafe', kitap: 'Kitap',
+  oyun: 'Oyun', muzik: 'Muzik', saglik: 'Saglik', diger: 'Diger'
+};
+// Map old event types to categories
+const TYPE_TO_CAT = {
+  group_run:'kosu', tempo_run:'kosu', long_run:'kosu',
+  interval:'kosu', trail_run:'kosu', race:'kosu', social:'kafe'
 };
 
 let map, userMarker, currentPopup;
@@ -141,16 +151,17 @@ function initMap() {
       }
     });
 
-    // Event emoji labels
+    // Event icon labels
     map.addLayer({
       id: 'event-labels',
       type: 'symbol',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
       layout: {
-        'text-field': ['get', 'emoji'],
-        'text-size': 14,
-        'text-allow-overlap': true
+        'text-field': ['get', 'icon'],
+        'text-size': 16,
+        'text-allow-overlap': true,
+        'text-ignore-placement': true
       }
     });
 
@@ -217,11 +228,18 @@ function initMap() {
   });
 }
 
+function resolveCat(p) {
+  if (p.category && CATEGORY_COLORS[p.category]) return p.category;
+  if (p.eventType && TYPE_TO_CAT[p.eventType]) return TYPE_TO_CAT[p.eventType];
+  return 'diger';
+}
+
 function showEventPopup(lngLat, p) {
   if (currentPopup) currentPopup.remove();
-  const cat = p.category || 'diger';
+  const cat = resolveCat(p);
   const color = CATEGORY_COLORS[cat] || '#8B949E';
-  const emoji = CATEGORY_EMOJI[cat] || '\u{1F3AF}';
+  const icon = CATEGORY_ICONS[cat] || '\u2728';
+  const label = CATEGORY_LABELS[cat] || 'Diger';
   const isGoing = p.isGoing === true || p.isGoing === 'true';
   const d = new Date(p.date);
   const timeStr = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
@@ -230,7 +248,7 @@ function showEventPopup(lngLat, p) {
     .setLngLat(lngLat)
     .setHTML(`
       <div class="popup-card">
-        <div class="popup-cat" style="background:${color}20;color:${color}">${emoji} ${esc(cat.charAt(0).toUpperCase() + cat.slice(1))}</div>
+        <div class="popup-cat" style="background:${color}20;color:${color}">${icon} ${label}</div>
         <div class="popup-title">${esc(p.title)}</div>
         <div class="popup-meta">
           <span>\u{1F552} ${timeStr}</span>
@@ -256,17 +274,21 @@ function postRN(data) {
 
 function setEvents(events) {
   if (!map || !map.getSource('events')) return;
-  const features = (events || []).map(e => ({
-    type: 'Feature',
-    geometry: { type: 'Point', coordinates: [e.lng, e.lat] },
-    properties: {
-      id: e.id, slug: e.slug, title: e.title, category: e.category || 'diger',
-      emoji: CATEGORY_EMOJI[e.category] || '\u{1F3AF}',
-      date: e.date, attendeeCount: e.attendeeCount || 0,
-      maxParticipants: e.maxParticipants, isGoing: e.isGoing,
-      meetingPoint: e.meetingPoint, creatorName: e.creatorName
-    }
-  }));
+  const features = (events || []).filter(e => e.lat && e.lng).map(e => {
+    const cat = e.category && CATEGORY_COLORS[e.category] ? e.category : (TYPE_TO_CAT[e.eventType] || 'diger');
+    return {
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [e.lng, e.lat] },
+      properties: {
+        id: e.id, slug: e.slug, title: e.title, category: cat,
+        eventType: e.eventType || '',
+        icon: CATEGORY_ICONS[cat] || '\u2728',
+        date: e.date, attendeeCount: e.attendeeCount || e.rsvpCount || 0,
+        maxParticipants: e.maxParticipants, isGoing: e.isGoing,
+        meetingPoint: e.meetingPoint, creatorName: e.creatorName
+      }
+    };
+  });
   map.getSource('events').setData({ type: 'FeatureCollection', features });
 
   // Fit bounds if events exist

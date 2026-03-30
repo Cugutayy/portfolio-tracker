@@ -9,7 +9,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
 import { formatRelativeTime, formatDate, getInitials } from "@/lib/format";
-import { CATEGORIES, CATEGORY_MAP, type EventCategory } from "@/constants/categories";
+import { CATEGORIES, CATEGORY_MAP, eventTypeToCategory, type EventCategory } from "@/constants/categories";
 
 interface EventItem {
   id: string;
@@ -100,7 +100,7 @@ export default function DiscoverScreen() {
                   style={[s.chip, selectedCategory === c.key && { borderColor: c.color, backgroundColor: c.color + "15" }]}
                   onPress={() => setSelectedCategory(selectedCategory === c.key ? null : c.key)}
                 >
-                  <Text style={s.chipEmoji}>{c.emoji}</Text>
+                  <Ionicons name={c.icon as any} size={14} color={selectedCategory === c.key ? c.color : brand.textMuted} />
                   <Text style={[s.chipText, selectedCategory === c.key && { color: c.color }]}>{c.label}</Text>
                 </TouchableOpacity>
               ))}
@@ -136,12 +136,13 @@ export default function DiscoverScreen() {
           </>
         }
         renderItem={({ item }) => {
-          const cat = CATEGORY_MAP[(item.category || item.eventType || "diger") as EventCategory] || CATEGORY_MAP.diger;
+          const catKey = (item.category as EventCategory) || eventTypeToCategory(item.eventType);
+          const cat = CATEGORY_MAP[catKey] || CATEGORY_MAP.diger;
           const count = item.attendeeCount ?? item.rsvpCount ?? 0;
           return (
             <TouchableOpacity style={s.eventCard} onPress={() => router.push(`/event/${item.slug}` as never)} activeOpacity={0.7}>
-              <View style={[s.eventCatDot, { backgroundColor: cat.color }]}>
-                <Text style={{ fontSize: 16 }}>{cat.emoji}</Text>
+              <View style={[s.eventCatDot, { backgroundColor: cat.color + "20" }]}>
+                <Ionicons name={cat.icon as any} size={22} color={cat.color} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={s.eventTitle}>{item.title}</Text>
@@ -206,7 +207,6 @@ const s = StyleSheet.create({
     borderRadius: 20, borderWidth: 1, borderColor: brand.border, backgroundColor: brand.surface,
   },
   chipActive: { borderColor: brand.accent, backgroundColor: brand.accentDim },
-  chipEmoji: { fontSize: 14 },
   chipText: { fontSize: 12, fontWeight: "600", color: brand.textMuted },
   chipTextActive: { color: brand.accent },
 
