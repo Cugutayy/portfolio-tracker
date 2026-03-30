@@ -10,41 +10,74 @@
 body { background: #0D1117; overflow: hidden; }
 #map { width: 100vw; height: 100vh; }
 
-/* Event marker */
-.ev-marker {
-  display: flex; flex-direction: column; align-items: center;
-  cursor: pointer; transform: translate(-50%, -100%);
+/* === Marker: dot only (zoom < 13) === */
+.mk-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  border: 2px solid rgba(255,255,255,0.3);
+  transform: translate(-50%, -50%);
+  transition: transform 0.15s ease;
 }
-.ev-pin {
-  display: flex; align-items: center; gap: 5px;
-  padding: 6px 10px; border-radius: 20px;
-  font-family: -apple-system, system-ui, sans-serif;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.5);
-  border: 2px solid rgba(255,255,255,0.15);
-  white-space: nowrap; max-width: 180px;
+.mk-dot:active { transform: translate(-50%, -50%) scale(1.15); }
+
+/* === Marker: dot + short label (zoom 13-15) === */
+.mk-label {
+  display: flex; align-items: center; gap: 4px; cursor: pointer;
+  transform: translate(-50%, -50%);
 }
-.ev-pin .ev-icon { font-size: 16px; flex-shrink: 0; }
-.ev-pin .ev-title {
-  font-size: 11px; font-weight: 700; color: #fff;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.mk-label .mk-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+  border: 2px solid rgba(255,255,255,0.25);
 }
-.ev-tail {
-  width: 0; height: 0;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 6px solid currentColor;
+.mk-label .mk-text {
+  font-size: 11px; font-weight: 700; color: #E6EDF3;
+  background: rgba(13,17,23,0.85); padding: 3px 8px; border-radius: 6px;
+  white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
 }
 
-/* Cluster marker */
-.cluster-marker {
+/* === Marker: full card (zoom >= 15) === */
+.mk-card {
+  display: flex; flex-direction: column; align-items: flex-start;
+  cursor: pointer; transform: translate(-14px, -100%);
+}
+.mk-card-inner {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(22,27,34,0.92); padding: 8px 10px; border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  max-width: 200px;
+}
+.mk-card .mk-emoji {
+  width: 32px; height: 32px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  width: 44px; height: 44px; border-radius: 22px;
-  background: #10B981; color: #fff;
+  font-size: 16px; flex-shrink: 0;
+}
+.mk-card .mk-info { min-width: 0; }
+.mk-card .mk-title {
+  font-size: 12px; font-weight: 700; color: #E6EDF3;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px;
+}
+.mk-card .mk-sub { font-size: 10px; color: #8B949E; margin-top: 1px; }
+.mk-card .mk-tail {
+  width: 0; height: 0; margin-left: 10px;
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+  border-top: 5px solid rgba(22,27,34,0.92);
+}
+
+/* Cluster */
+.cluster-mk {
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; color: #fff;
   font-family: -apple-system, system-ui, sans-serif;
-  font-size: 15px; font-weight: 800;
-  box-shadow: 0 3px 12px rgba(16,185,129,0.4);
+  font-weight: 800; cursor: pointer;
   border: 3px solid rgba(255,255,255,0.2);
-  cursor: pointer;
   transform: translate(-50%, -50%);
 }
 
@@ -58,62 +91,48 @@ body { background: #0D1117; overflow: hidden; }
 }
 .mapboxgl-popup-tip { border-top-color: #161B22 !important; }
 .mapboxgl-popup-close-button { color: #888; font-size: 18px; padding: 8px; z-index: 1; }
-
 .popup-card { padding: 14px; }
-.popup-cat {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 8px; margin-bottom: 8px;
-}
-.popup-title { font-weight: 700; font-size: 15px; color: #E6EDF3; margin-bottom: 4px; line-height: 1.3; }
-.popup-location { font-size: 11px; color: #8B949E; margin-bottom: 8px; }
+.popup-cat { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 8px; margin-bottom: 8px; }
+.popup-title { font-weight: 700; font-size: 15px; color: #E6EDF3; margin-bottom: 4px; }
+.popup-loc { font-size: 11px; color: #8B949E; margin-bottom: 8px; }
 .popup-meta { display: flex; gap: 12px; font-size: 11px; color: #8B949E; margin-bottom: 10px; }
-.popup-join {
-  width: 100%; padding: 10px; border: none; border-radius: 10px;
-  font-size: 13px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
-  background: #10B981; color: #fff;
-}
+.popup-join { width: 100%; padding: 10px; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; letter-spacing: 1px; cursor: pointer; background: #10B981; color: #fff; }
 .popup-join.joined { background: #21262D; color: #8B949E; }
 
 /* User location */
-.user-marker {
-  width: 18px; height: 18px; border-radius: 50%;
+.user-loc {
+  width: 16px; height: 16px; border-radius: 50%;
   background: #3B82F6; border: 3px solid #FFF;
-  box-shadow: 0 0 0 6px rgba(59,130,246,0.25);
+  box-shadow: 0 0 0 6px rgba(59,130,246,0.2);
   animation: pulse 2s ease-out infinite;
   transform: translate(-50%, -50%);
 }
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.4); }
-  100% { box-shadow: 0 0 0 20px rgba(59,130,246,0); }
-}
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(59,130,246,0.35)} 100%{box-shadow:0 0 0 18px rgba(59,130,246,0)} }
 
 .mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right { display: none !important; }
 </style>
 </head>
 <body>
 <div id="map"></div>
-
 <script>
 mapboxgl.accessToken = window.__MAPBOX_TOKEN__ || '';
 
 const CAT = {
-  spor:   { color: '#FF6B35', icon: '🏀', label: 'Spor' },
-  kosu:   { color: '#10B981', icon: '🏃', label: 'Kosu' },
-  kafe:   { color: '#A78BFA', icon: '☕', label: 'Kafe' },
-  kitap:  { color: '#60A5FA', icon: '📖', label: 'Kitap' },
-  oyun:   { color: '#F472B6', icon: '🎮', label: 'Oyun' },
-  muzik:  { color: '#FBBF24', icon: '🎵', label: 'Muzik' },
-  saglik: { color: '#34D399', icon: '🌿', label: 'Saglik' },
-  diger:  { color: '#8B949E', icon: '✨', label: 'Diger' }
+  spor:   { c:'#FF6B35', i:'🏀', l:'Spor' },
+  kosu:   { c:'#10B981', i:'🏃', l:'Kosu' },
+  kafe:   { c:'#A78BFA', i:'☕', l:'Kafe' },
+  kitap:  { c:'#60A5FA', i:'📖', l:'Kitap' },
+  oyun:   { c:'#F472B6', i:'🎮', l:'Oyun' },
+  muzik:  { c:'#FBBF24', i:'🎵', l:'Muzik' },
+  saglik: { c:'#34D399', i:'🌿', l:'Saglik' },
+  diger:  { c:'#8B949E', i:'✨', l:'Diger' }
 };
-const TYPE_TO_CAT = {
-  group_run:'kosu', tempo_run:'kosu', long_run:'kosu',
-  interval:'kosu', trail_run:'kosu', race:'kosu', social:'kafe'
-};
+const T2C = { group_run:'kosu',tempo_run:'kosu',long_run:'kosu',interval:'kosu',trail_run:'kosu',race:'kosu',social:'kafe' };
 
 let map, userMarker, currentPopup;
-let eventMarkers = [];
-let activeCategory = null;
+let allEvents = []; // processed events with resolved category
+let markers = [];   // { marker, el, data, cat }
+let activeCat = null;
 
 function initMap() {
   if (map || !mapboxgl.accessToken) return;
@@ -126,124 +145,149 @@ function initMap() {
   });
   map.on('load', () => {
     postRN({ type: 'mapReady' });
+    map.on('zoom', updateMarkerStyles);
   });
 }
 
-function resolveCat(e) {
-  // 1. Direct category field
+function resCat(e) {
   if (e.category && CAT[e.category]) return e.category;
-  // 2. eventType IS a new category name (spor, kosu, kafe, etc.)
   if (e.eventType && CAT[e.eventType]) return e.eventType;
-  // 3. eventType is an old running type (group_run, tempo_run, etc.)
-  if (e.eventType && TYPE_TO_CAT[e.eventType]) return TYPE_TO_CAT[e.eventType];
+  if (e.eventType && T2C[e.eventType]) return T2C[e.eventType];
   return 'diger';
 }
 
-function createMarkerEl(e, cat) {
-  const c = CAT[cat] || CAT.diger;
-  const el = document.createElement('div');
-  el.className = 'ev-marker';
-  el.setAttribute('data-category', cat);
-  el.innerHTML = `
-    <div class="ev-pin" style="background:${c.color}">
-      <span class="ev-icon">${c.icon}</span>
-      <span class="ev-title">${esc(e.title)}</span>
-    </div>
-    <div class="ev-tail" style="color:${c.color}"></div>
-  `;
-  return el;
-}
-
-// Simple check: is this coordinate likely on water in İzmir Bay?
-function isLikelyWater(lat, lng) {
-  // İzmir Bay runs roughly NW-SE. These polygons cover the main water body.
-  // Zone 1: Inner bay (Alsancak-Karşıyaka gap) lat 38.41-38.47, lng 27.05-27.15
-  if (lat > 38.41 && lat < 38.47 && lng > 27.05 && lng < 27.145) return true;
-  // Zone 2: Outer bay (south toward Konak) lat 38.39-38.42, lng 27.05-27.13
-  if (lat > 38.39 && lat < 38.42 && lng > 27.05 && lng < 27.125) return true;
+// İzmir Bay water check — only the clear open water, not shoreline
+function isWater(lat, lng) {
+  // Central bay between Karşıyaka and Alsancak (open water)
+  if (lat > 38.43 && lat < 38.46 && lng > 27.06 && lng < 27.13) return true;
+  // Southern bay mouth (below Konak, clearly offshore)
+  if (lat > 38.40 && lat < 38.43 && lng > 27.06 && lng < 27.115) return true;
   return false;
 }
 
+function makeMarkerEl(e, cat, zoom) {
+  const c = CAT[cat] || CAT.diger;
+  const el = document.createElement('div');
+
+  if (zoom >= 15) {
+    // Full card
+    el.className = 'mk-card';
+    const count = e.attendeeCount || e.rsvpCount || 0;
+    el.innerHTML = `<div class="mk-card-inner">
+      <div class="mk-emoji" style="background:${c.c}22">${c.i}</div>
+      <div class="mk-info">
+        <div class="mk-title">${esc(e.title)}</div>
+        <div class="mk-sub">${c.l} · ${count} kisi</div>
+      </div>
+    </div><div class="mk-tail"></div>`;
+  } else if (zoom >= 13) {
+    // Dot + label
+    el.className = 'mk-label';
+    el.innerHTML = `<div class="mk-icon" style="background:${c.c}">${c.i}</div>
+      <span class="mk-text">${esc(e.title)}</span>`;
+  } else {
+    // Dot only
+    el.className = 'mk-dot';
+    el.style.background = c.c;
+    el.textContent = c.i;
+  }
+  return el;
+}
+
 function setEvents(events) {
-  // Clear old markers
-  eventMarkers.forEach(m => m.marker.remove());
-  eventMarkers = [];
-  if (currentPopup) { currentPopup.remove(); currentPopup = null; }
+  clearMarkers();
+  allEvents = [];
 
   const bounds = new mapboxgl.LngLatBounds();
-  let hasCoords = false;
+  let visibleCount = 0;
 
   (events || []).forEach(e => {
-    // Normalize coordinates
     const lat = e.lat || e.meetingLat;
     const lng = e.lng || e.meetingLng;
     if (!lat || !lng) return;
+    if (isWater(lat, lng)) return;
 
-    // Skip events with coordinates in the water
-    if (isLikelyWater(lat, lng)) return;
+    const cat = resCat(e);
+    const processed = { ...e, _lat: lat, _lng: lng, _cat: cat };
+    allEvents.push(processed);
 
-    const cat = resolveCat(e);
-    const el = createMarkerEl(e, cat);
+    const zoom = map ? map.getZoom() : 13;
+    const el = makeMarkerEl(e, cat, zoom);
+    el.addEventListener('click', (ev) => { ev.stopPropagation(); showPopup([lng,lat], e, cat); });
 
-    // Apply category filter
-    if (activeCategory && cat !== activeCategory) {
-      el.style.display = 'none';
-    }
+    const visible = !activeCat || cat === activeCat;
+    if (!visible) el.style.display = 'none';
+    else visibleCount++;
 
-    el.addEventListener('click', (evt) => {
-      evt.stopPropagation();
-      showEventPopup([lng, lat], e, cat);
-    });
+    const marker = new mapboxgl.Marker({ element: el, anchor: zoom >= 15 ? 'bottom' : 'center' })
+      .setLngLat([lng, lat]).addTo(map);
 
-    const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
-      .setLngLat([lng, lat])
-      .addTo(map);
-
-    eventMarkers.push({ marker, category: cat, data: e });
+    markers.push({ marker, el, data: processed, cat });
     bounds.extend([lng, lat]);
-    hasCoords = true;
   });
 
-  if (hasCoords && !userMarker) {
+  // Report visible count to RN
+  postRN({ type: 'visibleCount', count: visibleCount });
+
+  if (allEvents.length > 0 && !userMarker) {
     map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 800 });
   }
 }
 
-function showEventPopup(lngLat, e, cat) {
+function updateMarkerStyles() {
+  if (!map) return;
+  const zoom = map.getZoom();
+
+  markers.forEach(m => {
+    const newEl = makeMarkerEl(m.data, m.cat, zoom);
+    newEl.addEventListener('click', (ev) => { ev.stopPropagation(); showPopup([m.data._lng, m.data._lat], m.data, m.cat); });
+
+    if (activeCat && m.cat !== activeCat) newEl.style.display = 'none';
+
+    const anchor = zoom >= 15 ? 'bottom' : 'center';
+    m.marker.remove();
+    m.marker = new mapboxgl.Marker({ element: newEl, anchor })
+      .setLngLat([m.data._lng, m.data._lat]).addTo(map);
+    m.el = newEl;
+  });
+}
+
+function clearMarkers() {
+  markers.forEach(m => m.marker.remove());
+  markers = [];
+  if (currentPopup) { currentPopup.remove(); currentPopup = null; }
+}
+
+function showPopup(lngLat, e, cat) {
   if (currentPopup) currentPopup.remove();
   const c = CAT[cat] || CAT.diger;
   const isGoing = e.isGoing === true || e.isGoing === 'true';
   const d = new Date(e.date);
-  const timeStr = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
-  const dateStr = d.getDate() + ' ' + ['Oca','Sub','Mar','Nis','May','Haz','Tem','Agu','Eyl','Eki','Kas','Ara'][d.getMonth()];
-  const count = e.attendeeCount || e.rsvpCount || 0;
+  const time = d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+  const date = d.getDate()+' '+['Oca','Sub','Mar','Nis','May','Haz','Tem','Agu','Eyl','Eki','Kas','Ara'][d.getMonth()];
+  const cnt = e.attendeeCount || e.rsvpCount || 0;
   const slug = e.slug || e.id;
 
-  currentPopup = new mapboxgl.Popup({ closeOnClick: true, offset: 20, maxWidth: '260px' })
+  currentPopup = new mapboxgl.Popup({ closeOnClick:true, offset:20, maxWidth:'260px' })
     .setLngLat(lngLat)
-    .setHTML(`
-      <div class="popup-card">
-        <div class="popup-cat" style="background:${c.color}22;color:${c.color}">${c.icon} ${c.label}</div>
-        <div class="popup-title">${esc(e.title)}</div>
-        ${e.meetingPoint ? `<div class="popup-location">📍 ${esc(e.meetingPoint)}</div>` : ''}
-        <div class="popup-meta">
-          <span>📅 ${dateStr} · ${timeStr}</span>
-          <span>👥 ${count}${e.maxParticipants ? '/' + e.maxParticipants : ''}</span>
-        </div>
-        <button class="popup-join ${isGoing ? 'joined' : ''}" onclick="onJoinClick('${e.id}','${slug}')">${isGoing ? 'KATILDIN ✓' : 'KATIL'}</button>
-      </div>
-    `)
-    .addTo(map);
+    .setHTML(`<div class="popup-card">
+      <div class="popup-cat" style="background:${c.c}22;color:${c.c}">${c.i} ${c.l}</div>
+      <div class="popup-title">${esc(e.title)}</div>
+      ${e.meetingPoint ? `<div class="popup-loc">📍 ${esc(e.meetingPoint)}</div>` : ''}
+      <div class="popup-meta"><span>📅 ${date} · ${time}</span><span>👥 ${cnt}${e.maxParticipants?'/'+e.maxParticipants:''}</span></div>
+      <button class="popup-join ${isGoing?'joined':''}" onclick="postRN({type:'joinEvent',id:'${e.id}',slug:'${slug}'})">${isGoing?'KATILDIN ✓':'KATIL'}</button>
+    </div>`).addTo(map);
 }
 
-function onJoinClick(id, slug) {
-  postRN({ type: 'joinEvent', id, slug });
-}
-
-function esc(s) { return String(s || '').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-function postRN(data) {
-  if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify(data));
+function filterCategory(cat) {
+  activeCat = cat || null;
+  let count = 0;
+  markers.forEach(m => {
+    const vis = !activeCat || m.cat === activeCat;
+    m.el.style.display = vis ? '' : 'none';
+    if (vis) count++;
+  });
+  postRN({ type: 'visibleCount', count });
 }
 
 function setUserLocation(loc) {
@@ -251,7 +295,7 @@ function setUserLocation(loc) {
   const coords = [loc.lng, loc.lat];
   if (!userMarker) {
     const el = document.createElement('div');
-    el.className = 'user-marker';
+    el.className = 'user-loc';
     userMarker = new mapboxgl.Marker({ element: el }).setLngLat(coords).addTo(map);
     map.flyTo({ center: coords, zoom: 14, duration: 1000 });
   } else {
@@ -259,46 +303,25 @@ function setUserLocation(loc) {
   }
 }
 
-function filterCategory(category) {
-  activeCategory = category || null;
-  eventMarkers.forEach(m => {
-    if (!activeCategory || m.category === activeCategory) {
-      m.marker.getElement().style.display = '';
-    } else {
-      m.marker.getElement().style.display = 'none';
-    }
-  });
-}
+function setVenues() {}
+function esc(s) { return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function postRN(d) { if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify(d)); }
 
-function setVenues(venues) {
-  // Venues rendered as simple small markers
-  // (placeholder for future venue layer)
-}
-
-// Message bridge
 if (window.__MAPBOX_TOKEN__) initMap();
-
-document.addEventListener('message', handleMessage);
-window.addEventListener('message', handleMessage);
-
-function handleMessage(event) {
+document.addEventListener('message', hMsg);
+window.addEventListener('message', hMsg);
+function hMsg(ev) {
   try {
-    const msg = JSON.parse(event.data);
-    switch (msg.type) {
-      case 'setToken':
-        window.__MAPBOX_TOKEN__ = msg.data;
-        mapboxgl.accessToken = msg.data;
-        initMap();
-        break;
-      case 'setEvents': setEvents(msg.data); break;
-      case 'setVenues': setVenues(msg.data); break;
-      case 'setUserLocation': setUserLocation(msg.data); break;
-      case 'filterCategory': filterCategory(msg.data); break;
-      case 'flyTo':
-        if (map) map.flyTo({ center: [msg.data.lng, msg.data.lat], zoom: msg.data.zoom || 14 });
-        break;
+    const m = JSON.parse(ev.data);
+    switch(m.type) {
+      case 'setToken': window.__MAPBOX_TOKEN__=m.data; mapboxgl.accessToken=m.data; initMap(); break;
+      case 'setEvents': setEvents(m.data); break;
+      case 'setVenues': setVenues(m.data); break;
+      case 'setUserLocation': setUserLocation(m.data); break;
+      case 'filterCategory': filterCategory(m.data); break;
+      case 'flyTo': if(map) map.flyTo({center:[m.data.lng,m.data.lat],zoom:m.data.zoom||14}); break;
     }
-  } catch (e) {}
+  } catch(e){}
 }
 </script>
 </body>
