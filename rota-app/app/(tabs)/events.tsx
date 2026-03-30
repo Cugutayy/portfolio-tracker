@@ -44,7 +44,7 @@ export default function EventsScreen() {
 
   const fetchEvents = useCallback(async () => {
     try {
-      const data = (await API.getEvents()) as { events: Event[] };
+      const data = (await API.getEvents()) as unknown as { events: Event[] };
       setEvents(data.events || []);
     } catch {
       // silently fail

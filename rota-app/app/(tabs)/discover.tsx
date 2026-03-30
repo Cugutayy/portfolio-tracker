@@ -60,7 +60,10 @@ export default function DiscoverScreen() {
   useFocusEffect(useCallback(() => { fetchData(); }, [fetchData]));
 
   const filteredEvents = selectedCategory
-    ? events.filter((e) => (e.category || e.eventType) === selectedCategory)
+    ? events.filter((e) => {
+        const cat = (e.category as EventCategory) || eventTypeToCategory(e.eventType);
+        return cat === selectedCategory;
+      })
     : events;
 
   const handleRSVP = async (slug: string) => {
