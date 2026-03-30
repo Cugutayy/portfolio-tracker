@@ -111,45 +111,67 @@ function initMap() {
     });
 
     // ── Individual event points ──
+    // Outer ring (white border effect)
     map.addLayer({
-      id: 'event-bg',
+      id: 'event-ring',
       type: 'circle',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
       paint: {
-        'circle-color': '#0D1117',
-        'circle-radius': 18,
-        'circle-opacity': 0.6
+        'circle-color': ['get', 'color'],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 6, 14, 10, 17, 14],
+        'circle-stroke-width': 3,
+        'circle-stroke-color': '#0D1117',
+        'circle-opacity': 1
       }
     });
 
+    // Inner white dot
     map.addLayer({
-      id: 'event-emoji',
+      id: 'event-dot',
+      type: 'circle',
+      source: 'events',
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-color': '#ffffff',
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 2, 14, 3, 17, 4],
+        'circle-opacity': 0.9
+      }
+    });
+
+    // Category initial letter (visible zoom >= 13)
+    map.addLayer({
+      id: 'event-icon',
       type: 'symbol',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
+      minzoom: 13,
       layout: {
-        'text-field': ['get', 'emoji'],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 10, 16, 15, 22],
+        'text-field': ['get', 'initial'],
+        'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 13, 8, 17, 12],
         'text-allow-overlap': true,
         'text-ignore-placement': true
+      },
+      paint: {
+        'text-color': '#ffffff'
       }
     });
 
-    // Event title label (visible at zoom >= 14)
+    // Event title label (visible at zoom >= 14.5)
     map.addLayer({
       id: 'event-label',
       type: 'symbol',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
-      minzoom: 14,
+      minzoom: 14.5,
       layout: {
         'text-field': ['get', 'title'],
         'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
-        'text-size': 11,
-        'text-offset': [0, 1.8],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 14.5, 10, 17, 12],
+        'text-offset': [0, 1.6],
         'text-anchor': 'top',
-        'text-max-width': 12,
+        'text-max-width': 10,
         'text-allow-overlap': false
       },
       paint: {
@@ -160,14 +182,14 @@ function initMap() {
     });
 
     // ── Click handlers ──
-    map.on('click', 'event-emoji', (e) => {
+    map.on('click', 'event-ring', (e) => {
       if (!e.features || !e.features[0]) return;
       const p = e.features[0].properties;
       const coords = e.features[0].geometry.coordinates.slice();
       showPopup(coords, p);
     });
 
-    map.on('click', 'event-bg', (e) => {
+    map.on('click', 'event-dot', (e) => {
       if (!e.features || !e.features[0]) return;
       const p = e.features[0].properties;
       const coords = e.features[0].geometry.coordinates.slice();
@@ -183,7 +205,7 @@ function initMap() {
       });
     });
 
-    ['event-emoji', 'event-bg', 'clusters'].forEach(l => {
+    ['event-ring', 'event-dot', 'clusters'].forEach(l => {
       map.on('mouseenter', l, () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', l, () => { map.getCanvas().style.cursor = ''; });
     });
@@ -232,6 +254,7 @@ function setEvents(events) {
         slug: e.slug || e.id || '',
         title: e.title || '',
         emoji: c.i,
+        initial: c.l.charAt(0),
         category: cat,
         color: c.c,
         label: c.l,
@@ -284,12 +307,12 @@ function showPopup(coords, p) {
 
 function filterCategory(cat) {
   if (!map) return;
-  const activeFilter = ['!', ['has', 'point_count']];
-  const catFilter = cat ? ['all', activeFilter, ['==', ['get', 'category'], cat]] : activeFilter;
+  const base = ['!', ['has', 'point_count']];
+  const f = cat ? ['all', base, ['==', ['get', 'category'], cat]] : base;
 
-  map.setFilter('event-emoji', catFilter);
-  map.setFilter('event-bg', catFilter);
-  map.setFilter('event-label', cat ? ['all', activeFilter, ['==', ['get', 'category'], cat]] : activeFilter);
+  ['event-ring', 'event-dot', 'event-icon', 'event-label'].forEach(l => {
+    if (map.getLayer(l)) map.setFilter(l, f);
+  });
 
   // Recount visible
   const src = map.getSource('events');
