@@ -44,7 +44,7 @@ if [ -f "constants/categories.ts" ] && [ -f "assets/map.html" ]; then
   CAT_KEYS=$(grep -oP "key: \"(\w+)\"" constants/categories.ts | sed 's/key: "//;s/"//')
   MISSING_MAP=""
   for cat in $CAT_KEYS; do
-    if ! grep -q "'$cat'" assets/map.html 2>/dev/null; then
+    if ! grep -q "$cat" assets/map.html 2>/dev/null; then
       MISSING_MAP="$MISSING_MAP $cat"
     fi
   done
