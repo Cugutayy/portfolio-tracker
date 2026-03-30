@@ -1,33 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-  Platform,
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  SafeAreaView, ScrollView, Alert, ActivityIndicator, Platform, Switch,
 } from "react-native";
 import DateTimePicker, { DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
+import * as Location from "expo-location";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
+import { CATEGORIES, CATEGORY_MAP, type EventCategory } from "@/constants/categories";
 
 const MONTHS = ["Oca", "Sub", "Mar", "Nis", "May", "Haz", "Tem", "Agu", "Eyl", "Eki", "Kas", "Ara"];
 
-const EVENT_TYPES: { value: string; label: string }[] = [
-  { value: "group_run", label: "Grup Kosusu" },
-  { value: "tempo_run", label: "Tempo Kosusu" },
-  { value: "long_run", label: "Uzun Kosu" },
-  { value: "interval", label: "Interval" },
-  { value: "trail_run", label: "Patika Kosusu" },
-  { value: "social", label: "Sosyal Bulusma" },
-  { value: "race", label: "Yaris" },
-];
+const DURATION_OPTIONS = [
+  { value: 60, label: "1 sa" },
+  { value: 120, label: "2 sa" },
+  { value: 240, label: "4 sa" },
+  { value: 480, label: "Tum gun" },
+] as const;
+
+const WHEN_OPTIONS = [
+  { key: "now", label: "Simdi" },
+  { key: "today", label: "Bugun" },
+  { key: "tomorrow", label: "Yarin" },
+  { key: "custom", label: "Tarih Sec" },
+] as const;
 
 function formatDateTR(d: Date) {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
@@ -38,24 +36,83 @@ function formatTimeTR(d: Date) {
 
 export default function CreateEventScreen() {
   const { groupId } = useLocalSearchParams<{ groupId?: string }>();
+
+  // Core fields
+  const [category, setCategory] = useState<EventCategory>("spor");
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [meetingPoint, setMeetingPoint] = useState("");
-  const [distanceKm, setDistanceKm] = useState("");
-  const [maxParticipants, setMaxParticipants] = useState("");
-  const [eventType, setEventType] = useState("group_run");
+  const [whenKey, setWhenKey] = useState<string>("today");
   const [saving, setSaving] = useState(false);
 
-  // Date/time state — default to tomorrow at 07:30
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  tomorrow.setHours(7, 30, 0, 0);
+  // Location
+  const [lat, setLat] = useState<number | null>(null);
+  const [lng, setLng] = useState<number | null>(null);
+  const [locationName, setLocationName] = useState("Konum aliniyor...");
 
-  const [eventDate, setEventDate] = useState(tomorrow);
+  // Details (collapsed by default)
+  const [showDetails, setShowDetails] = useState(false);
+  const [description, setDescription] = useState("");
+  const [meetingPoint, setMeetingPoint] = useState("");
+  const [maxParticipants, setMaxParticipants] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState(120);
+  const [approvalRequired, setApprovalRequired] = useState(false);
+
+  // Date/time
+  const [eventDate, setEventDate] = useState(() => {
+    const d = new Date();
+    d.setHours(d.getHours() + 2, 0, 0, 0);
+    return d;
+  });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-  const onDateChange = (_event: DateTimePickerEvent, selected?: Date) => {
+  // Get GPS location on mount
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        setLocationName("Konum izni verilmedi");
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      setLat(loc.coords.latitude);
+      setLng(loc.coords.longitude);
+
+      // Reverse geocode
+      try {
+        const [addr] = await Location.reverseGeocodeAsync({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
+        if (addr) {
+          const parts = [addr.district || addr.subregion, addr.city].filter(Boolean);
+          setLocationName(parts.join(", ") || "Konum alindi");
+        }
+      } catch {
+        setLocationName("Konum alindi");
+      }
+    })();
+  }, []);
+
+  // Handle "when" quick buttons
+  const handleWhen = (key: string) => {
+    setWhenKey(key);
+    const now = new Date();
+    if (key === "now") {
+      now.setMinutes(now.getMinutes() + 10);
+      setEventDate(now);
+    } else if (key === "today") {
+      now.setHours(now.getHours() + 2, 0, 0, 0);
+      setEventDate(now);
+    } else if (key === "tomorrow") {
+      now.setDate(now.getDate() + 1);
+      now.setHours(10, 0, 0, 0);
+      setEventDate(now);
+    } else {
+      setShowDatePicker(true);
+    }
+  };
+
+  const onDateChange = (_e: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS === "android") setShowDatePicker(false);
     if (selected) {
       const updated = new Date(eventDate);
@@ -64,7 +121,7 @@ export default function CreateEventScreen() {
     }
   };
 
-  const onTimeChange = (_event: DateTimePickerEvent, selected?: Date) => {
+  const onTimeChange = (_e: DateTimePickerEvent, selected?: Date) => {
     if (Platform.OS === "android") setShowTimePicker(false);
     if (selected) {
       const updated = new Date(eventDate);
@@ -73,29 +130,30 @@ export default function CreateEventScreen() {
     }
   };
 
+  const catDef = CATEGORY_MAP[category];
+
   const handleCreate = async () => {
     if (!title.trim()) {
       Alert.alert("Hata", "Etkinlik adi gerekli");
       return;
     }
-    if (eventDate < new Date()) {
-      Alert.alert("Hata", "Etkinlik tarihi gelecekte olmali");
-      return;
-    }
 
     setSaving(true);
     try {
-      const eventData: Record<string, any> = {
+      await API.createEvent({
         title: title.trim(),
         description: description.trim() || null,
         meetingPoint: meetingPoint.trim() || null,
-        distanceM: distanceKm ? Math.round(parseFloat(distanceKm) * 1000) : null,
-        maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
         date: eventDate.toISOString(),
-        eventType,
-      };
-      if (groupId) eventData.groupId = groupId;
-      await API.createEvent(eventData as any);
+        category,
+        eventType: category, // backwards compat
+        lat,
+        lng,
+        durationMinutes,
+        maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
+        approvalRequired,
+        ...(groupId ? { groupId } : {}),
+      } as any);
       Alert.alert("Basarili", "Etkinlik olusturuldu!", [
         { text: "Tamam", onPress: () => router.back() },
       ]);
@@ -110,149 +168,172 @@ export default function CreateEventScreen() {
     <SafeAreaView style={s.container}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <Ionicons name="arrow-back" size={24} color={brand.text} />
+          <Ionicons name="close" size={24} color={brand.text} />
         </TouchableOpacity>
         <Text style={s.headerTitle}>ETKINLIK OLUSTUR</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={s.form} contentContainerStyle={s.formContent}>
+      <ScrollView style={s.form} contentContainerStyle={s.formContent} keyboardShouldPersistTaps="handled">
+
+        {/* Category Grid */}
+        <Text style={s.label}>KATEGORI</Text>
+        <View style={s.catGrid}>
+          {CATEGORIES.map((c) => {
+            const selected = category === c.key;
+            return (
+              <TouchableOpacity
+                key={c.key}
+                style={[s.catItem, selected && { borderColor: c.color, backgroundColor: c.color + "18" }]}
+                onPress={() => setCategory(c.key)}
+                activeOpacity={0.7}
+              >
+                <View style={[s.catIconWrap, { backgroundColor: selected ? c.color : brand.elevated }]}>
+                  <Ionicons name={c.icon as any} size={22} color={selected ? "#FFF" : brand.textMuted} />
+                </View>
+                <Text style={[s.catLabel, selected && { color: c.color, fontWeight: "700" }]}>{c.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Title */}
         <View style={s.field}>
           <Text style={s.label}>ETKINLIK ADI *</Text>
           <TextInput
-            style={s.input}
+            style={[s.input, { borderColor: catDef.color + "40" }]}
             value={title}
             onChangeText={setTitle}
-            placeholder="orn: Kordon Sabah Kosusu"
+            placeholder={catDef.placeholder}
             placeholderTextColor={brand.textDim}
           />
         </View>
 
+        {/* Location */}
         <View style={s.field}>
-          <Text style={s.label}>ETKINLIK TURU</Text>
-          <View style={s.chipsRow}>
-            {EVENT_TYPES.map((t) => (
+          <Text style={s.label}>KONUM</Text>
+          <View style={s.locationRow}>
+            <Ionicons name="location" size={18} color={lat ? brand.accent : brand.textDim} />
+            <Text style={[s.locationText, !lat && { color: brand.textDim }]}>{locationName}</Text>
+          </View>
+        </View>
+
+        {/* When */}
+        <View style={s.field}>
+          <Text style={s.label}>NE ZAMAN</Text>
+          <View style={s.whenRow}>
+            {WHEN_OPTIONS.map((w) => (
               <TouchableOpacity
-                key={t.value}
-                style={[s.chip, eventType === t.value && s.chipSelected]}
-                onPress={() => setEventType(t.value)}
+                key={w.key}
+                style={[s.whenPill, whenKey === w.key && { borderColor: catDef.color, backgroundColor: catDef.color + "18" }]}
+                onPress={() => handleWhen(w.key)}
               >
-                <Text style={[s.chipText, eventType === t.value && s.chipTextSelected]}>
-                  {t.label}
-                </Text>
+                <Text style={[s.whenText, whenKey === w.key && { color: catDef.color }]}>{w.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <TouchableOpacity style={s.dateDisplay} onPress={() => setShowTimePicker(true)}>
+            <Text style={s.dateText}>{formatDateTR(eventDate)} · {formatTimeTR(eventDate)}</Text>
+            <Ionicons name="chevron-forward" size={16} color={brand.textDim} />
+          </TouchableOpacity>
+        </View>
+
+        {showDatePicker && (
+          <DateTimePicker value={eventDate} mode="date" display={Platform.OS === "ios" ? "spinner" : "default"} onChange={onDateChange} minimumDate={new Date()} locale="tr" themeVariant="dark" />
+        )}
+        {showTimePicker && (
+          <DateTimePicker value={eventDate} mode="time" display={Platform.OS === "ios" ? "spinner" : "default"} onChange={onTimeChange} minuteInterval={5} locale="tr" themeVariant="dark" />
+        )}
+
+        {/* Duration */}
+        <View style={s.field}>
+          <Text style={s.label}>SURE</Text>
+          <View style={s.whenRow}>
+            {DURATION_OPTIONS.map((d) => (
+              <TouchableOpacity
+                key={d.value}
+                style={[s.whenPill, durationMinutes === d.value && { borderColor: catDef.color, backgroundColor: catDef.color + "18" }]}
+                onPress={() => setDurationMinutes(d.value)}
+              >
+                <Text style={[s.whenText, durationMinutes === d.value && { color: catDef.color }]}>{d.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        <View style={s.field}>
-          <Text style={s.label}>ACIKLAMA</Text>
-          <TextInput
-            style={[s.input, s.textArea]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Etkinlik hakkinda detaylar..."
-            placeholderTextColor={brand.textDim}
-            multiline
-            numberOfLines={3}
-          />
-        </View>
+        {/* Toggle details */}
+        <TouchableOpacity style={s.detailsToggle} onPress={() => setShowDetails(!showDetails)}>
+          <Text style={s.detailsToggleText}>{showDetails ? "Detaylari Gizle" : "Detaylar Ekle"}</Text>
+          <Ionicons name={showDetails ? "chevron-up" : "chevron-down"} size={18} color={brand.textMuted} />
+        </TouchableOpacity>
 
-        {/* Date & Time Pickers */}
-        <View style={s.row}>
-          <View style={[s.field, { flex: 1 }]}>
-            <Text style={s.label}>TARIH *</Text>
-            <TouchableOpacity
-              style={[s.pickerBtn, showDatePicker && s.pickerBtnActive]}
-              onPress={() => { setShowTimePicker(false); setShowDatePicker(v => !v); }}
-            >
-              <Ionicons name="calendar-outline" size={16} color={showDatePicker ? brand.text : brand.accent} />
-              <Text style={s.pickerText}>{formatDateTR(eventDate)}</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={{ width: 12 }} />
-          <View style={[s.field, { flex: 1 }]}>
-            <Text style={s.label}>SAAT *</Text>
-            <TouchableOpacity
-              style={[s.pickerBtn, showTimePicker && s.pickerBtnActive]}
-              onPress={() => { setShowDatePicker(false); setShowTimePicker(v => !v); }}
-            >
-              <Ionicons name="time-outline" size={16} color={showTimePicker ? brand.text : brand.accent} />
-              <Text style={s.pickerText}>{formatTimeTR(eventDate)}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        {showDetails && (
+          <>
+            <View style={s.field}>
+              <Text style={s.label}>ACIKLAMA</Text>
+              <TextInput
+                style={[s.input, s.textArea]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Etkinlik hakkinda detaylar..."
+                placeholderTextColor={brand.textDim}
+                multiline
+                numberOfLines={3}
+              />
+            </View>
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={eventDate}
-            mode="date"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={onDateChange}
-            minimumDate={new Date()}
-            locale="tr"
-            themeVariant="dark"
-          />
+            <View style={s.field}>
+              <Text style={s.label}>BULUSMA NOKTASI</Text>
+              <TextInput
+                style={s.input}
+                value={meetingPoint}
+                onChangeText={setMeetingPoint}
+                placeholder="orn: Alsancak Kordon, Starbucks onu"
+                placeholderTextColor={brand.textDim}
+              />
+            </View>
+
+            <View style={s.field}>
+              <Text style={s.label}>MAKS KATILIMCI</Text>
+              <TextInput
+                style={[s.input, { width: 120 }]}
+                value={maxParticipants}
+                onChangeText={setMaxParticipants}
+                placeholder="20"
+                placeholderTextColor={brand.textDim}
+                keyboardType="numeric"
+              />
+            </View>
+
+            <View style={s.switchRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={s.switchLabel}>Katilim Onayi</Text>
+                <Text style={s.switchDesc}>Katilimcilar senin onayini beklesin</Text>
+              </View>
+              <Switch
+                value={approvalRequired}
+                onValueChange={setApprovalRequired}
+                trackColor={{ false: brand.border, true: catDef.color + "60" }}
+                thumbColor={approvalRequired ? catDef.color : brand.textDim}
+              />
+            </View>
+          </>
         )}
 
-        {showTimePicker && (
-          <DateTimePicker
-            value={eventDate}
-            mode="time"
-            display={Platform.OS === "ios" ? "spinner" : "default"}
-            onChange={onTimeChange}
-            minuteInterval={5}
-            locale="tr"
-            themeVariant="dark"
-          />
-        )}
-
-        <View style={s.field}>
-          <Text style={s.label}>BULUSMA NOKTASI</Text>
-          <TextInput
-            style={s.input}
-            value={meetingPoint}
-            onChangeText={setMeetingPoint}
-            placeholder="orn: Alsancak Kordon, Starbucks onu"
-            placeholderTextColor={brand.textDim}
-          />
-        </View>
-
-        <View style={s.row}>
-          <View style={[s.field, { flex: 1 }]}>
-            <Text style={s.label}>MESAFE (KM)</Text>
-            <TextInput
-              style={s.input}
-              value={distanceKm}
-              onChangeText={setDistanceKm}
-              placeholder="5"
-              placeholderTextColor={brand.textDim}
-              keyboardType="numeric"
-            />
-          </View>
-          <View style={{ width: 12 }} />
-          <View style={[s.field, { flex: 1 }]}>
-            <Text style={s.label}>MAKS KATILIMCI</Text>
-            <TextInput
-              style={s.input}
-              value={maxParticipants}
-              onChangeText={setMaxParticipants}
-              placeholder="20"
-              placeholderTextColor={brand.textDim}
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
-
+        {/* Create Button */}
         <TouchableOpacity
-          style={[s.createBtn, saving && s.createBtnDisabled]}
+          style={[s.createBtn, { backgroundColor: catDef.color }, saving && s.createBtnDisabled]}
           onPress={handleCreate}
           disabled={saving}
+          activeOpacity={0.8}
         >
           {saving ? (
-            <ActivityIndicator color={brand.bg} />
+            <ActivityIndicator color="#FFF" />
           ) : (
-            <Text style={s.createBtnText}>ETKINLIK OLUSTUR</Text>
+            <>
+              <Ionicons name={catDef.icon as any} size={20} color="#FFF" />
+              <Text style={s.createBtnText}>OLUSTUR</Text>
+            </>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -263,57 +344,81 @@ export default function CreateEventScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: brand.bg },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: brand.border,
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 16, paddingVertical: 12,
+    borderBottomWidth: 1, borderBottomColor: brand.border,
   },
   backBtn: { width: 40, height: 40, justifyContent: "center" },
   headerTitle: { fontSize: 14, fontWeight: "bold", color: brand.text, letterSpacing: 3 },
   form: { flex: 1 },
-  formContent: { padding: 16, gap: 16 },
+  formContent: { padding: 16, gap: 18 },
+
+  label: { fontSize: 10, fontWeight: "700", color: brand.textMuted, letterSpacing: 2, marginBottom: 2 },
+
+  // Category grid
+  catGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  catItem: {
+    width: "22.5%", alignItems: "center", gap: 6,
+    paddingVertical: 12, borderRadius: 14,
+    borderWidth: 1.5, borderColor: brand.border, backgroundColor: brand.surface,
+  },
+  catIconWrap: {
+    width: 44, height: 44, borderRadius: 14,
+    alignItems: "center", justifyContent: "center",
+  },
+  catLabel: { fontSize: 11, fontWeight: "600", color: brand.textMuted },
+
   field: { gap: 6 },
-  label: { fontSize: 10, fontWeight: "700", color: brand.textMuted, letterSpacing: 2 },
   input: {
-    backgroundColor: brand.surface,
-    borderWidth: 1,
-    borderColor: brand.border,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: brand.text,
+    backgroundColor: brand.surface, borderWidth: 1, borderColor: brand.border,
+    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 14, color: brand.text,
   },
   textArea: { minHeight: 80, textAlignVertical: "top" },
-  chipsRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 4, borderWidth: 1, borderColor: brand.border, backgroundColor: brand.surface },
-  chipSelected: { borderColor: brand.accent, backgroundColor: brand.accent + "18" },
-  chipText: { fontSize: 12, fontWeight: "600", color: brand.textMuted },
-  chipTextSelected: { color: brand.accent },
-  row: { flexDirection: "row" },
-  pickerBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: brand.surface,
-    borderWidth: 1,
-    borderColor: brand.border,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+
+  locationRow: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: brand.surface, borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 12,
+    borderWidth: 1, borderColor: brand.border,
   },
-  pickerBtnActive: { borderColor: brand.accent, backgroundColor: "rgba(230,255,0,0.08)" },
-  pickerText: { fontSize: 14, color: brand.text, fontWeight: "600" },
+  locationText: { fontSize: 14, color: brand.text, flex: 1 },
+
+  whenRow: { flexDirection: "row", gap: 8 },
+  whenPill: {
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12,
+    borderWidth: 1, borderColor: brand.border, backgroundColor: brand.surface,
+  },
+  whenText: { fontSize: 12, fontWeight: "600", color: brand.textMuted },
+
+  dateDisplay: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    marginTop: 6, backgroundColor: brand.surface, borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 10,
+    borderWidth: 1, borderColor: brand.border,
+  },
+  dateText: { fontSize: 13, fontWeight: "600", color: brand.text },
+
+  detailsToggle: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+    paddingVertical: 10, borderTopWidth: 1, borderTopColor: brand.border,
+  },
+  detailsToggleText: { fontSize: 13, fontWeight: "600", color: brand.textMuted },
+
+  switchRow: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    backgroundColor: brand.surface, borderRadius: 12,
+    padding: 14, borderWidth: 1, borderColor: brand.border,
+  },
+  switchLabel: { fontSize: 14, fontWeight: "600", color: brand.text },
+  switchDesc: { fontSize: 11, color: brand.textDim, marginTop: 2 },
+
   createBtn: {
-    backgroundColor: brand.accent,
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    paddingVertical: 16, borderRadius: 14, marginTop: 4,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
   },
   createBtnDisabled: { opacity: 0.6 },
-  createBtnText: { fontSize: 14, fontWeight: "bold", color: brand.bg, letterSpacing: 2 },
+  createBtnText: { fontSize: 15, fontWeight: "800", color: "#FFF", letterSpacing: 2 },
 });
