@@ -203,7 +203,7 @@ export const API = {
 
   // Events
   getEvents: (params?: Record<string, string>) =>
-    api(`/api/events${params ? `?${new URLSearchParams(params)}` : ""}`),
+    api<{ events: Array<{ id: string; slug: string; title: string; eventType: string; date: string; meetingPoint: string | null; meetingLat: number | null; meetingLng: number | null; maxParticipants: number | null; rsvpCount: number; isGoing?: boolean; creatorName?: string; status: string }> }>(`/api/events${params ? `?${new URLSearchParams(params)}` : ""}`),
   getEventDetail: (slug: string) =>
     api<{ event: any; rsvps: Array<{ id: string; memberName: string; memberImage: string | null; paceGroup: string | null; status: string }> }>(
       `/api/events/${slug}`
