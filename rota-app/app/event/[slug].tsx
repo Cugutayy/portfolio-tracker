@@ -101,11 +101,11 @@ export default function EventDetailScreen() {
 
   const getEventTypeLabel = (type: string) => {
     const map: Record<string, string> = {
-      group_run: "Grup Kosusu",
-      race: "Yaris",
-      social: "Sosyal",
-      training: "Antrenman",
-      other: "Diger",
+      group_run: "Grup Kosusu", tempo_run: "Tempo Kosusu", long_run: "Uzun Kosu",
+      interval: "Interval", trail_run: "Patika Kosusu", race: "Yaris",
+      social: "Sosyal", training: "Antrenman", other: "Diger",
+      spor: "Spor", kosu: "Kosu", kafe: "Kafe", kitap: "Kitap",
+      oyun: "Oyun", muzik: "Muzik", saglik: "Saglik", diger: "Diger",
     };
     return map[type] || type;
   };
@@ -148,6 +148,12 @@ export default function EventDetailScreen() {
           }}
         />
         <Text style={s.errorText}>{error || "Etkinlik bulunamadi"}</Text>
+        <TouchableOpacity
+          onPress={() => { setError(null); setLoading(true); loadData(); }}
+          style={{ marginTop: 16, paddingHorizontal: 20, paddingVertical: 10, borderWidth: 1, borderColor: brand.accent, borderRadius: 8 }}
+        >
+          <Text style={{ color: brand.accent, fontWeight: "700", fontSize: 12, letterSpacing: 1 }}>TEKRAR DENE</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -268,7 +274,7 @@ export default function EventDetailScreen() {
                       </Text>
                     )}
                   </View>
-                  <View style={s.onlineDot} />
+                  {/* Online dot removed — no real-time status available */}
                 </View>
                 <View style={s.attendeeInfo}>
                   <Text style={s.attendeeName}>{rsvp.memberName}</Text>

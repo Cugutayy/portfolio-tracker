@@ -1,5 +1,6 @@
 import { getToken, clearToken, getRefreshToken, setToken, setRefreshToken } from "./auth";
 import { getGlobalLogout } from "./auth-context";
+import type { EventCategory } from "@/constants/categories";
 
 // In development, use your local Alsancak Runners backend
 // In production, use the deployed Vercel URL
@@ -594,7 +595,7 @@ export interface PersonalRecord {
 
 // ── Location-based types ──
 
-export type EventCategory = "spor" | "kosu" | "kafe" | "kitap" | "oyun" | "muzik" | "saglik" | "diger";
+// EventCategory re-exported from top-level import
 
 export interface NearbyEvent {
   id: string;

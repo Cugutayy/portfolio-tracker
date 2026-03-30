@@ -48,6 +48,10 @@ export default function NotificationsTab() {
   useFocusEffect(useCallback(() => { loadNotifications(); }, [loadNotifications]));
 
   const handlePress = (n: Notification) => {
+    // Mark as read locally
+    if (!n.read) {
+      setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, read: true } : item));
+    }
     if (n.targetType === "activity" && n.targetId) router.push(`/activity/${n.targetId}` as never);
     else if (n.targetType === "post" && n.targetId) router.push(`/post/${n.targetId}` as never);
     else if (n.targetType === "member" && n.targetId) router.push(`/member/${n.targetId}` as never);
