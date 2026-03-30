@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import * as Location from "expo-location";
 import * as ImagePicker from "expo-image-picker";
+import { Ionicons } from "@expo/vector-icons";
 // Speech removed — sesli koç devre dışı
 import polyline from "@mapbox/polyline";
 import { router } from "expo-router";
