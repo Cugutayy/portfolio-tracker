@@ -1,7 +1,34 @@
 import React from "react";
-import { Tabs } from "expo-router";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { Tabs, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { brand } from "@/constants/Colors";
+
+function CreateTabButton({ children, ...props }: any) {
+  return (
+    <TouchableOpacity
+      {...props}
+      style={fab.wrap}
+      activeOpacity={0.8}
+      onPress={() => router.push("/create-event" as never)}
+    >
+      <View style={fab.circle}>
+        <Ionicons name="add" size={28} color="#FFF" />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+const fab = StyleSheet.create({
+  wrap: { top: -16, justifyContent: "center", alignItems: "center" },
+  circle: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: brand.accent,
+    justifyContent: "center", alignItems: "center",
+    shadowColor: brand.accent, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4, shadowRadius: 8, elevation: 8,
+  },
+});
 
 export default function TabLayout() {
   return (
@@ -28,15 +55,6 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Feed",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="map"
-        options={{
           title: "Harita",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "map" : "map-outline"} size={22} color={color} />
@@ -44,20 +62,27 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="track"
+        name="discover"
         options={{
-          title: "Kosu",
+          title: "Kesfet",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "fitness" : "fitness-outline"} size={24} color={color} />
+            <Ionicons name={focused ? "compass" : "compass-outline"} size={22} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="groups"
+        name="create"
         options={{
-          title: "Gruplar",
+          title: "",
+          tabBarButton: (props) => <CreateTabButton {...props} />,
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: "Bildirimler",
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "people" : "people-outline"} size={22} color={color} />
+            <Ionicons name={focused ? "notifications" : "notifications-outline"} size={22} color={color} />
           ),
         }}
       />
@@ -70,6 +95,10 @@ export default function TabLayout() {
           ),
         }}
       />
+      {/* Hidden tabs — kept for Expo Router file routing but not shown in tab bar */}
+      <Tabs.Screen name="groups" options={{ href: null }} />
+      <Tabs.Screen name="map" options={{ href: null }} />
+      <Tabs.Screen name="track" options={{ href: null }} />
     </Tabs>
   );
 }
