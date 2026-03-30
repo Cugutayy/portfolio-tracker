@@ -143,12 +143,12 @@ export default function CreateEventScreen() {
       await API.createEvent({
         title: title.trim(),
         description: description.trim() || null,
-        meetingPoint: meetingPoint.trim() || null,
+        meetingPoint: meetingPoint.trim() || locationName || null,
         date: eventDate.toISOString(),
         category,
-        eventType: category, // backwards compat
-        lat,
-        lng,
+        eventType: category,
+        meetingLat: lat,
+        meetingLng: lng,
         durationMinutes,
         maxParticipants: maxParticipants ? parseInt(maxParticipants) : null,
         approvalRequired,
