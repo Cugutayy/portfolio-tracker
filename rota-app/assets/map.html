@@ -274,7 +274,12 @@ function postRN(data) {
 
 function setEvents(events) {
   if (!map || !map.getSource('events')) return;
-  const features = (events || []).filter(e => e.lat && e.lng).map(e => {
+  const features = (events || []).map(e => {
+    // Support both lat/lng and meetingLat/meetingLng from backend
+    e.lat = e.lat || e.meetingLat;
+    e.lng = e.lng || e.meetingLng;
+    return e;
+  }).filter(e => e.lat && e.lng).map(e => {
     const cat = e.category && CATEGORY_COLORS[e.category] ? e.category : (TYPE_TO_CAT[e.eventType] || 'diger');
     return {
       type: 'Feature',
