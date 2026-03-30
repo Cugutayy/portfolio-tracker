@@ -40,7 +40,7 @@ export default function ProfileScreen() {
   const [profileTab, setProfileTab] = useState<"progress" | "activities" | "achievements">("progress");
   const [myActivities, setMyActivities] = useState<Array<{ id: string; title: string; distanceM: number; movingTimeSec: number; startTime: string; avgPaceSecKm: number | null }>>([]);
   const [weeklyHistory, setWeeklyHistory] = useState<{
-    weeks: Array<{ weekStart: string; totalDistanceM: number; runCount: number }>;
+    weeks: Array<{ weekStart: string; totalDistanceM: number; totalTimeSec: number; totalElevationM: number; runCount: number }>;
     currentMonth: { name: string; totalDistanceM: number; totalTimeSec: number; runCount: number; streak: number; streakActivities: number };
   } | null>(null);
 
@@ -373,12 +373,8 @@ export default function ProfileScreen() {
               <View style={s.trendStatItem}>
                 <Text style={s.trendStatLabel}>Sure</Text>
                 <Text style={s.trendStatValue}>
-                  {Math.floor((weeklyHistory.weeks[weeklyHistory.weeks.length - 1]?.totalDistanceM || 0) / 60000)}dk
+                  {Math.floor((weeklyHistory.weeks[weeklyHistory.weeks.length - 1]?.totalTimeSec || 0) / 60)} dk
                 </Text>
-              </View>
-              <View style={s.trendStatItem}>
-                <Text style={s.trendStatLabel}>Irtifa Kazanimi</Text>
-                <Text style={s.trendStatValue}>0 m</Text>
               </View>
             </View>
 

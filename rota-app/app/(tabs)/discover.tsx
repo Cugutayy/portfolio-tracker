@@ -59,6 +59,8 @@ export default function DiscoverScreen() {
 
   useFocusEffect(useCallback(() => { fetchData(); }, [fetchData]));
 
+  const [rsvpLoading, setRsvpLoading] = useState<string | null>(null);
+
   const filteredEvents = selectedCategory
     ? events.filter((e) => {
         const cat = (e.category as EventCategory) || eventTypeToCategory(e.eventType);
@@ -67,10 +69,13 @@ export default function DiscoverScreen() {
     : events;
 
   const handleRSVP = async (slug: string) => {
+    if (rsvpLoading) return;
+    setRsvpLoading(slug);
     try {
       await API.toggleRSVP(slug);
       fetchData();
     } catch {}
+    setRsvpLoading(null);
   };
 
   return (

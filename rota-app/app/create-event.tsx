@@ -118,7 +118,7 @@ export default function CreateEventScreen() {
   };
 
   const onDateChange = (_e: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === "android") setShowDatePicker(false);
+    setShowDatePicker(false);
     if (selected) {
       const updated = new Date(eventDate);
       updated.setFullYear(selected.getFullYear(), selected.getMonth(), selected.getDate());
@@ -127,7 +127,7 @@ export default function CreateEventScreen() {
   };
 
   const onTimeChange = (_e: DateTimePickerEvent, selected?: Date) => {
-    if (Platform.OS === "android") setShowTimePicker(false);
+    setShowTimePicker(false);
     if (selected) {
       const updated = new Date(eventDate);
       updated.setHours(selected.getHours(), selected.getMinutes());
