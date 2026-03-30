@@ -638,8 +638,8 @@ export interface CreateEventInput {
   endDate?: string | null;
   eventType?: string;
   category?: EventCategory;
-  lat?: number | null;
-  lng?: number | null;
+  meetingLat?: number | null;
+  meetingLng?: number | null;
   durationMinutes?: number | null;
   approvalRequired?: boolean;
   repeatConfig?: string | null;
