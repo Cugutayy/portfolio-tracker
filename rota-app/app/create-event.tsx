@@ -74,20 +74,25 @@ export default function CreateEventScreen() {
         return;
       }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-      setLat(loc.coords.latitude);
-      setLng(loc.coords.longitude);
+      const cLat = loc.coords.latitude;
+      const cLng = loc.coords.longitude;
 
-      // Reverse geocode
+      // Reverse geocode to verify this is a real land location
       try {
-        const [addr] = await Location.reverseGeocodeAsync({
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-        });
-        if (addr) {
+        const [addr] = await Location.reverseGeocodeAsync({ latitude: cLat, longitude: cLng });
+        if (addr && (addr.district || addr.subregion || addr.city || addr.street)) {
+          setLat(cLat);
+          setLng(cLng);
           const parts = [addr.district || addr.subregion, addr.city].filter(Boolean);
           setLocationName(parts.join(", ") || "Konum alindi");
+        } else {
+          // Reverse geocode returned nothing useful — likely water or empty area
+          setLocationName("Konum dogrulanamadi — elle girin");
         }
       } catch {
+        // Geocode failed but coordinates exist — use them anyway
+        setLat(cLat);
+        setLng(cLng);
         setLocationName("Konum alindi");
       }
     })();

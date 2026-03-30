@@ -154,6 +154,16 @@ function createMarkerEl(e, cat) {
   return el;
 }
 
+// Simple check: is this coordinate likely on water in İzmir Bay?
+function isLikelyWater(lat, lng) {
+  // İzmir Bay runs roughly NW-SE. These polygons cover the main water body.
+  // Zone 1: Inner bay (Alsancak-Karşıyaka gap) lat 38.41-38.47, lng 27.05-27.15
+  if (lat > 38.41 && lat < 38.47 && lng > 27.05 && lng < 27.145) return true;
+  // Zone 2: Outer bay (south toward Konak) lat 38.39-38.42, lng 27.05-27.13
+  if (lat > 38.39 && lat < 38.42 && lng > 27.05 && lng < 27.125) return true;
+  return false;
+}
+
 function setEvents(events) {
   // Clear old markers
   eventMarkers.forEach(m => m.marker.remove());
@@ -168,6 +178,9 @@ function setEvents(events) {
     const lat = e.lat || e.meetingLat;
     const lng = e.lng || e.meetingLng;
     if (!lat || !lng) return;
+
+    // Skip events with coordinates in the water
+    if (isLikelyWater(lat, lng)) return;
 
     const cat = resolveCat(e);
     const el = createMarkerEl(e, cat);
