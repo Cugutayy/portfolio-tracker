@@ -137,6 +137,7 @@ export default function MapHomeScreen() {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type === "mapReady") setMapReady(true);
+      if (msg.type === "visibleCount") setEventCount(msg.count);
       if (msg.type === "joinEvent" && msg.slug) {
         API.toggleRSVP(msg.slug).catch(() => {});
         router.push(`/event/${msg.slug}` as never);
