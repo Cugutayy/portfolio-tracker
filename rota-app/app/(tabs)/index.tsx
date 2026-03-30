@@ -79,13 +79,31 @@ export default function MapHomeScreen() {
     let cancelled = false;
     setLoading(true);
 
-    Promise.allSettled([
-      API.getNearbyEvents({ lat: userLat, lng: userLng, radiusKm, category: selectedCategory || undefined }),
-      API.getNearbyVenues({ lat: userLat, lng: userLng, radiusKm }),
-    ]).then(([evRes, venRes]) => {
+    // Try nearby endpoint first, fallback to regular events list
+    const fetchEvents = async () => {
+      try {
+        const res = await API.getNearbyEvents({ lat: userLat!, lng: userLng!, radiusKm, category: selectedCategory || undefined });
+        return res.events || [];
+      } catch {
+        // Fallback: use regular events endpoint (for backends without /nearby)
+        try {
+          const res = await API.getEvents() as any;
+          return (res.events || []).map((e: any) => ({ ...e, lat: e.lat || null, lng: e.lng || null }));
+        } catch { return []; }
+      }
+    };
+
+    const fetchVenues = async () => {
+      try {
+        const res = await API.getNearbyVenues({ lat: userLat!, lng: userLng!, radiusKm });
+        return res.venues || [];
+      } catch { return []; }
+    };
+
+    Promise.allSettled([fetchEvents(), fetchVenues()]).then(([evRes, venRes]) => {
       if (cancelled) return;
-      const events = evRes.status === "fulfilled" ? evRes.value.events : [];
-      const venues = venRes.status === "fulfilled" ? venRes.value.venues : [];
+      const events = evRes.status === "fulfilled" ? evRes.value : [];
+      const venues = venRes.status === "fulfilled" ? venRes.value : [];
       setEventCount(events.length);
 
       if (mapReady) {
@@ -150,7 +168,7 @@ export default function MapHomeScreen() {
               style={[s.filterBtn, selectedCategory === c.key && { borderColor: c.color, backgroundColor: c.color + "18" }]}
               onPress={() => setSelectedCategory(selectedCategory === c.key ? null : c.key)}
             >
-              <Text style={{ fontSize: 13 }}>{c.emoji}</Text>
+              <Ionicons name={c.icon as any} size={14} color={selectedCategory === c.key ? c.color : brand.textMuted} />
               <Text style={[s.filterText, selectedCategory === c.key && { color: c.color }]}>{c.label}</Text>
             </TouchableOpacity>
           ))}
