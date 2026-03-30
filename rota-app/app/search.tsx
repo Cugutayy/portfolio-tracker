@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,7 +14,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { brand } from "@/constants/Colors";
 import { API, type Group } from "@/lib/api";
-import { getInitials } from "@/lib/format";
+import { getInitials, formatDate } from "@/lib/format";
+import { CATEGORY_MAP, eventTypeToCategory } from "@/constants/categories";
 
 type SearchTab = "all" | "members" | "groups" | "events";
 
@@ -37,7 +38,18 @@ export default function SearchScreen() {
   const [results, setResults] = useState<SearchResults>({ members: [], groups: [], events: [] });
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [defaultEvents, setDefaultEvents] = useState<Array<{ id: string; title: string; slug: string; date: string; meetingPoint?: string; eventType?: string }>>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load upcoming events on mount (shown before any search)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await API.getEvents() as any;
+        setDefaultEvents((res.events || []).slice(0, 10));
+      } catch {}
+    })();
+  }, []);
 
   const doSearch = useCallback(async (q: string, type?: string) => {
     if (q.trim().length < 2) {
@@ -143,20 +155,22 @@ export default function SearchScreen() {
       );
     }
     // event
-    const e = item.data;
+    const e = item.data as any;
+    const catKey = eventTypeToCategory(e.eventType || e.category);
+    const cat = CATEGORY_MAP[catKey];
     return (
       <TouchableOpacity
         style={s.resultRow}
         activeOpacity={0.7}
         onPress={() => router.push(`/event/${e.slug}` as never)}
       >
-        <View style={[s.avatar, s.eventAvatar]}>
-          <Ionicons name="calendar-outline" size={18} color={brand.accent} />
+        <View style={[s.avatar, { backgroundColor: cat.color + "18" }]}>
+          <Ionicons name={cat.icon as any} size={18} color={cat.color} />
         </View>
         <View style={s.resultInfo}>
           <Text style={s.resultName}>{e.title}</Text>
           <Text style={s.resultType}>
-            {new Date(e.date).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}
+            {formatDate(e.date)}{e.meetingPoint ? ` · ${e.meetingPoint}` : ""}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={16} color={brand.textDim} />
@@ -164,7 +178,10 @@ export default function SearchScreen() {
     );
   };
 
-  const items = getItems();
+  // If no search yet, show default events
+  const items = searched || query.trim().length >= 2
+    ? getItems()
+    : defaultEvents.map((e): ResultItem => ({ type: "event", data: e }));
 
   return (
     <SafeAreaView style={s.container}>
@@ -214,16 +231,25 @@ export default function SearchScreen() {
           renderItem={renderItem}
           keyExtractor={(item, index) => `${item.type}-${item.type === "member" ? item.data.id : item.type === "group" ? (item.data as Group).slug : (item.data as any).id}-${index}`}
           contentContainerStyle={s.list}
+          ListHeaderComponent={
+            !searched && defaultEvents.length > 0 && query.trim().length < 2 ? (
+              <View style={{ marginBottom: 8 }}>
+                <Text style={s.sectionLabel}>YAKLASAN ETKINLIKLER</Text>
+              </View>
+            ) : null
+          }
           ListEmptyComponent={
-            <View style={s.centerContainer}>
-              <Text style={s.emptyText}>
-                {!searched
-                  ? "Arama icin bir seyler yazin"
-                  : query.trim().length < 2
-                    ? "En az 2 karakter girin"
-                    : "Sonuc bulunamadi"}
-              </Text>
-            </View>
+            !searched && defaultEvents.length > 0 && query.trim().length < 2 ? null : (
+              <View style={s.centerContainer}>
+                <Text style={s.emptyText}>
+                  {!searched
+                    ? "Arama icin bir seyler yazin"
+                    : query.trim().length < 2
+                      ? "En az 2 karakter girin"
+                      : "Sonuc bulunamadi"}
+                </Text>
+              </View>
+            )
           }
         />
       )}
@@ -295,4 +321,5 @@ const s = StyleSheet.create({
   resultName: { fontSize: 14, fontWeight: "600", color: brand.text },
   resultType: { fontSize: 11, color: brand.textDim, marginTop: 2 },
   emptyText: { fontSize: 14, color: brand.textMuted },
+  sectionLabel: { fontSize: 11, fontWeight: "700", color: brand.textDim, letterSpacing: 2, marginBottom: 8 },
 });
