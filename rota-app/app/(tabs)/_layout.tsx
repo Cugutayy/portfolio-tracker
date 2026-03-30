@@ -99,6 +99,7 @@ export default function TabLayout() {
       <Tabs.Screen name="groups" options={{ href: null }} />
       <Tabs.Screen name="map" options={{ href: null }} />
       <Tabs.Screen name="track" options={{ href: null }} />
+      <Tabs.Screen name="events" options={{ href: null }} />
     </Tabs>
   );
 }
