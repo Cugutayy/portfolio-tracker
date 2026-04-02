@@ -381,6 +381,24 @@ export const API = {
     api<{ comment: Comment }>(`/api/posts/${postId}/comments`, {
       method: "POST", body: JSON.stringify({ text })
     }),
+
+  // Conversations / Messaging
+  getConversations: () =>
+    api<{ conversations: Conversation[] }>("/api/conversations"),
+  createConversation: (data: { type?: string; participantIds: string[]; name?: string }) =>
+    api<{ conversationId: string }>("/api/conversations", { method: "POST", body: JSON.stringify(data) }),
+  getMessages: (conversationId: string, before?: string) =>
+    api<{ messages: Message[]; hasMore: boolean }>(
+      `/api/conversations/${conversationId}/messages${before ? `?before=${before}` : ""}`
+    ),
+  sendMessage: (conversationId: string, content: string, messageType?: string) =>
+    api<{ message: Message }>(`/api/conversations/${conversationId}/messages`, {
+      method: "POST", body: JSON.stringify({ content, messageType })
+    }),
+
+  // Reports
+  reportContent: (data: { targetType: string; targetId: string; reason: string; description?: string }) =>
+    api<{ reportId: string; message: string }>("/api/reports", { method: "POST", body: JSON.stringify(data) }),
 };
 
 // ── Types ──
@@ -646,4 +664,30 @@ export interface CreateEventInput {
   repeatConfig?: string | null;
   feeTL?: number | null;
   photoBase64?: string | null;
+}
+
+// ── Messaging types ──
+
+export interface Conversation {
+  id: string;
+  type: "direct" | "group" | "event";
+  name: string | null;
+  image: string | null;
+  otherUserId: string | null;
+  lastMessagePreview: string | null;
+  lastMessageAt: string | null;
+  hasUnread: boolean;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  messageType: "text" | "image" | "system" | "location" | "activity_share";
+  mediaUrl: string | null;
+  replyToId: string | null;
+  isEdited: boolean;
+  createdAt: string;
+  senderId: string;
+  senderName: string;
+  senderImage: string | null;
 }

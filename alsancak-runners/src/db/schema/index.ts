@@ -741,3 +741,76 @@ export const onboardingEvents = pgTable("onboarding_events", {
   index("idx_onboarding_events_member").on(t.memberId),
   index("idx_onboarding_events_event").on(t.eventName),
 ]);
+
+// ============================================================
+// DOMAIN 13: CONVERSATIONS & MESSAGING
+// ============================================================
+
+export const conversations = pgTable("conversations", {
+  id: uuid().primaryKey().defaultRandom(),
+  type: text("type").notNull().default("direct"), // direct, group, event
+  name: text("name"), // null for DMs, set for group chats
+  imageUrl: text("image_url"),
+  createdBy: uuid("created_by").references(() => members.id),
+  // Denormalized for fast list rendering
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+  lastMessagePreview: text("last_message_preview"),
+  lastMessageBy: uuid("last_message_by").references(() => members.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("idx_conversations_last_msg").on(t.lastMessageAt),
+]);
+
+export const conversationParticipants = pgTable("conversation_participants", {
+  id: uuid().primaryKey().defaultRandom(),
+  conversationId: uuid("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  memberId: uuid("member_id").notNull().references(() => members.id, { onDelete: "cascade" }),
+  role: text("role").notNull().default("member"), // owner, admin, member
+  lastReadAt: timestamp("last_read_at", { withTimezone: true }),
+  mutedUntil: timestamp("muted_until", { withTimezone: true }),
+  joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  uniqueIndex("conversation_participants_unique").on(t.conversationId, t.memberId),
+  index("idx_conv_participants_member").on(t.memberId),
+  index("idx_conv_participants_conv").on(t.conversationId),
+]);
+
+export const messages = pgTable("messages", {
+  id: uuid().primaryKey().defaultRandom(),
+  conversationId: uuid("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  senderId: uuid("sender_id").notNull().references(() => members.id),
+  content: text("content").notNull(),
+  messageType: text("message_type").notNull().default("text"), // text, image, system, location, activity_share
+  mediaUrl: text("media_url"),
+  replyToId: uuid("reply_to_id"), // for reply threads
+  isEdited: boolean("is_edited").notNull().default(false),
+  isDeleted: boolean("is_deleted").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("idx_messages_conversation").on(t.conversationId),
+  index("idx_messages_sender").on(t.senderId),
+  index("idx_messages_created").on(t.createdAt),
+]);
+
+// ============================================================
+// DOMAIN 14: REPORTS & MODERATION
+// ============================================================
+
+export const reports = pgTable("reports", {
+  id: uuid().primaryKey().defaultRandom(),
+  reporterId: uuid("reporter_id").notNull().references(() => members.id),
+  targetType: text("target_type").notNull(), // post, comment, member, message, event, group
+  targetId: uuid("target_id").notNull(),
+  reason: text("reason").notNull(), // spam, harassment, inappropriate, misinformation, other
+  description: text("description"),
+  status: text("status").notNull().default("pending"), // pending, reviewed, resolved, dismissed
+  reviewedBy: uuid("reviewed_by").references(() => members.id),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  action: text("action"), // warn, mute, ban, delete, none
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  index("idx_reports_status").on(t.status),
+  index("idx_reports_target").on(t.targetType, t.targetId),
+]);
