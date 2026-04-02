@@ -181,6 +181,10 @@ function AuthGatedNavigation() {
         options={{ animation: "slide_from_bottom", presentation: "modal" }}
       />
       <Stack.Screen
+        name="run-summary"
+        options={{ headerShown: false, animation: "slide_from_bottom" }}
+      />
+      <Stack.Screen
         name="followers"
         options={{
           headerShown: true,
@@ -190,13 +194,7 @@ function AuthGatedNavigation() {
           headerStyle: { backgroundColor: brand.bg },
         }}
       />
-      <Stack.Screen
-        name="invite"
-        options={{
-          animation: "slide_from_bottom",
-          presentation: "modal",
-        }}
-      />
+      {/* invite screen removed — file doesn't exist */}
     </Stack>
   );
 }

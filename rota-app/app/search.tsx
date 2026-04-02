@@ -290,7 +290,7 @@ const s = StyleSheet.create({
     borderColor: brand.border,
     backgroundColor: brand.surface,
   },
-  tabActive: { borderColor: brand.accent, backgroundColor: "rgba(230,255,0,0.1)" },
+  tabActive: { borderColor: brand.accent, backgroundColor: brand.accentDim },
   tabText: { fontSize: 10, fontWeight: "600", color: brand.textMuted, letterSpacing: 1 },
   tabTextActive: { color: brand.accent },
   list: { paddingHorizontal: 16, paddingBottom: 40 },
