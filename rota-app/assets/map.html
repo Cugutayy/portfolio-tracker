@@ -47,14 +47,14 @@ body { background: #0D1117; overflow: hidden; }
 mapboxgl.accessToken = window.__MAPBOX_TOKEN__ || '';
 
 const CAT = {
-  spor:  { c:'#FF6B35', i:'🏀', l:'Spor' },
-  kosu:  { c:'#10B981', i:'🏃', l:'Kosu' },
-  kafe:  { c:'#A78BFA', i:'☕', l:'Kafe' },
-  kitap: { c:'#60A5FA', i:'📖', l:'Kitap' },
-  oyun:  { c:'#F472B6', i:'🎮', l:'Oyun' },
-  muzik: { c:'#FBBF24', i:'🎵', l:'Muzik' },
-  saglik:{ c:'#34D399', i:'🌿', l:'Saglik' },
-  diger: { c:'#8B949E', i:'✨', l:'Diger' }
+  spor:  { c:'#FF6B35', s:'⚽', l:'Spor' },
+  kosu:  { c:'#10B981', s:'👟', l:'Kosu' },
+  kafe:  { c:'#A78BFA', s:'☕', l:'Kafe' },
+  kitap: { c:'#60A5FA', s:'📖', l:'Kitap' },
+  oyun:  { c:'#F472B6', s:'🎮', l:'Oyun' },
+  muzik: { c:'#FBBF24', s:'🎵', l:'Muzik' },
+  saglik:{ c:'#34D399', s:'🧘', l:'Saglik' },
+  diger: { c:'#8B949E', s:'📌', l:'Diger' }
 };
 const T2C = { group_run:'kosu',tempo_run:'kosu',long_run:'kosu',interval:'kosu',trail_run:'kosu',race:'kosu',social:'kafe' };
 const MO = ['Oca','Sub','Mar','Nis','May','Haz','Tem','Agu','Eyl','Eki','Kas','Ara'];
@@ -108,39 +108,37 @@ function initMap() {
       paint: { 'text-color': '#10B981' }
     });
 
-    // ── Individual event markers (Google Maps / Apple Maps style) ──
+    // ── Individual event markers — icon only, no colored circles ──
 
-    // Layer 1: Shadow (subtle depth)
-    map.addLayer({
-      id: 'event-shadow',
-      type: 'circle',
-      source: 'events',
-      filter: ['!', ['has', 'point_count']],
-      paint: {
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 14, 8, 17, 11],
-        'circle-color': '#000000',
-        'circle-opacity': 0.2,
-        'circle-blur': 0.8,
-        'circle-translate': [0, 1]
-      }
-    });
-
-    // Layer 2: Filled circle with white border (the actual pin)
+    // Invisible click target (larger hit area)
     map.addLayer({
       id: 'event-ring',
       type: 'circle',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
       paint: {
-        'circle-color': ['get', 'color'],
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 4, 14, 7, 17, 10],
-        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 10, 1.5, 17, 2.5],
-        'circle-stroke-color': '#FFFFFF',
-        'circle-opacity': 1
+        'circle-color': 'transparent',
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 12, 17, 18],
+        'circle-stroke-width': 0
       }
     });
 
-    // Layer 3: Event title (zoom >= 14)
+    // Icon symbol — matches the filter chip icons (outline style)
+    map.addLayer({
+      id: 'event-icon',
+      type: 'symbol',
+      source: 'events',
+      filter: ['!', ['has', 'point_count']],
+      layout: {
+        'text-field': ['get', 'symbol'],
+        'text-font': ['Arial Unicode MS Regular'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 10, 18, 14, 24, 17, 30],
+        'text-allow-overlap': true,
+        'text-ignore-placement': true
+      }
+    });
+
+    // Event title (zoom >= 14)
     map.addLayer({
       id: 'event-label',
       type: 'symbol',
@@ -151,7 +149,7 @@ function initMap() {
         'text-field': ['get', 'title'],
         'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
         'text-size': ['interpolate', ['linear'], ['zoom'], 14, 10, 17, 12],
-        'text-offset': [0, 1.5],
+        'text-offset': [0, 2],
         'text-anchor': 'top',
         'text-max-width': 8,
         'text-allow-overlap': false
@@ -227,8 +225,7 @@ function setEvents(events) {
         id: e.id || '',
         slug: e.slug || e.id || '',
         title: e.title || '',
-        emoji: c.i,
-        initial: c.l.charAt(0),
+        symbol: c.s,
         category: cat,
         color: c.c,
         label: c.l,
@@ -270,7 +267,7 @@ function showPopup(coords, p) {
   popup = new mapboxgl.Popup({ closeOnClick: true, offset: 24, maxWidth: '260px' })
     .setLngLat(coords)
     .setHTML(`<div class="pp">
-      <div class="pp-cat" style="background:${c.c}22;color:${c.c}">${c.i} ${c.l}</div>
+      <div class="pp-cat" style="background:${c.c}22;color:${c.c}">${c.s} ${c.l}</div>
       <div class="pp-title">${esc(p.title)}</div>
       ${p.meetingPoint ? `<div class="pp-loc">\u{1F4CD} ${esc(p.meetingPoint)}</div>` : ''}
       <div class="pp-meta">${date ? `<span>\u{1F4C5} ${date} \u00B7 ${time}</span>` : ''}<span>\u{1F465} ${cnt}${max}</span></div>
@@ -284,7 +281,7 @@ function filterCategory(cat) {
   const base = ['!', ['has', 'point_count']];
   const f = cat ? ['all', base, ['==', ['get', 'category'], cat]] : base;
 
-  ['event-shadow', 'event-ring', 'event-label'].forEach(l => {
+  ['event-ring', 'event-icon', 'event-label'].forEach(l => {
     if (map.getLayer(l)) map.setFilter(l, f);
   });
 
