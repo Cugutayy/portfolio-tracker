@@ -108,62 +108,8 @@ function initMap() {
       paint: { 'text-color': '#10B981' }
     });
 
-    // ── Individual event markers ──
-    // Colored circle pin (category color + white border)
-    map.addLayer({
-      id: 'event-ring',
-      type: 'circle',
-      source: 'events',
-      filter: ['!', ['has', 'point_count']],
-      paint: {
-        'circle-color': ['get', 'color'],
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 14, 8, 17, 12],
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#FFFFFF'
-      }
-    });
-
-    // Category initial letter inside circle (zoom >= 13)
-    map.addLayer({
-      id: 'event-icon',
-      type: 'symbol',
-      source: 'events',
-      filter: ['!', ['has', 'point_count']],
-      minzoom: 13,
-      layout: {
-        'text-field': ['get', 'initial'],
-        'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 13, 8, 17, 11],
-        'text-allow-overlap': true,
-        'text-ignore-placement': true
-      },
-      paint: {
-        'text-color': '#FFFFFF'
-      }
-    });
-
-    // Event title below pin (zoom >= 14)
-    map.addLayer({
-      id: 'event-label',
-      type: 'symbol',
-      source: 'events',
-      filter: ['!', ['has', 'point_count']],
-      minzoom: 14,
-      layout: {
-        'text-field': ['get', 'title'],
-        'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 14, 10, 17, 12],
-        'text-offset': [0, 1.5],
-        'text-anchor': 'top',
-        'text-max-width': 8,
-        'text-allow-overlap': false
-      },
-      paint: {
-        'text-color': '#E6EDF3',
-        'text-halo-color': '#0D1117',
-        'text-halo-width': 1.5
-      }
-    });
+    // Individual markers are DOM-based (added in setEvents)
+    // GL layers not used for individual pins — emoji doesn't render in WebView GL
 
     // ── Click handlers ──
     map.on('click', 'event-ring', (e) => {
@@ -206,11 +152,18 @@ function isValidCoord(lat, lng) {
   return lat > 35 && lat < 43 && lng > 25 && lng < 45;
 }
 
+let eventMarkers = []; // DOM markers
+let activeCat = null;
+
 function setEvents(events) {
-  if (!map || !map.getSource('events')) return;
+  if (!map) return;
   eventsData = events || [];
 
-  const features = [];
+  // Clear old markers
+  eventMarkers.forEach(m => m.marker.remove());
+  eventMarkers = [];
+
+  const bounds = new mapboxgl.LngLatBounds();
   let visibleCount = 0;
 
   eventsData.forEach(e => {
@@ -222,36 +175,43 @@ function setEvents(events) {
     const cat = resCat(e);
     const c = CAT[cat] || CAT.diger;
 
-    features.push({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: [lng, lat] },
-      properties: {
-        id: e.id || '',
-        slug: e.slug || e.id || '',
-        title: e.title || '',
-        symbol: c.s,
-        initial: c.l.charAt(0),
-        category: cat,
-        color: c.c,
-        label: c.l,
-        date: e.date || '',
-        meetingPoint: e.meetingPoint || '',
-        attendeeCount: e.attendeeCount || e.rsvpCount || 0,
-        maxParticipants: e.maxParticipants || 0,
-        isGoing: e.isGoing || false,
-        creatorName: e.creatorName || ''
-      }
+    // Create DOM element — just the icon, no background
+    const el = document.createElement('div');
+    el.style.cssText = 'font-size:28px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));transition:transform 0.1s;';
+    el.textContent = c.s;
+    el.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      showPopup([lng, lat], { ...e, category: cat });
     });
-    visibleCount++;
+
+    const visible = !activeCat || cat === activeCat;
+    if (!visible) el.style.display = 'none';
+    else visibleCount++;
+
+    const marker = new mapboxgl.Marker({ element: el })
+      .setLngLat([lng, lat])
+      .addTo(map);
+
+    eventMarkers.push({ marker, el, cat, data: e });
+    bounds.extend([lng, lat]);
   });
 
-  map.getSource('events').setData({ type: 'FeatureCollection', features });
+  // Update GeoJSON for clusters (still use GL for clusters)
+  if (map.getSource('events')) {
+    const features = eventsData
+      .filter(e => (e.lat || e.meetingLat) && (e.lng || e.meetingLng))
+      .filter(e => isValidCoord(e.lat || e.meetingLat, e.lng || e.meetingLng))
+      .map(e => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [e.lng || e.meetingLng, e.lat || e.meetingLat] },
+        properties: { category: resCat(e) }
+      }));
+    map.getSource('events').setData({ type: 'FeatureCollection', features });
+  }
+
   postRN({ type: 'visibleCount', count: visibleCount });
 
-  // Fit to events if no user marker yet
-  if (features.length > 0 && !userMarker) {
-    const bounds = new mapboxgl.LngLatBounds();
-    features.forEach(f => bounds.extend(f.geometry.coordinates));
+  if (eventMarkers.length > 0 && !userMarker) {
     map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 800 });
   }
 }
@@ -282,19 +242,13 @@ function showPopup(coords, p) {
 }
 
 function filterCategory(cat) {
-  if (!map) return;
-  const base = ['!', ['has', 'point_count']];
-  const f = cat ? ['all', base, ['==', ['get', 'category'], cat]] : base;
-
-  ['event-ring', 'event-icon', 'event-label'].forEach(l => {
-    if (map.getLayer(l)) map.setFilter(l, f);
+  activeCat = cat || null;
+  let count = 0;
+  eventMarkers.forEach(m => {
+    const vis = !activeCat || m.cat === activeCat;
+    m.el.style.display = vis ? '' : 'none';
+    if (vis) count++;
   });
-
-  // Recount visible
-  const src = map.getSource('events');
-  if (!src || !src._data) return;
-  const feats = (src._data.features || []);
-  const count = cat ? feats.filter(f => f.properties.category === cat).length : feats.length;
   postRN({ type: 'visibleCount', count });
 }
 
