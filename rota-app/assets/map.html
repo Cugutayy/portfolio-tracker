@@ -82,21 +82,19 @@ function initMap() {
       clusterRadius: 50
     });
 
-    // Cluster circles — outline style, no fill
+    // ── Cluster markers ──
     map.addLayer({
       id: 'clusters',
       type: 'circle',
       source: 'events',
       filter: ['has', 'point_count'],
       paint: {
-        'circle-color': 'rgba(16,185,129,0.08)',
-        'circle-radius': ['step', ['get', 'point_count'], 18, 5, 24, 20, 30],
+        'circle-color': '#161B22',
+        'circle-radius': ['step', ['get', 'point_count'], 16, 5, 20, 20, 26],
         'circle-stroke-width': 2,
         'circle-stroke-color': '#10B981'
       }
     });
-
-    // Cluster count
     map.addLayer({
       id: 'cluster-count',
       type: 'symbol',
@@ -104,75 +102,58 @@ function initMap() {
       filter: ['has', 'point_count'],
       layout: {
         'text-field': '{point_count_abbreviated}',
-        'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-        'text-size': 13
+        'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+        'text-size': 12
       },
       paint: { 'text-color': '#10B981' }
     });
 
-    // ── Individual event points ──
-    // Simple dot — category color, no background fill, just outline
+    // ── Individual event markers (Google Maps / Apple Maps style) ──
+
+    // Layer 1: Shadow (subtle depth)
+    map.addLayer({
+      id: 'event-shadow',
+      type: 'circle',
+      source: 'events',
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 14, 8, 17, 11],
+        'circle-color': '#000000',
+        'circle-opacity': 0.2,
+        'circle-blur': 0.8,
+        'circle-translate': [0, 1]
+      }
+    });
+
+    // Layer 2: Filled circle with white border (the actual pin)
     map.addLayer({
       id: 'event-ring',
       type: 'circle',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
       paint: {
-        'circle-color': 'transparent',
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 14, 8, 17, 11],
-        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 17, 2.5],
-        'circle-stroke-color': ['get', 'color']
-      }
-    });
-
-    // Center dot — same color, small filled
-    map.addLayer({
-      id: 'event-dot',
-      type: 'circle',
-      source: 'events',
-      filter: ['!', ['has', 'point_count']],
-      paint: {
         'circle-color': ['get', 'color'],
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 2.5, 14, 4, 17, 5.5]
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 4, 14, 7, 17, 10],
+        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 10, 1.5, 17, 2.5],
+        'circle-stroke-color': '#FFFFFF',
+        'circle-opacity': 1
       }
     });
 
-    // Category icon text — matches filter chip icons via initial letter
-    map.addLayer({
-      id: 'event-icon',
-      type: 'symbol',
-      source: 'events',
-      filter: ['!', ['has', 'point_count']],
-      minzoom: 14,
-      layout: {
-        'text-field': ['get', 'initial'],
-        'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 14, 9, 17, 12],
-        'text-allow-overlap': true,
-        'text-ignore-placement': true,
-        'text-offset': [0, -1.4]
-      },
-      paint: {
-        'text-color': ['get', 'color'],
-        'text-halo-color': '#0D1117',
-        'text-halo-width': 1
-      }
-    });
-
-    // Event title label (visible at zoom >= 14.5)
+    // Layer 3: Event title (zoom >= 14)
     map.addLayer({
       id: 'event-label',
       type: 'symbol',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
-      minzoom: 14.5,
+      minzoom: 14,
       layout: {
         'text-field': ['get', 'title'],
         'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 14.5, 10, 17, 12],
-        'text-offset': [0, 1.6],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 14, 10, 17, 12],
+        'text-offset': [0, 1.5],
         'text-anchor': 'top',
-        'text-max-width': 10,
+        'text-max-width': 8,
         'text-allow-overlap': false
       },
       paint: {
@@ -190,13 +171,6 @@ function initMap() {
       showPopup(coords, p);
     });
 
-    map.on('click', 'event-dot', (e) => {
-      if (!e.features || !e.features[0]) return;
-      const p = e.features[0].properties;
-      const coords = e.features[0].geometry.coordinates.slice();
-      showPopup(coords, p);
-    });
-
     map.on('click', 'clusters', (e) => {
       const f = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
       if (!f.length) return;
@@ -206,7 +180,7 @@ function initMap() {
       });
     });
 
-    ['event-ring', 'event-dot', 'clusters'].forEach(l => {
+    ['event-ring', 'clusters'].forEach(l => {
       map.on('mouseenter', l, () => { map.getCanvas().style.cursor = 'pointer'; });
       map.on('mouseleave', l, () => { map.getCanvas().style.cursor = ''; });
     });
@@ -310,7 +284,7 @@ function filterCategory(cat) {
   const base = ['!', ['has', 'point_count']];
   const f = cat ? ['all', base, ['==', ['get', 'category'], cat]] : base;
 
-  ['event-ring', 'event-dot', 'event-icon', 'event-label'].forEach(l => {
+  ['event-shadow', 'event-ring', 'event-label'].forEach(l => {
     if (map.getLayer(l)) map.setFilter(l, f);
   });
 
