@@ -108,37 +108,41 @@ function initMap() {
       paint: { 'text-color': '#10B981' }
     });
 
-    // ── Individual event markers — icon only, no colored circles ──
-
-    // Invisible click target (larger hit area)
+    // ── Individual event markers ──
+    // Colored circle pin (category color + white border)
     map.addLayer({
       id: 'event-ring',
       type: 'circle',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
       paint: {
-        'circle-color': 'transparent',
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 12, 17, 18],
-        'circle-stroke-width': 0
+        'circle-color': ['get', 'color'],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 14, 8, 17, 12],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#FFFFFF'
       }
     });
 
-    // Icon symbol — matches the filter chip icons (outline style)
+    // Category initial letter inside circle (zoom >= 13)
     map.addLayer({
       id: 'event-icon',
       type: 'symbol',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
+      minzoom: 13,
       layout: {
-        'text-field': ['get', 'symbol'],
-        'text-font': ['Arial Unicode MS Regular'],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 10, 18, 14, 24, 17, 30],
+        'text-field': ['get', 'initial'],
+        'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 13, 8, 17, 11],
         'text-allow-overlap': true,
         'text-ignore-placement': true
+      },
+      paint: {
+        'text-color': '#FFFFFF'
       }
     });
 
-    // Event title (zoom >= 14)
+    // Event title below pin (zoom >= 14)
     map.addLayer({
       id: 'event-label',
       type: 'symbol',
@@ -149,7 +153,7 @@ function initMap() {
         'text-field': ['get', 'title'],
         'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
         'text-size': ['interpolate', ['linear'], ['zoom'], 14, 10, 17, 12],
-        'text-offset': [0, 2],
+        'text-offset': [0, 1.5],
         'text-anchor': 'top',
         'text-max-width': 8,
         'text-allow-overlap': false
@@ -226,6 +230,7 @@ function setEvents(events) {
         slug: e.slug || e.id || '',
         title: e.title || '',
         symbol: c.s,
+        initial: c.l.charAt(0),
         category: cat,
         color: c.c,
         label: c.l,
