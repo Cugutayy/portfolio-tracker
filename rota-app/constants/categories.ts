@@ -28,7 +28,8 @@ export function eventTypeToCategory(eventType: string | undefined | null): Event
   const map: Record<string, EventCategory> = {
     group_run: "kosu", tempo_run: "kosu", long_run: "kosu",
     interval: "kosu", trail_run: "kosu", race: "kosu",
-    social: "kafe",
+    recovery_run: "kosu", virtual_run: "kosu",
+    social: "kafe", training: "kosu",
   };
   return map[eventType || ""] || "diger";
 }
