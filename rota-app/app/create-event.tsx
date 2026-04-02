@@ -73,27 +73,37 @@ export default function CreateEventScreen() {
         setLocationName("Konum izni verilmedi");
         return;
       }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       const cLat = loc.coords.latitude;
       const cLng = loc.coords.longitude;
+      const acc = loc.coords.accuracy;
 
-      // Reverse geocode to verify this is a real land location
+      // Reject if GPS accuracy is too poor (>100m)
+      if (acc && acc > 100) {
+        setLocationName("GPS sinyali zayif — daha acik bir alanda deneyin");
+        return;
+      }
+
+      // Reverse geocode to verify this is a real location with an address
       try {
         const [addr] = await Location.reverseGeocodeAsync({ latitude: cLat, longitude: cLng });
         if (addr && (addr.district || addr.subregion || addr.city || addr.street)) {
           setLat(cLat);
           setLng(cLng);
-          const parts = [addr.district || addr.subregion, addr.city].filter(Boolean);
+          const parts = [addr.street, addr.district || addr.subregion, addr.city].filter(Boolean);
           setLocationName(parts.join(", ") || "Konum alindi");
         } else {
-          // Reverse geocode returned nothing useful — likely water or empty area
-          setLocationName("Konum dogrulanamadi — elle girin");
+          setLocationName("Konum dogrulanamadi — baska bir yer deneyin");
         }
       } catch {
-        // Geocode failed but coordinates exist — use them anyway
-        setLat(cLat);
-        setLng(cLng);
-        setLocationName("Konum alindi");
+        // Geocode failed but coordinates seem valid — accept with basic accuracy
+        if (acc && acc <= 50) {
+          setLat(cLat);
+          setLng(cLng);
+          setLocationName("Konum alindi");
+        } else {
+          setLocationName("Konum dogrulanamadi");
+        }
       }
     })();
   }, []);
