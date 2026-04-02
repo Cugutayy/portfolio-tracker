@@ -82,17 +82,17 @@ function initMap() {
       clusterRadius: 50
     });
 
-    // Cluster circles
+    // Cluster circles — outline style, no fill
     map.addLayer({
       id: 'clusters',
       type: 'circle',
       source: 'events',
       filter: ['has', 'point_count'],
       paint: {
-        'circle-color': ['step', ['get', 'point_count'], '#10B981', 5, '#FF6B35', 20, '#A78BFA'],
-        'circle-radius': ['step', ['get', 'point_count'], 20, 5, 26, 20, 32],
+        'circle-color': 'rgba(16,185,129,0.08)',
+        'circle-radius': ['step', ['get', 'point_count'], 18, 5, 24, 20, 30],
         'circle-stroke-width': 2,
-        'circle-stroke-color': 'rgba(255,255,255,0.15)'
+        'circle-stroke-color': '#10B981'
       }
     });
 
@@ -107,54 +107,55 @@ function initMap() {
         'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
         'text-size': 13
       },
-      paint: { 'text-color': '#ffffff' }
+      paint: { 'text-color': '#10B981' }
     });
 
     // ── Individual event points ──
-    // Outer ring (white border effect)
+    // Simple dot — category color, no background fill, just outline
     map.addLayer({
       id: 'event-ring',
       type: 'circle',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
       paint: {
-        'circle-color': ['get', 'color'],
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 6, 14, 10, 17, 14],
-        'circle-stroke-width': 3,
-        'circle-stroke-color': '#0D1117',
-        'circle-opacity': 1
+        'circle-color': 'transparent',
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 5, 14, 8, 17, 11],
+        'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 17, 2.5],
+        'circle-stroke-color': ['get', 'color']
       }
     });
 
-    // Inner white dot
+    // Center dot — same color, small filled
     map.addLayer({
       id: 'event-dot',
       type: 'circle',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
       paint: {
-        'circle-color': '#ffffff',
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 2, 14, 3, 17, 4],
-        'circle-opacity': 0.9
+        'circle-color': ['get', 'color'],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 2.5, 14, 4, 17, 5.5]
       }
     });
 
-    // Category initial letter (visible zoom >= 13)
+    // Category icon text — matches filter chip icons via initial letter
     map.addLayer({
       id: 'event-icon',
       type: 'symbol',
       source: 'events',
       filter: ['!', ['has', 'point_count']],
-      minzoom: 13,
+      minzoom: 14,
       layout: {
         'text-field': ['get', 'initial'],
         'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-        'text-size': ['interpolate', ['linear'], ['zoom'], 13, 8, 17, 12],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 14, 9, 17, 12],
         'text-allow-overlap': true,
-        'text-ignore-placement': true
+        'text-ignore-placement': true,
+        'text-offset': [0, -1.4]
       },
       paint: {
-        'text-color': '#ffffff'
+        'text-color': ['get', 'color'],
+        'text-halo-color': '#0D1117',
+        'text-halo-width': 1
       }
     });
 
