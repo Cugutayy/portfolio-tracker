@@ -221,13 +221,12 @@ function resCat(e) {
   return 'diger';
 }
 
-// İzmir Bay water — conservative, only obvious open water
-function isWater(lat, lng) {
-  // Karşıyaka-Alsancak strait (open bay center)
-  if (lat > 38.435 && lat < 38.455 && lng > 27.06 && lng < 27.125) return true;
-  // South bay (below Konak, offshore)
-  if (lat > 38.41 && lat < 38.435 && lng > 27.06 && lng < 27.11) return true;
-  return false;
+// Coordinate validation — only basic sanity check, no water filter
+// (water filtering caused false positives on shoreline locations)
+// Instead, we trust that create-event validates via reverse geocoding
+function isValidCoord(lat, lng) {
+  // Must be in Turkey region (rough bounding box)
+  return lat > 35 && lat < 43 && lng > 25 && lng < 45;
 }
 
 function setEvents(events) {
@@ -241,7 +240,7 @@ function setEvents(events) {
     const lat = e.lat || e.meetingLat;
     const lng = e.lng || e.meetingLng;
     if (!lat || !lng) return;
-    if (isWater(lat, lng)) return;
+    if (!isValidCoord(lat, lng)) return;
 
     const cat = resCat(e);
     const c = CAT[cat] || CAT.diger;
