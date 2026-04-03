@@ -46,15 +46,27 @@ body { background: #0D1117; overflow: hidden; }
 <script>
 mapboxgl.accessToken = window.__MAPBOX_TOKEN__ || '';
 
+// Ionicons outline SVG paths (viewBox 0 0 512 512)
+const SVG = {
+  spor: 'M256 464c-114.69 0-208-93.31-208-208S141.31 48 256 48s208 93.31 208 208-93.31 208-208 208zm0-384C159 80 80 159 80 256s79 176 176 176 176-79 176-176S353 80 256 80zm118.4 176h-60.8l-20.8-41.6L256 288l-36.8-73.6L198.4 256h-60.8', // basketball-outline simplified
+  kosu: 'M352 256h-48l-32-80-40 120-32-80H144m208 0a96 96 0 01-96 96 96 96 0 01-96-96 96 96 0 0196-96 96 96 0 0196 96z', // fitness-outline simplified
+  kafe: 'M368 112h16a64 64 0 010 128h-16m-240 64h256m-256 0V112h256v192m-288 96h320', // cafe-outline
+  kitap: 'M256 160c-16-63.16-76.16-95.27-144-96v304c67.84.75 128 32.84 144 96 16-63.16 76.16-95.25 144-96V64c-67.84.75-128 32.84-144 96z', // book-outline
+  oyun: 'M336 256h-48m24-24v48m-120-24h48M80 336V176a64 64 0 0164-64h224a64 64 0 0164 64v160a64 64 0 01-64 64H144a64 64 0 01-64-64z', // game-controller-outline
+  muzik: 'M192 416V160l192-64v256m-192 64a48 48 0 100-96 48 48 0 000 96zm192-64a48 48 0 100-96 48 48 0 000 96z', // musical-notes-outline
+  saglik: 'M256 96c-48 0-112 48-112 112 0 96 112 208 112 208s112-112 112-208c0-64-64-112-112-112z', // leaf-outline simplified
+  diger: 'M259.92 262.91L216 304 176 264l43.92-41.09M336 96l-80 80-48-48L96 240m16 176V272l96-96 48 48 80-80 80 80v192' // sparkles-outline simplified
+};
+
 const CAT = {
-  spor:  { c:'#FF6B35', s:'⚽', l:'Spor' },
-  kosu:  { c:'#10B981', s:'👟', l:'Kosu' },
-  kafe:  { c:'#A78BFA', s:'☕', l:'Kafe' },
-  kitap: { c:'#60A5FA', s:'📖', l:'Kitap' },
-  oyun:  { c:'#F472B6', s:'🎮', l:'Oyun' },
-  muzik: { c:'#FBBF24', s:'🎵', l:'Muzik' },
-  saglik:{ c:'#34D399', s:'🧘', l:'Saglik' },
-  diger: { c:'#8B949E', s:'📌', l:'Diger' }
+  spor:  { c:'#FF6B35', svg: SVG.spor, l:'Spor' },
+  kosu:  { c:'#10B981', svg: SVG.kosu, l:'Kosu' },
+  kafe:  { c:'#A78BFA', svg: SVG.kafe, l:'Kafe' },
+  kitap: { c:'#60A5FA', svg: SVG.kitap, l:'Kitap' },
+  oyun:  { c:'#F472B6', svg: SVG.oyun, l:'Oyun' },
+  muzik: { c:'#FBBF24', svg: SVG.muzik, l:'Muzik' },
+  saglik:{ c:'#34D399', svg: SVG.saglik, l:'Saglik' },
+  diger: { c:'#8B949E', svg: SVG.diger, l:'Diger' }
 };
 const T2C = { group_run:'kosu',tempo_run:'kosu',long_run:'kosu',interval:'kosu',trail_run:'kosu',race:'kosu',social:'kafe' };
 const MO = ['Oca','Sub','Mar','Nis','May','Haz','Tem','Agu','Eyl','Eki','Kas','Ara'];
@@ -175,10 +187,10 @@ function setEvents(events) {
     const cat = resCat(e);
     const c = CAT[cat] || CAT.diger;
 
-    // Create DOM element — just the icon, no background
+    // Create DOM element — SVG icon only, no background, matches filter chips
     const el = document.createElement('div');
-    el.style.cssText = 'font-size:28px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));transition:transform 0.1s;';
-    el.textContent = c.s;
+    el.style.cssText = 'cursor:pointer;width:28px;height:28px;';
+    el.innerHTML = `<svg viewBox="0 0 512 512" width="28" height="28" fill="none" stroke="${c.c}" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 1px 3px rgba(0,0,0,0.6))"><path d="${c.svg}"/></svg>`;
     el.addEventListener('click', (ev) => {
       ev.stopPropagation();
       showPopup([lng, lat], { ...e, category: cat });
@@ -232,7 +244,7 @@ function showPopup(coords, p) {
   popup = new mapboxgl.Popup({ closeOnClick: true, offset: 24, maxWidth: '260px' })
     .setLngLat(coords)
     .setHTML(`<div class="pp">
-      <div class="pp-cat" style="background:${c.c}22;color:${c.c}">${c.s} ${c.l}</div>
+      <div class="pp-cat" style="background:${c.c}22;color:${c.c}">${c.l}</div>
       <div class="pp-title">${esc(p.title)}</div>
       ${p.meetingPoint ? `<div class="pp-loc">\u{1F4CD} ${esc(p.meetingPoint)}</div>` : ''}
       <div class="pp-meta">${date ? `<span>\u{1F4C5} ${date} \u00B7 ${time}</span>` : ''}<span>\u{1F465} ${cnt}${max}</span></div>
