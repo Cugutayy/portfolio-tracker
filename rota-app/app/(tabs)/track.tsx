@@ -17,9 +17,13 @@ import { Ionicons } from "@expo/vector-icons";
 // Speech removed — sesli koç devre dışı
 import polyline from "@mapbox/polyline";
 import { router } from "expo-router";
+import { Dimensions } from "react-native";
 import { brand } from "@/constants/Colors";
 import { API } from "@/lib/api";
 import { formatDuration, formatDistance, formatPace } from "@/lib/format";
+
+const MAPBOX_TOKEN = process.env.EXPO_PUBLIC_MAPBOX_TOKEN || "";
+const SCREEN_WIDTH = Dimensions.get("window").width;
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type TrackState = "idle" | "running" | "paused" | "finished";
@@ -585,6 +589,28 @@ export default function TrackScreen() {
       {/* State: RUNNING */}
       {state === "running" && (
         <View style={s.runningContainer}>
+          {/* Live Map — shows route as you run */}
+          {coords.length >= 2 && MAPBOX_TOKEN ? (
+            <Image
+              source={{ uri: (() => {
+                // Take last 200 points max for URL length limit
+                const pts = coords.slice(-200);
+                const encoded = polyline.encode(pts.map(c => [c.latitude, c.longitude]));
+                const last = pts[pts.length - 1];
+                const mapW = Math.round(SCREEN_WIDTH - 32);
+                const mapH = 180;
+                return `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s+10B981(${last.longitude},${last.latitude}),path-2+10B981(${encodeURIComponent(encoded)})/auto/${mapW}x${mapH}@2x?access_token=${MAPBOX_TOKEN}&padding=30`;
+              })() }}
+              style={s.liveMap}
+              key={`map-${Math.floor(coords.length / 3)}`}
+            />
+          ) : (
+            <View style={s.liveMapPlaceholder}>
+              <Ionicons name="location-outline" size={24} color={brand.textDim} />
+              <Text style={s.liveMapPlaceholderText}>GPS rotasi olusturuluyor...</Text>
+            </View>
+          )}
+
           <View style={s.mainStat}>
             <Text style={s.mainValue}>{formatDistance(distanceM)}</Text>
             <Text style={s.mainLabel}>KM</Text>
@@ -600,8 +626,6 @@ export default function TrackScreen() {
               <Text style={s.gridLabel}>TEMPO</Text>
             </View>
           </View>
-
-          <Text style={s.coordCount}>{coords.length} GPS noktasi</Text>
 
           <View style={s.runButtons}>
             <TouchableOpacity style={s.pauseButton} onPress={pauseRun} activeOpacity={0.8}>
@@ -627,6 +651,21 @@ export default function TrackScreen() {
           {autoPaused.current && (
             <Text style={s.autoPauseText}>Otomatik Duraklama</Text>
           )}
+
+          {/* Live Map — frozen on pause */}
+          {coords.length >= 2 && MAPBOX_TOKEN ? (
+            <Image
+              source={{ uri: (() => {
+                const pts = coords.slice(-200);
+                const encoded = polyline.encode(pts.map(c => [c.latitude, c.longitude]));
+                const last = pts[pts.length - 1];
+                const mapW = Math.round(SCREEN_WIDTH - 32);
+                return `https://api.mapbox.com/styles/v1/mapbox/dark-v11/static/pin-s+FF9800(${last.longitude},${last.latitude}),path-2+10B981(${encodeURIComponent(encoded)})/auto/${mapW}x180@2x?access_token=${MAPBOX_TOKEN}&padding=30`;
+              })() }}
+              style={[s.liveMap, { opacity: 0.6 }]}
+            />
+          ) : null}
+
           <View style={s.mainStat}>
             <Text style={[s.mainValue, { opacity: 0.5 }]}>{formatDistance(distanceM)}</Text>
             <Text style={s.mainLabel}>KM — DURAKLATILDI</Text>
@@ -757,8 +796,18 @@ const s = StyleSheet.create({
   startButtonText: { fontSize: 28, fontWeight: "bold", color: brand.bg, letterSpacing: 6 },
 
   // RUNNING + PAUSED
-  runningContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 32 },
-  mainStat: { alignItems: "center", marginBottom: 32 },
+  runningContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: 16 },
+  liveMap: {
+    width: "100%", height: 180, borderRadius: 16, marginBottom: 16,
+    backgroundColor: brand.surface,
+  },
+  liveMapPlaceholder: {
+    width: "100%", height: 120, borderRadius: 16, marginBottom: 16,
+    backgroundColor: brand.surface, justifyContent: "center", alignItems: "center",
+    borderWidth: 1, borderColor: brand.border,
+  },
+  liveMapPlaceholderText: { fontSize: 12, color: brand.textDim, marginTop: 8 },
+  mainStat: { alignItems: "center", marginBottom: 24 },
   mainValue: { fontSize: 72, fontWeight: "bold", color: brand.accent, letterSpacing: 2 },
   mainLabel: { fontSize: 14, color: brand.textMuted, letterSpacing: 4, marginTop: -4 },
   statsGrid: { flexDirection: "row", gap: 32, marginBottom: 32 },
