@@ -147,9 +147,14 @@ async function fetchAllPrices() {
   }
   setLog();
 
-  // ── 6-8) Bond, Fund, Deposit — HISTORY only ──
+  // ── 6) BIO Fon — TEFAS API server-side bloklu, manual override (data.js) ──
+  if(typeof MANUAL_FUND_PRICE !== 'undefined' && MANUAL_FUND_PRICE.fund > 0){
+    livePrices.fund = { price: MANUAL_FUND_PRICE.fund, src: 'Manuel (TEFAS API kapalı)' };
+  }
+
+  // ── 7-8) Bond, Fund, Deposit ──
   log.push({status:'ok',icon:'◆',label:'DİBS 2Y',val:`${fmt(getLatestPrice('bond'),2)} — ${t('lastClose')}`});
-  log.push({status:'ok',icon:'◆',label:'BIO Fon',val:`${fmt(getLatestPrice('fund'),4)} TL — ${t('lastClose')}`});
+  log.push({status:'ok',icon:'◆',label:'BIO Fon',val:`${fmt(getLatestPrice('fund'),4)} TL — ${livePrices.fund ? 'Manuel' : t('lastClose')}`});
   log.push({status:'ok',icon:'◆',label:LANG==='tr'?'Mevduat':'Deposit',val:`${fmt(getLatestPrice('dep'),0)} TL — ${t('lastValue')}`});
   setLog();
 

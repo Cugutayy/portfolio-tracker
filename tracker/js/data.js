@@ -20,6 +20,13 @@ function L(obj){ return (typeof obj === 'object' && obj !== null) ? (obj[LANG]||
 function SN(ins){ return L(ins.name).split(/[—(]/)[0].trim(); }
 
 // ════════════════════════════════════════════════════════════════
+// MANUAL OVERRIDES — TEFAS API F5 WAF tarafından server-side bloklu,
+// hiçbir proxy ulaşamıyor. BIO fonu için güncel fiyat buradan girilir.
+// Güncelleme: https://www.tefas.gov.tr/tr/fon-detayli-analiz/BIO
+// ════════════════════════════════════════════════════════════════
+const MANUAL_FUND_PRICE = { fund: 2.560 }; // BIO — son güncelleme: 2026-05-17
+
+// ════════════════════════════════════════════════════════════════
 // HISTORICAL PRICES — update weekly with actual closing prices
 // ════════════════════════════════════════════════════════════════
 const HISTORY = {
