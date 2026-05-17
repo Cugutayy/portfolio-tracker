@@ -233,6 +233,89 @@ async function verifyHistoryFromAPI(){
   }
 }
 
+// ── HISTORY VERIFY: Yahoo Finance'tan THYAO, ASELS ve Gram Altın geçmiş fiyatlarını doğrula/düzelt ──
+// BIST hisselerinin carry-forward'la doldurulduğu günler gerçek Yahoo kapanışlarıyla değiştirilir.
+async function verifyStocksFromAPI(){
+  const startDate = HISTORY.dates[0];
+  if(!startDate) return;
+  const startTs = Math.floor(new Date(startDate + 'T00:00:00').getTime() / 1000);
+  const endTs   = Math.floor(Date.now() / 1000);
+
+  const applyFix = (id, label, priceMap, decimals=2) => {
+    let fixes = 0;
+    HISTORY.dates.forEach((date, i) => {
+      const apiPrice = priceMap[date];
+      if(apiPrice === undefined || apiPrice === null || apiPrice <= 0) return;
+      const histPrice = HISTORY[id][i];
+      const apiRounded = +apiPrice.toFixed(decimals);
+      const diff = Math.abs(apiRounded - histPrice) / apiRounded;
+      // %0.5'ten fazla sapma varsa düzelt (carry-forward günleri otomatik yakalanır)
+      if(diff > 0.005){
+        HISTORY[id][i] = apiRounded;
+        fixes++;
+      }
+    });
+    if(fixes > 0) console.log(`[HISTORY VERIFY] ${fixes} ${label} fiyatı Yahoo'dan düzeltildi`);
+    return fixes;
+  };
+
+  let totalFixes = 0;
+
+  // THYAO + ASELS — paralel
+  const stockJobs = [
+    { id: 'thyao', sym: 'THYAO.IS' },
+    { id: 'asels', sym: 'ASELS.IS' },
+  ];
+  const stockResults = await Promise.allSettled(
+    stockJobs.map(j => safeGet(yahooHistProxy(j.sym, startTs, endTs), 15000, 1))
+  );
+  stockJobs.forEach((job, idx) => {
+    const r = stockResults[idx];
+    if(r.status !== 'fulfilled'){
+      console.warn(`[HISTORY VERIFY] ${job.sym} hata:`, r.reason?.message);
+      return;
+    }
+    const parsed = parseYahooHistorical(r.value, startDate);
+    if(!parsed) { console.warn(`[HISTORY VERIFY] ${job.sym} parse edilemedi`); return; }
+    const priceMap = {};
+    parsed.dates.forEach((d, i) => { priceMap[d] = parsed.prices[i]; });
+    totalFixes += applyFix(job.id, job.sym, priceMap, 2);
+  });
+
+  // Gram Altın — GC=F (USD/oz) × USD/TRY ÷ 31.1035
+  try {
+    const [goldRes, fxRes] = await Promise.allSettled([
+      safeGet(yahooHistProxy('GC=F',     startTs, endTs), 15000, 1),
+      safeGet(yahooHistProxy('USDTRY=X', startTs, endTs), 15000, 1),
+    ]);
+    if(goldRes.status === 'fulfilled'){
+      const goldParsed = parseYahooHistorical(goldRes.value, startDate);
+      const fxParsed   = fxRes.status === 'fulfilled' ? parseYahooHistorical(fxRes.value, startDate) : null;
+      if(goldParsed){
+        const fxMap = {};
+        if(fxParsed) fxParsed.dates.forEach((d, i) => { fxMap[d] = fxParsed.prices[i]; });
+        const goldMap = {};
+        goldParsed.dates.forEach((d, i) => {
+          const rate = fxMap[d] || usdTryRate;
+          goldMap[d] = Math.round((goldParsed.prices[i] / 31.1035) * rate);
+        });
+        totalFixes += applyFix('gold', 'Gram Altın', goldMap, 0);
+      }
+    } else {
+      console.warn('[HISTORY VERIFY] Gold (GC=F) hata:', goldRes.reason?.message);
+    }
+  } catch(e){
+    console.warn('[HISTORY VERIFY] Gold doğrulama hatası:', e.message);
+  }
+
+  if(totalFixes > 0){
+    console.log(`[HISTORY VERIFY] Toplam ${totalFixes} hisse/altın fiyatı API'den düzeltildi`);
+    renderAll();
+  } else {
+    console.log('[HISTORY VERIFY] THYAO/ASELS/Altın fiyatları zaten güncel');
+  }
+}
+
 // ════════════════════════════════════════════════════════════════
 // FURKAN PORTFOLIO — Fetch ALL prices from real APIs
 // BTC: Binance klines, Stocks: Yahoo Finance, Gold: Yahoo GC=F,
