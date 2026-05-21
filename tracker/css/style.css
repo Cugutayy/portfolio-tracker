@@ -656,3 +656,6 @@ header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
 .macro-learn{padding:12px 14px;background:var(--surface);border-radius:6px;border-left:3px solid var(--accent);font-size:0.55rem;line-height:1.65;color:var(--text2)}
 .macro-learn strong{color:var(--text);font-size:0.6rem;font-weight:700}
 .macro-footer{margin-top:8px;padding-top:14px;border-top:1px solid var(--border);font-size:0.5rem;color:var(--muted);text-align:center}
+.macro-empty{padding:14px 16px;border-radius:8px;background:var(--surface);border:1px dashed var(--border);font-size:0.55rem;line-height:1.7;color:var(--text2)}
+.macro-empty strong{color:var(--text);display:block;margin-bottom:4px;font-size:0.6rem}
+.macro-empty code{background:var(--surface2);padding:1px 6px;border-radius:4px;font-family:'Geist Mono',monospace;font-size:0.5rem;color:var(--accent)}
