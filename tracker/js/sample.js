@@ -37,6 +37,106 @@ const SAMPLE_PORTFOLIO = [
     link:null},
 ];
 
+// ─── 17 Şubat → Bugün Performansı (Yahoo historical) ──────────────
+// Her ETF için Yahoo'dan period1=2026-02-17, period2=bugün ile fiyat çek.
+// USD ETF'leri: TL → USD (Feb 17 kuru) → bugün → TL geri çevir (bugün kuru).
+// DJIST.IS (TL): direkt fiyat oranı.
+// CASH: %35.5 yıllık brüt mevduat, %15 stopaj, günlük tahakkuk.
+const SAMPLE_START_DATE = '2026-02-17';
+let samplePerf = null; // hesaplandıktan sonra render'da kullanılır
+let samplePerfLoading = false;
+
+async function fetchYahooCloseRange(sym){
+  const p1 = Math.floor(new Date(SAMPLE_START_DATE + 'T00:00:00Z').getTime()/1000);
+  const p2 = Math.floor(Date.now()/1000);
+  const url = (typeof yahooHistProxy === 'function')
+    ? yahooHistProxy(sym, p1, p2)
+    : `/api/prices?sym=${encodeURIComponent(sym)}&period1=${p1}&period2=${p2}&interval=1d`;
+  const data = await safeGet(url, 12000, 1);
+  const r = data?.chart?.result?.[0];
+  if(!r) return null;
+  const ts = r.timestamp || [];
+  const cl = r.indicators?.quote?.[0]?.close || [];
+  // İlk ve son geçerli kapanışları al
+  let firstClose=null, lastClose=null, firstDate=null, lastDate=null;
+  for(let i=0;i<cl.length;i++){
+    if(cl[i] !== null && cl[i] !== undefined){
+      if(firstClose === null){ firstClose = cl[i]; firstDate = new Date(ts[i]*1000).toISOString().slice(0,10); }
+      lastClose = cl[i]; lastDate = new Date(ts[i]*1000).toISOString().slice(0,10);
+    }
+  }
+  if(firstClose === null || lastClose === null) return null;
+  return { firstClose, lastClose, firstDate, lastDate, currency: r.meta?.currency };
+}
+
+async function computeSamplePerformance(){
+  if(samplePerfLoading) return;
+  samplePerfLoading = true;
+  try {
+    // FX: USD/TRY tarihsel — USD ETF'leri için gerekli
+    const fx = await fetchYahooCloseRange('USDTRY=X');
+    if(!fx){ samplePerfLoading = false; return; }
+    const usdtryStart = fx.firstClose;
+    const usdtryNow   = fx.lastClose;
+
+    // Her enstrüman için
+    const results = await Promise.all(SAMPLE_PORTFOLIO.map(async item => {
+      if(item.ticker === 'CASH'){
+        // %35.5 brüt - %15 stopaj = net daily
+        const days = (Date.now() - new Date(SAMPLE_START_DATE).getTime()) / 86400000;
+        const dailyNet = (0.355/365) * 0.85;
+        const valueTl = item.amount * (1 + dailyNet * days);
+        const retPct = (valueTl - item.amount) / item.amount * 100;
+        return { ticker:item.ticker, amount:item.amount, valueTl, retPct, src:'%35.5 yıllık brüt · %15 stopaj' };
+      }
+      const r = await fetchYahooCloseRange(item.ticker);
+      if(!r){ return { ticker:item.ticker, amount:item.amount, valueTl:item.amount, retPct:0, src:'veri yok', failed:true }; }
+      const isTL = (r.currency === 'TRY') || item.ticker.endsWith('.IS');
+      let valueTl;
+      if(isTL){
+        const shares = item.amount / r.firstClose;
+        valueTl = shares * r.lastClose;
+      } else {
+        // USD ETF: TL→USD (start), shares, USD→TL (now)
+        const usdInitial = item.amount / usdtryStart;
+        const shares = usdInitial / r.firstClose;
+        const usdNow = shares * r.lastClose;
+        valueTl = usdNow * usdtryNow;
+      }
+      const retPct = (valueTl - item.amount) / item.amount * 100;
+      return {
+        ticker: item.ticker,
+        amount: item.amount,
+        valueTl,
+        retPct,
+        priceStart: r.firstClose,
+        priceNow:   r.lastClose,
+        firstDate:  r.firstDate,
+        lastDate:   r.lastDate,
+        currency:   isTL ? 'TRY' : 'USD',
+        src: isTL ? 'Yahoo (TL)' : `Yahoo (USD·FX: ${usdtryStart.toFixed(2)}→${usdtryNow.toFixed(2)})`,
+      };
+    }));
+
+    const totalInitial = SAMPLE_PORTFOLIO.reduce((s,i)=>s+i.amount,0);
+    const totalNow     = results.reduce((s,r)=>s+r.valueTl,0);
+    samplePerf = {
+      rows: results,
+      startDate: SAMPLE_START_DATE,
+      endDate:   new Date().toISOString().slice(0,10),
+      totalInitial, totalNow,
+      totalPl:    totalNow - totalInitial,
+      totalPct:  (totalNow - totalInitial) / totalInitial * 100,
+      usdtryStart, usdtryNow,
+    };
+    samplePerfLoading = false;
+    renderSample(); // re-render with perf data
+  } catch(e){
+    console.warn('[Sample] performance fetch failed:', e.message);
+    samplePerfLoading = false;
+  }
+}
+
 // ── Donut hover/click handlers ──
 function sampleDonutHover(idx, enter){
   const slices=document.querySelectorAll('.sample-donut-slice');
@@ -73,6 +173,11 @@ function renderSample(){
   const tr=LANG==='tr';
   const mono="font-family:'Geist Mono',monospace";
   const total=SAMPLE_PORTFOLIO.reduce((s,i)=>s+i.amount,0);
+
+  // İlk ziyarette performans hesabını tetikle (sonradan re-render olur)
+  if(!samplePerf && !samplePerfLoading) {
+    computeSamplePerformance();
+  }
 
   // Interactive donut with hover
   let donutSvg='', offset=0;
@@ -124,19 +229,50 @@ function renderSample(){
     </div>
   </div>`;
 
+  // ─── Performance Summary (17 Şubat → bugün) ──────────────────────
+  if(samplePerf){
+    const p = samplePerf;
+    const plColor = p.totalPl >= 0 ? 'var(--success)' : 'var(--danger)';
+    const arrow = p.totalPl >= 0 ? '▲' : '▼';
+    h += `<div class="ana-card" style="padding:18px;margin-bottom:18px;animation:anaIn 0.4s ease-out both;background:linear-gradient(135deg,var(--surface),var(--surface2))">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:10px">
+        <div>
+          <div class="ana-title" style="margin-bottom:4px">${tr?'Geriye Dönük Performans':'Backtest Performance'} <span class="tag">${p.startDate} → ${p.endDate}</span></div>
+          <div style="font-size:0.54rem;color:var(--muted);line-height:1.5">${tr?'Eğer bu portföyü 17 Şubat 2026\'da kurmuş olsaydık, bugün kaç TL olurdu?':'If we had built this portfolio on Feb 17 2026, what would it be worth today?'}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="${mono};font-size:1.1rem;font-weight:700;color:var(--text);line-height:1.1">${fmt(p.totalNow,0)} TL</div>
+          <div style="${mono};font-size:0.62rem;color:${plColor};font-weight:600;margin-top:2px">${arrow} ${p.totalPl>=0?'+':''}${fmt(p.totalPl,0)} TL (${p.totalPct>=0?'+':''}${p.totalPct.toFixed(2)}%)</div>
+          <div style="font-size:0.48rem;color:var(--muted);margin-top:2px">${tr?'Başlangıç':'Initial'}: ${fmt(p.totalInitial,0)} TL · USD/TRY ${p.usdtryStart.toFixed(2)} → ${p.usdtryNow.toFixed(2)}</div>
+        </div>
+      </div>
+    </div>`;
+  } else if(samplePerfLoading){
+    h += `<div class="ana-card" style="padding:14px 18px;margin-bottom:18px;text-align:center;font-size:0.56rem;color:var(--muted)">${tr?'Geriye dönük performans hesaplanıyor (Yahoo Finance)...':'Computing backtest performance...'}</div>`;
+  }
+
   // Table
   h+=`<table class="instr-table" style="margin-bottom:20px">
     <thead><tr>
       <th style="text-align:left">${tr?'Enstrüman':'Instrument'}</th>
       <th>${tr?'Varlık Sınıfı':'Asset Class'}</th>
       <th>${tr?'Ağırlık':'Weight'}</th>
-      <th>${tr?'Tutar':'Amount'}</th>
+      <th>${tr?'Yatırılan':'Invested'}</th>
+      <th>${tr?'Bugünkü Değer':'Current Value'}</th>
+      <th>${tr?'Getiri':'Return'}</th>
       <th style="text-align:left">${tr?'Açıklama':'Description'}</th>
     </tr></thead><tbody>`;
 
   SAMPLE_PORTFOLIO.forEach((item,idx)=>{
     const name=typeof item.name==='object'?L(item.name):item.name;
     const linkHtml=item.link?`<a href="${item.link}" target="_blank" rel="noopener" class="ext-link" title="Yahoo Finance">↗</a>`:'';
+    const perfRow = samplePerf?.rows?.find(r => r.ticker === item.ticker);
+    const valueCell = perfRow
+      ? `<span style="${mono}">${fmt(perfRow.valueTl,0)} TL</span>`
+      : (samplePerfLoading ? `<span style="color:var(--muted);font-size:0.5rem">${tr?'hesaplanıyor':'computing'}</span>` : `<span style="color:var(--muted)">—</span>`);
+    const retCell = perfRow
+      ? `<span style="${mono};font-weight:600;color:${perfRow.retPct>=0?'var(--success)':'var(--danger)'}">${perfRow.retPct>=0?'+':''}${perfRow.retPct.toFixed(2)}%</span>`
+      : `<span style="color:var(--muted)">—</span>`;
     h+=`<tr style="animation:anaIn ${0.3+idx*0.05}s ease-out both">
       <td style="text-align:left">
         <div class="iname-row">
@@ -149,7 +285,9 @@ function renderSample(){
       <td style="font-size:0.60rem">${L(item.asset)}</td>
       <td style="${mono};font-weight:600">%${item.weight}</td>
       <td style="${mono}">${fmt(item.amount,0)} TL</td>
-      <td style="text-align:left;font-size:0.56rem;color:var(--text2);max-width:280px;white-space:normal;line-height:1.4">${L(item.desc)}</td>
+      <td>${valueCell}</td>
+      <td>${retCell}</td>
+      <td style="text-align:left;font-size:0.56rem;color:var(--text2);max-width:260px;white-space:normal;line-height:1.4">${L(item.desc)}</td>
     </tr>`;
   });
   h+=`</tbody></table>`;

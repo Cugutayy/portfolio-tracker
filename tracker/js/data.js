@@ -103,37 +103,17 @@ const TEFAS_FALLBACK = {
 // 2) Günlük yorumlar MACRO_DATA.notes dizisine eklenir.
 //    Yeni yorumu en başa (unshift) ekleyerek tarihe göre sıralı tutun.
 //
+// Tüm metrik değerleri Yahoo Finance'tan otomatik çekilir; manuel alan yok.
 const MACRO_DATA = {
-  // ─── Manuel Metrikler ────────────────────────────────────────────
-  // Yahoo'da olmayan veriler. Güncel değer için kaynak: TCMB.gov.tr,
-  // Bloomberg HT, Reuters TR, investing.com/rates-bonds/turkey
-  manual: {
-    policyRate:   46.00,    // %, TCMB politika faizi (1-haftalık repo)
-    tlref:        47.20,    // %, gecelik TL referans faizi (TLREF)
-    bond2Y:       42.30,    // %, 2Y DİBS faizi
-    bond10Y:      38.10,    // %, 10Y DİBS faizi
-    cds5Y:        412,      // baz puan (bp), 5Y Türkiye CDS
-    netReserves: -15.4,     // milyar $, TCMB net rezerv (swap hariç en kötü senaryo)
-    // ─── Offshore TL Forward Kurları (Bloomberg HT — IRSWAP / FX FWD ekranı) ───
-    // Boş bırakırsan implied rate kartları gizlenir.
-    fwd1M:        null,     // USD/TRY 1-aylık forward kuru
-    fwd3M:        null,     // USD/TRY 3-aylık forward kuru
-    fwd1Y:        null,     // USD/TRY 12-aylık forward kuru
-    usdRate:      4.30,     // %, USD risksiz referans (SOFR / Fed Funds, yıllık)
-    lastUpdate:  '2026-05-22',
-  },
-
-  // ─── Eşikler (renk kodlaması için) ───────────────────────────────
-  // Günlük % değişim mutlak değerini bunlarla karşılaştır
+  // Renk kodlaması için günlük % değişim eşikleri (mutlak değer)
   thresholds: {
-    fx:    { warn: 1.5, alarm: 3.0 },  // kur: %1.5 dikkat, %3+ stres
-    bist:  { warn: 2.0, alarm: 5.0 },  // borsa: %2 dikkat, %5+ panik
-    rate:  { warn: 0.5, alarm: 1.5 },  // faiz: 50bp dikkat, 150bp+ büyük hareket
+    fx:    { warn: 1.5, alarm: 3.0 },  // kur:    %1.5 dikkat,  %3+ stres
+    bist:  { warn: 2.0, alarm: 5.0 },  // borsa:  %2 dikkat,    %5+ panik
+    rate:  { warn: 0.5, alarm: 1.5 },  // faiz:   50bp dikkat,  150bp+ büyük
   },
 
-  // ─── Günlük Yorumlar (en yeni en üstte) ──────────────────────────
+  // Günlük yorumlar — en yeni en üstte
   // Her entry: { date: 'YYYY-MM-DD', headline: 'Kısa başlık', body: 'Detaylı yorum...' }
-  // Yeni yorum eklerken dizinin BAŞINA (unshift) ekle.
   notes: [],
 };
 
