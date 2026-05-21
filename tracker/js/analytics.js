@@ -96,6 +96,28 @@ function renderAnalytics(){
   const sx=v=>(v-sdMin2)/(sdMax2-sdMin2)*(efW-2*efP)+efP;
   const sy=v=>efH-efP-(v-rtMin2)/(rtMax2-rtMin2)*(efH-2*efP);
 
+  // ─── CARD 3: MONTE CARLO BASIT ANLATIM ───
+  h+=`<div class="ana-card full"><div class="ana-title">${tr?'Monte Carlo Nedir?':'What is Monte Carlo?'} <span class="tag">${tr?'Açıklama':'Explainer'}</span></div>
+  <div style="font-size:0.58rem;line-height:1.75;color:var(--text2)">
+  ${tr ? `
+  <p style="margin:0 0 10px"><strong>Soru:</strong> "Portföyümün ağırlıklarını farklı dağıtsaydım nasıl olurdu?" Cevabı tek bir formülle değil, <strong>binlerce rastgele deneme</strong> ile buluruz.</p>
+
+  <p style="margin:0 0 10px"><strong>Yöntem:</strong> Adı Monaco'daki Monte Carlo kumarhanesinden gelir — rastgele süreçlerle çalışır. Üç basit adımdan oluşur:</p>
+
+  <ol style="margin:0 0 10px;padding-left:20px;line-height:1.85">
+    <li><strong>Üret</strong> — Bilgisayar, 500 farklı rastgele ağırlık kombinasyonu oluşturur. Örneğin: "BTC %18, THYAO %22, ASELS %11, Altın %14..." gibi. Hepsi toplamda %100 olacak şekilde.</li>
+    <li><strong>Simüle Et</strong> — Her bir rastgele portföy için geçmiş veriyi kullanarak yıllık beklenen getiri ve risk (standart sapma) hesaplanır.</li>
+    <li><strong>Çiz</strong> — Aşağıdaki grafikte her nokta bu denemelerden biri. X eksen: risk, Y eksen: getiri. Yeşilden kırmızıya renk geçişi Sharpe oranını gösterir (yeşil = risk başına daha fazla kazanç).</li>
+  </ol>
+
+  <p style="margin:0 0 10px"><strong>Ne öğreniriz?</strong> Tek bir "doğru cevap" yerine olası sonuçların <em>dağılımını</em> görürüz. Bulutun üst-sol kıvrımı <strong>"etkin sınır"</strong>tır — bu eğri üzerindeki portföyler, belirli bir risk düzeyinde alınabilecek en yüksek getiriyi sunar. Buranın altındaki portföyler "verimsiz" sayılır (daha az risk veya daha çok getiri için iyileştirilebilirler).</p>
+
+  <p style="margin:0;padding:10px 12px;background:var(--surface2);border-radius:6px;border-left:3px solid var(--gold)"><strong>Pratik anlamı:</strong> Eğer kendi portföyün (mavi halka) "etkin sınır"ın altında kalıyorsa, ya aynı riskle daha çok kazanabilirsin ya da aynı kazanç için daha az risk alabilirsin. Altın halka (Optimal), 500 deneme arasında en yüksek Sharpe oranına sahip ağırlıklandırmayı gösterir.</p>
+  ` : `
+  <p>Monte Carlo runs thousands of random simulations to map the distribution of possible portfolio outcomes. Each dot below is one random weighting; the upper-left curve is the "efficient frontier" — best return for given risk. Compare your portfolio (blue ring) to the optimal (gold ring).</p>
+  `}
+  </div></div>`;
+
   h+=`<div class="ana-card full"><div class="ana-title">${tr?'Etkin Sinir — Monte Carlo Simulasyonu':'Efficient Frontier — Monte Carlo Simulation'} <span class="tag">500 ${tr?'portfoy':'portfolios'}</span></div>
   <div style="font-size:0.52rem;color:var(--text2);line-height:1.6;margin-bottom:10px">${tr
     ?'500 rastgele portfoy agirligi olusturulup her birinin risk-getiri profili hesaplandi. Yesil noktalar yuksek Sharpe oranini, kirmizi noktalar dusuk Sharpe oranini gosterir. Mevcut portfoyunuz ve optimal (max Sharpe) portfoy isaretlenmistir.'
