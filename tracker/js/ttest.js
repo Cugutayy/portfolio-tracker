@@ -7,7 +7,7 @@ function renderTTest(){
     el.innerHTML=`<div class="ttest-panel"><div class="ttest-header"><h3>${tr?'Istatistiksel Analiz (t-Test)':'Statistical Analysis (t-Test)'}</h3></div><div class="ttest-body" style="padding:20px;text-align:center;font-size:0.5rem;color:var(--muted)">${tr?'t-Test icin en az 2 haftalik veri gerekli. Veri toplandikca sonuclar burada gorunecek.':'At least 2 weeks of data needed. Results will appear as data accumulates.'}</div></div>`;
     return;
   }
-  el.innerHTML=`<div class="ttest-panel"><div class="ttest-header"><h3>${tr?'Istatistiksel Analiz — Student t-Test':'Statistical Analysis — Student\'s t-Test'}</h3></div><div class="ttest-tabs"><button class="ttest-tab active" data-tab="overview" onclick="switchTTestTab('overview')">${tr?'Ozet':'Overview'}</button><button class="ttest-tab" data-tab="method" onclick="switchTTestTab('method')">${tr?'Metodoloji':'Methodology'}</button><button class="ttest-tab" data-tab="portfolio" onclick="switchTTestTab('portfolio')">${tr?'Portfoy Testi':'Portfolio Test'}</button><button class="ttest-tab" data-tab="instruments" onclick="switchTTestTab('instruments')">${tr?'Enstruman Testleri':'Instruments'}</button><button class="ttest-tab" data-tab="data" onclick="switchTTestTab('data')">${tr?'Ham Veri':'Raw Data'}</button></div><div class="ttest-body" id="tTestBody"></div></div>`;
+  el.innerHTML=`<div class="ttest-panel"><div class="ttest-header"><h3>${tr?'Istatistiksel Analiz — Student t-Test':'Statistical Analysis — Student\'s t-Test'}</h3></div><div class="ttest-tabs"><button class="ttest-tab ${tTestTab==='basic'?'active':''}" data-tab="basic" onclick="switchTTestTab('basic')">${tr?'Basit Anlatim':'Plain English'}</button><button class="ttest-tab ${tTestTab==='overview'?'active':''}" data-tab="overview" onclick="switchTTestTab('overview')">${tr?'Ozet':'Overview'}</button><button class="ttest-tab ${tTestTab==='method'?'active':''}" data-tab="method" onclick="switchTTestTab('method')">${tr?'Metodoloji':'Methodology'}</button><button class="ttest-tab ${tTestTab==='portfolio'?'active':''}" data-tab="portfolio" onclick="switchTTestTab('portfolio')">${tr?'Portfoy Testi':'Portfolio Test'}</button><button class="ttest-tab ${tTestTab==='instruments'?'active':''}" data-tab="instruments" onclick="switchTTestTab('instruments')">${tr?'Enstruman Testleri':'Instruments'}</button><button class="ttest-tab ${tTestTab==='data'?'active':''}" data-tab="data" onclick="switchTTestTab('data')">${tr?'Ham Veri':'Raw Data'}</button></div><div class="ttest-body" id="tTestBody"></div></div>`;
   renderTTestBody();
 }
 
@@ -34,7 +34,68 @@ function renderTTestBody(){
 
   const mono="font-family:'Geist Mono',monospace";
 
-  if(tTestTab==='overview'){
+  if(tTestTab==='basic'){
+    const t1Verdict = t1.rej ? (tr?'EVET — anlamlı bir getiri var':'YES — significant return') : (tr?'HENÜZ söyleyemiyoruz (veri yetersiz)':'NOT YET — sample too small');
+    const t2Verdict = t2.rej ? (t2.mean > rf ? (tr?'EVET — mevduatı geçtik (anlamlı)':'YES — beat the bank') : (tr?'EVET — mevduatın altındayız (anlamlı)':'YES — below the bank')) : (tr?'HENÜZ söyleyemiyoruz (veri yetersiz)':'NOT YET — inconclusive');
+    const cardCls = (color, title, body) => `<div class="ttest-card" style="border-left:3px solid ${color}"><div class="ttest-card-title">${title}</div><div style="font-size:0.6rem;line-height:1.75;color:var(--text2)">${body}</div></div>`;
+    const stat = (lbl, val, col) => `<span style="${mono};font-weight:700;color:${col||'var(--accent)'}">${val}</span>${lbl?` <span style="color:var(--muted);font-size:0.52rem">${lbl}</span>`:''}`;
+
+    let h = '';
+
+    // 1) Neden bu testi yapıyoruz?
+    h += cardCls('#c9a84c', tr?'🤔 Ne soruyoruz?':'🤔 What are we asking?',
+      tr ? `<p style="margin:0 0 10px"><strong>Portföyüm ${nW} haftada ortalama ${stat('', (t1.mean>=0?'+':'')+t1.mean.toFixed(2)+'%', t1.mean>=0?'var(--success)':'var(--danger)')} kazandı.</strong> Peki bu kazanç <em>gerçek bir başarı mı</em>, yoksa <em>şanslı bir dönem mi</em> yakaladık?</p>
+      <p style="margin:0">Bir parayı 10 kez attınız, 7 yazı geldi. Para hileli mi, yoksa şans mı? <strong>t-Testi</strong> tam olarak bu soruya cevap veren istatistiksel araç. Az veriyle (3 ay = 13 hafta) çalıştığımız için klasik normal dağılım yerine <strong>t-dağılımı</strong> kullanıyoruz.</p>`
+      : `<p>Our portfolio averaged ${(t1.mean>=0?'+':'')+t1.mean.toFixed(2)}% per week over ${nW} weeks. Is this real skill or just luck? The t-test answers exactly that.</p>`);
+
+    // 2) Mahkeme analojisi
+    h += cardCls('#8b6f47', tr?'⚖️ Mahkeme Analojisi':'⚖️ Court Analogy',
+      tr ? `<p style="margin:0 0 8px">Test, suçsuzluk karinesi gibi çalışır:</p>
+      <ul style="margin:0;padding-left:18px">
+        <li><strong>H₀ (Sıfır Hipotezi)</strong> = "Suçsuz" → Portföyün özel bir getirisi <strong>yok</strong>, gördüğümüz tesadüf.</li>
+        <li><strong>H₁ (Alternatif)</strong> = "Suçlu" → Hayır, gerçekten anlamlı bir getiri <strong>var</strong>.</li>
+      </ul>
+      <p style="margin:8px 0 0">Mahkemede yeterli delil olmazsa sanık beraat eder — biz de H₀'ı <em>reddedemeyiz</em>. "Suçsuzdur" demek aslında "kanıt yetmedi" demek. Delil yeterse (|t| ≥ tₖᵣᵢₜ) H₀ reddedilir → <strong>"istatistiksel olarak anlamlı"</strong> sonuca varırız.</p>`
+      : '<p>Like presumption of innocence: assume H₀ (no effect) until evidence (|t| ≥ tcrit) lets us reject it.</p>');
+
+    // 3) Test 1: Portföy ≠ 0?
+    h += cardCls(t1.rej?'#1a472a':'#9a8268', tr?'📊 Test 1 — "Para kazandım mı?"':'📊 Test 1 — "Did I make money?"',
+      tr ? `<p style="margin:0 0 10px"><strong>Soru:</strong> Portföyün haftalık ortalama getirisi gerçekten 0'dan farklı mı?</p>
+      <div style="background:var(--surface);padding:10px 12px;border-radius:6px;margin:8px 0;font-size:0.56rem">
+        <div>Ortalama (x̄): ${stat('', (t1.mean>=0?'+':'')+t1.mean.toFixed(4)+'%')}</div>
+        <div>t-değeri: ${stat('', t1.t.toFixed(3))} · Kritik eşik: ${stat('', '±'+t1.tc.toFixed(3))}</div>
+        <div style="margin-top:4px">${Math.abs(t1.t).toFixed(3)} ${t1.rej?'≥':'<'} ${t1.tc.toFixed(3)} → <strong style="color:${t1.rej?'var(--success)':'var(--muted)'}">${t1Verdict}</strong></div>
+      </div>
+      <p style="margin:0">${t1.rej ? '<strong>Yorum:</strong> Verinin gücü yeterli — bu getiri tesadüf olamayacak kadar tutarlı. %5 hata payıyla "portföy para kazandı" diyebiliriz.' : '<strong>Yorum:</strong> Ortalama pozitif (veya negatif) ama dalgalanma (s = '+t1.sd.toFixed(2)+') ortalamadan büyük. Yani haftadan haftaya inişler çıkışlar, sabit bir getiri trendini gizliyor olabilir. <em>"Henüz emin değiliz"</em> demek dürüst olan.'}</p>`
+      : '');
+
+    // 4) Test 2: Portföy ≠ Rf?
+    h += cardCls(t2.rej?'#1d4ed8':'#9a8268', tr?'🏦 Test 2 — "Bankayı yendim mi?"':'🏦 Test 2 — "Did I beat the bank?"',
+      tr ? `<p style="margin:0 0 10px"><strong>Soru:</strong> Hisse senedi, kripto, altın gibi <em>riskli</em> varlıklara para yatırdık. <strong>Mevduatta da kazanırdık</strong> — TCMB faizi %35.50/yıl, haftaya çevirince <strong>%${rf.toFixed(3)}/hafta</strong>. Riskimize değdi mi?</p>
+      <div style="background:var(--surface);padding:10px 12px;border-radius:6px;margin:8px 0;font-size:0.56rem">
+        <div>Portföy ortalaması: ${stat('', (t1.mean>=0?'+':'')+t1.mean.toFixed(4)+'%')} / <span style="color:var(--muted)">hafta</span></div>
+        <div>Mevduat (Rf): ${stat('', '+'+rf.toFixed(4)+'%')} / <span style="color:var(--muted)">hafta</span></div>
+        <div>Fark (x̄ − Rf): ${stat('', (t1.mean-rf>=0?'+':'')+(t1.mean-rf).toFixed(4)+'%', t1.mean-rf>=0?'var(--success)':'var(--danger)')}</div>
+        <div style="margin-top:4px">t = ${t2.t.toFixed(3)} · eşik ±${t2.tc.toFixed(3)} → <strong style="color:${t2.rej?(t2.mean>rf?'var(--success)':'var(--danger)'):'var(--muted)'}">${t2Verdict}</strong></div>
+      </div>
+      <p style="margin:0">${t2.rej ? (t2.mean>rf ? '<strong>Yorum:</strong> Riski almak <em>karşılığını verdi</em> — mevduata yatırsaydık daha az kazanacaktık. İstatistiksel olarak anlamlı bir üstünlük var.' : '<strong>Yorum:</strong> Hisse/kripto riski almak <em>zarar getirdi</em> — sadece mevduat tutsaydık daha iyi olurdu. Anlamlı bir altta kalış var.') : '<strong>Yorum:</strong> Portföy mevduata yakın seyrediyor; aradaki fark dalgalanma içinde kayboluyor. <em>"Risk aldığımıza değdi" diyebilmek için daha çok veri gerek.</em>'}</p>`
+      : '');
+
+    // 5) Sunumda kullanılacak cümleler
+    h += cardCls('#5a4a8c', tr?'🎤 Sunumda Nasıl Anlatırsın?':'🎤 How to Present This',
+      tr ? `<p style="margin:0 0 8px"><strong>Hocaya/dinleyiciye 3 cümlede:</strong></p>
+      <ol style="margin:0;padding-left:18px;line-height:1.85">
+        <li>"3 ayda ortalama haftalık ${(t1.mean>=0?'+':'')+t1.mean.toFixed(2)}% getiri elde ettik. Ama bu <em>şans</em> mı yoksa <em>gerçek başarı</em> mı, onu test ettim."</li>
+        <li>"Student t-Testi yaptım. Sonuç: <strong>t = ${t1.t.toFixed(2)}</strong>, %5 anlamlılık eşiği <strong>±${t1.tc.toFixed(2)}</strong>. ${t1.rej?'Eşiği <strong>geçti</strong>, yani sıfırdan istatistiksel olarak anlamlı şekilde farklı.':'Eşiği <strong>geçmedi</strong>, yani şu an istatistiksel olarak şanstan ayırt edemiyoruz."'}</li>
+        <li>"Örneklem küçük (n=${nW}). 6 ay sonra ~26 hafta veriyle <strong>standart hata düşecek</strong> ve test güçlenecek. Şimdilik temkinli yorumluyoruz."</li>
+      </ol>
+      <p style="margin:10px 0 0;font-size:0.54rem;color:var(--muted)"><strong>İpucu:</strong> "p-değeri" sorulursa → <strong>${t1.p}</strong>. p < 0.05 ise "5% güven düzeyinde anlamlı", p < 0.01 ise "1% güven düzeyinde anlamlı" diyebilirsin.</p>`
+      : '');
+
+    body.innerHTML = h;
+  }
+
+  else if(tTestTab==='overview'){
     let h=`<div class="ttest-card"><div class="ttest-card-title">${tr?'Hipotez Testleri Ozet Tablosu':'Hypothesis Tests Summary'}</div>
     <table class="ttest-table"><thead><tr><th>${tr?'Test':'Test'}</th><th style="text-align:right">x̄ (%)</th><th style="text-align:right">s</th><th style="text-align:right">SE</th><th style="text-align:right">t</th><th style="text-align:right">df</th><th style="text-align:right">t<sub>krit</sub></th><th style="text-align:center">p</th><th style="text-align:center">${tr?'Karar':'Decision'}</th></tr></thead><tbody>`;
     function row(label,sub,test,col){

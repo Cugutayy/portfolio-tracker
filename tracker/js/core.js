@@ -1524,7 +1524,7 @@ function closeDetail(e){
 // ════════════════════════════════════════════════════════════════
 // T-TEST — Full academic statistical analysis with tabs
 // ════════════════════════════════════════════════════════════════
-let tTestTab='overview';
+let tTestTab='basic';
 function switchTTestTab(tab){
   tTestTab=tab;
   document.querySelectorAll('.ttest-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
