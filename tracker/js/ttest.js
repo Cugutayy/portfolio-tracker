@@ -81,15 +81,13 @@ function renderTTestBody(){
       <p style="margin:0">${t2.rej ? (t2.mean>rf ? '<strong>Yorum:</strong> Riski almak <em>karşılığını verdi</em> — mevduata yatırsaydık daha az kazanacaktık. İstatistiksel olarak anlamlı bir üstünlük var.' : '<strong>Yorum:</strong> Hisse/kripto riski almak <em>zarar getirdi</em> — sadece mevduat tutsaydık daha iyi olurdu. Anlamlı bir altta kalış var.') : '<strong>Yorum:</strong> Portföy mevduata yakın seyrediyor; aradaki fark dalgalanma içinde kayboluyor. <em>"Risk aldığımıza değdi" diyebilmek için daha çok veri gerek.</em>'}</p>`
       : '');
 
-    // 5) Sunumda kullanılacak cümleler
-    h += cardCls('#5a4a8c', tr?'🎤 Sunumda Nasıl Anlatırsın?':'🎤 How to Present This',
-      tr ? `<p style="margin:0 0 8px"><strong>Hocaya/dinleyiciye 3 cümlede:</strong></p>
-      <ol style="margin:0;padding-left:18px;line-height:1.85">
-        <li>"3 ayda ortalama haftalık ${(t1.mean>=0?'+':'')+t1.mean.toFixed(2)}% getiri elde ettik. Ama bu <em>şans</em> mı yoksa <em>gerçek başarı</em> mı, onu test ettim."</li>
-        <li>"Student t-Testi yaptım. Sonuç: <strong>t = ${t1.t.toFixed(2)}</strong>, %5 anlamlılık eşiği <strong>±${t1.tc.toFixed(2)}</strong>. ${t1.rej?'Eşiği <strong>geçti</strong>, yani sıfırdan istatistiksel olarak anlamlı şekilde farklı.':'Eşiği <strong>geçmedi</strong>, yani şu an istatistiksel olarak şanstan ayırt edemiyoruz."'}</li>
-        <li>"Örneklem küçük (n=${nW}). 6 ay sonra ~26 hafta veriyle <strong>standart hata düşecek</strong> ve test güçlenecek. Şimdilik temkinli yorumluyoruz."</li>
-      </ol>
-      <p style="margin:10px 0 0;font-size:0.54rem;color:var(--muted)"><strong>İpucu:</strong> "p-değeri" sorulursa → <strong>${t1.p}</strong>. p < 0.05 ise "5% güven düzeyinde anlamlı", p < 0.01 ise "1% güven düzeyinde anlamlı" diyebilirsin.</p>`
+    // 5) Konuşma Metni — t-Test ve Sharpe Oranı kısa özeti
+    h += cardCls('#5a4a8c', tr?'📝 Konuşma Metni — t-Test & Sharpe Oranı':'📝 Speech Notes — t-Test & Sharpe Ratio',
+      tr ? `<p style="margin:0 0 10px"><strong>t-Test nedir?</strong><br>Portföyümün ortalama getirisinin sıfırdan (veya mevduat faizinden) istatistiksel olarak farklı olup olmadığını test eden bir yöntem. <strong>t-değeri</strong>, ortalamamın hipotez edilen değerden kaç standart hata uzakta olduğunu söyler. Bu değer kritik eşiği (t<sub>krit</sub>) aşarsa <em>"getiri tesadüf değil"</em> diyebilirim. Az veriyle çalıştığım için (n=${nW} hafta) sonuç bazen <em>"henüz yeterli kanıt yok"</em> da olabilir — bu da dürüst bir yanıt.</p>
+
+      <p style="margin:0 0 10px"><strong>Sharpe Oranı nedir?</strong><br>Aldığım risk başına ne kadar fazla kazandığımı söyleyen tek bir sayı. Formülü: <strong>(Portföy getirisi − Risksiz faiz) ÷ Standart sapma</strong>. Sıfırın üstündeyse mevduatı geçtim demektir. <em>1'in üstü iyi, 2'nin üstü mükemmel</em> sayılır. Aynı kârı daha sakin bir grafikle elde ettiysem Sharpe artar — yani sadece "ne kadar kazandım"a değil, "ne kadar dalgalanmaya katlandığıma" da bakar.</p>
+
+      <p style="margin:0;padding:10px 12px;background:var(--surface);border-radius:6px;border-left:3px solid var(--accent)"><strong>Özetle:</strong> t-Test sonucumun <strong>anlamlı</strong> olup olmadığını söyler, Sharpe ise sonucumun <strong>değerli</strong> olup olmadığını. Biri istatistiksel güveni, diğeri risk-getiri verimliliğini ölçer. İkisi bir arada portföyün gerçek performansını dürüstçe değerlendirir.</p>`
       : '');
 
     body.innerHTML = h;
