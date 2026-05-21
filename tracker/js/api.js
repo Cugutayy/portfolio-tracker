@@ -248,11 +248,15 @@ async function verifyStocksFromAPI(){
 
   const applyFix = (id, label, priceMap, decimals=2) => {
     let fixes = 0;
+    let lastApi = null; // forward-fill: BIST tatili / NaN günler için en son Yahoo değerini taşı
     HISTORY.dates.forEach((date, i) => {
       const apiPrice = priceMap[date];
-      if(apiPrice === undefined || apiPrice === null || apiPrice <= 0) return;
+      if(apiPrice !== undefined && apiPrice !== null && apiPrice > 0){
+        lastApi = apiPrice;
+      }
+      if(lastApi === null) return; // henüz Yahoo verisi yok (başlangıç günleri)
       const histPrice = HISTORY[id][i];
-      const apiRounded = +apiPrice.toFixed(decimals);
+      const apiRounded = +lastApi.toFixed(decimals);
       const diff = Math.abs(apiRounded - histPrice) / apiRounded;
       // %0.5'ten fazla sapma varsa düzelt (carry-forward günleri otomatik yakalanır)
       if(diff > 0.005){
