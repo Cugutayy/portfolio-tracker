@@ -98,12 +98,10 @@ const TEFAS_FALLBACK = {
 // ════════════════════════════════════════════════════════════════
 //
 // İŞ AKIŞI:
-// 1) Manuel metrikleri (TCMB faiz, tahviller, CDS, rezerv) buraya gir
-//    → Bloomberg, Reuters, investing.com, TCMB sitesinden bakıp güncelle
-// 2) Günlük yorum eklemek istediğinde Claude'a gel:
-//    "Bugünkü makro tabloya bak, ciddi bir yorum yaz" de
-//    → Claude araştırıp metin yazar, sen MACRO_DATA.notes başına ekle
-// 3) En yeni yorum en üstte olacak şekilde unshift ile ekle
+// 1) Manuel metrikler (politika faizi, tahviller, CDS, rezerv) buraya yazılır.
+//    Kaynak: TCMB.gov.tr, Bloomberg HT, Reuters, investing.com
+// 2) Günlük yorumlar MACRO_DATA.notes dizisine eklenir.
+//    Yeni yorumu en başa (unshift) ekleyerek tarihe göre sıralı tutun.
 //
 const MACRO_DATA = {
   // ─── Manuel Metrikler ────────────────────────────────────────────
@@ -128,15 +126,9 @@ const MACRO_DATA = {
   },
 
   // ─── Günlük Yorumlar (en yeni en üstte) ──────────────────────────
-  // Her entry: { date, headline, body, snapshot? }
-  // Claude'a "şu metriklere bak ve yaz" diyerek yazdır, buraya yapıştır.
-  notes: [
-    {
-      date: '2026-05-21',
-      headline: 'Örnek başlangıç notu — Claude\'a yeni yorum yazdır',
-      body: 'Bu kart, MACRO_DATA.notes dizisinin ilk girdisidir. Sen Claude\'a günlük makro tabloya bakıp ciddi bir yorum yazmasını istediğinde, üretilen metni buraya yeni bir entry olarak (unshift ile en üste) ekleyeceksin. Format: { date: \'YYYY-MM-DD\', headline: \'Kısa başlık\', body: \'Detaylı yorum...\' }',
-    },
-  ],
+  // Her entry: { date: 'YYYY-MM-DD', headline: 'Kısa başlık', body: 'Detaylı yorum...' }
+  // Yeni yorum eklerken dizinin BAŞINA (unshift) ekle.
+  notes: [],
 };
 
 // ════════════════════════════════════════════════════════════════
