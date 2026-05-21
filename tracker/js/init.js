@@ -6,6 +6,7 @@ function switchPage(page){
   document.getElementById('pageBeta').style.display=page==='beta'?'':'none';
   document.getElementById('pageAnalytics').style.display=page==='analytics'?'':'none';
   document.getElementById('pageMarkets').style.display=page==='markets'?'':'none';
+  document.getElementById('pageMacro').style.display=page==='macro'?'':'none';
   document.getElementById('pageSample').style.display=page==='sample'?'':'none';
   // Hide side panel stuff on sub pages
   document.querySelector('.side-overlay')?.classList.remove('open');
@@ -15,6 +16,7 @@ function switchPage(page){
   if(page==='beta') renderBeta();
   if(page==='analytics') renderAnalytics();
   if(page==='markets') renderMarkets();
+  if(page==='macro') renderMacro();
   if(page==='sample') renderSample();
   window.scrollTo(0,0);
 }

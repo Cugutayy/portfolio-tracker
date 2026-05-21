@@ -94,5 +94,51 @@ const TEFAS_FALLBACK = {
 };
 
 // ════════════════════════════════════════════════════════════════
+// MAKRO VERİ — Yahoo'da olmayan elle güncellenenler + günlük yorumlar
+// ════════════════════════════════════════════════════════════════
+//
+// İŞ AKIŞI:
+// 1) Manuel metrikleri (TCMB faiz, tahviller, CDS, rezerv) buraya gir
+//    → Bloomberg, Reuters, investing.com, TCMB sitesinden bakıp güncelle
+// 2) Günlük yorum eklemek istediğinde Claude'a gel:
+//    "Bugünkü makro tabloya bak, ciddi bir yorum yaz" de
+//    → Claude araştırıp metin yazar, sen MACRO_DATA.notes başına ekle
+// 3) En yeni yorum en üstte olacak şekilde unshift ile ekle
+//
+const MACRO_DATA = {
+  // ─── Manuel Metrikler ────────────────────────────────────────────
+  // Yahoo'da olmayan veriler. Güncel değer için kaynak: TCMB.gov.tr,
+  // Bloomberg HT, Reuters TR, investing.com/rates-bonds/turkey
+  manual: {
+    policyRate:   46.00,    // %, TCMB politika faizi (1-haftalık repo)
+    tlref:        47.20,    // %, gecelik TL referans faizi (TLREF)
+    bond2Y:       42.30,    // %, 2Y DİBS faizi
+    bond10Y:      38.10,    // %, 10Y DİBS faizi
+    cds5Y:        412,      // baz puan (bp), 5Y Türkiye CDS
+    netReserves: -15.4,     // milyar $, TCMB net rezerv (swap hariç en kötü senaryo)
+    lastUpdate:  '2026-05-21',
+  },
+
+  // ─── Eşikler (renk kodlaması için) ───────────────────────────────
+  // Günlük % değişim mutlak değerini bunlarla karşılaştır
+  thresholds: {
+    fx:    { warn: 1.5, alarm: 3.0 },  // kur: %1.5 dikkat, %3+ stres
+    bist:  { warn: 2.0, alarm: 5.0 },  // borsa: %2 dikkat, %5+ panik
+    rate:  { warn: 0.5, alarm: 1.5 },  // faiz: 50bp dikkat, 150bp+ büyük hareket
+  },
+
+  // ─── Günlük Yorumlar (en yeni en üstte) ──────────────────────────
+  // Her entry: { date, headline, body, snapshot? }
+  // Claude'a "şu metriklere bak ve yaz" diyerek yazdır, buraya yapıştır.
+  notes: [
+    {
+      date: '2026-05-21',
+      headline: 'Örnek başlangıç notu — Claude\'a yeni yorum yazdır',
+      body: 'Bu kart, MACRO_DATA.notes dizisinin ilk girdisidir. Sen Claude\'a günlük makro tabloya bakıp ciddi bir yorum yazmasını istediğinde, üretilen metni buraya yeni bir entry olarak (unshift ile en üste) ekleyeceksin. Format: { date: \'YYYY-MM-DD\', headline: \'Kısa başlık\', body: \'Detaylı yorum...\' }',
+    },
+  ],
+};
+
+// ════════════════════════════════════════════════════════════════
 // STATE
 // ════════════════════════════════════════════════════════════════
