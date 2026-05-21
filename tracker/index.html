@@ -68,6 +68,7 @@
   <button class="page-nav-btn" data-page="beta" onclick="switchPage('beta')"><span>Beta <span style="font-style:italic;font-family:'Instrument Serif',serif">β</span></span></button>
   <button class="page-nav-btn" data-page="analytics" onclick="switchPage('analytics')"><span data-i18n="navAnalytics">Analiz</span></button>
   <button class="page-nav-btn" data-page="markets" onclick="switchPage('markets')"><span data-i18n="navMarkets">Piyasalar</span></button>
+  <button class="page-nav-btn" data-page="macro" onclick="switchPage('macro')"><span>Makro</span></button>
   <button class="page-nav-btn" data-page="sample" onclick="switchPage('sample')"><span data-i18n="navSample">Ornek</span></button>
 </nav>
 
@@ -184,6 +185,13 @@
   </div>
 </div>
 
+<!-- ═══ MAKRO PAGE ═══ -->
+<div id="pageMacro" style="display:none">
+  <div style="max-width:1180px;margin:0 auto;padding:24px 20px">
+    <div id="macroSection"></div>
+  </div>
+</div>
+
 <!-- ═══ SAMPLE PORTFOLIO PAGE ═══ -->
 <div id="pageSample" style="display:none">
   <div style="max-width:1040px;margin:0 auto;padding:24px 20px">
@@ -230,6 +238,7 @@
 <script src="js/beta.js"></script>
 <script src="js/analytics.js"></script>
 <script src="js/markets.js"></script>
+<script src="js/macro.js"></script>
 <script src="js/sample.js"></script>
 <script src="js/init.js"></script>
 </body>
