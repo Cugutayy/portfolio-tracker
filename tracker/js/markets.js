@@ -98,19 +98,20 @@ const MARKET_ITEMS = {
   // EEM/EWZ: EM hisse karşılaştırması.
   // ^IRX/^FVX/^TYX: ABD 13W/5Y/30Y hazine getirileri (global risksiz faiz eğrisi).
   // ^VIX, DX-Y.NYB: küresel risk iştahı ve dolar gücü.
+  // Linkler TradingView — tüm semboller için güvenilir, 404 dönmüyor.
   emRisk: [
-    {sym:'TUR',       name:{tr:'Türkiye ETF (USD)',en:'Turkey ETF (USD)'},        link:'https://www.investing.com/etfs/ishares-msci-turkey-investable-mkt-index'},
-    {sym:'EMB',       name:{tr:'EM Tahvil (USD)',en:'EM USD Bond'},               link:'https://www.investing.com/etfs/ishares-jpm-usd-emrgng-mrkts-bnd'},
-    {sym:'EMLC',      name:{tr:'EM Tahvil (Yerel)',en:'EM Local Currency Bond'},  link:'https://www.investing.com/etfs/market-vectors-em-local-curr-bond'},
-    {sym:'EMHY',      name:{tr:'EM Yüksek Getiri',en:'EM High Yield'},            link:'https://www.investing.com/etfs/ishares-emerging-markets-high-yield-bond'},
-    {sym:'EEM',       name:{tr:'EM Hisse',en:'EM Equities'},                       link:'https://www.investing.com/etfs/ishares-msci-emg-markets'},
-    {sym:'EWZ',       name:{tr:'Brezilya ETF',en:'Brazil ETF'},                    link:'https://www.investing.com/etfs/ishares-msci-brazil-index'},
-    {sym:'DX-Y.NYB',  name:{tr:'DXY (Dolar Endeksi)',en:'DXY (Dollar Index)'},     link:'https://www.investing.com/indices/usdollar'},
-    {sym:'^VIX',      name:{tr:'VIX (Korku Endeksi)',en:'VIX (Fear Index)'},      link:'https://www.investing.com/indices/volatility-s-p-500'},
-    {sym:'^IRX',      name:{tr:'ABD 13W Hazine',en:'US 13W T-Bill'},               link:'https://www.investing.com/rates-bonds/u.s.-13-week-bond-yield'},
-    {sym:'^FVX',      name:{tr:'ABD 5Y Hazine',en:'US 5Y Treasury'},               link:'https://www.investing.com/rates-bonds/u.s.-5-year-bond-yield'},
-    {sym:'^TNX',      name:{tr:'ABD 10Y Hazine',en:'US 10Y Treasury'},             link:'https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield'},
-    {sym:'^TYX',      name:{tr:'ABD 30Y Hazine',en:'US 30Y Treasury'},             link:'https://www.investing.com/rates-bonds/u.s.-30-year-bond-yield'},
+    {sym:'TUR',       name:{tr:'Türkiye ETF (USD)',en:'Turkey ETF (USD)'},        link:'https://www.tradingview.com/symbols/TUR/'},
+    {sym:'EMB',       name:{tr:'EM Tahvil (USD)',en:'EM USD Bond'},               link:'https://www.tradingview.com/symbols/EMB/'},
+    {sym:'EMLC',      name:{tr:'EM Tahvil (Yerel)',en:'EM Local Currency Bond'},  link:'https://www.tradingview.com/symbols/EMLC/'},
+    {sym:'EMHY',      name:{tr:'EM Yüksek Getiri',en:'EM High Yield'},            link:'https://www.tradingview.com/symbols/EMHY/'},
+    {sym:'EEM',       name:{tr:'EM Hisse',en:'EM Equities'},                       link:'https://www.tradingview.com/symbols/EEM/'},
+    {sym:'EWZ',       name:{tr:'Brezilya ETF',en:'Brazil ETF'},                    link:'https://www.tradingview.com/symbols/EWZ/'},
+    {sym:'DX-Y.NYB',  name:{tr:'DXY (Dolar Endeksi)',en:'DXY (Dollar Index)'},     link:'https://www.tradingview.com/symbols/DXY/'},
+    {sym:'^VIX',      name:{tr:'VIX (Korku Endeksi)',en:'VIX (Fear Index)'},      link:'https://www.tradingview.com/symbols/VIX/'},
+    {sym:'^IRX',      name:{tr:'ABD 13W Hazine',en:'US 13W T-Bill'},               link:'https://www.tradingview.com/symbols/US03MY/'},
+    {sym:'^FVX',      name:{tr:'ABD 5Y Hazine',en:'US 5Y Treasury'},               link:'https://www.tradingview.com/symbols/US05Y/'},
+    {sym:'^TNX',      name:{tr:'ABD 10Y Hazine',en:'US 10Y Treasury'},             link:'https://www.tradingview.com/symbols/US10Y/'},
+    {sym:'^TYX',      name:{tr:'ABD 30Y Hazine',en:'US 30Y Treasury'},             link:'https://www.tradingview.com/symbols/US30Y/'},
   ],
 };
 
