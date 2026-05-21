@@ -8,7 +8,7 @@ const MACRO_SYMBOLS = {
     { id:'usdtry',  sym:'USDTRY=X', label:'USD/TRY',          help:'TL\'nin dolar karşısındaki değeri. Yukarı = TL değer kaybı.', cat:'fx' },
     { id:'eurtry',  sym:'EURTRY=X', label:'EUR/TRY',          help:'TL\'nin euro karşısındaki değeri.', cat:'fx' },
     { id:'dxy',     sym:'DX-Y.NYB', label:'DXY (Dolar End.)', help:'Doların 6 büyük para birimi sepetine karşı gücü. Yukarı = küresel dolar gücü, gelişen ülkelere baskı.', cat:'fx' },
-    { id:'vix',     sym:'^VIX',     label:'VIX (Korku End.)', help:'Küresel risk iştahı. <15 sakin · 15-25 normal · 25+ stres.', cat:'rate' },
+    { id:'vix',     sym:'^VIX',     label:'VIX (Korku End.)', help:'Küresel risk iştahı. <15 sakin · 15-25 normal · 25+ stres.', cat:'rate', levelBands:{ calm:15, alarm:25 } },
   ],
   bist: [
     { id:'xu100',   sym:'^XU100',   label:'BIST 100',  help:'BIST\'in en büyük 100 hissesini içeren ana endeks.', cat:'bist' },
@@ -33,6 +33,14 @@ function macroBadge(category, chgAbs){
   if(chgAbs >= t.alarm) return { color:'#c0392b', label:'STRES' };
   if(chgAbs >= t.warn)  return { color:'#c9a84c', label:'DİKKAT' };
   return { color:'#1a472a', label:'NORMAL' };
+}
+
+// Mutlak seviye bantlarıyla rozet (VIX gibi: <15 sakin, >25 stres)
+function macroLevelBadge(price, bands){
+  if(price === null || price === undefined) return { color:'#888', label:'—' };
+  if(price >= bands.alarm) return { color:'#c0392b', label:'STRES' };
+  if(price <= bands.calm)  return { color:'#1a472a', label:'SAKİN' };
+  return { color:'#c9a84c', label:'NORMAL' };
 }
 
 function macroFmt(v, d=2){
@@ -77,7 +85,10 @@ function renderMacroBody(){
   function liveCard(cfg){
     const d = macroLive[cfg.id];
     if(!d) return `<div class="macro-card"><div class="mc-head"><div class="mc-label">${cfg.label}</div></div><div class="mc-val">—</div><div class="mc-help">${cfg.help}</div></div>`;
-    const b = macroBadge(cfg.cat, Math.abs(d.chg));
+    // Bazı metriklerde stres absolute seviyeden okunur (VIX gibi); diğerlerinde günlük % değişim.
+    const b = cfg.levelBands
+      ? macroLevelBadge(d.price, cfg.levelBands)
+      : macroBadge(cfg.cat, Math.abs(d.chg));
     const arrow = d.chg >= 0 ? '▲' : '▼';
     const color = d.chg >= 0 ? 'var(--success)' : 'var(--danger)';
     const isBistIdx = ['xu100','xu030','xbank','xusin'].includes(cfg.id);
