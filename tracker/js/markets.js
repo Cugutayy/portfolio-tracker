@@ -92,6 +92,26 @@ const MARKET_ITEMS = {
     {sym:'EEM',name:'Emerging Mkts',link:'https://www.investing.com/etfs/ishares-msci-emg-markets'},
     {sym:'DJIST.IS',name:'BIST-100 ETF',link:'https://www.investing.com/etfs/djist'},
   ],
+  // ─── Türkiye risk + EM yansımaları + global risksiz faiz ─────────
+  // TUR: Türkiye'nin yabancı para gözünden değeri (USD bazlı ETF).
+  // EMB/EMLC: USD ve yerel para EM tahvilleri (global risk primi).
+  // EEM/EWZ: EM hisse karşılaştırması.
+  // ^IRX/^FVX/^TYX: ABD 13W/5Y/30Y hazine getirileri (global risksiz faiz eğrisi).
+  // ^VIX, DX-Y.NYB: küresel risk iştahı ve dolar gücü.
+  emRisk: [
+    {sym:'TUR',       name:{tr:'Türkiye ETF (USD)',en:'Turkey ETF (USD)'},        link:'https://www.investing.com/etfs/ishares-msci-turkey-investable-mkt-index'},
+    {sym:'EMB',       name:{tr:'EM Tahvil (USD)',en:'EM USD Bond'},               link:'https://www.investing.com/etfs/ishares-jpm-usd-emrgng-mrkts-bnd'},
+    {sym:'EMLC',      name:{tr:'EM Tahvil (Yerel)',en:'EM Local Currency Bond'},  link:'https://www.investing.com/etfs/market-vectors-em-local-curr-bond'},
+    {sym:'EMHY',      name:{tr:'EM Yüksek Getiri',en:'EM High Yield'},            link:'https://www.investing.com/etfs/ishares-emerging-markets-high-yield-bond'},
+    {sym:'EEM',       name:{tr:'EM Hisse',en:'EM Equities'},                       link:'https://www.investing.com/etfs/ishares-msci-emg-markets'},
+    {sym:'EWZ',       name:{tr:'Brezilya ETF',en:'Brazil ETF'},                    link:'https://www.investing.com/etfs/ishares-msci-brazil-index'},
+    {sym:'DX-Y.NYB',  name:{tr:'DXY (Dolar Endeksi)',en:'DXY (Dollar Index)'},     link:'https://www.investing.com/indices/usdollar'},
+    {sym:'^VIX',      name:{tr:'VIX (Korku Endeksi)',en:'VIX (Fear Index)'},      link:'https://www.investing.com/indices/volatility-s-p-500'},
+    {sym:'^IRX',      name:{tr:'ABD 13W Hazine',en:'US 13W T-Bill'},               link:'https://www.investing.com/rates-bonds/u.s.-13-week-bond-yield'},
+    {sym:'^FVX',      name:{tr:'ABD 5Y Hazine',en:'US 5Y Treasury'},               link:'https://www.investing.com/rates-bonds/u.s.-5-year-bond-yield'},
+    {sym:'^TNX',      name:{tr:'ABD 10Y Hazine',en:'US 10Y Treasury'},             link:'https://www.investing.com/rates-bonds/u.s.-10-year-bond-yield'},
+    {sym:'^TYX',      name:{tr:'ABD 30Y Hazine',en:'US 30Y Treasury'},             link:'https://www.investing.com/rates-bonds/u.s.-30-year-bond-yield'},
+  ],
 };
 
 let mktCache={};
@@ -354,6 +374,18 @@ const SEARCH_SUGGESTIONS=[
   {sym:'^AXJO',name:'ASX 200 Avustralya',cat:'Endeks'},{sym:'^KS11',name:'KOSPI Kore',cat:'Endeks'},
   {sym:'^NSEI',name:'Nifty 50 Hindistan',cat:'Endeks'},{sym:'^STOXX50E',name:'Euro Stoxx 50',cat:'Endeks'},
   {sym:'^RUT',name:'Russell 2000',cat:'Endeks'},{sym:'^VIX',name:'VIX Korku Endeksi',cat:'Endeks'},
+  // TR Risk & EM proxies (Türkiye'nin yabancı para gözünden + EM yansımaları)
+  {sym:'TUR',name:'Turkiye ETF iShares MSCI',cat:'TRRisk'},
+  {sym:'EMB',name:'EM USD Tahvil iShares JPM',cat:'TRRisk'},
+  {sym:'EMLC',name:'EM Yerel Para Tahvil VanEck',cat:'TRRisk'},
+  {sym:'EMHY',name:'EM Yuksek Getiri Tahvil',cat:'TRRisk'},
+  {sym:'EEM',name:'EM Hisse iShares MSCI',cat:'TRRisk'},
+  {sym:'EWZ',name:'Brezilya ETF iShares',cat:'TRRisk'},
+  {sym:'DX-Y.NYB',name:'DXY Dolar Endeksi',cat:'TRRisk'},
+  {sym:'^IRX',name:'ABD 13W Hazine Bonosu',cat:'TRRisk'},
+  {sym:'^FVX',name:'ABD 5Y Hazine Tahvili',cat:'TRRisk'},
+  {sym:'^TNX',name:'ABD 10Y Hazine Tahvili',cat:'TRRisk'},
+  {sym:'^TYX',name:'ABD 30Y Hazine Tahvili',cat:'TRRisk'},
 ];
 
 let mktDDOpen=false;
@@ -504,6 +536,7 @@ function renderMarkets(){
   // Category tabs
   const cats=[
     {key:'all',label:tr?'Tumu':'All'},
+    {key:'TRRisk',label:tr?'TR Risk & EM':'TR Risk & EM'},
     {key:'BIST',label:'BIST'},
     {key:'Emtia',label:tr?'Emtia':'Commodities'},
     {key:'Doviz',label:tr?'Doviz':'Forex'},
@@ -537,6 +570,7 @@ function renderMarkets(){
   <div id="mktSearchStatus" style="font-size:0.54rem;color:var(--muted);margin-bottom:4px"></div>
   <div id="mktSearchResult" style="margin-bottom:12px"></div>`;
 
+  h+=`<div class="mkt-section" data-cat="TRRisk">`+secTitle(tr?'Türkiye Risk & EM (Yansımalar)':'Turkey Risk & EM (Proxies)')+renderGroup(MARKET_ITEMS.emRisk)+`</div>`;
   h+=`<div class="mkt-section" data-cat="Endeks">`+secTitle(tr?'Endeksler':'Indices')+renderGroup(MARKET_ITEMS.indices)+`</div>`;
   h+=`<div class="mkt-section" data-cat="BIST">`+secTitle(tr?'BIST Hisseler':'BIST Stocks')+renderGroup(MARKET_ITEMS.stocks)+`</div>`;
   h+=`<div class="mkt-section" data-cat="US">`+secTitle(tr?'ABD Hisseleri':'US Stocks')+renderGroup(MARKET_ITEMS.us)+`</div>`;
