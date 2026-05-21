@@ -186,7 +186,7 @@ function renderMacroBody(){
       ${notesArchive}
       ${learnCards}
       <div class="macro-footer">
-        <em>${tr?'Veri kaynakları':'Sources'}: Yahoo Finance (canlı) · ${tr?'Manuel metrikler':'Manual metrics'}: TCMB, Bloomberg HT, investing.com · ${tr?'Yorumlar': 'Notes'}: ${tr?'Claude\'a sorularak yazılır':'Written via Claude'}</em>
+        <em>${tr?'Veri kaynakları':'Sources'}: Yahoo Finance · TCMB · Bloomberg HT · investing.com</em>
       </div>
     </div>
   `;
