@@ -114,7 +114,13 @@ const MACRO_DATA = {
     bond10Y:      38.10,    // %, 10Y DİBS faizi
     cds5Y:        412,      // baz puan (bp), 5Y Türkiye CDS
     netReserves: -15.4,     // milyar $, TCMB net rezerv (swap hariç en kötü senaryo)
-    lastUpdate:  '2026-05-21',
+    // ─── Offshore TL Forward Kurları (Bloomberg HT — IRSWAP / FX FWD ekranı) ───
+    // Boş bırakırsan implied rate kartları gizlenir.
+    fwd1M:        null,     // USD/TRY 1-aylık forward kuru
+    fwd3M:        null,     // USD/TRY 3-aylık forward kuru
+    fwd1Y:        null,     // USD/TRY 12-aylık forward kuru
+    usdRate:      4.30,     // %, USD risksiz referans (SOFR / Fed Funds, yıllık)
+    lastUpdate:  '2026-05-22',
   },
 
   // ─── Eşikler (renk kodlaması için) ───────────────────────────────

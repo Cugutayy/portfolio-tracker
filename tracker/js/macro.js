@@ -23,6 +23,83 @@ const MACRO_SYMBOLS = {
 
 let macroLive = {}; // { id: { price, prev, chg } }
 
+// ─── Offshore TL Implied Rate — Faiz Paritesi (Covered Interest Parity) ─────
+// Formül: r_TRY = ((F/S) × (1 + r_USD × n/360) − 1) × (360/n)
+// F: forward USD/TRY, S: spot, r_USD: USD risksiz faiz (yıllık), n: gün sayısı
+// Çıkış: yıllık implied TL faizi (%)
+function impliedTRYRate(spot, forward, usdRatePct, days){
+  if(!spot || !forward || spot <= 0 || forward <= 0 || !days) return null;
+  const rUsd = (usdRatePct || 0) / 100;
+  const factor = 1 + rUsd * (days / 360);
+  return ((forward / spot) * factor - 1) * (360 / days) * 100; // yüzde
+}
+
+function renderOffshoreSection(tr, m, mono){
+  const spot = macroLive?.usdtry?.price;
+  const hasAny = m.fwd1M || m.fwd3M || m.fwd1Y;
+  if(!hasAny){
+    // Boş durum — kullanıcıyı manuel girişe yönlendir, yer kaplamasın
+    return `
+    <section class="macro-section">
+      <h3 class="macro-h3">🌐 ${tr?'Offshore TL — İleri Vade Beklentileri':'Offshore TL — Forward Curve'}</h3>
+      <div class="macro-empty">
+        <strong>${tr?'Forward kurları henüz girilmedi.':'No forward rates yet.'}</strong>
+        ${tr?'<code>data.js</code> içinde <code>MACRO_DATA.manual.fwd1M / fwd3M / fwd1Y</code> alanlarına Bloomberg HT, Reuters veya offshore broker ekranından bakıp girince burada implied TL faizi otomatik hesaplanır.':'Fill <code>MACRO_DATA.manual.fwd1M / fwd3M / fwd1Y</code> in <code>data.js</code> with forward USDTRY rates; implied TL yields will be computed here.'}
+      </div>
+    </section>`;
+  }
+
+  const tenors = [
+    { id:'1M', days:30,  fwd:m.fwd1M, label:tr?'1 Ay':'1 Month' },
+    { id:'3M', days:90,  fwd:m.fwd3M, label:tr?'3 Ay':'3 Months' },
+    { id:'1Y', days:360, fwd:m.fwd1Y, label:tr?'1 Yıl':'1 Year' },
+  ];
+
+  function offshoreCard(t){
+    if(!t.fwd) return `<div class="macro-card macro-card-manual"><div class="mc-head"><div class="mc-label">${t.label}</div><span class="mc-badge" style="background:#777">—</span></div><div class="mc-val" style="${mono};color:var(--muted)">veri yok</div></div>`;
+    const impl = impliedTRYRate(spot, t.fwd, m.usdRate, t.days);
+    const devalAnn = spot > 0 ? ((t.fwd / spot - 1) * (360 / t.days) * 100) : null;
+    // Renk eşiği: offshore implied politika faizinden YUKARI saparsa stres (piyasa TCMB'ye güvenmiyor)
+    // Aşağı sapma normalde sakinlik anlamına gelir (forward dar, TL stabil bekleniyor)
+    const gap = impl - (m.policyRate || 0);
+    const badge = gap > 10 ? { color:'#c0392b', label:'STRES' }
+                : gap > 3  ? { color:'#c9a84c', label:'AYRIŞMA' }
+                : gap > -5 ? { color:'#1a472a', label:'UYUMLU' }
+                :            { color:'#1d4ed8', label:'SAKİN' };
+    return `
+    <div class="macro-card macro-card-manual">
+      <div class="mc-head">
+        <div class="mc-label">${t.label}</div>
+        <span class="mc-badge" style="background:${badge.color}">${badge.label}</span>
+      </div>
+      <div class="mc-val" style="${mono}">${macroFmt(impl, 2)}<span style="font-size:0.55rem;color:var(--muted);font-weight:400;margin-left:4px">% / ${tr?'yıl':'yr'}</span></div>
+      <div class="mc-chg" style="color:var(--muted);${mono};font-size:0.5rem">
+        F=${macroFmt(t.fwd,3)} · S=${macroFmt(spot,3)} · ${tr?'yıllık deval':'annual deval'}: ${macroFmt(devalAnn,2)}%
+      </div>
+      <div class="mc-help">${tr?'Faiz paritesinden hesaplanan offshore TL implied faizi. Politika faizinden 10+ puan yüksekse piyasa TCMB\'ye güvenmiyor demektir.':'Implied TRY yield via covered interest parity. >10pp above policy rate = market does not trust CBRT.'}</div>
+    </div>`;
+  }
+
+  const summary = (() => {
+    const r1y = impliedTRYRate(spot, m.fwd1Y, m.usdRate, 360);
+    if(!r1y) return '';
+    const gap = r1y - (m.policyRate || 0);
+    if(gap > 10) return tr ? `1Y offshore implied faiz politika faizinin <strong>${gap.toFixed(1)} puan üstünde</strong> — piyasa ek sıkılaşma veya hızlı TL değer kaybı fiyatlıyor; TCMB'ye güven düşük.` : `1Y offshore implied is ${gap.toFixed(1)}pp above policy rate.`;
+    if(gap > 3)  return tr ? `1Y offshore politika faizinin ${gap.toFixed(1)} puan üstünde — hafif ayrışma, izlenmeli.` : `1Y offshore ${gap.toFixed(1)}pp above policy — mild stress.`;
+    if(gap > -5) return tr ? `Offshore faizi politika faizine yakın (${gap.toFixed(1)}pp fark) — piyasa beklentileri TCMB ile uyumlu.` : `Offshore close to policy rate (${gap.toFixed(1)}pp).`;
+    return tr ? `1Y offshore politika faizinin <strong>${Math.abs(gap).toFixed(1)} puan altında</strong> — forward dar, piyasa TL'nin stabil seyredeceğini ya da faiz indirimi geleceğini bekliyor.` : `1Y offshore ${Math.abs(gap).toFixed(1)}pp below policy — narrow forward, market expects TL stability or rate cuts.`;
+  })();
+
+  return `
+    <section class="macro-section">
+      <h3 class="macro-h3">🌐 ${tr?'Offshore TL — İleri Vade Beklentileri':'Offshore TL — Forward Curve'}</h3>
+      <div class="macro-grid">
+        ${tenors.map(offshoreCard).join('')}
+      </div>
+      ${summary ? `<div class="macro-empty" style="background:linear-gradient(135deg,var(--surface),var(--surface2));border-left:3px solid var(--accent);font-size:0.58rem">${summary}</div>` : ''}
+    </section>`;
+}
+
 function macroBadge(category, chgAbs){
   const t = MACRO_DATA?.thresholds?.[category];
   if(!t) return { color:'#888', label:'—' };
@@ -147,7 +224,8 @@ function renderMacroBody(){
         ${manualCard(tr?'10Y DİBS':'10Y Govt Bond',                     m.bond10Y,    '%', tr?'10 yıllık hazine tahvili. Uzun vade enflasyon/risk beklentisi.':'10Y bond yield.','rate')}
         ${MACRO_SYMBOLS.global.map(liveCard).join('')}
       </div>
-    </section>`;
+    </section>
+    ${renderOffshoreSection(tr, m, mono)}`;
 
   // Yorum geçmişi (en yeni ilk; ilkini header'da gösterdik, kalanları aşağıda)
   const olderNotes = notes.slice(1);
