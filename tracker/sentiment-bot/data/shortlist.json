@@ -1,0 +1,85 @@
+{
+  "date": "2026-05-25",
+  "items": [
+    {
+      "ticker": "TCELL.IS",
+      "score": 0.794,
+      "close": 105.5,
+      "ret_5": -0.0365,
+      "momentum_60": -0.1317,
+      "rsi_14": 41.6
+    },
+    {
+      "ticker": "EREGL.IS",
+      "score": 0.792,
+      "close": 40.0,
+      "ret_5": 0.0096,
+      "momentum_60": 0.2508,
+      "rsi_14": 62.0
+    },
+    {
+      "ticker": "KCHOL.IS",
+      "score": 0.743,
+      "close": 189.9,
+      "ret_5": -0.0457,
+      "momentum_60": -0.0628,
+      "rsi_14": 43.3
+    },
+    {
+      "ticker": "SASA.IS",
+      "score": 0.741,
+      "close": 2.71,
+      "ret_5": -0.0424,
+      "momentum_60": 0.1292,
+      "rsi_14": 41.0
+    },
+    {
+      "ticker": "TAVHL.IS",
+      "score": 0.729,
+      "close": 256.0,
+      "ret_5": -0.0087,
+      "momentum_60": -0.2,
+      "rsi_14": 42.1
+    },
+    {
+      "ticker": "HALKB.IS",
+      "score": 0.725,
+      "close": 40.28,
+      "ret_5": -0.003,
+      "momentum_60": -0.1895,
+      "rsi_14": 59.6
+    },
+    {
+      "ticker": "THYAO.IS",
+      "score": 0.725,
+      "close": 298.0,
+      "ret_5": -0.0067,
+      "momentum_60": -0.034,
+      "rsi_14": 48.3
+    },
+    {
+      "ticker": "SAHOL.IS",
+      "score": 0.699,
+      "close": 89.45,
+      "ret_5": -0.0387,
+      "momentum_60": -0.145,
+      "rsi_14": 41.4
+    },
+    {
+      "ticker": "PGSUS.IS",
+      "score": 0.671,
+      "close": 172.2,
+      "ret_5": -0.0249,
+      "momentum_60": -0.1377,
+      "rsi_14": 43.2
+    },
+    {
+      "ticker": "ENKAI.IS",
+      "score": 0.632,
+      "close": 98.0,
+      "ret_5": -0.0364,
+      "momentum_60": -0.0266,
+      "rsi_14": 42.3
+    }
+  ]
+}
