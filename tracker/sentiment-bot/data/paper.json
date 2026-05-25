@@ -1,0 +1,102 @@
+[
+  {
+    "prediction_date": "2026-05-25",
+    "ticker": "TCELL.IS",
+    "rank": 1,
+    "score": 0.794,
+    "entry_price": 105.5,
+    "ret_5d": null,
+    "ret_10d": null,
+    "ret_20d": null
+  },
+  {
+    "prediction_date": "2026-05-25",
+    "ticker": "EREGL.IS",
+    "rank": 2,
+    "score": 0.792,
+    "entry_price": 40.0,
+    "ret_5d": null,
+    "ret_10d": null,
+    "ret_20d": null
+  },
+  {
+    "prediction_date": "2026-05-25",
+    "ticker": "KCHOL.IS",
+    "rank": 3,
+    "score": 0.743,
+    "entry_price": 189.9,
+    "ret_5d": null,
+    "ret_10d": null,
+    "ret_20d": null
+  },
+  {
+    "prediction_date": "2026-05-25",
+    "ticker": "SASA.IS",
+    "rank": 4,
+    "score": 0.741,
+    "entry_price": 2.71,
+    "ret_5d": null,
+    "ret_10d": null,
+    "ret_20d": null
+  },
+  {
+    "prediction_date": "2026-05-25",
+    "ticker": "TAVHL.IS",
+    "rank": 5,
+    "score": 0.729,
+    "entry_price": 256.0,
+    "ret_5d": null,
+    "ret_10d": null,
+    "ret_20d": null
+  },
+  {
+    "prediction_date": "2026-05-25",
+    "ticker": "HALKB.IS",
+    "rank": 6,
+    "score": 0.725,
+    "entry_price": 40.28,
+    "ret_5d": null,
+    "ret_10d": null,
+    "ret_20d": null
+  },
+  {
+    "prediction_date": "2026-05-25",
+    "ticker": "THYAO.IS",
+    "rank": 7,
+    "score": 0.725,
+    "entry_price": 298.0,
+    "ret_5d": null,
+    "ret_10d": null,
+    "ret_20d": null
+  },
+  {
+    "prediction_date": "2026-05-25",
+    "ticker": "SAHOL.IS",
+    "rank": 8,
+    "score": 0.699,
+    "entry_price": 89.45,
+    "ret_5d": null,
+    "ret_10d": null,
+    "ret_20d": null
+  },
+  {
+    "prediction_date": "2026-05-25",
+    "ticker": "PGSUS.IS",
+    "rank": 9,
+    "score": 0.671,
+    "entry_price": 172.2,
+    "ret_5d": null,
+    "ret_10d": null,
+    "ret_20d": null
+  },
+  {
+    "prediction_date": "2026-05-25",
+    "ticker": "ENKAI.IS",
+    "rank": 10,
+    "score": 0.632,
+    "entry_price": 98.0,
+    "ret_5d": null,
+    "ret_10d": null,
+    "ret_20d": null
+  }
+]
