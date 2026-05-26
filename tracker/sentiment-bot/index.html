@@ -507,6 +507,13 @@ const I18N = {
     // Backtest
     btCaption: 'fold walk-forward · {n} test günü · 30 ticker BIST 30',
     btEquity: 'Equity Curve',
+    btYearlyH: 'Yıllık Getiri · Portföy vs XU100',
+    btYearlySub: 'Her yıl için strateji ile XU100 endeksinin getiri farkı. Yeşil = portföy önde, kırmızı = endeks önde.',
+    btYearlyCol1: 'Yıl',
+    btYearlyCol2: 'Portföy',
+    btYearlyCol3: 'XU100',
+    btYearlyCol4: 'Fark',
+    btYearlyCol5: 'Test Günü',
     btDrawdownH: 'Underwater (Drawdown) Eğrisi',
     btDrawdownSub: 'Tepe değerden anlık geri çekilme — sıfırın altında ne kadar zaman ve ne kadar derin tutulduğu kritik.',
     btHeatmapH: 'Aylık Getiri Isı Haritası',
@@ -674,6 +681,13 @@ const I18N = {
     // Backtest
     btCaption: 'fold walk-forward · {n} test days · 30 tickers BIST 30',
     btEquity: 'Equity Curve',
+    btYearlyH: 'Yearly Returns · Portfolio vs XU100',
+    btYearlySub: 'Year-by-year return spread between strategy and the XU100 index. Green = portfolio ahead, red = index ahead.',
+    btYearlyCol1: 'Year',
+    btYearlyCol2: 'Portfolio',
+    btYearlyCol3: 'XU100',
+    btYearlyCol4: 'Spread',
+    btYearlyCol5: 'Test Days',
     btDrawdownH: 'Underwater (Drawdown) Curve',
     btDrawdownSub: 'Instantaneous drawdown from running peak. How deep and how long underwater is the key risk metric.',
     btHeatmapH: 'Monthly Returns Heatmap',
@@ -999,6 +1013,11 @@ function renderBacktest() {
     <h3>${t('btEquity')}</h3>
     <div class="chart-box"><canvas id="chart-equity" height="100"></canvas></div>
 
+    <h3>${t('btYearlyH')}</h3>
+    <p class="caption">${t('btYearlySub')}</p>
+    <div class="chart-box"><canvas id="chart-yearly" height="85"></canvas></div>
+    <div id="yearly-table"></div>
+
     <h3>${t('btDrawdownH')}</h3>
     <p class="caption">${t('btDrawdownSub')}</p>
     <div class="chart-box"><canvas id="chart-drawdown" height="70"></canvas></div>
@@ -1092,6 +1111,9 @@ function renderBacktest() {
     },
   });
 
+  // Yearly returns: compounded ret_p and ret_b grouped by year
+  renderYearlyComparison(DATA.backtest.equity, {cAccent, cGold, cGrid, cTick, cBg, cText, cText2});
+
   // Monthly returns heatmap (compounded daily returns into months)
   renderMonthlyHeatmap(DATA.backtest.equity);
 
@@ -1114,6 +1136,89 @@ function renderBacktest() {
       ${DATA.backtest.fold_metrics.map(f => `<tr><td>${f.fold}</td><td>${f.test_period}</td><td class="num">${f.train_n}</td><td class="num">${f.positive_rate_train.toFixed(3)}</td></tr>`).join('')}
     </tbody>
   </table>`;
+}
+
+// ── YEARLY COMPARISON ───────────────────────────────────────────────
+function renderYearlyComparison(equity, colors) {
+  const byYear = {};
+  for (const row of equity) {
+    const y = row.date.slice(0, 4);
+    if (!byYear[y]) byYear[y] = { p: 1.0, b: 1.0, days: 0 };
+    byYear[y].p *= (1.0 + row.ret_p);
+    byYear[y].b *= (1.0 + row.ret_b);
+    byYear[y].days += 1;
+  }
+  const years = Object.keys(byYear).sort();
+  const portRets = years.map(y => (byYear[y].p - 1) * 100);
+  const benchRets = years.map(y => (byYear[y].b - 1) * 100);
+
+  // Chart
+  const ctx = document.getElementById('chart-yearly');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: years,
+        datasets: [
+          { label: t('portfolio'), data: portRets, backgroundColor: portRets.map(v => v >= 0 ? 'rgba(74,222,128,0.75)' : 'rgba(239,68,68,0.75)'), borderRadius: 4, borderWidth: 0 },
+          { label: 'XU100', data: benchRets, backgroundColor: benchRets.map(v => v >= 0 ? 'rgba(245,158,11,0.55)' : 'rgba(180,83,9,0.45)'), borderRadius: 4, borderWidth: 0 },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: colors.cText2, font: { family: 'DM Mono', size: 11 } } },
+          tooltip: {
+            backgroundColor: colors.cBg, titleColor: colors.cText, bodyColor: colors.cText2,
+            callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y >= 0 ? '+' : ''}${c.parsed.y.toFixed(2)}%` },
+          },
+        },
+        scales: {
+          x: { ticks: { color: colors.cTick, font: { family: 'DM Mono', size: 12 } }, grid: { display: false } },
+          y: { ticks: { color: colors.cTick, font: { family: 'DM Mono' }, callback: v => (v >= 0 ? '+' : '') + v + '%' }, grid: { color: colors.cGrid } },
+        },
+      },
+    });
+  }
+
+  // Table
+  const tableEl = document.getElementById('yearly-table');
+  if (tableEl) {
+    const rows = years.map(y => {
+      const v = byYear[y];
+      const pr = (v.p - 1) * 100;
+      const br = (v.b - 1) * 100;
+      const diff = pr - br;
+      return `<tr>
+        <td><strong>${y}</strong></td>
+        <td class="num ${pr >= 0 ? 'pos' : 'neg'}">${(pr >= 0 ? '+' : '') + pr.toFixed(2)}%</td>
+        <td class="num ${br >= 0 ? 'pos' : 'neg'}">${(br >= 0 ? '+' : '') + br.toFixed(2)}%</td>
+        <td class="num ${diff >= 0 ? 'pos' : 'neg'}"><strong>${(diff >= 0 ? '+' : '') + diff.toFixed(2)} pp</strong></td>
+        <td class="num">${v.days}</td>
+      </tr>`;
+    }).join('');
+    // Toplam
+    let totP = 1, totB = 1, totDays = 0;
+    for (const y of years) { totP *= byYear[y].p; totB *= byYear[y].b; totDays += byYear[y].days; }
+    const totPr = (totP - 1) * 100, totBr = (totB - 1) * 100, totDiff = totPr - totBr;
+    const totalRow = `<tr style="border-top:2px solid var(--border)">
+      <td><strong>Toplam</strong></td>
+      <td class="num ${totPr >= 0 ? 'pos' : 'neg'}"><strong>${(totPr >= 0 ? '+' : '') + totPr.toFixed(2)}%</strong></td>
+      <td class="num ${totBr >= 0 ? 'pos' : 'neg'}"><strong>${(totBr >= 0 ? '+' : '') + totBr.toFixed(2)}%</strong></td>
+      <td class="num ${totDiff >= 0 ? 'pos' : 'neg'}"><strong>${(totDiff >= 0 ? '+' : '') + totDiff.toFixed(2)} pp</strong></td>
+      <td class="num"><strong>${totDays}</strong></td>
+    </tr>`;
+    tableEl.innerHTML = `<table style="margin-bottom:22px">
+      <thead><tr>
+        <th>${t('btYearlyCol1')}</th>
+        <th class="num">${t('btYearlyCol2')}</th>
+        <th class="num">${t('btYearlyCol3')}</th>
+        <th class="num">${t('btYearlyCol4')}</th>
+        <th class="num">${t('btYearlyCol5')}</th>
+      </tr></thead>
+      <tbody>${rows}${totalRow}</tbody>
+    </table>`;
+  }
 }
 
 // ── MONTHLY RETURNS HEATMAP ─────────────────────────────────────────
