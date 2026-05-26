@@ -23,6 +23,27 @@
     --muted: #6b6b6b;
     --text: #e8e8e8;
     --text2: #a8a8a8;
+    --chart-grid: #252525;
+    --chart-tick: #6b6b6b;
+    --topbar-bg: rgba(10,10,10,0.85);
+  }
+  :root[data-theme="light"] {
+    --bg: #faf9f6;
+    --bg-2: #f3f1ec;
+    --surface: #ffffff;
+    --surface2: #efece5;
+    --border: #d8d4c8;
+    --accent: #16a34a;
+    --accent-soft: rgba(22,163,74,0.10);
+    --gold: #b45309;
+    --gold-soft: rgba(180,83,9,0.10);
+    --danger: #b91c1c;
+    --muted: #8a8578;
+    --text: #1a1817;
+    --text2: #4a463e;
+    --chart-grid: #d8d4c8;
+    --chart-tick: #8a8578;
+    --topbar-bg: rgba(250,249,246,0.85);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -34,21 +55,58 @@
   a:hover { text-decoration: underline; }
   code { font-family: 'DM Mono', monospace; background: var(--surface); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
 
-  /* Top banner */
-  .status-banner {
-    background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
-    border-bottom: 1px solid var(--gold);
-    padding: 10px 20px; text-align: center;
-    font-size: 0.78rem; color: var(--gold);
-    font-family: 'DM Mono', monospace;
+  /* Top bar */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--topbar-bg); backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px; height: 48px;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .status-banner strong { color: var(--gold); font-weight: 500; }
+  .topbar-left { display: flex; align-items: center; gap: 18px; }
+  .hub-btn {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text2); padding: 5px 12px; border-radius: 6px;
+    font-family: 'DM Mono', monospace; font-size: 0.72rem; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    transition: all .15s;
+  }
+  .hub-btn:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+  .topbar-title {
+    font-family: 'Newsreader', serif; font-size: 0.92rem; font-weight: 400;
+    color: var(--text2); font-style: italic;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 4px; }
+  .lang-btn {
+    background: none; border: 1px solid var(--border); border-radius: 5px;
+    width: 30px; height: 22px; cursor: pointer; padding: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.5; transition: all .2s;
+  }
+  .lang-btn.active { opacity: 1; border-color: var(--accent); }
+  .lang-btn svg { width: 20px; height: 14px; display: block; }
+  .theme-toggle {
+    width: 52px; height: 26px; padding: 3px; border-radius: 99px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--bg);
+    transition: all .3s; margin-left: 8px; position: relative;
+    display: flex; align-items: center;
+  }
+  .theme-toggle-knob {
+    width: 18px; height: 18px; border-radius: 50%;
+    transition: all .3s cubic-bezier(.16,1,.3,1);
+    position: absolute; left: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+  :root[data-theme="dark"] .theme-toggle-knob { transform: translateX(26px); background: #252420; color: #fbbf24; }
+  :root[data-theme="light"] .theme-toggle-knob { transform: translateX(0); background: #e8e4dc; color: #8a8578; }
 
   /* Layout */
-  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 48px); }
   aside {
     background: var(--bg-2); border-right: 1px solid var(--border);
-    padding: 24px 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    padding: 24px 18px; position: sticky; top: 48px; height: calc(100vh - 48px); overflow-y: auto;
   }
   main { padding: 32px 40px; max-width: 1280px; }
 
@@ -188,17 +246,35 @@
 </head>
 <body>
 
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="/" class="hub-btn" title="Hub">← <span data-i18n="hub">Hub</span></a>
+    <span class="topbar-title">Sentiment Trading <em style="color:var(--accent)">with LLM</em></span>
+  </div>
+  <div class="topbar-right">
+    <button class="lang-btn" data-lang="tr" title="Türkçe">
+      <svg viewBox="0 0 1200 800"><rect fill="#E30A17" width="1200" height="800"/><circle fill="#fff" cx="480" cy="400" r="200"/><circle fill="#E30A17" cx="530" cy="400" r="160"/><polygon fill="#fff" points="600,400 667,430 650,360 700,310 630,310 600,260 570,310 500,310 550,360 533,430"/></svg>
+    </button>
+    <button class="lang-btn" data-lang="en" title="English">
+      <svg viewBox="0 0 60 30"><clipPath id="clipEN"><rect width="60" height="30"/></clipPath><g clip-path="url(#clipEN)"><rect width="60" height="30" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4"/><path d="M30,0V30M0,15H60" stroke="#fff" stroke-width="10"/><path d="M30,0V30M0,15H60" stroke="#C8102E" stroke-width="6"/></g></svg>
+    </button>
+    <div class="theme-toggle" id="theme-toggle" title="Dark / Light">
+      <div class="theme-toggle-knob" id="theme-knob"></div>
+    </div>
+  </div>
+</div>
+
 <div class="layout">
 <aside>
   <div class="brand">Sentiment Trading <em>with LLM</em></div>
-  <div class="brand-sub">QUANT RESEARCH · BIST 30 · v0.5</div>
+  <div class="brand-sub" data-i18n="brandSub">QUANT RESEARCH · BIST 30 · v0.5</div>
   <nav id="nav">
-    <button class="active" data-page="overview">Genel Bakış</button>
-    <button data-page="backtest">Backtest Performansı</button>
-    <button data-page="trades">İşlem Geçmişi</button>
-    <button data-page="shortlist">Bugünün Sıralaması</button>
-    <button data-page="paper">Paper Trading</button>
-    <button data-page="methodology">Metodoloji</button>
+    <button class="active" data-page="overview" data-i18n="navOverview">Genel Bakış</button>
+    <button data-page="backtest" data-i18n="navBacktest">Backtest Performansı</button>
+    <button data-page="trades" data-i18n="navTrades">İşlem Geçmişi</button>
+    <button data-page="shortlist" data-i18n="navShortlist">Bugünün Sıralaması</button>
+    <button data-page="paper" data-i18n="navPaper">Paper Trading</button>
+    <button data-page="methodology" data-i18n="navMethodology">Metodoloji</button>
   </nav>
 </aside>
 
@@ -211,9 +287,9 @@
   <div id="page-methodology" class="hidden"></div>
 
   <footer>
-    Sentiment Trading with LLM · v0.5 · Quant research platform
+    <span data-i18n="footerTitle">Sentiment Trading with LLM · v0.5 · Quant research platform</span>
     <br>
-    Methodology refs: <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4706629">Kirtaç &amp; Germano (2024)</a> · <a href="https://arxiv.org/html/2409.05698v1">MANA-Net (2024)</a>
+    <span style="color:var(--text2)">Salih Çağatay Sönmez</span> · <a href="mailto:s.cagatay.sonmez@gmail.com">s.cagatay.sonmez@gmail.com</a> · <a href="https://github.com/Cugutayy" target="_blank">github</a>
   </footer>
 </main>
 </div>
@@ -224,6 +300,315 @@ const DATA = { backtest: null, trades: null, shortlist: null, paper: null };
 const FMT_PCT = (x, d=2) => x == null || isNaN(x) ? '–' : (x*100).toFixed(d) + '%';
 const FMT_PCT_S = (x, d=2) => x == null || isNaN(x) ? '–' : (x>=0 ? '+' : '') + (x*100).toFixed(d) + '%';
 
+let LANG = localStorage.getItem('sb_lang') || 'tr';
+let THEME = localStorage.getItem('sb_theme') || 'dark';
+let EQUITY_CHART = null;
+
+// ── i18n Dictionary ──────────────────────────────────────────────────
+const I18N = {
+  tr: {
+    hub: 'Hub',
+    brandSub: 'QUANT RESEARCH · BIST 30 · v0.5',
+    navOverview: 'Genel Bakış',
+    navBacktest: 'Backtest Performansı',
+    navTrades: 'İşlem Geçmişi',
+    navShortlist: 'Bugünün Sıralaması',
+    navPaper: 'Paper Trading',
+    navMethodology: 'Metodoloji',
+    footerTitle: 'Sentiment Trading with LLM · v0.5 · Quant research platform',
+    loading: 'Yükleniyor...',
+    noData: 'Veri yok',
+    // Overview
+    heroTagline: 'BIST 30 üzerine LLM-tabanlı sentiment + makine öğrenmesi sinyalleri. Akademik metodoloji ile validate edilmiş, kurumsal seviye risk yönetimi roadmap\'inde.',
+    tagValidated: '● Backtest validated',
+    tagData: '5y data · 30 ticker',
+    tagModel: 'LightGBM ensemble-ready',
+    tagLLM: 'Claude LLM sentiment',
+    tagWF: 'Walk-forward purged+embargoed',
+    tagTests: '33/33 unit tests',
+    h2Perf: 'Backtest Performansı (Bias-Adjusted)',
+    kpiSharpe: 'Sharpe Oranı',
+    kpiCagr: 'Yıllık Getiri (CAGR)',
+    kpiMaxDd: 'Maks. Düşüş',
+    kpiHitRate: 'Kazanç Oranı',
+    kpiHitRateSub: 'pozitif gün oranı',
+    h2Profile: 'Sistem Profili',
+    kpiPeriod: 'Backtest Period',
+    kpiPeriodUnit: 'gün',
+    kpiPeriodSub: 'fold walk-forward',
+    kpiTrades: 'Toplam İşlem',
+    kpiTradesSub: 'backtest sırasında',
+    kpiUniverse: 'Aktif Universe',
+    kpiUniverseSub: 'BIST 30 ticker',
+    kpiLive: 'Live Status',
+    kpiLiveVal: '● Active',
+    kpiLiveSub: 'kayıt',
+    h2Academic: 'Akademik Temel',
+    card1: 'LLM-based sentiment trading. OPT model %74.4 doğruluk, long-short Sharpe 3.05. Bizim sistem aynı metodolojiyi BIST\'e uyarlıyor.',
+    card2: 'News aggregation homogenization sorunu. Attention-based weighting ile tek-haber dominasyonu önleme.',
+    card3: 'Triple barrier labeling, purged + embargoed walk-forward, look-ahead bias defansı.',
+    card4: 'Financial news sentiment ve stock returns. Decay + surprise feature engineering.',
+    // Backtest
+    btCaption: 'fold walk-forward · {n} test günü · 30 ticker BIST 30',
+    btEquity: 'Equity Curve',
+    btMetrics: 'Performans Metrikleri',
+    btCagrShort: 'CAGR',
+    btDaily: 'Günlük μ',
+    btTurnover: 'Turnover',
+    btTurnoverSub: 'haftalık rebalance',
+    btConservativeH: 'Conservative Adjustment',
+    btConservative: 'Survivorship bias backtest sonuçlarını <strong>yukarı şişirir</strong>. Aşağıdaki slider ile daha realist tahmin görebilirsiniz.',
+    btSliderLabel: 'Tahmini bias düzeltmesi:',
+    btAdjSharpe: 'Adj. Sharpe',
+    btAdjCagr: 'Adj. CAGR',
+    btFoldH: 'Walk-Forward Fold Breakdown',
+    btFoldCol1: 'Fold',
+    btFoldCol2: 'Test Dönemi',
+    btFoldCol3: 'Train Size',
+    btFoldCol4: 'Class Balance',
+    portfolio: 'Portföy',
+    // Trades
+    tradesH: 'İşlem Geçmişi',
+    tradesCaption: 'Backtest sırasında uygulanan {n} işlem · pozisyon boyutu, fiyat, P&L',
+    tradesEmpty: 'İşlem yok',
+    kpiAvgPnl: 'Ort. P&L / işlem',
+    kpiAvgPnlSub: 'scored',
+    kpiWinRate: 'Kazanç Oranı',
+    kpiActiveTicker: 'Aktif Ticker',
+    kpiActiveTickerSub: 'farklı sembol',
+    privacy: '<strong>Veri Gizliliği:</strong> Model skorları ve seçim kriterleri (proprietary IP) gösterilmez. Sadece zaman, boyut, fiyat ve P&L public.',
+    filterSortH: 'Filtre & Sıralama',
+    allAction: 'Tüm Aksiyon',
+    allTicker: 'Tüm Ticker',
+    dateLabel: 'Tarih:',
+    sortDesc: '↓ Yeni → Eski',
+    sortAsc: '↑ Eski → Yeni',
+    sortDescTitle: 'En yeni üstte',
+    sortAscTitle: 'En eski üstte',
+    ledgerH: 'Trade Ledger',
+    records: 'kayıt',
+    colDate: 'Tarih',
+    colTicker: 'Ticker',
+    colAction: 'Aksiyon',
+    colPos: 'Pozisyon',
+    colEntry: 'Entry',
+    colClose: 'Close',
+    colPnl: 'P&L',
+    first200: 'İlk 200 gösteriliyor (toplam',
+    // Shortlist
+    slH: 'Bugünün Sıralaması',
+    slCaption: 'Tarih: {d} · Top {n} ticker · Model çıktısı (proprietary)',
+    slPrivacy: 'Sıralama kriterleri ve skorlar şirket IP\'sidir, paylaşılmaz. Sadece <strong>rank + ticker + güncel fiyat</strong> public.',
+    slTop10: 'Bugünün Top 10',
+    slCol1: 'Sıra',
+    slCol2: 'Ticker',
+    slCol3: 'Güncel Fiyat (TL)',
+    // Paper
+    paperH: 'Paper Trading',
+    paperHSub: 'backtest ↔ live cross-check',
+    paperCaption: 'Live predict çıktıları zaman içinde gerçek getirilerle karşılaştırılır',
+    paperEmpty: 'Paper trade yok',
+    kpiTotalPred: 'Toplam Tahmin',
+    kpiTotalPredSub: 'log kayıt',
+    kpi5dScored: '5-gün Scored',
+    paperInfo: '<strong>Paper trading nedir?</strong> Bot gerçek emir vermez ama önerilerini kaydeder. 5/10/20 gün sonra gerçek piyasa hareketi ile karşılaştırılır. Backtest Sharpe ↔ live Sharpe gap\'i &lt;%20 ise model sağlam.',
+    paperRecH: 'Tahmin Kayıtları',
+    pCol1: 'Tarih', pCol2: 'Ticker', pCol3: 'Rank', pCol4: 'Entry (TL)',
+    // Methodology
+    methH: 'Metodoloji',
+    methLead: 'Sistem akademik literatürdeki ileri quant trading metodolojileriyle inşa edildi. Her aşama purged walk-forward + look-ahead defansı + halisünasyon koruması ile test edilmiştir.',
+    meth1H: '1. Pipeline Mimarisi',
+    meth1c1H: 'Data Ingestion',
+    meth1c1: 'Yahoo Finance (price), 7 RSS feed (news), Claude Haiku (sentiment scoring) · content-hash cached, retry/backoff.',
+    meth1c2H: 'Feature Engineering',
+    meth1c2: '14 fiyat feature (momentum, RSI, vol, cross-sectional z-score) + 8 sentiment feature (decay-weighted aggregation).',
+    meth1c3H: 'Model Training',
+    meth1c3: 'LightGBM classifier, triple barrier labeling (López de Prado), purged + embargoed walk-forward.',
+    meth1c4H: 'Strategy',
+    meth1c4: 'Top-N long, equal weight, max %10/ticker, haftalık rebalance, signal EMA smoothing.',
+    meth2H: '2. Bias Defansı',
+    meth2a: '<strong>Look-Ahead Bias:</strong> Sinyal close[t-1]\'de üretilir, alım open[t] fiyatından (gözlemlenebilir). Bot dibi/tepeyi yakalayamaz.',
+    meth2b: '<strong>Survivorship Bias:</strong> Bugünkü BIST 30 listesi 5y geriye uygulanıyor. Public dashboard\'da bias-adjusted Sharpe (×0.85) gösterilir.',
+    meth2c: '<strong>Overfit Defansı:</strong> Purged k-fold + embargo periodu (5 gün) + walk-forward (out-of-sample test sample).',
+    meth3H: '3. Realistik Maliyet Modeli',
+    cCol1: 'Komponent', cCol2: 'bp', cCol3: 'Açıklama',
+    cR1a: 'Komisyon', cR1b: 'Broker (ortalama BIST)',
+    cR2a: 'BSMV', cR2b: 'Komisyon × %5',
+    cR3a: 'Spread', cR3b: 'Likit BIST 30 ortalaması',
+    cR4a: 'Slippage (overnight gap proxy)', cR4b: 'Next-day open execution',
+    cR5a: '<strong>Toplam tek yön</strong>', cR5b: 'Round-trip ~70 bp',
+    meth4H: '4. Test Coverage',
+    tCol1: 'Test Suite', tCol2: 'Test #', tCol3: 'Kapsam',
+    tR1a: 'Feature engineering', tR1b: 'Look-ahead defansı, lag shift, RSI bounds',
+    tR2a: 'Backtest ↔ Live parity', tR2b: 'Aynı feature, aynı tarih',
+    tR3a: 'Halisünasyon defansı', tR3b: 'Sentiment NaN, missing data, inf check',
+    tR4a: 'Triple barrier labeling', tR4b: 'Edge cases',
+    tR5a: 'Walk-forward splits', tR5b: 'Purge + embargo',
+    tR6a: 'Cost & news collector', tR6b: 'BIST realistic cost',
+    tR7a: '<strong>Toplam</strong>', tR7b: '%100 geçiyor',
+  },
+  en: {
+    hub: 'Hub',
+    brandSub: 'QUANT RESEARCH · BIST 30 · v0.5',
+    navOverview: 'Overview',
+    navBacktest: 'Backtest Performance',
+    navTrades: 'Trade History',
+    navShortlist: 'Today\'s Ranking',
+    navPaper: 'Paper Trading',
+    navMethodology: 'Methodology',
+    footerTitle: 'Sentiment Trading with LLM · v0.5 · Quant research platform',
+    loading: 'Loading...',
+    noData: 'No data',
+    // Overview
+    heroTagline: 'LLM-based sentiment + machine learning signals on BIST 30 equities. Validated with academic methodology, institutional-grade risk management on roadmap.',
+    tagValidated: '● Backtest validated',
+    tagData: '5y data · 30 tickers',
+    tagModel: 'LightGBM ensemble-ready',
+    tagLLM: 'Claude LLM sentiment',
+    tagWF: 'Walk-forward purged+embargoed',
+    tagTests: '33/33 unit tests',
+    h2Perf: 'Backtest Performance (Bias-Adjusted)',
+    kpiSharpe: 'Sharpe Ratio',
+    kpiCagr: 'Annual Return (CAGR)',
+    kpiMaxDd: 'Max Drawdown',
+    kpiHitRate: 'Hit Rate',
+    kpiHitRateSub: 'positive-day ratio',
+    h2Profile: 'System Profile',
+    kpiPeriod: 'Backtest Period',
+    kpiPeriodUnit: 'days',
+    kpiPeriodSub: 'fold walk-forward',
+    kpiTrades: 'Total Trades',
+    kpiTradesSub: 'during backtest',
+    kpiUniverse: 'Active Universe',
+    kpiUniverseSub: 'BIST 30 tickers',
+    kpiLive: 'Live Status',
+    kpiLiveVal: '● Active',
+    kpiLiveSub: 'records',
+    h2Academic: 'Academic Foundation',
+    card1: 'LLM-based sentiment trading. OPT model 74.4% accuracy, long-short Sharpe 3.05. Our system adapts the same methodology to BIST.',
+    card2: 'News aggregation homogenization problem. Attention-based weighting to prevent single-news dominance.',
+    card3: 'Triple barrier labeling, purged + embargoed walk-forward, look-ahead bias defence.',
+    card4: 'Financial news sentiment and stock returns. Decay + surprise feature engineering.',
+    // Backtest
+    btCaption: 'fold walk-forward · {n} test days · 30 tickers BIST 30',
+    btEquity: 'Equity Curve',
+    btMetrics: 'Performance Metrics',
+    btCagrShort: 'CAGR',
+    btDaily: 'Daily μ',
+    btTurnover: 'Turnover',
+    btTurnoverSub: 'weekly rebalance',
+    btConservativeH: 'Conservative Adjustment',
+    btConservative: 'Survivorship bias <strong>inflates</strong> backtest results. Use the slider below for a more realistic estimate.',
+    btSliderLabel: 'Estimated bias adjustment:',
+    btAdjSharpe: 'Adj. Sharpe',
+    btAdjCagr: 'Adj. CAGR',
+    btFoldH: 'Walk-Forward Fold Breakdown',
+    btFoldCol1: 'Fold',
+    btFoldCol2: 'Test Period',
+    btFoldCol3: 'Train Size',
+    btFoldCol4: 'Class Balance',
+    portfolio: 'Portfolio',
+    // Trades
+    tradesH: 'Trade History',
+    tradesCaption: '{n} trades executed during backtest · position size, price, P&L',
+    tradesEmpty: 'No trades',
+    kpiAvgPnl: 'Avg P&L / trade',
+    kpiAvgPnlSub: 'scored',
+    kpiWinRate: 'Win Rate',
+    kpiActiveTicker: 'Active Tickers',
+    kpiActiveTickerSub: 'distinct symbols',
+    privacy: '<strong>Data Privacy:</strong> Model scores and selection criteria (proprietary IP) are hidden. Only timing, size, price and P&L are public.',
+    filterSortH: 'Filter & Sort',
+    allAction: 'All Actions',
+    allTicker: 'All Tickers',
+    dateLabel: 'Date:',
+    sortDesc: '↓ Newest → Oldest',
+    sortAsc: '↑ Oldest → Newest',
+    sortDescTitle: 'Newest on top',
+    sortAscTitle: 'Oldest on top',
+    ledgerH: 'Trade Ledger',
+    records: 'records',
+    colDate: 'Date',
+    colTicker: 'Ticker',
+    colAction: 'Action',
+    colPos: 'Position',
+    colEntry: 'Entry',
+    colClose: 'Close',
+    colPnl: 'P&L',
+    first200: 'Showing first 200 (total',
+    // Shortlist
+    slH: 'Today\'s Ranking',
+    slCaption: 'Date: {d} · Top {n} tickers · Model output (proprietary)',
+    slPrivacy: 'Ranking criteria and scores are company IP and not disclosed. Only <strong>rank + ticker + current price</strong> are public.',
+    slTop10: 'Today\'s Top 10',
+    slCol1: 'Rank',
+    slCol2: 'Ticker',
+    slCol3: 'Current Price (TL)',
+    // Paper
+    paperH: 'Paper Trading',
+    paperHSub: 'backtest ↔ live cross-check',
+    paperCaption: 'Live predict outputs are compared to actual returns over time',
+    paperEmpty: 'No paper trades',
+    kpiTotalPred: 'Total Predictions',
+    kpiTotalPredSub: 'log entries',
+    kpi5dScored: '5-day Scored',
+    paperInfo: '<strong>What is paper trading?</strong> The bot does not place real orders but records its recommendations. After 5/10/20 days, predictions are compared to actual market moves. If the backtest Sharpe ↔ live Sharpe gap is &lt;20%, the model is robust.',
+    paperRecH: 'Prediction Records',
+    pCol1: 'Date', pCol2: 'Ticker', pCol3: 'Rank', pCol4: 'Entry (TL)',
+    // Methodology
+    methH: 'Methodology',
+    methLead: 'The system was built using advanced quant-trading methodologies from academic literature. Every stage is tested with purged walk-forward + look-ahead defence + hallucination protection.',
+    meth1H: '1. Pipeline Architecture',
+    meth1c1H: 'Data Ingestion',
+    meth1c1: 'Yahoo Finance (price), 7 RSS feeds (news), Claude Haiku (sentiment scoring) · content-hash cached, retry/backoff.',
+    meth1c2H: 'Feature Engineering',
+    meth1c2: '14 price features (momentum, RSI, vol, cross-sectional z-score) + 8 sentiment features (decay-weighted aggregation).',
+    meth1c3H: 'Model Training',
+    meth1c3: 'LightGBM classifier, triple barrier labeling (López de Prado), purged + embargoed walk-forward.',
+    meth1c4H: 'Strategy',
+    meth1c4: 'Top-N long, equal weight, max 10% per ticker, weekly rebalance, signal EMA smoothing.',
+    meth2H: '2. Bias Defence',
+    meth2a: '<strong>Look-Ahead Bias:</strong> Signal is generated at close[t-1], buy uses open[t] (observable). The bot cannot catch bottoms/tops.',
+    meth2b: '<strong>Survivorship Bias:</strong> Today\'s BIST 30 list is applied 5y back. The public dashboard shows bias-adjusted Sharpe (×0.85).',
+    meth2c: '<strong>Overfit Defence:</strong> Purged k-fold + embargo period (5 days) + walk-forward (out-of-sample test).',
+    meth3H: '3. Realistic Cost Model',
+    cCol1: 'Component', cCol2: 'bp', cCol3: 'Description',
+    cR1a: 'Commission', cR1b: 'Broker (BIST average)',
+    cR2a: 'BSMV', cR2b: 'Commission × 5%',
+    cR3a: 'Spread', cR3b: 'Liquid BIST 30 average',
+    cR4a: 'Slippage (overnight gap proxy)', cR4b: 'Next-day open execution',
+    cR5a: '<strong>Total one-way</strong>', cR5b: 'Round-trip ~70 bp',
+    meth4H: '4. Test Coverage',
+    tCol1: 'Test Suite', tCol2: 'Tests', tCol3: 'Scope',
+    tR1a: 'Feature engineering', tR1b: 'Look-ahead defence, lag shift, RSI bounds',
+    tR2a: 'Backtest ↔ Live parity', tR2b: 'Same feature, same date',
+    tR3a: 'Hallucination defence', tR3b: 'Sentiment NaN, missing data, inf check',
+    tR4a: 'Triple barrier labeling', tR4b: 'Edge cases',
+    tR5a: 'Walk-forward splits', tR5b: 'Purge + embargo',
+    tR6a: 'Cost & news collector', tR6b: 'BIST realistic cost',
+    tR7a: '<strong>Total</strong>', tR7b: '100% passing',
+  },
+};
+const t = (k) => (I18N[LANG] && I18N[LANG][k]) || k;
+
+// Apply data-i18n to static elements
+function applyStaticI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    el.innerHTML = t(k);
+  });
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === LANG);
+  });
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme = THEME;
+  const knob = document.getElementById('theme-knob');
+  if (knob) knob.textContent = THEME === 'dark' ? '☾' : '☀';
+}
+
 // Sidebar nav
 document.querySelectorAll('#nav button').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -233,6 +618,24 @@ document.querySelectorAll('#nav button').forEach(btn => {
     document.getElementById('page-' + btn.dataset.page).classList.remove('hidden');
     window.scrollTo(0, 0);
   });
+});
+
+// Language buttons
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    LANG = btn.dataset.lang;
+    localStorage.setItem('sb_lang', LANG);
+    applyStaticI18n();
+    rerenderAll();
+  });
+});
+
+// Theme toggle
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  THEME = THEME === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('sb_theme', THEME);
+  applyTheme();
+  rerenderAll();  // chart colors update
 });
 
 function kpi(label, value, sub, tone) {
@@ -249,13 +652,19 @@ async function loadAll() {
   try { DATA.trades = await (await fetch('./data/trades.json')).json(); } catch (e) {}
   try { DATA.shortlist = await (await fetch('./data/shortlist.json')).json(); } catch (e) {}
   try { DATA.paper = await (await fetch('./data/paper.json')).json(); } catch (e) {}
+  rerenderAll();
+}
+
+function rerenderAll() {
+  if (EQUITY_CHART) { try { EQUITY_CHART.destroy(); } catch(e){} EQUITY_CHART = null; }
+  applyStaticI18n();
   renderOverview(); renderBacktest(); renderTrades(); renderShortlist(); renderPaper(); renderMethodology();
 }
 
 // ── OVERVIEW ────────────────────────────────────────────────────────
 function renderOverview() {
   const el = document.getElementById('page-overview');
-  if (!DATA.backtest) { el.innerHTML = `<h1>Loading...</h1>`; return; }
+  if (!DATA.backtest) { el.innerHTML = `<h1>${t('loading')}</h1>`; return; }
   const pm = DATA.backtest.portfolio_metrics;
   const bm = DATA.backtest.benchmark_metrics;
   const sharpeAdj = pm.sharpe * 0.85;
@@ -264,39 +673,39 @@ function renderOverview() {
   el.innerHTML = `
     <div class="hero">
       <h1>Sentiment Trading <em>with LLM</em></h1>
-      <p class="tagline">BIST 30 üzerine LLM-tabanlı sentiment + makine öğrenmesi sinyalleri. Akademik metodoloji ile validate edilmiş, kurumsal seviye risk yönetimi roadmap'inde.</p>
+      <p class="tagline">${t('heroTagline')}</p>
       <div class="hero-tags">
-        <span class="green">● Backtest validated</span>
-        <span>5y data · 30 ticker</span>
-        <span>LightGBM ensemble-ready</span>
-        <span>Claude LLM sentiment</span>
-        <span>Walk-forward purged+embargoed</span>
-        <span>33/33 unit tests</span>
+        <span class="green">${t('tagValidated')}</span>
+        <span>${t('tagData')}</span>
+        <span>${t('tagModel')}</span>
+        <span>${t('tagLLM')}</span>
+        <span>${t('tagWF')}</span>
+        <span>${t('tagTests')}</span>
       </div>
     </div>
 
-    <h2>Backtest Performansı (Bias-Adjusted)</h2>
+    <h2>${t('h2Perf')}</h2>
     ${kpiGrid([
-      kpi('Sharpe Oranı', sharpeAdj.toFixed(2), `XU100 BH: ${(bm.sharpe).toFixed(2)}`, sharpeAdj > bm.sharpe ? 'pos' : 'neg'),
-      kpi('Yıllık Getiri (CAGR)', FMT_PCT_S(cagrAdj, 1), `XU100 BH: ${FMT_PCT_S(bm.cagr, 1)}`, cagrAdj > bm.cagr ? 'pos' : 'neg'),
-      kpi('Maks. Düşüş', FMT_PCT(pm.max_dd, 1), `XU100: ${FMT_PCT(bm.max_dd, 1)}`, 'neg'),
-      kpi('Kazanç Oranı', FMT_PCT(pm.hit_rate, 1), 'pozitif gün oranı', 'neutral'),
+      kpi(t('kpiSharpe'), sharpeAdj.toFixed(2), `XU100 BH: ${(bm.sharpe).toFixed(2)}`, sharpeAdj > bm.sharpe ? 'pos' : 'neg'),
+      kpi(t('kpiCagr'), FMT_PCT_S(cagrAdj, 1), `XU100 BH: ${FMT_PCT_S(bm.cagr, 1)}`, cagrAdj > bm.cagr ? 'pos' : 'neg'),
+      kpi(t('kpiMaxDd'), FMT_PCT(pm.max_dd, 1), `XU100: ${FMT_PCT(bm.max_dd, 1)}`, 'neg'),
+      kpi(t('kpiHitRate'), FMT_PCT(pm.hit_rate, 1), t('kpiHitRateSub'), 'neutral'),
     ])}
 
-    <h2>Sistem Profili</h2>
+    <h2>${t('h2Profile')}</h2>
     ${kpiGrid([
-      kpi('Backtest Period', `${DATA.backtest.n_days} gün`, `${DATA.backtest.n_folds} fold walk-forward`, 'neutral'),
-      kpi('Toplam İşlem', String(DATA.trades?.length || 0), 'backtest sırasında', 'neutral'),
-      kpi('Aktif Universe', '30', 'BIST 30 ticker', 'neutral'),
-      kpi('Live Status', '● Active', `${DATA.paper?.length || 0} kayıt`, 'pos'),
+      kpi(t('kpiPeriod'), `${DATA.backtest.n_days} ${t('kpiPeriodUnit')}`, `${DATA.backtest.n_folds} ${t('kpiPeriodSub')}`, 'neutral'),
+      kpi(t('kpiTrades'), String(DATA.trades?.length || 0), t('kpiTradesSub'), 'neutral'),
+      kpi(t('kpiUniverse'), '30', t('kpiUniverseSub'), 'neutral'),
+      kpi(t('kpiLive'), t('kpiLiveVal'), `${DATA.paper?.length || 0} ${t('kpiLiveSub')}`, 'pos'),
     ])}
 
-    <h2>Akademik Temel</h2>
+    <h2>${t('h2Academic')}</h2>
     <div class="method-grid">
-      <div class="method-card"><strong>Kirtaç &amp; Germano (2024)</strong><p>LLM-based sentiment trading. OPT model %74.4 doğruluk, long-short Sharpe 3.05. Bizim sistem aynı metodolojiyi BIST'e uyarlıyor.</p></div>
-      <div class="method-card"><strong>MANA-Net (2024)</strong><p>News aggregation homogenization sorunu. Attention-based weighting ile tek-haber dominasyonu önleme.</p></div>
-      <div class="method-card"><strong>López de Prado (AFML)</strong><p>Triple barrier labeling, purged + embargoed walk-forward, look-ahead bias defansı.</p></div>
-      <div class="method-card"><strong>Tetlock (2007)</strong><p>Financial news sentiment ve stock returns. Decay + surprise feature engineering.</p></div>
+      <div class="method-card"><strong>Kirtaç &amp; Germano (2024)</strong><p>${t('card1')}</p></div>
+      <div class="method-card"><strong>MANA-Net (2024)</strong><p>${t('card2')}</p></div>
+      <div class="method-card"><strong>López de Prado (AFML)</strong><p>${t('card3')}</p></div>
+      <div class="method-card"><strong>Tetlock (2007)</strong><p>${t('card4')}</p></div>
     </div>
   `;
 }
@@ -304,58 +713,68 @@ function renderOverview() {
 // ── BACKTEST ────────────────────────────────────────────────────────
 function renderBacktest() {
   const el = document.getElementById('page-backtest');
-  if (!DATA.backtest) { el.innerHTML = `<h1>Veri yok</h1>`; return; }
+  if (!DATA.backtest) { el.innerHTML = `<h1>${t('noData')}</h1>`; return; }
   const pm = DATA.backtest.portfolio_metrics;
   const bm = DATA.backtest.benchmark_metrics;
 
   el.innerHTML = `
-    <h2 style="margin-top:0">Backtest Performansı</h2>
-    <p class="caption">${DATA.backtest.n_folds} fold walk-forward · ${DATA.backtest.n_days} test günü · 30 ticker BIST 30</p>
+    <h2 style="margin-top:0">${t('navBacktest')}</h2>
+    <p class="caption">${DATA.backtest.n_folds} ${t('btCaption').replace('{n}', DATA.backtest.n_days)}</p>
 
-    <h3>Equity Curve</h3>
+    <h3>${t('btEquity')}</h3>
     <div class="chart-box"><canvas id="chart-equity" height="100"></canvas></div>
 
-    <h3>Performans Metrikleri</h3>
+    <h3>${t('btMetrics')}</h3>
     ${kpiGrid([
       kpi('Sharpe', pm.sharpe.toFixed(2), `XU100: ${bm.sharpe.toFixed(2)}`, pm.sharpe > bm.sharpe ? 'pos' : 'neg'),
-      kpi('CAGR', FMT_PCT_S(pm.cagr, 1), `XU100: ${FMT_PCT_S(bm.cagr, 1)}`, pm.cagr > bm.cagr ? 'pos' : 'neg'),
-      kpi('Maks. Düşüş', FMT_PCT(pm.max_dd, 1), `XU100: ${FMT_PCT(bm.max_dd, 1)}`, 'neg'),
-      kpi('Kazanç Oranı', FMT_PCT(pm.hit_rate, 1), `XU100: ${FMT_PCT(bm.hit_rate, 1)}`, 'neutral'),
-      kpi('Günlük μ', FMT_PCT_S(pm.mean_d, 3), `σ=${FMT_PCT(pm.std_d, 2)}`, 'neutral'),
-      kpi('Turnover', FMT_PCT(pm.turnover_d || 0, 1) + '/g', 'haftalık rebalance', 'neutral'),
+      kpi(t('btCagrShort'), FMT_PCT_S(pm.cagr, 1), `XU100: ${FMT_PCT_S(bm.cagr, 1)}`, pm.cagr > bm.cagr ? 'pos' : 'neg'),
+      kpi(t('kpiMaxDd'), FMT_PCT(pm.max_dd, 1), `XU100: ${FMT_PCT(bm.max_dd, 1)}`, 'neg'),
+      kpi(t('kpiHitRate'), FMT_PCT(pm.hit_rate, 1), `XU100: ${FMT_PCT(bm.hit_rate, 1)}`, 'neutral'),
+      kpi(t('btDaily'), FMT_PCT_S(pm.mean_d, 3), `σ=${FMT_PCT(pm.std_d, 2)}`, 'neutral'),
+      kpi(t('btTurnover'), FMT_PCT(pm.turnover_d || 0, 1) + '/d', t('btTurnoverSub'), 'neutral'),
     ])}
 
-    <h3>Conservative Adjustment</h3>
-    ${disclose("Survivorship bias backtest sonuçlarını <strong>yukarı şişirir</strong>. Aşağıdaki slider ile daha realist tahmin görebilirsiniz.")}
+    <h3>${t('btConservativeH')}</h3>
+    ${disclose(t('btConservative'))}
     <div class="slider-row">
-      <label>Tahmini bias düzeltmesi:</label>
+      <label>${t('btSliderLabel')}</label>
       <input type="range" id="bias-slider" min="0" max="30" value="15" step="1">
       <span class="value" id="bias-value">15%</span>
     </div>
     <div id="bias-results"></div>
 
-    <h3>Walk-Forward Fold Breakdown</h3>
+    <h3>${t('btFoldH')}</h3>
     <div id="fold-table"></div>
   `;
+
+  // Theme-aware chart colors
+  const css = getComputedStyle(document.documentElement);
+  const cGrid = css.getPropertyValue('--chart-grid').trim() || '#252525';
+  const cTick = css.getPropertyValue('--chart-tick').trim() || '#6b6b6b';
+  const cText2 = css.getPropertyValue('--text2').trim() || '#a8a8a8';
+  const cBg = css.getPropertyValue('--bg').trim() || '#0a0a0a';
+  const cText = css.getPropertyValue('--text').trim() || '#e8e8e8';
+  const cAccent = css.getPropertyValue('--accent').trim() || '#4ade80';
+  const cGold = css.getPropertyValue('--gold').trim() || '#f59e0b';
 
   // Chart
   const ctx = document.getElementById('chart-equity').getContext('2d');
   const labels = DATA.backtest.equity.map(p => p.date);
-  new Chart(ctx, {
+  EQUITY_CHART = new Chart(ctx, {
     type: 'line',
     data: {
       labels,
       datasets: [
-        { label: 'Portföy', data: DATA.backtest.equity.map(p => p.portfolio), borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.07)', borderWidth: 2.5, fill: true, pointRadius: 0, tension: 0.1 },
-        { label: 'XU100 BH', data: DATA.backtest.equity.map(p => p.benchmark), borderColor: '#f59e0b', borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0, tension: 0.1, fill: false },
+        { label: t('portfolio'), data: DATA.backtest.equity.map(p => p.portfolio), borderColor: cAccent, backgroundColor: 'rgba(74,222,128,0.07)', borderWidth: 2.5, fill: true, pointRadius: 0, tension: 0.1 },
+        { label: 'XU100 BH', data: DATA.backtest.equity.map(p => p.benchmark), borderColor: cGold, borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0, tension: 0.1, fill: false },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#a8a8a8', font: { family: 'DM Mono' } } }, tooltip: { backgroundColor: '#0a0a0a', titleColor: '#e8e8e8', bodyColor: '#a8a8a8' } },
+      plugins: { legend: { labels: { color: cText2, font: { family: 'DM Mono' } } }, tooltip: { backgroundColor: cBg, titleColor: cText, bodyColor: cText2 } },
       scales: {
-        x: { ticks: { color: '#6b6b6b', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 12 }, grid: { color: '#252525' } },
-        y: { ticks: { color: '#6b6b6b', font: { family: 'DM Mono' } }, grid: { color: '#252525' } },
+        x: { ticks: { color: cTick, font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 12 }, grid: { color: cGrid } },
+        y: { ticks: { color: cTick, font: { family: 'DM Mono' } }, grid: { color: cGrid } },
       },
     },
   });
@@ -367,14 +786,14 @@ function renderBacktest() {
     document.getElementById('bias-value').textContent = pct + '%';
     const mult = 1 - pct / 100;
     document.getElementById('bias-results').innerHTML = kpiGrid([
-      kpi('Adj. Sharpe', (pm.sharpe * mult).toFixed(2), `raw ${pm.sharpe.toFixed(2)}`, pm.sharpe * mult > 0 ? 'pos' : 'neg'),
-      kpi('Adj. CAGR', FMT_PCT_S(pm.cagr * mult, 1), `raw ${FMT_PCT_S(pm.cagr, 1)}`, pm.cagr * mult > 0 ? 'pos' : 'neg'),
+      kpi(t('btAdjSharpe'), (pm.sharpe * mult).toFixed(2), `raw ${pm.sharpe.toFixed(2)}`, pm.sharpe * mult > 0 ? 'pos' : 'neg'),
+      kpi(t('btAdjCagr'), FMT_PCT_S(pm.cagr * mult, 1), `raw ${FMT_PCT_S(pm.cagr, 1)}`, pm.cagr * mult > 0 ? 'pos' : 'neg'),
     ]);
   };
   slider.addEventListener('input', updateBias); updateBias();
 
   document.getElementById('fold-table').innerHTML = `<table>
-    <thead><tr><th>Fold</th><th>Test Dönemi</th><th class="num">Train Size</th><th class="num">Class Balance</th></tr></thead>
+    <thead><tr><th>${t('btFoldCol1')}</th><th>${t('btFoldCol2')}</th><th class="num">${t('btFoldCol3')}</th><th class="num">${t('btFoldCol4')}</th></tr></thead>
     <tbody>
       ${DATA.backtest.fold_metrics.map(f => `<tr><td>${f.fold}</td><td>${f.test_period}</td><td class="num">${f.train_n}</td><td class="num">${f.positive_rate_train.toFixed(3)}</td></tr>`).join('')}
     </tbody>
@@ -386,47 +805,47 @@ let TRADES_FILTERED = [];
 let TRADES_SORT = { key: 'date', dir: 'desc' };  // varsayılan: en yeni üstte
 function renderTrades() {
   const el = document.getElementById('page-trades');
-  if (!DATA.trades || !DATA.trades.length) { el.innerHTML = `<h1>İşlem yok</h1>`; return; }
-  const nBuy = DATA.trades.filter(t => t.action === 'BUY').length;
-  const nSell = DATA.trades.filter(t => t.action === 'SELL').length;
-  const pnls = DATA.trades.filter(t => t.pnl_pct != null).map(t => t.pnl_pct);
+  if (!DATA.trades || !DATA.trades.length) { el.innerHTML = `<h1>${t('tradesEmpty')}</h1>`; return; }
+  const nBuy = DATA.trades.filter(x => x.action === 'BUY').length;
+  const nSell = DATA.trades.filter(x => x.action === 'SELL').length;
+  const pnls = DATA.trades.filter(x => x.pnl_pct != null).map(x => x.pnl_pct);
   const totalPnl = pnls.reduce((a, b) => a + b, 0);
   const avgPnl = pnls.length ? totalPnl / pnls.length : 0;
   const winRate = pnls.length ? pnls.filter(p => p > 0).length / pnls.length : 0;
-  const tickers = Array.from(new Set(DATA.trades.map(t => t.ticker))).sort();
+  const tickers = Array.from(new Set(DATA.trades.map(x => x.ticker))).sort();
 
   el.innerHTML = `
-    <h2 style="margin-top:0">İşlem Geçmişi</h2>
-    <p class="caption">Backtest sırasında uygulanan ${DATA.trades.length} işlem · pozisyon boyutu, fiyat, P&amp;L</p>
+    <h2 style="margin-top:0">${t('tradesH')}</h2>
+    <p class="caption">${t('tradesCaption').replace('{n}', DATA.trades.length)}</p>
 
     ${kpiGrid([
-      kpi('Toplam İşlem', String(DATA.trades.length), `${nBuy} BUY · ${nSell} SELL`, 'neutral'),
-      kpi('Ort. P&L / işlem', FMT_PCT_S(avgPnl, 3), `${pnls.length} scored`, avgPnl > 0 ? 'pos' : 'neg'),
-      kpi('Kazanç Oranı', FMT_PCT(winRate, 1), `${Math.round(pnls.length * winRate)} kâr / ${pnls.length}`, winRate > 0.5 ? 'pos' : 'neg'),
-      kpi('Aktif Ticker', String(tickers.length), 'farklı sembol', 'neutral'),
+      kpi(t('kpiTrades'), String(DATA.trades.length), `${nBuy} BUY · ${nSell} SELL`, 'neutral'),
+      kpi(t('kpiAvgPnl'), FMT_PCT_S(avgPnl, 3), `${pnls.length} ${t('kpiAvgPnlSub')}`, avgPnl > 0 ? 'pos' : 'neg'),
+      kpi(t('kpiWinRate'), FMT_PCT(winRate, 1), `${Math.round(pnls.length * winRate)} / ${pnls.length}`, winRate > 0.5 ? 'pos' : 'neg'),
+      kpi(t('kpiActiveTicker'), String(tickers.length), t('kpiActiveTickerSub'), 'neutral'),
     ])}
 
-    ${disclose("<strong>Veri Gizliliği:</strong> Model skorları ve seçim kriterleri (proprietary IP) gösterilmez. Sadece zaman, boyut, fiyat ve P&amp;L public.", 'info')}
+    ${disclose(t('privacy'), 'info')}
 
-    <h3>Filtre & Sıralama</h3>
+    <h3>${t('filterSortH')}</h3>
     <div class="filters">
       <select id="f-action">
-        <option value="">Tüm Aksiyon</option>
+        <option value="">${t('allAction')}</option>
         <option>BUY</option>
         <option>SELL</option>
       </select>
       <select id="f-ticker">
-        <option value="">Tüm Ticker</option>
-        ${tickers.map(t => `<option>${t}</option>`).join('')}
+        <option value="">${t('allTicker')}</option>
+        ${tickers.map(x => `<option>${x}</option>`).join('')}
       </select>
       <div class="sort-group" style="display:inline-flex;gap:4px;align-items:center;margin-left:8px;">
-        <span style="color:var(--muted);font-size:0.72rem;font-family:'DM Mono';text-transform:uppercase;letter-spacing:.08em;margin-right:4px;">Tarih:</span>
-        <button id="sort-date-desc" class="sort-btn active" type="button" title="En yeni üstte">↓ Yeni → Eski</button>
-        <button id="sort-date-asc" class="sort-btn" type="button" title="En eski üstte">↑ Eski → Yeni</button>
+        <span style="color:var(--muted);font-size:0.72rem;font-family:'DM Mono';text-transform:uppercase;letter-spacing:.08em;margin-right:4px;">${t('dateLabel')}</span>
+        <button id="sort-date-desc" class="sort-btn ${TRADES_SORT.dir==='desc'?'active':''}" type="button" title="${t('sortDescTitle')}">${t('sortDesc')}</button>
+        <button id="sort-date-asc" class="sort-btn ${TRADES_SORT.dir==='asc'?'active':''}" type="button" title="${t('sortAscTitle')}">${t('sortAsc')}</button>
       </div>
     </div>
 
-    <h3>Trade Ledger <span style="color:var(--muted);font-style:normal;font-size:0.85rem;font-family:'DM Mono'">(<span id="trade-count">${DATA.trades.length}</span> kayıt)</span></h3>
+    <h3>${t('ledgerH')} <span style="color:var(--muted);font-style:normal;font-size:0.85rem;font-family:'DM Mono'">(<span id="trade-count">${DATA.trades.length}</span> ${t('records')})</span></h3>
     <div id="trades-table"></div>
   `;
 
@@ -467,39 +886,39 @@ function renderTradesTable() {
   const rows = TRADES_FILTERED.slice(0, 200);
   el.innerHTML = `<table>
     <thead><tr>
-      <th>Tarih</th><th>Ticker</th><th>Aksiyon</th>
-      <th class="num">Pozisyon</th><th class="num">Entry</th>
-      <th class="num">Close</th><th class="num">P&amp;L</th>
+      <th>${t('colDate')}</th><th>${t('colTicker')}</th><th>${t('colAction')}</th>
+      <th class="num">${t('colPos')}</th><th class="num">${t('colEntry')}</th>
+      <th class="num">${t('colClose')}</th><th class="num">${t('colPnl')}</th>
     </tr></thead>
     <tbody>
-      ${rows.map(t => `<tr>
-        <td>${t.date}</td>
-        <td><strong>${t.ticker}</strong></td>
-        <td><span class="badge badge-${t.action.toLowerCase()}">${t.action}</span></td>
-        <td class="num">${t.size_pct != null ? (t.size_pct >= 0 ? '+' : '') + t.size_pct.toFixed(1) + '%' : '–'}</td>
-        <td class="num">${t.entry_price != null ? t.entry_price.toFixed(2) : '–'}</td>
-        <td class="num">${t.close_price != null ? t.close_price.toFixed(2) : '–'}</td>
-        <td class="num ${t.pnl_pct > 0 ? 'pos' : t.pnl_pct < 0 ? 'neg' : ''}">${t.pnl_pct != null ? FMT_PCT_S(t.pnl_pct, 2) : '–'}</td>
+      ${rows.map(r => `<tr>
+        <td>${r.date}</td>
+        <td><strong>${r.ticker}</strong></td>
+        <td><span class="badge badge-${r.action.toLowerCase()}">${r.action}</span></td>
+        <td class="num">${r.size_pct != null ? (r.size_pct >= 0 ? '+' : '') + r.size_pct.toFixed(1) + '%' : '–'}</td>
+        <td class="num">${r.entry_price != null ? r.entry_price.toFixed(2) : '–'}</td>
+        <td class="num">${r.close_price != null ? r.close_price.toFixed(2) : '–'}</td>
+        <td class="num ${r.pnl_pct > 0 ? 'pos' : r.pnl_pct < 0 ? 'neg' : ''}">${r.pnl_pct != null ? FMT_PCT_S(r.pnl_pct, 2) : '–'}</td>
       </tr>`).join('')}
     </tbody>
   </table>
-  ${TRADES_FILTERED.length > 200 ? `<div style="text-align:center;padding:14px;color:var(--muted);font-size:0.75rem">İlk 200 gösteriliyor (toplam ${TRADES_FILTERED.length})</div>` : ''}`;
+  ${TRADES_FILTERED.length > 200 ? `<div style="text-align:center;padding:14px;color:var(--muted);font-size:0.75rem">${t('first200')} ${TRADES_FILTERED.length})</div>` : ''}`;
 }
 
 // ── SHORTLIST (rank-only) ───────────────────────────────────────────
 function renderShortlist() {
   const el = document.getElementById('page-shortlist');
-  if (!DATA.shortlist) { el.innerHTML = `<h1>Veri yok</h1>`; return; }
+  if (!DATA.shortlist) { el.innerHTML = `<h1>${t('noData')}</h1>`; return; }
   const items = DATA.shortlist.items;
   el.innerHTML = `
-    <h2 style="margin-top:0">Bugünün Sıralaması</h2>
-    <p class="caption">Tarih: ${DATA.shortlist.date} · Top ${items.length} ticker · Model çıktısı (proprietary)</p>
+    <h2 style="margin-top:0">${t('slH')}</h2>
+    <p class="caption">${t('slCaption').replace('{d}', DATA.shortlist.date).replace('{n}', items.length)}</p>
 
-    ${disclose("Sıralama kriterleri ve skorlar şirket IP'sidir, paylaşılmaz. Sadece <strong>rank + ticker + güncel fiyat</strong> public.", 'info')}
+    ${disclose(t('slPrivacy'), 'info')}
 
-    <h3>Bugünün Top 10</h3>
+    <h3>${t('slTop10')}</h3>
     <table>
-      <thead><tr><th>Sıra</th><th>Ticker</th><th class="num">Güncel Fiyat (TL)</th></tr></thead>
+      <thead><tr><th>${t('slCol1')}</th><th>${t('slCol2')}</th><th class="num">${t('slCol3')}</th></tr></thead>
       <tbody>
         ${items.map(it => `<tr>
           <td><strong>#${it.rank}</strong></td>
@@ -508,29 +927,28 @@ function renderShortlist() {
         </tr>`).join('')}
       </tbody>
     </table>
-
   `;
 }
 
 // ── PAPER ──────────────────────────────────────────────────────────
 function renderPaper() {
   const el = document.getElementById('page-paper');
-  if (!DATA.paper || !DATA.paper.length) { el.innerHTML = `<h1>Paper trade yok</h1>`; return; }
+  if (!DATA.paper || !DATA.paper.length) { el.innerHTML = `<h1>${t('paperEmpty')}</h1>`; return; }
   const scored = DATA.paper.filter(p => p.ret_5d != null);
   el.innerHTML = `
-    <h2 style="margin-top:0">Paper Trading <span style="font-style:normal;color:var(--muted);font-size:0.7em">· backtest ↔ live cross-check</span></h2>
-    <p class="caption">Live predict çıktıları zaman içinde gerçek getirilerle karşılaştırılır</p>
+    <h2 style="margin-top:0">${t('paperH')} <span style="font-style:normal;color:var(--muted);font-size:0.7em">· ${t('paperHSub')}</span></h2>
+    <p class="caption">${t('paperCaption')}</p>
 
     ${kpiGrid([
-      kpi('Toplam Tahmin', String(DATA.paper.length), 'log kayıt', 'neutral'),
-      kpi('5-gün Scored', String(scored.length), `/${DATA.paper.length}`, 'neutral'),
+      kpi(t('kpiTotalPred'), String(DATA.paper.length), t('kpiTotalPredSub'), 'neutral'),
+      kpi(t('kpi5dScored'), String(scored.length), `/${DATA.paper.length}`, 'neutral'),
     ])}
 
-    ${disclose("<strong>Paper trading nedir?</strong> Bot gerçek emir vermez ama önerilerini kaydeder. 5/10/20 gün sonra gerçek piyasa hareketi ile karşılaştırılır. Backtest Sharpe ↔ live Sharpe gap'i &lt;%20 ise model sağlam.", 'info')}
+    ${disclose(t('paperInfo'), 'info')}
 
-    <h3>Tahmin Kayıtları</h3>
+    <h3>${t('paperRecH')}</h3>
     <table>
-      <thead><tr><th>Tarih</th><th>Ticker</th><th class="num">Rank</th><th class="num">Entry (TL)</th><th class="num">5d</th><th class="num">10d</th><th class="num">20d</th></tr></thead>
+      <thead><tr><th>${t('pCol1')}</th><th>${t('pCol2')}</th><th class="num">${t('pCol3')}</th><th class="num">${t('pCol4')}</th><th class="num">5d</th><th class="num">10d</th><th class="num">20d</th></tr></thead>
       <tbody>
         ${DATA.paper.map(p => `<tr>
           <td>${p.prediction_date}</td>
@@ -550,58 +968,52 @@ function renderPaper() {
 function renderMethodology() {
   const el = document.getElementById('page-methodology');
   el.innerHTML = `
-    <h2 style="margin-top:0">Metodoloji</h2>
-    <p class="lead">Sistem akademik literatürdeki ileri quant trading metodolojileriyle inşa edildi. Her aşama purged walk-forward + look-ahead defansı + halisünasyon koruması ile test edilmiştir.</p>
+    <h2 style="margin-top:0">${t('methH')}</h2>
+    <p class="lead">${t('methLead')}</p>
 
-    <h3>1. Pipeline Mimarisi</h3>
+    <h3>${t('meth1H')}</h3>
     <div class="method-grid">
-      <div class="method-card"><strong>Data Ingestion</strong><p>Yahoo Finance (price), 7 RSS feed (news), Claude Haiku (sentiment scoring) · content-hash cached, retry/backoff.</p></div>
-      <div class="method-card"><strong>Feature Engineering</strong><p>14 fiyat feature (momentum, RSI, vol, cross-sectional z-score) + 8 sentiment feature (decay-weighted aggregation).</p></div>
-      <div class="method-card"><strong>Model Training</strong><p>LightGBM classifier, triple barrier labeling (López de Prado), purged + embargoed walk-forward.</p></div>
-      <div class="method-card"><strong>Strategy</strong><p>Top-N long, equal weight, max %10/ticker, haftalık rebalance, signal EMA smoothing.</p></div>
+      <div class="method-card"><strong>${t('meth1c1H')}</strong><p>${t('meth1c1')}</p></div>
+      <div class="method-card"><strong>${t('meth1c2H')}</strong><p>${t('meth1c2')}</p></div>
+      <div class="method-card"><strong>${t('meth1c3H')}</strong><p>${t('meth1c3')}</p></div>
+      <div class="method-card"><strong>${t('meth1c4H')}</strong><p>${t('meth1c4')}</p></div>
     </div>
 
-    <h3>2. Bias Defansı</h3>
-    ${disclose("<strong>Look-Ahead Bias:</strong> Sinyal close[t-1]'de üretilir, alım open[t] fiyatından (gözlemlenebilir). Bot dibi/tepeyi yakalayamaz.", 'info')}
-    ${disclose("<strong>Survivorship Bias:</strong> Bugünkü BIST 30 listesi 5y geriye uygulanıyor. Public dashboard'da bias-adjusted Sharpe (×0.85) gösterilir.")}
-    ${disclose("<strong>Overfit Defansı:</strong> Purged k-fold + embargo periodu (5 gün) + walk-forward (out-of-sample test sample).", 'info')}
+    <h3>${t('meth2H')}</h3>
+    ${disclose(t('meth2a'), 'info')}
+    ${disclose(t('meth2b'))}
+    ${disclose(t('meth2c'), 'info')}
 
-    <h3>3. Realistik Maliyet Modeli</h3>
+    <h3>${t('meth3H')}</h3>
     <table>
-      <thead><tr><th>Komponent</th><th class="num">bp</th><th>Açıklama</th></tr></thead>
+      <thead><tr><th>${t('cCol1')}</th><th class="num">${t('cCol2')}</th><th>${t('cCol3')}</th></tr></thead>
       <tbody>
-        <tr><td>Komisyon</td><td class="num">5</td><td>Broker (ortalama BIST)</td></tr>
-        <tr><td>BSMV</td><td class="num">0.25</td><td>Komisyon × %5</td></tr>
-        <tr><td>Spread</td><td class="num">15</td><td>Likit BIST 30 ortalaması</td></tr>
-        <tr><td>Slippage (overnight gap proxy)</td><td class="num">15</td><td>Next-day open execution</td></tr>
-        <tr><td><strong>Toplam tek yön</strong></td><td class="num"><strong>~35 bp</strong></td><td>Round-trip ~70 bp</td></tr>
+        <tr><td>${t('cR1a')}</td><td class="num">5</td><td>${t('cR1b')}</td></tr>
+        <tr><td>${t('cR2a')}</td><td class="num">0.25</td><td>${t('cR2b')}</td></tr>
+        <tr><td>${t('cR3a')}</td><td class="num">15</td><td>${t('cR3b')}</td></tr>
+        <tr><td>${t('cR4a')}</td><td class="num">15</td><td>${t('cR4b')}</td></tr>
+        <tr><td>${t('cR5a')}</td><td class="num"><strong>~35 bp</strong></td><td>${t('cR5b')}</td></tr>
       </tbody>
     </table>
 
-    <h3>4. Test Coverage</h3>
+    <h3>${t('meth4H')}</h3>
     <table>
-      <thead><tr><th>Test Suite</th><th class="num">Test #</th><th>Kapsam</th></tr></thead>
+      <thead><tr><th>${t('tCol1')}</th><th class="num">${t('tCol2')}</th><th>${t('tCol3')}</th></tr></thead>
       <tbody>
-        <tr><td>Feature engineering</td><td class="num">5</td><td>Look-ahead defansı, lag shift, RSI bounds</td></tr>
-        <tr><td>Backtest ↔ Live parity</td><td class="num">3</td><td>Aynı feature, aynı tarih</td></tr>
-        <tr><td>Halisünasyon defansı</td><td class="num">6</td><td>Sentiment NaN, missing data, inf check</td></tr>
-        <tr><td>Triple barrier labeling</td><td class="num">5</td><td>Edge cases</td></tr>
-        <tr><td>Walk-forward splits</td><td class="num">4</td><td>Purge + embargo</td></tr>
-        <tr><td>Cost &amp; news collector</td><td class="num">10</td><td>BIST realistic cost</td></tr>
-        <tr><td><strong>Toplam</strong></td><td class="num"><strong>33</strong></td><td>%100 geçiyor</td></tr>
+        <tr><td>${t('tR1a')}</td><td class="num">5</td><td>${t('tR1b')}</td></tr>
+        <tr><td>${t('tR2a')}</td><td class="num">3</td><td>${t('tR2b')}</td></tr>
+        <tr><td>${t('tR3a')}</td><td class="num">6</td><td>${t('tR3b')}</td></tr>
+        <tr><td>${t('tR4a')}</td><td class="num">5</td><td>${t('tR4b')}</td></tr>
+        <tr><td>${t('tR5a')}</td><td class="num">4</td><td>${t('tR5b')}</td></tr>
+        <tr><td>${t('tR6a')}</td><td class="num">10</td><td>${t('tR6b')}</td></tr>
+        <tr><td>${t('tR7a')}</td><td class="num"><strong>33</strong></td><td>${t('tR7b')}</td></tr>
       </tbody>
     </table>
-
-    <h3>5. Roadmap</h3>
-    <div class="method-grid">
-      <div class="method-card"><strong>Faz 5 (Q3 2026)</strong><p>Point-in-time BIST membership · sentiment data backfill (5 yıl) · hyperparameter optimization (Optuna)</p></div>
-      <div class="method-card"><strong>Faz 6 (Q4 2026)</strong><p>Broker API entegrasyonu (Matriks/Algotrader) · live PnL monitoring · risk circuit breaker · compliance audit log</p></div>
-      <div class="method-card"><strong>Faz 7 (2027)</strong><p>Fundamentals integration (P/E, ROE) · ensemble models (XGBoost + transformer) · regime detection (HMM) · scenario stress testing</p></div>
-      <div class="method-card"><strong>Faz 8 (2027+)</strong><p>Alternative data (satellite, web traffic, KAP NLP) · TWAP/VWAP execution · capacity analysis · regulatory reporting</p></div>
-    </div>
   `;
 }
 
+applyTheme();
+applyStaticI18n();
 loadAll();
 </script>
 
