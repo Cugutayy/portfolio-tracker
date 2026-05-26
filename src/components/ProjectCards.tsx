@@ -83,6 +83,20 @@ export function ProjectCards({ t }: Props) {
             <Tags items={['Next.js 16','Strava','Drizzle','Auth.js']} />
           </GlassCard>
         </ScrollReveal>
+
+        <ScrollReveal delay={480} style={{ height: '100%' }}>
+          <GlassCard href="/tracker/sentiment-bot/" label="06" accent="#4ade80">
+            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>Sentiment Trading <em style={{ color:'#4ade80', fontStyle:'italic', fontWeight:300 }}>with LLM</em></h3>
+            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>BIST 30 üzerine Claude LLM + LightGBM ile sentiment-tabanlı sinyaller. Walk-forward backtest + paper trade validasyonu.</p>
+            <SentimentMini />
+            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
+              <Stat label="Sharpe" value="0.40" pos />
+              <Stat label="CAGR" value="+60%" pos />
+              <Stat label="Trades" value="133" />
+            </div>
+            <Tags items={['Claude','LightGBM','Walk-Forward','5y BIST']} />
+          </GlassCard>
+        </ScrollReveal>
       </div>
     </section>
   )
@@ -272,6 +286,31 @@ function ArbitrageMini() {
           </g>
         )
       })}
+    </svg>
+  )
+}
+
+// ═══════════════════════════════════════════
+// SENTIMENT MINI — backtest equity curve with sentiment "pulses"
+// ═══════════════════════════════════════════
+function SentimentMini() {
+  return (
+    <svg style={{width:'100%',height:36,display:'block'}} viewBox="0 0 400 50" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="sf" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#4ade80" stopOpacity=".18"/>
+          <stop offset="100%" stopColor="#4ade80" stopOpacity=".01"/>
+        </linearGradient>
+      </defs>
+      {/* Benchmark (XU100 BH) — flat dotted line */}
+      <polyline points="0,30 50,29 100,28 150,28 200,27 250,27 300,26 350,25 400,25" fill="none" stroke="#f59e0b" strokeWidth="1" strokeDasharray="3,3" opacity=".5"/>
+      {/* Portföy equity */}
+      <path d="M0,32 L33,30 L66,33 L99,28 L132,29 L165,25 L198,22 L231,18 L264,21 L297,16 L330,12 L363,14 L400,10 L400,50 L0,50 Z" fill="url(#sf)"/>
+      <polyline points="0,32 33,30 66,33 99,28 132,29 165,25 198,22 231,18 264,21 297,16 330,12 363,14 400,10" fill="none" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" opacity=".9"/>
+      {/* Sentiment pulses (data points) */}
+      <circle cx="99" cy="28" r="2" fill="#4ade80" opacity=".8"><animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite"/></circle>
+      <circle cx="231" cy="18" r="2" fill="#4ade80" opacity=".8"><animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite" begin="0.6s"/></circle>
+      <circle cx="363" cy="14" r="2" fill="#4ade80" opacity=".8"><animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite" begin="1.2s"/></circle>
     </svg>
   )
 }
