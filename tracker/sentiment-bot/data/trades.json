@@ -3,1729 +3,1197 @@
     "date": "2022-05-05",
     "ticker": "DOHOL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 3.21,
     "close_price": 3.2,
-    "day_low": 3.17,
-    "day_high": 3.27,
-    "score": null,
-    "rationale": "rsi_14=+21.687 \u00b7 cs_rsi_14=-1.710 \u00b7 volume_z=-1.123"
+    "pnl_pct": -0.00284
   },
   {
     "date": "2022-05-05",
     "ticker": "EKGYO.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 2.56,
     "close_price": 2.55,
-    "day_low": 2.53,
-    "day_high": 2.62,
-    "score": null,
-    "rationale": "rsi_14=+49.874 \u00b7 cs_ret_20=+0.673 \u00b7 cs_ret_5=-0.564"
+    "pnl_pct": -0.00368
   },
   {
     "date": "2022-05-05",
     "ticker": "ENKAI.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 12.93,
     "close_price": 12.88,
-    "day_low": 12.81,
-    "day_high": 13.0,
-    "score": null,
-    "rationale": "rsi_14=+52.093 \u00b7 volume_z=-1.569 \u00b7 cs_momentum_60=-0.985"
+    "pnl_pct": -0.00376
   },
   {
     "date": "2022-05-05",
     "ticker": "HALKB.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 5.48,
     "close_price": 5.58,
-    "day_low": 5.45,
-    "day_high": 5.66,
-    "score": null,
-    "rationale": "rsi_14=+46.231 \u00b7 volume_z=-1.212 \u00b7 cs_ret_5=-1.104"
+    "pnl_pct": 0.01825
   },
   {
     "date": "2022-05-05",
     "ticker": "KCHOL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 35.41,
     "close_price": 34.66,
-    "day_low": 34.66,
-    "day_high": 35.63,
-    "score": null,
-    "rationale": "rsi_14=+35.714 \u00b7 cs_ret_5=+1.225 \u00b7 volume_z=-1.063"
+    "pnl_pct": -0.02107
   },
   {
     "date": "2022-05-05",
     "ticker": "SOKM.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 12.48,
     "close_price": 12.67,
-    "day_low": 12.4,
-    "day_high": 12.73,
-    "score": null,
-    "rationale": "rsi_14=+52.055 \u00b7 cs_momentum_60=-2.075 \u00b7 cs_volume_z=+1.116"
+    "pnl_pct": 0.01517
   },
   {
     "date": "2022-05-05",
     "ticker": "THYAO.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 41.01,
     "close_price": 41.69,
-    "day_low": 40.85,
-    "day_high": 41.83,
-    "score": null,
-    "rationale": "rsi_14=+81.955 \u00b7 cs_rsi_14=+2.395 \u00b7 cs_momentum_60=+2.116"
+    "pnl_pct": 0.01667
   },
   {
     "date": "2022-05-05",
     "ticker": "TOASO.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 62.47,
     "close_price": 63.56,
-    "day_low": 62.43,
-    "day_high": 64.11,
-    "score": null,
-    "rationale": "rsi_14=+42.748 \u00b7 cs_momentum_60=-1.194 \u00b7 volume_z=-0.898"
+    "pnl_pct": 0.01754
   },
   {
     "date": "2022-05-05",
     "ticker": "TTKOM.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 10.17,
     "close_price": 10.08,
-    "day_low": 10.04,
-    "day_high": 10.29,
-    "score": null,
-    "rationale": "rsi_14=+46.816 \u00b7 cs_volume_z=+2.286 \u00b7 volume_z=+1.276"
+    "pnl_pct": -0.00885
   },
   {
     "date": "2022-05-05",
     "ticker": "TUPRS.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 22.41,
     "close_price": 22.58,
-    "day_low": 22.33,
-    "day_high": 23.02,
-    "score": null,
-    "rationale": "rsi_14=+40.370 \u00b7 cs_momentum_60=+1.238 \u00b7 cs_ret_5=-1.214"
+    "pnl_pct": 0.00781
   },
   {
     "date": "2022-05-12",
     "ticker": "AKBNK.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 6.93,
     "close_price": 6.81,
-    "day_low": 6.67,
-    "day_high": 6.95,
-    "score": null,
-    "rationale": "rsi_14=+25.346 \u00b7 cs_rsi_14=-1.084 \u00b7 cs_ret_5=-1.161"
+    "pnl_pct": -0.01665
   },
   {
     "date": "2022-05-12",
     "ticker": "ASELS.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 11.66,
     "close_price": 11.21,
-    "day_low": 11.18,
-    "day_high": 11.75,
-    "score": null,
-    "rationale": "rsi_14=+17.125 \u00b7 cs_ret_20=-1.895 \u00b7 cs_rsi_14=-1.602"
+    "pnl_pct": -0.03823
   },
   {
     "date": "2022-05-12",
     "ticker": "GUBRF.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 75.3,
     "close_price": 74.3,
-    "day_low": 73.35,
-    "day_high": 75.55,
-    "score": null,
-    "rationale": "rsi_14=+30.364 \u00b7 cs_momentum_60=-1.603 \u00b7 cs_ret_20=-1.757"
+    "pnl_pct": -0.01328
   },
   {
     "date": "2022-05-12",
     "ticker": "PETKM.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 10.03,
     "close_price": 9.78,
-    "day_low": 9.67,
-    "day_high": 10.11,
-    "score": null,
-    "rationale": "rsi_14=+49.650 \u00b7 cs_ret_5=+1.559 \u00b7 cs_volume_z=+0.967"
+    "pnl_pct": -0.02493
   },
   {
     "date": "2022-05-12",
     "ticker": "SASA.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 1.74,
     "close_price": 1.72,
-    "day_low": 1.69,
-    "day_high": 1.74,
-    "score": null,
-    "rationale": "rsi_14=+46.486 \u00b7 cs_momentum_60=+1.169 \u00b7 cs_ret_5=+0.583"
+    "pnl_pct": -0.01662
   },
   {
     "date": "2022-05-12",
     "ticker": "TKFEN.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 17.81,
     "close_price": 17.06,
-    "day_low": 16.92,
-    "day_high": 17.89,
-    "score": null,
-    "rationale": "rsi_14=+18.511 \u00b7 cs_momentum_60=-2.425 \u00b7 cs_rsi_14=-1.515"
+    "pnl_pct": -0.04235
   },
   {
     "date": "2022-05-20",
     "ticker": "EREGL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 15.54,
     "close_price": 15.18,
-    "day_low": 15.16,
-    "day_high": 15.64,
-    "score": null,
-    "rationale": "rsi_14=+36.680 \u00b7 cs_momentum_60=+0.868 \u00b7 cs_ret_5=-1.061"
+    "pnl_pct": -0.0233
   },
   {
     "date": "2022-05-20",
     "ticker": "GARAN.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 12.54,
     "close_price": 13.11,
-    "day_low": 12.42,
-    "day_high": 13.79,
-    "score": null,
-    "rationale": "rsi_14=+95.946 \u00b7 cs_rsi_14=+3.036 \u00b7 cs_ret_20=+1.905"
+    "pnl_pct": 0.04502
   },
   {
     "date": "2022-05-20",
     "ticker": "MGROS.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 40.17,
     "close_price": 39.2,
-    "day_low": 39.03,
-    "day_high": 40.17,
-    "score": null,
-    "rationale": "rsi_14=+35.507 \u00b7 cs_ret_5=+0.985 \u00b7 cs_momentum_60=-0.614"
+    "pnl_pct": -0.02428
   },
   {
     "date": "2022-05-20",
     "ticker": "SAHOL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 17.07,
     "close_price": 17.33,
-    "day_low": 17.01,
-    "day_high": 17.37,
-    "score": null,
-    "rationale": "rsi_14=+35.862 \u00b7 cs_momentum_60=+0.827 \u00b7 cs_ret_20=-0.495"
+    "pnl_pct": 0.01543
   },
   {
     "date": "2022-05-20",
     "ticker": "SISE.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 18.56,
     "close_price": 18.13,
-    "day_low": 18.13,
-    "day_high": 18.74,
-    "score": null,
-    "rationale": "rsi_14=+71.336 \u00b7 cs_momentum_60=+2.278 \u00b7 cs_ret_20=+2.085"
+    "pnl_pct": -0.02314
   },
   {
     "date": "2022-05-20",
     "ticker": "TCELL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 16.98,
     "close_price": 16.48,
-    "day_low": 16.47,
-    "day_high": 16.98,
-    "score": null,
-    "rationale": "rsi_14=+17.230 \u00b7 cs_rsi_14=-1.208 \u00b7 cs_ret_20=-1.234"
+    "pnl_pct": -0.0292
   },
   {
     "date": "2023-02-07",
     "ticker": "YKBNK.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 7.8,
     "close_price": 7.14,
-    "day_low": 7.04,
-    "day_high": 7.8,
-    "score": null,
-    "rationale": "rsi_14=+37.534 \u00b7 volume_z=-2.928 \u00b7 cs_momentum_60=-1.260"
+    "pnl_pct": -0.08446
   },
   {
     "date": "2023-02-07",
     "ticker": "ASELS.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 28.81,
     "close_price": 26.35,
-    "day_low": 26.35,
-    "day_high": 29.26,
-    "score": null,
-    "rationale": "rsi_14=+49.813 \u00b7 volume_z=-2.536 \u00b7 cs_momentum_60=+1.508"
+    "pnl_pct": 0.09348
   },
   {
     "date": "2023-02-07",
     "ticker": "DOHOL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 8.04,
     "close_price": 7.41,
-    "day_low": 7.36,
-    "day_high": 8.04,
-    "score": null,
-    "rationale": "rsi_14=+17.857 \u00b7 cs_rsi_14=-2.034 \u00b7 volume_z=-2.672"
+    "pnl_pct": 0.08494
   },
   {
     "date": "2023-02-07",
     "ticker": "ENKAI.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 24.3,
     "close_price": 22.18,
-    "day_low": 22.18,
-    "day_high": 24.51,
-    "score": null,
-    "rationale": "rsi_14=+29.135 \u00b7 volume_z=-2.311 \u00b7 cs_rsi_14=-0.957"
+    "pnl_pct": 0.09554
   },
   {
     "date": "2023-02-07",
     "ticker": "EREGL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 19.57,
     "close_price": 18.39,
-    "day_low": 18.22,
-    "day_high": 19.7,
-    "score": null,
-    "rationale": "rsi_14=+46.023 \u00b7 volume_z=-1.622 \u00b7 cs_volume_z=+1.196"
+    "pnl_pct": 0.0644
   },
   {
     "date": "2023-02-07",
     "ticker": "GARAN.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 18.78,
     "close_price": 17.34,
-    "day_low": 16.95,
-    "day_high": 18.83,
-    "score": null,
-    "rationale": "rsi_14=+36.008 \u00b7 volume_z=-2.644 \u00b7 cs_momentum_60=-1.201"
+    "pnl_pct": 0.08262
   },
   {
     "date": "2023-02-07",
     "ticker": "GUBRF.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 191.2,
     "close_price": 175.4,
-    "day_low": 175.4,
-    "day_high": 192.6,
-    "score": null,
-    "rationale": "rsi_14=+29.884 \u00b7 cs_ret_5=-4.374 \u00b7 cs_ret_20=-2.314"
+    "pnl_pct": 0.09008
   },
   {
     "date": "2023-02-07",
     "ticker": "KCHOL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 66.27,
     "close_price": 59.81,
-    "day_low": 59.72,
-    "day_high": 66.27,
-    "score": null,
-    "rationale": "rsi_14=+48.805 \u00b7 volume_z=-2.813 \u00b7 cs_rsi_14=+0.920"
+    "pnl_pct": 0.10805
   },
   {
     "date": "2023-02-07",
     "ticker": "PETKM.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 15.6,
     "close_price": 14.09,
-    "day_low": 14.05,
-    "day_high": 15.6,
-    "score": null,
-    "rationale": "rsi_14=+25.565 \u00b7 volume_z=-2.437 \u00b7 cs_rsi_14=-1.298"
+    "pnl_pct": 0.10717
   },
   {
     "date": "2023-02-07",
     "ticker": "SAHOL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 35.04,
     "close_price": 32.61,
-    "day_low": 31.88,
-    "day_high": 35.07,
-    "score": null,
-    "rationale": "rsi_14=+42.479 \u00b7 volume_z=-2.383 \u00b7 cs_ret_5=+0.876"
+    "pnl_pct": 0.07431
   },
   {
     "date": "2023-02-07",
     "ticker": "SASA.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 5.46,
     "close_price": 4.95,
-    "day_low": 4.92,
-    "day_high": 5.46,
-    "score": null,
-    "rationale": "rsi_14=+36.784 \u00b7 cs_momentum_60=-2.585 \u00b7 cs_volume_z=+1.454"
+    "pnl_pct": 0.10293
   },
   {
     "date": "2023-02-07",
     "ticker": "SISE.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 39.94,
     "close_price": 36.95,
-    "day_low": 36.78,
-    "day_high": 39.98,
-    "score": null,
-    "rationale": "rsi_14=+45.858 \u00b7 volume_z=-2.007 \u00b7 cs_ret_5=+1.372"
+    "pnl_pct": 0.08089
   },
   {
     "date": "2023-02-07",
     "ticker": "SOKM.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 22.77,
     "close_price": 20.99,
-    "day_low": 20.89,
-    "day_high": 22.84,
-    "score": null,
-    "rationale": "rsi_14=+42.976 \u00b7 cs_volume_z=+1.301 \u00b7 volume_z=-1.563"
+    "pnl_pct": 0.08484
   },
   {
     "date": "2023-02-07",
     "ticker": "TUPRS.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 53.09,
     "close_price": 48.13,
-    "day_low": 47.98,
-    "day_high": 53.09,
-    "score": null,
-    "rationale": "rsi_14=+51.914 \u00b7 cs_ret_20=+2.040 \u00b7 volume_z=-2.312"
+    "pnl_pct": 0.10312
   },
   {
     "date": "2023-02-20",
     "ticker": "BIMAS.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 63.33,
     "close_price": 63.0,
-    "day_low": 62.63,
-    "day_high": 64.69,
-    "score": null,
-    "rationale": "rsi_14=+48.582 \u00b7 cs_ret_20=+0.983 \u00b7 cs_rsi_14=+0.710"
+    "pnl_pct": -0.00517
   },
   {
     "date": "2023-02-20",
     "ticker": "GARAN.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 18.78,
     "close_price": 18.73,
-    "day_low": 18.58,
-    "day_high": 19.17,
-    "score": null,
-    "rationale": "rsi_14=+37.106 \u00b7 cs_momentum_60=-1.559 \u00b7 volume_z=-0.919"
+    "pnl_pct": -0.00263
   },
   {
     "date": "2023-02-20",
     "ticker": "GUBRF.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 181.7,
     "close_price": 198.6,
-    "day_low": 175.6,
-    "day_high": 198.6,
-    "score": null,
-    "rationale": "rsi_14=+15.459 \u00b7 cs_rsi_14=-2.912 \u00b7 cs_ret_20=-3.043"
+    "pnl_pct": 0.09301
   },
   {
     "date": "2023-02-20",
     "ticker": "PETKM.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 15.49,
     "close_price": 16.7,
-    "day_low": 15.36,
-    "day_high": 16.76,
-    "score": null,
-    "rationale": "rsi_14=+37.763 \u00b7 cs_ret_20=-0.981 \u00b7 volume_z=-1.122"
+    "pnl_pct": 0.07811
   },
   {
     "date": "2023-02-20",
     "ticker": "SOKM.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 22.61,
     "close_price": 22.65,
-    "day_low": 22.22,
-    "day_high": 22.92,
-    "score": null,
-    "rationale": "rsi_14=+30.475 \u00b7 cs_rsi_14=-1.270 \u00b7 volume_z=-0.971"
+    "pnl_pct": 0.00168
   },
   {
     "date": "2023-02-20",
     "ticker": "TAVHL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 71.5,
     "close_price": 73.7,
-    "day_low": 70.2,
-    "day_high": 74.1,
-    "score": null,
-    "rationale": "rsi_14=+34.032 \u00b7 cs_momentum_60=-1.345 \u00b7 cs_ret_5=-1.379"
+    "pnl_pct": 0.03077
   },
   {
     "date": "2023-02-27",
     "ticker": "EREGL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 21.65,
     "close_price": 21.55,
-    "day_low": 20.97,
-    "day_high": 21.67,
-    "score": null,
-    "rationale": "rsi_14=+60.309 \u00b7 cs_rsi_14=+1.766 \u00b7 cs_ret_20=+1.934"
+    "pnl_pct": -0.00452
   },
   {
     "date": "2023-02-27",
     "ticker": "ISCTR.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 3.73,
     "close_price": 3.98,
-    "day_low": 3.65,
-    "day_high": 3.99,
-    "score": null,
-    "rationale": "rsi_14=+49.464 \u00b7 volume_z=-0.875 \u00b7 cs_volume_z=-0.426"
+    "pnl_pct": 0.06605
   },
   {
     "date": "2023-02-27",
     "ticker": "KCHOL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 65.18,
     "close_price": 67.61,
-    "day_low": 62.97,
-    "day_high": 67.7,
-    "score": null,
-    "rationale": "rsi_14=+48.261 \u00b7 volume_z=-0.802 \u00b7 cs_volume_z=-0.335"
+    "pnl_pct": 0.03726
   },
   {
     "date": "2023-02-27",
     "ticker": "SAHOL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 35.71,
     "close_price": 37.53,
-    "day_low": 34.63,
-    "day_high": 37.67,
-    "score": null,
-    "rationale": "rsi_14=+54.068 \u00b7 cs_rsi_14=+0.764 \u00b7 volume_z=-0.975"
+    "pnl_pct": 0.05116
   },
   {
     "date": "2023-11-13",
     "ticker": "AKBNK.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 26.27,
     "close_price": 25.43,
-    "day_low": 25.38,
-    "day_high": 26.34,
-    "score": null,
-    "rationale": "rsi_14=+41.284 \u00b7 cs_ret_5=-1.035 \u00b7 cs_rsi_14=-0.832"
+    "pnl_pct": 0.03286
   },
   {
     "date": "2023-11-13",
     "ticker": "EKGYO.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 6.71,
     "close_price": 6.83,
-    "day_low": 6.68,
-    "day_high": 7.06,
-    "score": null,
-    "rationale": "rsi_14=+43.655 \u00b7 cs_momentum_60=-1.655 \u00b7 cs_ret_5=+0.857"
+    "pnl_pct": -0.01712
   },
   {
     "date": "2023-11-13",
     "ticker": "EREGL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 18.78,
     "close_price": 18.2,
-    "day_low": 18.2,
-    "day_high": 19.0,
-    "score": null,
-    "rationale": "rsi_14=+48.205 \u00b7 cs_volume_z=+1.052 \u00b7 cs_momentum_60=-0.761"
+    "pnl_pct": 0.03172
   },
   {
     "date": "2023-11-13",
     "ticker": "GUBRF.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 365.25,
     "close_price": 359.5,
-    "day_low": 356.25,
-    "day_high": 366.75,
-    "score": null,
-    "rationale": "rsi_14=+50.632 \u00b7 cs_momentum_60=+1.126 \u00b7 cs_ret_20=+0.927"
+    "pnl_pct": 0.01599
   },
   {
     "date": "2023-11-13",
     "ticker": "HALKB.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 13.18,
     "close_price": 12.8,
-    "day_low": 12.73,
-    "day_high": 13.18,
-    "score": null,
-    "rationale": "rsi_14=+35.227 \u00b7 cs_rsi_14=-1.498 \u00b7 cs_ret_20=-1.412"
+    "pnl_pct": 0.02969
   },
   {
     "date": "2023-11-13",
     "ticker": "MGROS.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 347.7,
     "close_price": 340.79,
-    "day_low": 336.03,
-    "day_high": 348.41,
-    "score": null,
-    "rationale": "rsi_14=+51.132 \u00b7 volume_z=-1.606 \u00b7 cs_volume_z=-1.087"
+    "pnl_pct": 0.02025
   },
   {
     "date": "2023-11-13",
     "ticker": "PETKM.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 21.18,
     "close_price": 20.2,
-    "day_low": 20.16,
-    "day_high": 21.4,
-    "score": null,
-    "rationale": "rsi_14=+52.405 \u00b7 cs_ret_5=+1.874 \u00b7 cs_ret_20=-1.172"
+    "pnl_pct": 0.04851
   },
   {
     "date": "2023-11-13",
     "ticker": "THYAO.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 225.66,
     "close_price": 226.83,
-    "day_low": 223.41,
-    "day_high": 234.45,
-    "score": null,
-    "rationale": "rsi_14=+65.039 \u00b7 cs_rsi_14=+1.783 \u00b7 cs_ret_20=+1.268"
+    "pnl_pct": -0.00517
   },
   {
     "date": "2023-11-13",
     "ticker": "TKFEN.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 40.69,
     "close_price": 40.01,
-    "day_low": 39.77,
-    "day_high": 40.91,
-    "score": null,
-    "rationale": "rsi_14=+37.414 \u00b7 cs_ret_20=-1.936 \u00b7 cs_rsi_14=-1.258"
+    "pnl_pct": 0.01692
   },
   {
     "date": "2023-11-13",
     "ticker": "TOASO.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 209.61,
     "close_price": 199.9,
-    "day_low": 199.41,
-    "day_high": 209.61,
-    "score": null,
-    "rationale": "rsi_14=+47.167 \u00b7 volume_z=-1.461 \u00b7 cs_volume_z=-0.906"
+    "pnl_pct": 0.04858
   },
   {
     "date": "2023-11-20",
     "ticker": "ASELS.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 42.3,
     "close_price": 44.39,
-    "day_low": 42.28,
-    "day_high": 44.88,
-    "score": null,
-    "rationale": "rsi_14=+52.000 \u00b7 volume_z=-0.891 \u00b7 cs_momentum_60=+0.862"
+    "pnl_pct": 0.04941
   },
   {
     "date": "2023-11-20",
     "ticker": "ENKAI.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 29.53,
     "close_price": 29.6,
-    "day_low": 29.51,
-    "day_high": 29.83,
-    "score": null,
-    "rationale": "rsi_14=+64.921 \u00b7 volume_z=-0.893 \u00b7 cs_rsi_14=+0.780"
+    "pnl_pct": 0.00238
   },
   {
     "date": "2023-11-20",
     "ticker": "PETKM.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 22.52,
     "close_price": 22.34,
-    "day_low": 22.22,
-    "day_high": 22.74,
-    "score": null,
-    "rationale": "rsi_14=+62.601 \u00b7 cs_momentum_60=+1.302 \u00b7 cs_ret_5=+1.244"
+    "pnl_pct": -0.00799
   },
   {
     "date": "2023-11-20",
     "ticker": "SASA.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 5.51,
     "close_price": 5.54,
-    "day_low": 5.51,
-    "day_high": 5.66,
-    "score": null,
-    "rationale": "rsi_14=+50.000 \u00b7 cs_momentum_60=-1.515 \u00b7 volume_z=-1.024"
+    "pnl_pct": 0.00499
   },
   {
     "date": "2023-11-20",
     "ticker": "THYAO.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 251.06,
     "close_price": 248.86,
-    "day_low": 248.37,
-    "day_high": 254.48,
-    "score": null,
-    "rationale": "rsi_14=+90.034 \u00b7 cs_rsi_14=+2.781 \u00b7 cs_ret_5=+2.793"
+    "pnl_pct": -0.00875
   },
   {
     "date": "2023-11-20",
     "ticker": "TUPRS.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 118.18,
     "close_price": 117.34,
-    "day_low": 117.03,
-    "day_high": 119.78,
-    "score": null,
-    "rationale": "rsi_14=+70.234 \u00b7 cs_momentum_60=+2.391 \u00b7 cs_ret_20=+1.893"
+    "pnl_pct": -0.00711
   },
   {
     "date": "2023-11-27",
     "ticker": "EREGL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 19.87,
     "close_price": 20.2,
-    "day_low": 19.87,
-    "day_high": 20.33,
-    "score": null,
-    "rationale": "rsi_14=+64.080 \u00b7 cs_ret_5=+0.813 \u00b7 cs_rsi_14=+0.723"
+    "pnl_pct": 0.01675
   },
   {
     "date": "2023-11-27",
     "ticker": "TKFEN.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 46.98,
     "close_price": 46.48,
-    "day_low": 46.04,
-    "day_high": 47.36,
-    "score": null,
-    "rationale": "rsi_14=+67.467 \u00b7 cs_ret_5=+2.705 \u00b7 cs_volume_z=+2.287"
+    "pnl_pct": -0.01059
   },
   {
     "date": "2023-11-27",
     "ticker": "VAKBN.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 15.01,
     "close_price": 15.16,
-    "day_low": 14.96,
-    "day_high": 15.26,
-    "score": null,
-    "rationale": "rsi_14=+12.195 \u00b7 cs_rsi_14=-2.728 \u00b7 cs_ret_20=-2.270"
+    "pnl_pct": 0.00999
   },
   {
     "date": "2024-08-16",
     "ticker": "AKBNK.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 55.49,
     "close_price": 53.88,
-    "day_low": 53.84,
-    "day_high": 55.87,
-    "score": null,
-    "rationale": "rsi_14=+32.701 \u00b7 cs_ret_5=+1.821 \u00b7 cs_ret_20=-0.743"
+    "pnl_pct": -0.02904
   },
   {
     "date": "2024-08-16",
     "ticker": "BIMAS.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 275.11,
     "close_price": 266.95,
-    "day_low": 266.95,
-    "day_high": 279.44,
-    "score": null,
-    "rationale": "rsi_14=+38.123 \u00b7 cs_ret_5=+1.949 \u00b7 cs_momentum_60=+1.370"
+    "pnl_pct": 0.03058
   },
   {
     "date": "2024-08-16",
     "ticker": "GARAN.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 105.94,
     "close_price": 101.03,
-    "day_low": 101.03,
-    "day_high": 106.13,
-    "score": null,
-    "rationale": "rsi_14=+38.462 \u00b7 cs_momentum_60=+1.585 \u00b7 cs_volume_z=+0.583"
+    "pnl_pct": 0.04862
   },
   {
     "date": "2024-08-16",
     "ticker": "ISCTR.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 12.61,
     "close_price": 12.3,
-    "day_low": 12.3,
-    "day_high": 12.64,
-    "score": null,
-    "rationale": "rsi_14=+26.596 \u00b7 cs_ret_20=-2.138 \u00b7 cs_rsi_14=-1.022"
+    "pnl_pct": 0.02458
   },
   {
     "date": "2024-08-16",
     "ticker": "KCHOL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 171.76,
     "close_price": 167.07,
-    "day_low": 167.07,
-    "day_high": 172.41,
-    "score": null,
-    "rationale": "rsi_14=+18.325 \u00b7 cs_momentum_60=-1.490 \u00b7 cs_rsi_14=-1.951"
+    "pnl_pct": 0.02811
   },
   {
     "date": "2024-08-16",
     "ticker": "SASA.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 5.27,
     "close_price": 5.06,
-    "day_low": 5.05,
-    "day_high": 5.3,
-    "score": null,
-    "rationale": "rsi_14=+40.375 \u00b7 cs_ret_5=-2.537 \u00b7 cs_momentum_60=-0.843"
+    "pnl_pct": 0.0415
   },
   {
     "date": "2024-08-16",
     "ticker": "SOKM.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 57.38,
     "close_price": 56.4,
-    "day_low": 56.4,
-    "day_high": 58.21,
-    "score": null,
-    "rationale": "rsi_14=+28.571 \u00b7 volume_z=-0.953 \u00b7 cs_volume_z=-0.882"
+    "pnl_pct": 0.01742
   },
   {
     "date": "2024-08-16",
     "ticker": "TAVHL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 245.5,
     "close_price": 236.7,
-    "day_low": 236.7,
-    "day_high": 247.4,
-    "score": null,
-    "rationale": "rsi_14=+25.387 \u00b7 cs_rsi_14=-1.158 \u00b7 cs_ret_20=-0.719"
+    "pnl_pct": 0.03718
   },
   {
     "date": "2024-08-16",
     "ticker": "TTKOM.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 50.2,
     "close_price": 50.9,
-    "day_low": 49.56,
-    "day_high": 51.25,
-    "score": null,
-    "rationale": "rsi_14=+51.637 \u00b7 cs_rsi_14=+1.788 \u00b7 cs_momentum_60=+1.220"
+    "pnl_pct": -0.01375
   },
   {
     "date": "2024-08-16",
     "ticker": "VAKBN.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 19.39,
     "close_price": 19.31,
-    "day_low": 19.13,
-    "day_high": 19.62,
-    "score": null,
-    "rationale": "rsi_14=+32.060 \u00b7 cs_volume_z=+1.540 \u00b7 volume_z=+1.066"
+    "pnl_pct": 0.00414
   },
   {
     "date": "2024-08-16",
     "ticker": "YKBNK.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 29.28,
     "close_price": 28.54,
-    "day_low": 28.54,
-    "day_high": 29.56,
-    "score": null,
-    "rationale": "rsi_14=+42.593 \u00b7 volume_z=-1.055 \u00b7 cs_momentum_60=-0.851"
+    "pnl_pct": 0.02593
   },
   {
     "date": "2024-08-23",
     "ticker": "BIMAS.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 269.59,
     "close_price": 262.15,
-    "day_low": 262.15,
-    "day_high": 270.79,
-    "score": null,
-    "rationale": "rsi_14=+41.333 \u00b7 cs_momentum_60=+1.635 \u00b7 volume_z=-0.913"
+    "pnl_pct": -0.0276
   },
   {
     "date": "2024-08-23",
     "ticker": "DOHOL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 15.91,
     "close_price": 14.9,
-    "day_low": 14.8,
-    "day_high": 15.98,
-    "score": null,
-    "rationale": "rsi_14=+44.118 \u00b7 cs_momentum_60=+0.333 \u00b7 cs_volume_z=+0.291"
+    "pnl_pct": -0.0637
   },
   {
     "date": "2024-08-23",
     "ticker": "EKGYO.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 11.73,
     "close_price": 11.35,
-    "day_low": 11.25,
-    "day_high": 11.79,
-    "score": null,
-    "rationale": "rsi_14=+65.894 \u00b7 cs_momentum_60=+2.671 \u00b7 cs_rsi_14=+2.245"
+    "pnl_pct": -0.03237
   },
   {
     "date": "2024-08-23",
     "ticker": "FROTO.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 82.49,
     "close_price": 79.63,
-    "day_low": 79.19,
-    "day_high": 83.01,
-    "score": null,
-    "rationale": "rsi_14=+47.660 \u00b7 cs_momentum_60=-0.954 \u00b7 cs_ret_5=+1.003"
+    "pnl_pct": -0.03467
   },
   {
     "date": "2024-08-23",
     "ticker": "KCHOL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 177.75,
     "close_price": 170.56,
-    "day_low": 170.1,
-    "day_high": 178.49,
-    "score": null,
-    "rationale": "rsi_14=+35.094 \u00b7 cs_momentum_60=-1.353 \u00b7 cs_ret_5=+0.708"
+    "pnl_pct": -0.04041
   },
   {
     "date": "2024-08-23",
     "ticker": "PGSUS.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 216.5,
     "close_price": 211.8,
-    "day_low": 211.8,
-    "day_high": 217.7,
-    "score": null,
-    "rationale": "rsi_14=+37.771 \u00b7 cs_ret_5=-0.981 \u00b7 volume_z=-0.652"
+    "pnl_pct": -0.02171
   },
   {
     "date": "2024-09-02",
     "ticker": "GUBRF.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 171.0,
     "close_price": 173.8,
-    "day_low": 170.8,
-    "day_high": 176.6,
-    "score": null,
-    "rationale": "rsi_14=+56.720 \u00b7 cs_momentum_60=+1.037 \u00b7 cs_ret_20=+1.342"
+    "pnl_pct": 0.01637
   },
   {
     "date": "2024-09-02",
     "ticker": "HALKB.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 15.67,
     "close_price": 16.38,
-    "day_low": 15.66,
-    "day_high": 16.57,
-    "score": null,
-    "rationale": "rsi_14=+53.974 \u00b7 cs_ret_5=-1.268 \u00b7 cs_momentum_60=-0.755"
+    "pnl_pct": 0.04531
   },
   {
     "date": "2024-09-02",
     "ticker": "TTKOM.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 49.2,
     "close_price": 49.78,
-    "day_low": 48.66,
-    "day_high": 50.15,
-    "score": null,
-    "rationale": "rsi_14=+44.521 \u00b7 cs_momentum_60=+0.524 \u00b7 cs_ret_5=+0.483"
+    "pnl_pct": 0.01179
   },
   {
     "date": "2024-09-02",
     "ticker": "VAKBN.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 18.98,
     "close_price": 20.04,
-    "day_low": 18.97,
-    "day_high": 20.34,
-    "score": null,
-    "rationale": "rsi_14=+57.317 \u00b7 cs_momentum_60=-0.992 \u00b7 cs_ret_5=-0.867"
+    "pnl_pct": 0.05585
   },
   {
     "date": "2024-09-02",
     "ticker": "YKBNK.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 31.46,
     "close_price": 33.06,
-    "day_low": 31.38,
-    "day_high": 33.08,
-    "score": null,
-    "rationale": "rsi_14=+74.265 \u00b7 cs_rsi_14=+1.959 \u00b7 cs_ret_20=+0.968"
+    "pnl_pct": 0.05086
   },
   {
     "date": "2025-05-21",
     "ticker": "TAVHL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 231.7,
     "close_price": 225.0,
-    "day_low": 224.8,
-    "day_high": 233.0,
-    "score": null,
-    "rationale": "rsi_14=+51.572 \u00b7 cs_momentum_60=-0.718 \u00b7 cs_ret_20=-0.795"
+    "pnl_pct": -0.02892
   },
   {
     "date": "2025-05-21",
     "ticker": "AKBNK.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 50.82,
     "close_price": 50.87,
-    "day_low": 50.43,
-    "day_high": 51.6,
-    "score": null,
-    "rationale": "rsi_14=+66.127 \u00b7 cs_volume_z=+2.030 \u00b7 volume_z=+1.631"
+    "pnl_pct": -0.00095
   },
   {
     "date": "2025-05-21",
     "ticker": "ASELS.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 132.83,
     "close_price": 132.83,
-    "day_low": 131.03,
-    "day_high": 134.73,
-    "score": null,
-    "rationale": "rsi_14=+44.793 \u00b7 cs_momentum_60=+2.553 \u00b7 cs_rsi_14=-0.878"
+    "pnl_pct": 0.0
   },
   {
     "date": "2025-05-21",
     "ticker": "DOHOL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 14.72,
     "close_price": 14.82,
-    "day_low": 14.7,
-    "day_high": 15.02,
-    "score": null,
-    "rationale": "rsi_14=+42.507 \u00b7 cs_ret_20=-1.201 \u00b7 cs_rsi_14=-1.041"
+    "pnl_pct": -0.00664
   },
   {
     "date": "2025-05-21",
     "ticker": "ENKAI.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 60.68,
     "close_price": 61.39,
-    "day_low": 60.58,
-    "day_high": 62.77,
-    "score": null,
-    "rationale": "rsi_14=+49.914 \u00b7 cs_ret_5=-2.647 \u00b7 cs_momentum_60=+0.981"
+    "pnl_pct": -0.01162
   },
   {
     "date": "2025-05-21",
     "ticker": "EREGL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 24.67,
     "close_price": 24.01,
-    "day_low": 24.01,
-    "day_high": 24.67,
-    "score": null,
-    "rationale": "rsi_14=+65.495 \u00b7 cs_ret_20=+1.228 \u00b7 cs_ret_5=+0.770"
+    "pnl_pct": 0.02723
   },
   {
     "date": "2025-05-21",
     "ticker": "HALKB.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 21.34,
     "close_price": 20.66,
-    "day_low": 20.52,
-    "day_high": 21.34,
-    "score": null,
-    "rationale": "rsi_14=+67.311 \u00b7 volume_z=-1.085 \u00b7 cs_volume_z=-1.270"
+    "pnl_pct": 0.03291
   },
   {
     "date": "2025-05-21",
     "ticker": "KCHOL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 149.61,
     "close_price": 145.94,
-    "day_low": 145.56,
-    "day_high": 152.02,
-    "score": null,
-    "rationale": "rsi_14=+62.475 \u00b7 cs_ret_5=+0.836 \u00b7 cs_ret_20=+0.516"
+    "pnl_pct": 0.0251
   },
   {
     "date": "2025-05-21",
     "ticker": "PETKM.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 17.5,
     "close_price": 17.2,
-    "day_low": 17.2,
-    "day_high": 17.6,
-    "score": null,
-    "rationale": "rsi_14=+63.570 \u00b7 volume_z=-0.615 \u00b7 cs_volume_z=-0.699"
+    "pnl_pct": 0.01744
   },
   {
     "date": "2025-05-21",
     "ticker": "PGSUS.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 249.9,
     "close_price": 241.7,
-    "day_low": 241.5,
-    "day_high": 250.75,
-    "score": null,
-    "rationale": "rsi_14=+58.151 \u00b7 volume_z=-0.389 \u00b7 cs_volume_z=-0.424"
+    "pnl_pct": 0.03393
   },
   {
     "date": "2025-05-21",
     "ticker": "TCELL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 94.6,
     "close_price": 93.59,
-    "day_low": 93.55,
-    "day_high": 95.66,
-    "score": null,
-    "rationale": "rsi_14=+68.037 \u00b7 cs_rsi_14=+0.780 \u00b7 cs_volume_z=+0.802"
+    "pnl_pct": 0.01079
   },
   {
     "date": "2025-05-21",
     "ticker": "TKFEN.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 123.02,
     "close_price": 119.64,
-    "day_low": 119.64,
-    "day_high": 124.61,
-    "score": null,
-    "rationale": "rsi_14=+35.561 \u00b7 cs_momentum_60=+3.656 \u00b7 cs_rsi_14=-1.536"
+    "pnl_pct": 0.02829
   },
   {
     "date": "2025-05-21",
     "ticker": "VAKBN.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 23.54,
     "close_price": 23.4,
-    "day_low": 23.0,
-    "day_high": 23.58,
-    "score": null,
-    "rationale": "rsi_14=+79.476 \u00b7 cs_rsi_14=+1.596 \u00b7 cs_ret_20=+0.993"
+    "pnl_pct": 0.00598
   },
   {
     "date": "2025-05-28",
     "ticker": "AKBNK.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 49.42,
     "close_price": 50.05,
-    "day_low": 49.32,
-    "day_high": 50.39,
-    "score": null,
-    "rationale": "rsi_14=+58.102 \u00b7 cs_momentum_60=-1.105 \u00b7 volume_z=-0.866"
+    "pnl_pct": 0.01275
   },
   {
     "date": "2025-05-28",
     "ticker": "ARCLK.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 107.7,
     "close_price": 106.5,
-    "day_low": 105.9,
-    "day_high": 108.1,
-    "score": null,
-    "rationale": "rsi_14=+45.082 \u00b7 cs_volume_z=+2.543 \u00b7 cs_ret_20=-1.517"
+    "pnl_pct": -0.01114
   },
   {
     "date": "2025-05-28",
     "ticker": "EREGL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 23.6,
     "close_price": 23.64,
-    "day_low": 23.44,
-    "day_high": 23.78,
-    "score": null,
-    "rationale": "rsi_14=+50.000 \u00b7 cs_ret_20=+0.881 \u00b7 cs_volume_z=+0.959"
+    "pnl_pct": 0.00168
   },
   {
     "date": "2025-05-28",
     "ticker": "KCHOL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 137.56,
     "close_price": 138.62,
-    "day_low": 136.59,
-    "day_high": 139.1,
-    "score": null,
-    "rationale": "rsi_14=+57.006 \u00b7 cs_ret_5=-1.800 \u00b7 volume_z=-1.079"
+    "pnl_pct": 0.00771
   },
   {
     "date": "2025-05-28",
     "ticker": "MGROS.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 487.62,
     "close_price": 483.18,
-    "day_low": 476.52,
-    "day_high": 490.33,
-    "score": null,
-    "rationale": "rsi_14=+55.721 \u00b7 cs_momentum_60=-0.590 \u00b7 volume_z=-0.589"
+    "pnl_pct": -0.0091
   },
   {
     "date": "2025-05-28",
     "ticker": "PETKM.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 16.5,
     "close_price": 16.45,
-    "day_low": 16.37,
-    "day_high": 16.64,
-    "score": null,
-    "rationale": "rsi_14=+54.374 \u00b7 cs_ret_5=-0.878 \u00b7 volume_z=-0.702"
+    "pnl_pct": -0.00303
   },
   {
     "date": "2025-05-28",
     "ticker": "PGSUS.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 235.5,
     "close_price": 240.2,
-    "day_low": 234.5,
-    "day_high": 241.3,
-    "score": null,
-    "rationale": "rsi_14=+52.029 \u00b7 volume_z=-1.186 \u00b7 cs_ret_5=-0.781"
+    "pnl_pct": 0.01996
   },
   {
     "date": "2025-06-04",
     "ticker": "HALKB.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 20.24,
     "close_price": 20.44,
-    "day_low": 20.24,
-    "day_high": 20.48,
-    "score": null,
-    "rationale": "rsi_14=+35.261 \u00b7 volume_z=+0.295 \u00b7 cs_ret_5=-0.284"
+    "pnl_pct": 0.00988
   },
   {
     "date": "2025-06-04",
     "ticker": "SASA.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 3.27,
     "close_price": 3.33,
-    "day_low": 3.26,
-    "day_high": 3.35,
-    "score": null,
-    "rationale": "rsi_14=+24.510 \u00b7 cs_ret_20=-1.891 \u00b7 cs_ret_5=-1.546"
+    "pnl_pct": 0.01835
   },
   {
     "date": "2025-06-04",
     "ticker": "SOKM.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 33.86,
     "close_price": 34.48,
-    "day_low": 33.58,
-    "day_high": 34.68,
-    "score": null,
-    "rationale": "rsi_14=+18.250 \u00b7 cs_rsi_14=-1.413 \u00b7 cs_ret_20=-1.310"
+    "pnl_pct": 0.01831
   },
   {
     "date": "2025-06-04",
     "ticker": "TCELL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 90.18,
     "close_price": 94.36,
-    "day_low": 90.13,
-    "day_high": 94.6,
-    "score": null,
-    "rationale": "rsi_14=+45.771 \u00b7 cs_ret_5=-0.846 \u00b7 cs_ret_20=+0.610"
+    "pnl_pct": 0.04638
   },
   {
     "date": "2026-02-23",
     "ticker": "GARAN.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 153.69,
     "close_price": 152.25,
-    "day_low": 151.67,
-    "day_high": 154.55,
-    "score": null,
-    "rationale": "rsi_14=+47.345 \u00b7 volume_z=-1.467 \u00b7 cs_volume_z=-1.020"
+    "pnl_pct": -0.00938
   },
   {
     "date": "2026-02-23",
     "ticker": "ARCLK.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 121.1,
     "close_price": 124.4,
-    "day_low": 120.8,
-    "day_high": 124.9,
-    "score": null,
-    "rationale": "rsi_14=+57.033 \u00b7 cs_ret_5=-1.502 \u00b7 volume_z=-1.358"
+    "pnl_pct": -0.02653
   },
   {
     "date": "2026-02-23",
     "ticker": "EKGYO.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 24.72,
     "close_price": 24.92,
-    "day_low": 24.58,
-    "day_high": 25.08,
-    "score": null,
-    "rationale": "rsi_14=+46.421 \u00b7 cs_volume_z=+2.821 \u00b7 cs_rsi_14=-0.978"
+    "pnl_pct": -0.00803
   },
   {
     "date": "2026-02-23",
     "ticker": "FROTO.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 119.4,
     "close_price": 116.6,
-    "day_low": 115.73,
-    "day_high": 119.79,
-    "score": null,
-    "rationale": "rsi_14=+58.503 \u00b7 cs_volume_z=-2.185 \u00b7 volume_z=-2.200"
+    "pnl_pct": 0.02405
   },
   {
     "date": "2026-02-23",
     "ticker": "HALKB.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 49.62,
     "close_price": 50.35,
-    "day_low": 48.76,
-    "day_high": 50.6,
-    "score": null,
-    "rationale": "rsi_14=+70.071 \u00b7 cs_rsi_14=+1.604 \u00b7 cs_momentum_60=+0.897"
+    "pnl_pct": -0.0145
   },
   {
     "date": "2026-02-23",
     "ticker": "KCHOL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 208.7,
     "close_price": 208.6,
-    "day_low": 206.96,
-    "day_high": 210.34,
-    "score": null,
-    "rationale": "rsi_14=+60.256 \u00b7 volume_z=-1.113 \u00b7 cs_rsi_14=+0.532"
+    "pnl_pct": 0.00046
   },
   {
     "date": "2026-02-23",
     "ticker": "PETKM.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 17.57,
     "close_price": 18.0,
-    "day_low": 17.57,
-    "day_high": 18.11,
-    "score": null,
-    "rationale": "rsi_14=+46.098 \u00b7 cs_ret_20=-1.808 \u00b7 cs_momentum_60=-1.330"
+    "pnl_pct": -0.02389
   },
   {
     "date": "2026-02-23",
     "ticker": "PGSUS.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 208.0,
     "close_price": 203.3,
-    "day_low": 202.3,
-    "day_high": 208.4,
-    "score": null,
-    "rationale": "rsi_14=+51.286 \u00b7 cs_momentum_60=-1.479 \u00b7 cs_ret_20=-1.217"
+    "pnl_pct": 0.02312
   },
   {
     "date": "2026-02-23",
     "ticker": "SASA.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 2.44,
     "close_price": 2.43,
-    "day_low": 2.42,
-    "day_high": 2.49,
-    "score": null,
-    "rationale": "rsi_14=+43.478 \u00b7 cs_momentum_60=-2.501 \u00b7 cs_ret_5=-1.868"
+    "pnl_pct": 0.00412
   },
   {
     "date": "2026-02-23",
     "ticker": "SOKM.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 70.05,
     "close_price": 68.3,
-    "day_low": 68.0,
-    "day_high": 70.2,
-    "score": null,
-    "rationale": "rsi_14=+60.870 \u00b7 cs_momentum_60=+1.171 \u00b7 cs_ret_5=+0.899"
+    "pnl_pct": 0.02562
   },
   {
     "date": "2026-02-23",
     "ticker": "TAVHL.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 336.75,
     "close_price": 327.75,
-    "day_low": 326.5,
-    "day_high": 336.75,
-    "score": null,
-    "rationale": "rsi_14=+41.809 \u00b7 cs_rsi_14=-1.481 \u00b7 cs_ret_5=-1.521"
+    "pnl_pct": 0.02746
   },
   {
     "date": "2026-02-23",
     "ticker": "TTKOM.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 71.3,
     "close_price": 70.65,
-    "day_low": 70.05,
-    "day_high": 71.6,
-    "score": null,
-    "rationale": "rsi_14=+66.667 \u00b7 cs_volume_z=-1.620 \u00b7 volume_z=-1.844"
+    "pnl_pct": 0.0092
   },
   {
     "date": "2026-02-23",
     "ticker": "TUPRS.IS",
     "action": "SELL",
-    "weight_delta": -0.1,
-    "new_weight": 0.0,
+    "size_pct": -10.0,
     "entry_price": 214.5,
     "close_price": 218.06,
-    "day_low": 214.5,
-    "day_high": 218.83,
-    "score": null,
-    "rationale": "rsi_14=+40.654 \u00b7 cs_rsi_14=-1.608 \u00b7 cs_ret_20=-1.591"
+    "pnl_pct": -0.0163
   },
   {
     "date": "2026-03-02",
     "ticker": "DOHOL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 19.2,
     "close_price": 19.78,
-    "day_low": 18.87,
-    "day_high": 20.02,
-    "score": null,
-    "rationale": "rsi_14=+42.857 \u00b7 cs_volume_z=+1.450 \u00b7 volume_z=+1.573"
+    "pnl_pct": 0.03021
   },
   {
     "date": "2026-03-02",
     "ticker": "HALKB.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 46.48,
     "close_price": 49.6,
-    "day_low": 46.44,
-    "day_high": 50.6,
-    "score": null,
-    "rationale": "rsi_14=+65.575 \u00b7 cs_ret_20=+1.846 \u00b7 cs_rsi_14=+1.500"
+    "pnl_pct": 0.06713
   },
   {
     "date": "2026-03-02",
     "ticker": "TTKOM.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 64.05,
     "close_price": 65.8,
-    "day_low": 64.05,
-    "day_high": 66.55,
-    "score": null,
-    "rationale": "rsi_14=+52.145 \u00b7 cs_volume_z=+2.099 \u00b7 volume_z=+2.134"
+    "pnl_pct": 0.02732
   },
   {
     "date": "2026-03-02",
     "ticker": "TUPRS.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 209.89,
     "close_price": 215.94,
-    "day_low": 209.89,
-    "day_high": 226.13,
-    "score": null,
-    "rationale": "rsi_14=+48.499 \u00b7 cs_ret_20=-1.588 \u00b7 cs_momentum_60=-0.670"
+    "pnl_pct": 0.02883
   },
   {
     "date": "2026-03-02",
     "ticker": "VAKBN.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 39.16,
     "close_price": 39.38,
-    "day_low": 37.5,
-    "day_high": 39.76,
-    "score": null,
-    "rationale": "rsi_14=+67.247 \u00b7 cs_ret_20=+1.862 \u00b7 cs_rsi_14=+1.639"
+    "pnl_pct": 0.00562
   },
   {
     "date": "2026-03-09",
     "ticker": "ENKAI.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 85.53,
     "close_price": 90.02,
-    "day_low": 85.24,
-    "day_high": 90.02,
-    "score": null,
-    "rationale": "rsi_14=+17.718 \u00b7 cs_ret_5=-0.531 \u00b7 cs_rsi_14=-0.430"
+    "pnl_pct": 0.05257
   },
   {
     "date": "2026-03-09",
     "ticker": "KCHOL.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 175.54,
     "close_price": 181.03,
-    "day_low": 172.93,
-    "day_high": 181.13,
-    "score": null,
-    "rationale": "rsi_14=+12.602 \u00b7 cs_rsi_14=-0.752 \u00b7 volume_z=-0.414"
+    "pnl_pct": 0.0313
   },
   {
     "date": "2026-03-09",
     "ticker": "SOKM.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 58.3,
     "close_price": 59.15,
-    "day_low": 55.65,
-    "day_high": 59.15,
-    "score": null,
-    "rationale": "rsi_14=+18.730 \u00b7 volume_z=-1.361 \u00b7 cs_volume_z=-0.903"
+    "pnl_pct": 0.01458
   },
   {
     "date": "2026-03-09",
     "ticker": "TOASO.IS",
     "action": "BUY",
-    "weight_delta": 0.1,
-    "new_weight": 0.1,
+    "size_pct": 10.0,
     "entry_price": 261.95,
     "close_price": 270.37,
-    "day_low": 260.08,
-    "day_high": 270.37,
-    "score": null,
-    "rationale": "rsi_14=+11.803 \u00b7 cs_momentum_60=+0.758 \u00b7 cs_rsi_14=-0.803"
+    "pnl_pct": 0.03214
   }
 ]

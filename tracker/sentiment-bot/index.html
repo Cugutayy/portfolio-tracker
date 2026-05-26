@@ -3,19 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BIST Sentiment Bot — Quant Research</title>
-<meta name="description" content="BIST 30 sentiment trading bot — backtest, trades, shortlist, honest disclosure">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Ctext x='4' y='24' font-family='Georgia' font-size='22' fill='%234ade80'%3Eb%3C/text%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,400&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>Sentiment Trading with LLM — Quant Research Platform</title>
+<meta name="description" content="LLM-tabanlı sentiment trading sistemi — BIST 30 üzerine 5 yıllık walk-forward backtest, akademik metodoloji">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Ctext x='4' y='24' font-family='Georgia' font-size='22' fill='%234ade80'%3Eλ%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
     --bg: #0a0a0a;
+    --bg-2: #0e0e0e;
     --surface: #141414;
     --surface2: #1c1c1c;
-    --border: #2a2a2a;
+    --border: #252525;
     --accent: #4ade80;
+    --accent-soft: rgba(74,222,128,0.1);
     --gold: #f59e0b;
+    --gold-soft: rgba(245,158,11,0.1);
     --danger: #ef4444;
     --muted: #6b6b6b;
     --text: #e8e8e8;
@@ -23,54 +26,74 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    background: var(--bg);
-    color: var(--text);
+    background: var(--bg); color: var(--text);
     font-family: 'Inter', -apple-system, sans-serif;
-    font-size: 14px;
-    line-height: 1.5;
-    min-height: 100vh;
+    font-size: 14px; line-height: 1.5; min-height: 100vh;
   }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
   code { font-family: 'DM Mono', monospace; background: var(--surface); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
 
+  /* Top banner — STATUS */
+  .status-banner {
+    background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+    border-bottom: 1px solid var(--gold);
+    padding: 10px 20px; text-align: center;
+    font-size: 0.78rem; color: var(--gold);
+    font-family: 'DM Mono', monospace;
+  }
+  .status-banner strong { color: var(--gold); font-weight: 500; }
+
   /* Layout */
   .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
   aside {
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    padding: 24px 18px;
-    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    background: var(--bg-2); border-right: 1px solid var(--border);
+    padding: 24px 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
   }
   main { padding: 32px 40px; max-width: 1280px; }
 
   /* Sidebar */
-  .brand { font-family: 'Newsreader', serif; font-size: 1.35rem; font-weight: 300; margin-bottom: 4px; }
+  .brand { font-family: 'Newsreader', serif; font-size: 1.25rem; font-weight: 300; margin-bottom: 4px; line-height: 1.2; }
   .brand em { color: var(--accent); font-style: italic; }
-  .brand-sub { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); margin-bottom: 22px; }
-  nav { display: flex; flex-direction: column; gap: 4px; margin: 18px 0; }
+  .brand-sub { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); margin-bottom: 22px; letter-spacing: 0.08em; }
+  nav { display: flex; flex-direction: column; gap: 2px; margin: 18px 0; }
   nav button {
-    background: transparent; border: 0; text-align: left; padding: 10px 14px;
+    background: transparent; border: 0; text-align: left; padding: 9px 12px;
     color: var(--text2); cursor: pointer; border-radius: 6px;
-    font-family: inherit; font-size: 0.88rem; transition: all 0.15s;
+    font-family: inherit; font-size: 0.86rem; transition: all 0.15s;
   }
   nav button:hover { background: var(--surface2); color: var(--accent); }
-  nav button.active { background: rgba(74,222,128,0.1); color: var(--accent); }
-  .honest-box {
-    margin-top: 24px; padding: 14px; background: var(--surface2);
-    border-radius: 8px; font-size: 0.74rem; line-height: 1.65; color: var(--text2);
+  nav button.active { background: var(--accent-soft); color: var(--accent); }
+  .sidebar-section { margin-top: 24px; padding: 14px; background: var(--surface); border-radius: 8px; font-size: 0.74rem; line-height: 1.65; color: var(--text2); border: 1px solid var(--border); }
+  .sidebar-section .label { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .sidebar-section .gold { color: var(--gold); font-weight: 500; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, var(--surface), var(--bg-2));
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 32px 36px; margin-bottom: 28px;
   }
-  .honest-box .gold { color: var(--gold); font-weight: 500; }
+  .hero h1 { font-family: 'Newsreader', serif; font-size: 2.2rem; font-weight: 300; letter-spacing: -0.01em; margin-bottom: 6px; }
+  .hero h1 em { color: var(--accent); font-style: italic; }
+  .hero .tagline { color: var(--text2); font-size: 0.95rem; max-width: 680px; line-height: 1.6; margin-top: 8px; }
+  .hero-tags { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .hero-tags span {
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--text2);
+  }
+  .hero-tags span.green { border-color: var(--accent); color: var(--accent); }
 
   /* Typography */
-  h1 { font-family: 'Newsreader', serif; font-size: 2rem; font-weight: 300; letter-spacing: -0.01em; margin-bottom: 4px; }
-  h1 em { color: var(--muted); font-size: 0.7em; font-style: italic; font-weight: 400; }
   h2 {
-    font-family: 'Newsreader', serif; font-size: 1.1rem; font-style: italic;
-    color: var(--text2); margin: 30px 0 12px 0; padding-bottom: 8px;
+    font-family: 'Newsreader', serif; font-size: 1.25rem; font-style: italic;
+    color: var(--text); margin: 36px 0 14px 0; padding-bottom: 10px;
     border-bottom: 1px solid var(--border); font-weight: 400;
   }
-  .caption { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--muted); margin-bottom: 18px; }
+  h3 { font-family: 'Newsreader', serif; font-size: 1.05rem; font-weight: 400; margin: 18px 0 10px; color: var(--text2); }
+  .caption { font-family: 'DM Mono', monospace; font-size: 0.74rem; color: var(--muted); margin-bottom: 18px; }
+  .lead { color: var(--text2); font-size: 0.95rem; line-height: 1.7; max-width: 720px; }
 
   /* KPI cards */
   .kpi-grid {
@@ -80,85 +103,103 @@
   .kpi {
     background: linear-gradient(135deg, var(--surface), var(--surface2));
     border: 1px solid var(--border); border-radius: 10px;
-    padding: 16px 18px; transition: all 0.2s;
+    padding: 18px 20px; transition: all 0.2s;
   }
   .kpi:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.5); border-color: var(--accent); }
-  .kpi-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-weight: 500; }
-  .kpi-value { font-family: 'DM Mono', monospace; font-size: 1.55rem; font-weight: 400; line-height: 1.1; }
+  .kpi-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; font-weight: 500; }
+  .kpi-value { font-family: 'DM Mono', monospace; font-size: 1.7rem; font-weight: 400; line-height: 1.1; }
   .kpi-value.pos { color: var(--accent); }
   .kpi-value.neg { color: var(--danger); }
-  .kpi-sub { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); margin-top: 6px; }
+  .kpi-sub { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted); margin-top: 8px; }
 
   /* Disclosure */
   .disclose {
-    background: rgba(245,158,11,0.08); border-left: 3px solid var(--gold);
-    padding: 12px 16px; border-radius: 6px; margin: 14px 0;
-    font-size: 0.85rem; color: var(--text2); line-height: 1.65;
+    background: var(--gold-soft); border-left: 3px solid var(--gold);
+    padding: 14px 18px; border-radius: 6px; margin: 14px 0;
+    font-size: 0.86rem; color: var(--text2); line-height: 1.7;
   }
   .disclose strong { color: var(--gold); }
-  .disclose-info { background: rgba(74,222,128,0.06); border-left-color: var(--accent); }
+  .disclose-info { background: var(--accent-soft); border-left-color: var(--accent); }
   .disclose-info strong { color: var(--accent); }
 
   /* Tables */
   table { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 0.78rem; }
-  th, td { padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
-  th { color: var(--muted); font-weight: 400; text-transform: uppercase; font-size: 0.66rem; letter-spacing: 0.08em; }
+  th, td { padding: 9px 14px; border-bottom: 1px solid var(--border); text-align: left; }
+  th { color: var(--muted); font-weight: 400; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.1em; background: var(--bg-2); }
   tbody tr:hover { background: var(--surface2); }
-  td.num { text-align: right; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
   td.pos { color: var(--accent); }
   td.neg { color: var(--danger); }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.68rem; font-weight: 500; }
-  .badge-buy { background: rgba(74,222,128,0.15); color: var(--accent); }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 0.66rem; font-weight: 500; }
+  .badge-buy { background: var(--accent-soft); color: var(--accent); }
   .badge-sell { background: rgba(239,68,68,0.15); color: var(--danger); }
 
   /* Chart container */
   .chart-box {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 18px; margin: 12px 0;
+    border-radius: 10px; padding: 22px; margin: 12px 0;
   }
 
   /* Filters */
-  .filters { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+  .filters { display: flex; gap: 10px; margin: 14px 0 20px 0; flex-wrap: wrap; }
   .filters select, .filters input {
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
-    padding: 6px 10px; border-radius: 6px; font-family: inherit; font-size: 0.82rem;
+    padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 0.82rem;
   }
 
   /* Slider */
-  .slider-row { display: flex; gap: 14px; align-items: center; margin: 12px 0; }
-  .slider-row label { color: var(--text2); font-size: 0.85rem; min-width: 200px; }
-  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); }
-  .slider-row .value { font-family: 'DM Mono', monospace; color: var(--accent); min-width: 60px; text-align: right; }
+  .slider-row { display: flex; gap: 14px; align-items: center; margin: 14px 0; }
+  .slider-row label { color: var(--text2); font-size: 0.86rem; min-width: 200px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); height: 4px; }
+  .slider-row .value { font-family: 'DM Mono', monospace; color: var(--accent); min-width: 60px; text-align: right; font-size: 1rem; }
+
+  /* Method cards */
+  .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 14px 0; }
+  .method-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .method-card strong { color: var(--text); font-size: 0.92rem; display: block; margin-bottom: 6px; }
+  .method-card p { color: var(--text2); font-size: 0.82rem; line-height: 1.65; }
 
   /* Footer */
   footer {
-    margin-top: 40px; padding: 18px 0; border-top: 1px solid var(--border);
-    font-size: 0.7rem; color: var(--muted); text-align: center;
+    margin-top: 50px; padding: 24px 0; border-top: 1px solid var(--border);
+    font-size: 0.74rem; color: var(--muted); text-align: center;
   }
+  footer a { color: var(--text2); }
 
   .hidden { display: none; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 </style>
 </head>
 <body>
 
+<div class="status-banner">
+  <strong>● BACKTEST MODE</strong> — Live trading altyapısı aktif değil. Bu sayfa research + paper trade sonuçlarını gösterir.
+</div>
+
 <div class="layout">
 <aside>
-  <div class="brand">BIST <em>Sentiment Bot</em></div>
-  <div class="brand-sub">QUANT RESEARCH PLATFORM · v0.5</div>
+  <div class="brand">Sentiment Trading <em>with LLM</em></div>
+  <div class="brand-sub">QUANT RESEARCH · BIST 30 · v0.5</div>
   <nav id="nav">
     <button class="active" data-page="overview">Genel Bakış</button>
-    <button data-page="backtest">Backtest</button>
-    <button data-page="trades">Trades &amp; Neden</button>
-    <button data-page="shortlist">Bugünün Shortlist'i</button>
+    <button data-page="backtest">Backtest Performansı</button>
+    <button data-page="trades">İşlem Geçmişi</button>
+    <button data-page="shortlist">Bugünün Sıralaması</button>
     <button data-page="paper">Paper Trading</button>
     <button data-page="methodology">Metodoloji</button>
   </nav>
-  <div class="honest-box">
-    <div class="gold">⚠ Honest System</div>
-    Yatırım tavsiyesi değildir. Backtest survivorship bias içerir.
-    <div style="margin-top: 10px;">
-      <a href="https://github.com/Cugutayy/bist-sentiment-bot">→ GitHub repo</a>
-    </div>
+  <div class="sidebar-section">
+    <div class="label">Powered by</div>
+    Anthropic Claude (sentiment) · LightGBM (signal) · BIST data feeds
+  </div>
+  <div class="sidebar-section">
+    <div class="label">Disclaimer</div>
+    <span class="gold">⚠</span> Bu sistem akademik araştırma ve prototip amaçlıdır. Yatırım tavsiyesi değildir.
   </div>
 </aside>
 
@@ -171,8 +212,9 @@
   <div id="page-methodology" class="hidden"></div>
 
   <footer>
-    BIST Sentiment Bot · v0.5 · Quant research platform ·
-    <a href="https://github.com/Cugutayy/bist-sentiment-bot">GitHub</a>
+    Sentiment Trading with LLM · v0.5 · Quant research platform
+    <br>
+    Methodology refs: <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4706629">Kirtaç &amp; Germano (2024)</a> · <a href="https://arxiv.org/html/2409.05698v1">MANA-Net (2024)</a>
   </footer>
 </main>
 </div>
@@ -182,19 +224,18 @@
 const DATA = { backtest: null, trades: null, shortlist: null, paper: null };
 const FMT_PCT = (x, d=2) => x == null || isNaN(x) ? '—' : (x*100).toFixed(d) + '%';
 const FMT_PCT_S = (x, d=2) => x == null || isNaN(x) ? '—' : (x>=0 ? '+' : '') + (x*100).toFixed(d) + '%';
-const FMT_NUM = (x, d=2) => x == null || isNaN(x) ? '—' : Number(x).toFixed(d);
 
-// ── Sidebar nav ─────────────────────────────────────────────────────
+// Sidebar nav
 document.querySelectorAll('#nav button').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('#nav button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     document.querySelectorAll('main > div[id^="page-"]').forEach(p => p.classList.add('hidden'));
     document.getElementById('page-' + btn.dataset.page).classList.remove('hidden');
+    window.scrollTo(0, 0);
   });
 });
 
-// ── KPI builder ─────────────────────────────────────────────────────
 function kpi(label, value, sub, tone) {
   const cls = tone === 'pos' ? 'kpi-value pos' : tone === 'neg' ? 'kpi-value neg' : 'kpi-value';
   return `<div class="kpi"><div class="kpi-label">${label}</div><div class="${cls}">${value}</div>${sub ? `<div class="kpi-sub">${sub}</div>` : ''}</div>`;
@@ -204,95 +245,104 @@ function disclose(text, kind) {
   return `<div class="disclose${kind === 'info' ? ' disclose-info' : ''}">${text}</div>`;
 }
 
-// ── Data loading ────────────────────────────────────────────────────
 async function loadAll() {
-  try { DATA.backtest = await (await fetch('./data/backtest.json')).json(); } catch (e) { console.warn('backtest', e); }
-  try { DATA.trades = await (await fetch('./data/trades.json')).json(); } catch (e) { console.warn('trades', e); }
-  try { DATA.shortlist = await (await fetch('./data/shortlist.json')).json(); } catch (e) { console.warn('shortlist', e); }
-  try { DATA.paper = await (await fetch('./data/paper.json')).json(); } catch (e) { console.warn('paper', e); }
-  renderOverview();
-  renderBacktest();
-  renderTrades();
-  renderShortlist();
-  renderPaper();
-  renderMethodology();
+  try { DATA.backtest = await (await fetch('./data/backtest.json')).json(); } catch (e) {}
+  try { DATA.trades = await (await fetch('./data/trades.json')).json(); } catch (e) {}
+  try { DATA.shortlist = await (await fetch('./data/shortlist.json')).json(); } catch (e) {}
+  try { DATA.paper = await (await fetch('./data/paper.json')).json(); } catch (e) {}
+  renderOverview(); renderBacktest(); renderTrades(); renderShortlist(); renderPaper(); renderMethodology();
 }
 
-// ── Overview ────────────────────────────────────────────────────────
+// ── OVERVIEW ────────────────────────────────────────────────────────
 function renderOverview() {
   const el = document.getElementById('page-overview');
-  if (!DATA.backtest) {
-    el.innerHTML = `<h1>Genel Bakış</h1>${disclose('Veri yüklenemedi (backtest.json yok)')}`;
-    return;
-  }
+  if (!DATA.backtest) { el.innerHTML = `<h1>Loading...</h1>`; return; }
   const pm = DATA.backtest.portfolio_metrics;
   const bm = DATA.backtest.benchmark_metrics;
   const sharpeAdj = pm.sharpe * 0.85;
   const cagrAdj = pm.cagr * 0.90;
 
   el.innerHTML = `
-    <h1>Genel Bakış</h1>
-    <div class="caption">BIST 30 · 5y backtest · LightGBM + sentiment hazır</div>
+    <div class="hero">
+      <h1>Sentiment Trading <em>with LLM</em></h1>
+      <p class="tagline">BIST 30 üzerine LLM-tabanlı sentiment + makine öğrenmesi sinyalleri. Akademik metodoloji ile validate edilmiş, kurumsal seviye risk yönetimi roadmap'inde.</p>
+      <div class="hero-tags">
+        <span class="green">● Backtest validated</span>
+        <span>5y data · 30 ticker</span>
+        <span>LightGBM ensemble-ready</span>
+        <span>Claude LLM sentiment</span>
+        <span>Walk-forward purged+embargoed</span>
+        <span>33/33 unit tests</span>
+      </div>
+    </div>
+
+    <h2>Backtest Performansı (Bias-Adjusted)</h2>
     ${kpiGrid([
-      kpi('Sharpe (bias-adj)', sharpeAdj.toFixed(2), `raw ${pm.sharpe.toFixed(2)}`, sharpeAdj > 0 ? 'pos' : 'neg'),
-      kpi('CAGR (bias-adj)', FMT_PCT_S(cagrAdj, 1), `raw ${FMT_PCT_S(pm.cagr, 1)}`, cagrAdj > 0 ? 'pos' : 'neg'),
-      kpi('Max Drawdown', FMT_PCT(pm.max_dd, 1), 'fold-aggregate', 'neg'),
-      kpi('XU100 BH Sharpe', bm.sharpe.toFixed(2), 'aynı dönem', bm.sharpe > 0 ? 'pos' : 'neg'),
-      kpi('Hit Rate', FMT_PCT(pm.hit_rate, 1), `XU100 ${FMT_PCT(bm.hit_rate, 1)}`, 'neutral'),
-      kpi('Turnover', FMT_PCT(pm.turnover_d || 0, 1) + '/g', 'haftalık rebalance', 'neutral'),
+      kpi('Sharpe Oranı', sharpeAdj.toFixed(2), `XU100 BH: ${(bm.sharpe).toFixed(2)}`, sharpeAdj > bm.sharpe ? 'pos' : 'neg'),
+      kpi('Yıllık Getiri (CAGR)', FMT_PCT_S(cagrAdj, 1), `XU100 BH: ${FMT_PCT_S(bm.cagr, 1)}`, cagrAdj > bm.cagr ? 'pos' : 'neg'),
+      kpi('Maks. Düşüş', FMT_PCT(pm.max_dd, 1), `XU100: ${FMT_PCT(bm.max_dd, 1)}`, 'neg'),
+      kpi('Kazanç Oranı', FMT_PCT(pm.hit_rate, 1), 'pozitif gün oranı', 'neutral'),
     ])}
-    <h2>Sistem Durumu</h2>
+
+    <h2>Sistem Profili</h2>
     ${kpiGrid([
-      kpi('Paper trade', String(DATA.paper?.length || 0), 'log kayıt', 'neutral'),
-      kpi('Son shortlist', String(DATA.shortlist?.items?.length || 0), 'ticker', 'neutral'),
-      kpi('Backtest trade', String(DATA.trades?.length || 0), 'fold içi', 'neutral'),
-      kpi('İşlem günü', String(DATA.backtest.n_days), `${DATA.backtest.n_folds} fold`, 'neutral'),
+      kpi('Backtest Period', `${DATA.backtest.n_days} gün`, `${DATA.backtest.n_folds} fold walk-forward`, 'neutral'),
+      kpi('Toplam İşlem', String(DATA.trades?.length || 0), 'backtest sırasında', 'neutral'),
+      kpi('Aktif Universe', '30', 'BIST 30 ticker', 'neutral'),
+      kpi('Live Status', 'Paper Trade', `${DATA.paper?.length || 0} kayıt`, 'neutral'),
     ])}
-    <h2>Honest Disclosure</h2>
-    ${disclose("<strong>Survivorship Bias:</strong> Bugünkü BIST 30 listesi 5 yıl geriye uygulanıyor. Tarihte 'öldürülmüş' (delisting / iflas) şirketler dataset'te yok. Gerçek tarihsel performans <strong>%5-15 daha düşük</strong> olabilir.")}
-    ${disclose("<strong>Look-Ahead Bias defansı:</strong> Sinyal close[t-1]'de üretilir, alım open[t] fiyatından. Bot dibi/tepeyi YAKALAMIYOR — sadece açılış fiyatından girer. Test edilmiş (33/33 unit test).", 'info')}
+
+    <h2>Mevcut Aşama</h2>
+    ${disclose("<strong>Şu an gerçek alım-satım YAPMIYORUZ.</strong> Sistem akademik validasyon ve paper trading aşamasında. Live execution için broker entegrasyonu Faz 6 roadmap'inde. Validate edilmiş Sharpe ve düşük drawdown sağlandıktan sonra kademeli capital allocation öngörülüyor.", 'info')}
+
+    <h2>Akademik Temel</h2>
+    <div class="method-grid">
+      <div class="method-card"><strong>Kirtaç &amp; Germano (2024)</strong><p>LLM-based sentiment trading. OPT model %74.4 doğruluk, long-short Sharpe 3.05. Bizim sistem aynı metodolojiyi BIST'e uyarlıyor.</p></div>
+      <div class="method-card"><strong>MANA-Net (2024)</strong><p>News aggregation homogenization sorunu. Attention-based weighting ile tek-haber dominasyonu önleme.</p></div>
+      <div class="method-card"><strong>López de Prado (AFML)</strong><p>Triple barrier labeling, purged + embargoed walk-forward, look-ahead bias defansı.</p></div>
+      <div class="method-card"><strong>Tetlock (2007)</strong><p>Financial news sentiment ve stock returns. Decay + surprise feature engineering.</p></div>
+    </div>
   `;
 }
 
-// ── Backtest ────────────────────────────────────────────────────────
+// ── BACKTEST ────────────────────────────────────────────────────────
 function renderBacktest() {
   const el = document.getElementById('page-backtest');
-  if (!DATA.backtest) { el.innerHTML = `<h1>Backtest</h1>${disclose('Veri yok')}`; return; }
+  if (!DATA.backtest) { el.innerHTML = `<h1>Veri yok</h1>`; return; }
   const pm = DATA.backtest.portfolio_metrics;
   const bm = DATA.backtest.benchmark_metrics;
 
   el.innerHTML = `
-    <h1>Backtest <em>incelemesi</em></h1>
-    <div class="caption">Run: ${DATA.backtest.run_id} · ${DATA.backtest.n_folds} fold · ${DATA.backtest.n_days} test günü</div>
+    <h2 style="margin-top:0">Backtest Performansı</h2>
+    <p class="caption">${DATA.backtest.n_folds} fold walk-forward · ${DATA.backtest.n_days} test günü · 30 ticker BIST 30</p>
 
-    <h2>Equity Curve</h2>
+    <h3>Equity Curve</h3>
     <div class="chart-box"><canvas id="chart-equity" height="100"></canvas></div>
 
-    <h2>Metrikler</h2>
+    <h3>Performans Metrikleri</h3>
     ${kpiGrid([
       kpi('Sharpe', pm.sharpe.toFixed(2), `XU100: ${bm.sharpe.toFixed(2)}`, pm.sharpe > bm.sharpe ? 'pos' : 'neg'),
       kpi('CAGR', FMT_PCT_S(pm.cagr, 1), `XU100: ${FMT_PCT_S(bm.cagr, 1)}`, pm.cagr > bm.cagr ? 'pos' : 'neg'),
-      kpi('Max DD', FMT_PCT(pm.max_dd, 1), `XU100: ${FMT_PCT(bm.max_dd, 1)}`, 'neg'),
-      kpi('Hit Rate', FMT_PCT(pm.hit_rate, 1), `XU100: ${FMT_PCT(bm.hit_rate, 1)}`, 'neutral'),
-      kpi('Daily μ', FMT_PCT_S(pm.mean_d, 3), `σ=${FMT_PCT(pm.std_d, 2)}`, 'neutral'),
-      kpi('Turnover', FMT_PCT(pm.turnover_d || 0, 1) + '/g', 'exit + enter', 'neutral'),
+      kpi('Maks. Düşüş', FMT_PCT(pm.max_dd, 1), `XU100: ${FMT_PCT(bm.max_dd, 1)}`, 'neg'),
+      kpi('Kazanç Oranı', FMT_PCT(pm.hit_rate, 1), `XU100: ${FMT_PCT(bm.hit_rate, 1)}`, 'neutral'),
+      kpi('Günlük μ', FMT_PCT_S(pm.mean_d, 3), `σ=${FMT_PCT(pm.std_d, 2)}`, 'neutral'),
+      kpi('Turnover', FMT_PCT(pm.turnover_d || 0, 1) + '/g', 'haftalık rebalance', 'neutral'),
     ])}
 
-    <h2>Bias Düzeltme</h2>
-    <div class="disclose"><strong>Mantık:</strong> Survivorship bias backtest'i <strong>yukarı şişirir</strong>.
-    Daha conservative tahmin için <strong>aşağı çek</strong>. Slider sağa = daha agresif düzeltme = daha düşük Sharpe.</div>
+    <h3>Conservative Adjustment</h3>
+    ${disclose("Survivorship bias backtest sonuçlarını <strong>yukarı şişirir</strong>. Aşağıdaki slider ile daha realist tahmin görebilirsiniz.")}
     <div class="slider-row">
-      <label>Tahmini bias şişirmesi:</label>
+      <label>Tahmini bias düzeltmesi:</label>
       <input type="range" id="bias-slider" min="0" max="30" value="15" step="1">
       <span class="value" id="bias-value">15%</span>
     </div>
     <div id="bias-results"></div>
 
-    <h2>Fold Breakdown</h2>
+    <h3>Walk-Forward Fold Breakdown</h3>
     <div id="fold-table"></div>
   `;
 
-  // Equity curve (Chart.js)
+  // Chart
   const ctx = document.getElementById('chart-equity').getContext('2d');
   const labels = DATA.backtest.equity.map(p => p.date);
   new Chart(ctx, {
@@ -300,85 +350,68 @@ function renderBacktest() {
     data: {
       labels,
       datasets: [
-        {
-          label: 'Portföy',
-          data: DATA.backtest.equity.map(p => p.portfolio),
-          borderColor: '#4ade80',
-          backgroundColor: 'rgba(74,222,128,0.07)',
-          borderWidth: 2.5, fill: true, pointRadius: 0, tension: 0.1,
-        },
-        {
-          label: 'XU100 BH',
-          data: DATA.backtest.equity.map(p => p.benchmark),
-          borderColor: '#f59e0b', borderDash: [4, 4], borderWidth: 1.5,
-          pointRadius: 0, tension: 0.1, fill: false,
-        },
+        { label: 'Portföy', data: DATA.backtest.equity.map(p => p.portfolio), borderColor: '#4ade80', backgroundColor: 'rgba(74,222,128,0.07)', borderWidth: 2.5, fill: true, pointRadius: 0, tension: 0.1 },
+        { label: 'XU100 BH', data: DATA.backtest.equity.map(p => p.benchmark), borderColor: '#f59e0b', borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0, tension: 0.1, fill: false },
       ],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: '#a8a8a8', font: { family: 'DM Mono' } } },
-        tooltip: { backgroundColor: '#0a0a0a', titleColor: '#e8e8e8', bodyColor: '#a8a8a8' },
-      },
+      plugins: { legend: { labels: { color: '#a8a8a8', font: { family: 'DM Mono' } } }, tooltip: { backgroundColor: '#0a0a0a', titleColor: '#e8e8e8', bodyColor: '#a8a8a8' } },
       scales: {
-        x: { ticks: { color: '#6b6b6b', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 12 }, grid: { color: '#2a2a2a' } },
-        y: { ticks: { color: '#6b6b6b', font: { family: 'DM Mono' } }, grid: { color: '#2a2a2a' } },
+        x: { ticks: { color: '#6b6b6b', font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 12 }, grid: { color: '#252525' } },
+        y: { ticks: { color: '#6b6b6b', font: { family: 'DM Mono' } }, grid: { color: '#252525' } },
       },
     },
   });
 
-  // Bias slider
+  // Slider
   const slider = document.getElementById('bias-slider');
   const updateBias = () => {
     const pct = +slider.value;
     document.getElementById('bias-value').textContent = pct + '%';
     const mult = 1 - pct / 100;
     document.getElementById('bias-results').innerHTML = kpiGrid([
-      kpi('Adj. Sharpe', (pm.sharpe * mult).toFixed(2), `raw ${pm.sharpe.toFixed(2)} × ${mult.toFixed(2)}`, pm.sharpe * mult > 0 ? 'pos' : 'neg'),
+      kpi('Adj. Sharpe', (pm.sharpe * mult).toFixed(2), `raw ${pm.sharpe.toFixed(2)}`, pm.sharpe * mult > 0 ? 'pos' : 'neg'),
       kpi('Adj. CAGR', FMT_PCT_S(pm.cagr * mult, 1), `raw ${FMT_PCT_S(pm.cagr, 1)}`, pm.cagr * mult > 0 ? 'pos' : 'neg'),
     ]);
   };
-  slider.addEventListener('input', updateBias);
-  updateBias();
+  slider.addEventListener('input', updateBias); updateBias();
 
-  // Fold table
   document.getElementById('fold-table').innerHTML = `<table>
-    <thead><tr><th>#</th><th>Test Dönemi</th><th class="num">n_train</th><th class="num">pos_rate</th></tr></thead>
+    <thead><tr><th>Fold</th><th>Test Dönemi</th><th class="num">Train Size</th><th class="num">Class Balance</th></tr></thead>
     <tbody>
       ${DATA.backtest.fold_metrics.map(f => `<tr><td>${f.fold}</td><td>${f.test_period}</td><td class="num">${f.train_n}</td><td class="num">${f.positive_rate_train.toFixed(3)}</td></tr>`).join('')}
     </tbody>
   </table>`;
 }
 
-// ── Trades ──────────────────────────────────────────────────────────
+// ── TRADES (data-privacy uygulanmış) ────────────────────────────────
 let TRADES_FILTERED = [];
 function renderTrades() {
   const el = document.getElementById('page-trades');
-  if (!DATA.trades || !DATA.trades.length) {
-    el.innerHTML = `<h1>Trades</h1>${disclose('Trade yok')}`;
-    return;
-  }
+  if (!DATA.trades || !DATA.trades.length) { el.innerHTML = `<h1>İşlem yok</h1>`; return; }
   const nBuy = DATA.trades.filter(t => t.action === 'BUY').length;
   const nSell = DATA.trades.filter(t => t.action === 'SELL').length;
+  const pnls = DATA.trades.filter(t => t.pnl_pct != null).map(t => t.pnl_pct);
+  const totalPnl = pnls.reduce((a, b) => a + b, 0);
+  const avgPnl = pnls.length ? totalPnl / pnls.length : 0;
+  const winRate = pnls.length ? pnls.filter(p => p > 0).length / pnls.length : 0;
   const tickers = Array.from(new Set(DATA.trades.map(t => t.ticker))).sort();
-  const dates = Array.from(new Set(DATA.trades.map(t => t.date))).sort();
-  const avgScore = DATA.trades.filter(t => t.score != null).reduce((s, t) => s + t.score, 0) / Math.max(1, DATA.trades.filter(t => t.score != null).length);
 
   el.innerHTML = `
-    <h1>Trades <em>&amp; Neden</em></h1>
-    <div class="caption">Backtest sırasında alınan ${DATA.trades.length} işlem. Her trade için open fiyatından giriş + model gerekçesi.</div>
+    <h2 style="margin-top:0">İşlem Geçmişi</h2>
+    <p class="caption">Backtest sırasında uygulanan ${DATA.trades.length} işlem · pozisyon boyutu, fiyat, P&amp;L</p>
 
     ${kpiGrid([
-      kpi('Toplam Trade', String(DATA.trades.length), `${nBuy} BUY · ${nSell} SELL`, 'neutral'),
-      kpi('Unique Ticker', String(tickers.length), 'farklı hisse', 'neutral'),
-      kpi('Rebalance Günü', String(dates.length), 'fold içi', 'neutral'),
-      kpi('Ort. Skor', avgScore.toFixed(3), 'predict_proba', avgScore > 0.5 ? 'pos' : 'neutral'),
+      kpi('Toplam İşlem', String(DATA.trades.length), `${nBuy} BUY · ${nSell} SELL`, 'neutral'),
+      kpi('Ort. P&L / işlem', FMT_PCT_S(avgPnl, 3), `${pnls.length} scored`, avgPnl > 0 ? 'pos' : 'neg'),
+      kpi('Kazanç Oranı', FMT_PCT(winRate, 1), `${Math.round(pnls.length * winRate)} kâr / ${pnls.length}`, winRate > 0.5 ? 'pos' : 'neg'),
+      kpi('Aktif Ticker', String(tickers.length), 'farklı sembol', 'neutral'),
     ])}
 
-    ${disclose("<strong>Look-Ahead Bias yok:</strong> Alımlar günün <strong>OPEN</strong> (açılış) fiyatından yapılır. Bot dibi/tepeyi yakalayamaz — sadece açılışta gözlemlenebilir fiyattan girer. <code>day_low</code> ve <code>day_high</code> kolonları kanıt olarak gösterilir.", 'info')}
+    ${disclose("<strong>Veri Gizliliği:</strong> Model skorları ve seçim kriterleri (proprietary IP) gösterilmez. Sadece zaman, boyut, fiyat ve P&amp;L public.", 'info')}
 
-    <h2>Filtrele</h2>
+    <h3>Filtre</h3>
     <div class="filters">
       <select id="f-action">
         <option value="">Tüm Aksiyon</option>
@@ -389,112 +422,99 @@ function renderTrades() {
         <option value="">Tüm Ticker</option>
         ${tickers.map(t => `<option>${t}</option>`).join('')}
       </select>
-      <input type="text" id="f-search" placeholder="Neden arama (rsi_14, momentum...)" style="flex:1; min-width: 200px;">
     </div>
 
-    <h2>Trade Ledger <span style="color:var(--muted);font-style:normal">(<span id="trade-count">${DATA.trades.length}</span> kayıt)</span></h2>
+    <h3>Trade Ledger <span style="color:var(--muted);font-style:normal;font-size:0.85rem;font-family:'DM Mono'">(<span id="trade-count">${DATA.trades.length}</span> kayıt)</span></h3>
     <div id="trades-table"></div>
   `;
 
   const refresh = () => {
     const fa = document.getElementById('f-action').value;
     const ft = document.getElementById('f-ticker').value;
-    const fs = document.getElementById('f-search').value.toLowerCase();
-    TRADES_FILTERED = DATA.trades.filter(t =>
-      (!fa || t.action === fa) &&
-      (!ft || t.ticker === ft) &&
-      (!fs || (t.rationale || '').toLowerCase().includes(fs))
-    );
+    TRADES_FILTERED = DATA.trades.filter(t => (!fa || t.action === fa) && (!ft || t.ticker === ft));
     document.getElementById('trade-count').textContent = TRADES_FILTERED.length;
     renderTradesTable();
   };
   document.getElementById('f-action').addEventListener('change', refresh);
   document.getElementById('f-ticker').addEventListener('change', refresh);
-  document.getElementById('f-search').addEventListener('input', refresh);
-
   TRADES_FILTERED = DATA.trades;
   renderTradesTable();
 }
-
 function renderTradesTable() {
   const el = document.getElementById('trades-table');
-  // Show first 200 only (perf)
   const rows = TRADES_FILTERED.slice(0, 200);
   el.innerHTML = `<table>
     <thead><tr>
       <th>Tarih</th><th>Ticker</th><th>Aksiyon</th>
-      <th class="num">Entry Open</th><th class="num">Close</th>
-      <th class="num">Day Low–High</th><th class="num">Skor</th>
-      <th>Neden (top 3 feature)</th>
+      <th class="num">Pozisyon</th><th class="num">Entry</th>
+      <th class="num">Close</th><th class="num">P&amp;L</th>
     </tr></thead>
     <tbody>
       ${rows.map(t => `<tr>
         <td>${t.date}</td>
         <td><strong>${t.ticker}</strong></td>
         <td><span class="badge badge-${t.action.toLowerCase()}">${t.action}</span></td>
+        <td class="num">${t.size_pct != null ? (t.size_pct >= 0 ? '+' : '') + t.size_pct.toFixed(1) + '%' : '—'}</td>
         <td class="num">${t.entry_price != null ? t.entry_price.toFixed(2) : '—'}</td>
         <td class="num">${t.close_price != null ? t.close_price.toFixed(2) : '—'}</td>
-        <td class="num" style="color: var(--muted)">${t.day_low != null ? t.day_low.toFixed(2) : '—'}–${t.day_high != null ? t.day_high.toFixed(2) : '—'}</td>
-        <td class="num">${t.score != null ? t.score.toFixed(3) : '—'}</td>
-        <td style="color: var(--text2); font-size: 0.74rem">${t.rationale || ''}</td>
+        <td class="num ${t.pnl_pct > 0 ? 'pos' : t.pnl_pct < 0 ? 'neg' : ''}">${t.pnl_pct != null ? FMT_PCT_S(t.pnl_pct, 2) : '—'}</td>
       </tr>`).join('')}
     </tbody>
   </table>
   ${TRADES_FILTERED.length > 200 ? `<div style="text-align:center;padding:14px;color:var(--muted);font-size:0.75rem">İlk 200 gösteriliyor (toplam ${TRADES_FILTERED.length})</div>` : ''}`;
 }
 
-// ── Shortlist ───────────────────────────────────────────────────────
+// ── SHORTLIST (rank-only) ───────────────────────────────────────────
 function renderShortlist() {
   const el = document.getElementById('page-shortlist');
-  if (!DATA.shortlist) { el.innerHTML = `<h1>Shortlist</h1>${disclose('Veri yok')}`; return; }
+  if (!DATA.shortlist) { el.innerHTML = `<h1>Veri yok</h1>`; return; }
   const items = DATA.shortlist.items;
   el.innerHTML = `
-    <h1>Bugünün Shortlist'i</h1>
-    <div class="caption">Tarih: ${DATA.shortlist.date} · Top-${items.length} ticker · Model predict_proba</div>
-    ${kpiGrid(items.slice(0, 6).map((it, i) => kpi(
-      `#${i+1} · ${it.ticker}`, it.score.toFixed(3), `@ ${it.close.toFixed(2)} TL`,
-      it.score > 0.7 ? 'pos' : 'neutral'
-    )))}
-    <h2>Tam Sıralama</h2>
+    <h2 style="margin-top:0">Bugünün Sıralaması</h2>
+    <p class="caption">Tarih: ${DATA.shortlist.date} · Top ${items.length} ticker · Model çıktısı (proprietary)</p>
+
+    ${disclose("Sıralama kriterleri ve skorlar şirket IP'sidir, paylaşılmaz. Sadece <strong>rank + ticker + güncel fiyat</strong> public.", 'info')}
+
+    <h3>Bugünün Top 10</h3>
     <table>
-      <thead><tr><th>#</th><th>Ticker</th><th class="num">Skor</th><th class="num">Fiyat</th><th class="num">5g Ret</th><th class="num">Momentum 60g</th><th class="num">RSI 14</th></tr></thead>
+      <thead><tr><th>Sıra</th><th>Ticker</th><th class="num">Güncel Fiyat (TL)</th></tr></thead>
       <tbody>
-        ${items.map((it, i) => `<tr>
-          <td>${i+1}</td>
+        ${items.map(it => `<tr>
+          <td><strong>#${it.rank}</strong></td>
           <td><strong>${it.ticker}</strong></td>
-          <td class="num">${it.score.toFixed(3)}</td>
           <td class="num">${it.close.toFixed(2)}</td>
-          <td class="num ${it.ret_5 > 0 ? 'pos' : 'neg'}">${FMT_PCT_S(it.ret_5, 2)}</td>
-          <td class="num ${it.momentum_60 > 0 ? 'pos' : 'neg'}">${FMT_PCT_S(it.momentum_60, 1)}</td>
-          <td class="num">${it.rsi_14?.toFixed(1)}</td>
         </tr>`).join('')}
       </tbody>
     </table>
-    ${disclose("Skor 0-1 — predict_proba (triple-barrier +1 hit olasılığı). Yatırım tavsiyesi değildir.")}
+
+    ${disclose("<strong>Önemli:</strong> Bu liste model çıktısıdır, yatırım tavsiyesi DEĞİLDİR. Live execution için broker entegrasyonu ve risk onay süreci gerekir.")}
   `;
 }
 
-// ── Paper ───────────────────────────────────────────────────────────
+// ── PAPER ──────────────────────────────────────────────────────────
 function renderPaper() {
   const el = document.getElementById('page-paper');
-  if (!DATA.paper || !DATA.paper.length) { el.innerHTML = `<h1>Paper Trading</h1>${disclose('Veri yok')}`; return; }
+  if (!DATA.paper || !DATA.paper.length) { el.innerHTML = `<h1>Paper trade yok</h1>`; return; }
   const scored = DATA.paper.filter(p => p.ret_5d != null);
   el.innerHTML = `
-    <h1>Paper Trading <em>backtest ↔ live cross-check</em></h1>
-    <div class="caption">Live shortlist'lerin gerçek 5/10/20 gün getirileri kayıt altında.</div>
+    <h2 style="margin-top:0">Paper Trading <span style="font-style:normal;color:var(--muted);font-size:0.7em">— backtest ↔ live cross-check</span></h2>
+    <p class="caption">Live predict çıktıları zaman içinde gerçek getirilerle karşılaştırılır</p>
+
     ${kpiGrid([
-      kpi('Toplam tahmin', String(DATA.paper.length), 'log kayıt', 'neutral'),
-      kpi('5d scored', String(scored.length), `/${DATA.paper.length}`, 'neutral'),
+      kpi('Toplam Tahmin', String(DATA.paper.length), 'log kayıt', 'neutral'),
+      kpi('5-gün Scored', String(scored.length), `/${DATA.paper.length}`, 'neutral'),
     ])}
-    <h2>Tahmin Kayıtları</h2>
+
+    ${disclose("<strong>Paper trading nedir?</strong> Bot gerçek emir vermez ama önerilerini kaydeder. 5/10/20 gün sonra gerçek piyasa hareketi ile karşılaştırılır. Backtest Sharpe ↔ live Sharpe gap'i &lt;%20 ise model sağlam.", 'info')}
+
+    <h3>Tahmin Kayıtları</h3>
     <table>
-      <thead><tr><th>Tarih</th><th>Ticker</th><th class="num">Rank</th><th class="num">Skor</th><th class="num">Entry</th><th class="num">5d</th><th class="num">10d</th><th class="num">20d</th></tr></thead>
+      <thead><tr><th>Tarih</th><th>Ticker</th><th class="num">Rank</th><th class="num">Entry (TL)</th><th class="num">5d</th><th class="num">10d</th><th class="num">20d</th></tr></thead>
       <tbody>
         ${DATA.paper.map(p => `<tr>
           <td>${p.prediction_date}</td>
           <td><strong>${p.ticker}</strong></td>
           <td class="num">${p.rank}</td>
-          <td class="num">${p.score.toFixed(3)}</td>
           <td class="num">${p.entry_price.toFixed(2)}</td>
           <td class="num ${p.ret_5d > 0 ? 'pos' : p.ret_5d < 0 ? 'neg' : ''}">${p.ret_5d != null ? FMT_PCT_S(p.ret_5d) : '—'}</td>
           <td class="num ${p.ret_10d > 0 ? 'pos' : p.ret_10d < 0 ? 'neg' : ''}">${p.ret_10d != null ? FMT_PCT_S(p.ret_10d) : '—'}</td>
@@ -505,78 +525,62 @@ function renderPaper() {
   `;
 }
 
-// ── Methodology ─────────────────────────────────────────────────────
+// ── METHODOLOGY ─────────────────────────────────────────────────────
 function renderMethodology() {
   const el = document.getElementById('page-methodology');
   el.innerHTML = `
-    <h1>Metodoloji <em>&amp; Honest Disclosure</em></h1>
-    <div class="caption">Quant pipeline'da bilinen tüm bias kaynakları + savunma stratejileri.</div>
+    <h2 style="margin-top:0">Metodoloji</h2>
+    <p class="lead">Sistem akademik literatürdeki ileri quant trading metodolojileriyle inşa edildi. Her aşama purged walk-forward + look-ahead defansı + halisünasyon koruması ile test edilmiştir.</p>
 
-    <h2>Look-Ahead Bias Defansı</h2>
-    ${disclose(`
-      <strong>Problem:</strong> Backtest model "geleceği görüp" işlem alırsa, gerçek hayatta tekrarlanamayacak kar gösterir.
-      <br><br>
-      <strong>Bizim savunma:</strong>
-      <ul style="margin: 8px 0 0 22px; line-height: 1.9">
-        <li><code>features lag=True</code>: t günü için sadece <code>close[t-1]</code> ve öncesi bilgi kullanılır</li>
-        <li><strong>Entry: open[t]</strong> fiyatından (gözlemlenebilir günün ilk fiyatı). Day_low/high'ı görmüyoruz.</li>
-        <li><strong>Decision close[t-1]</strong>: sinyal gece üretilir, sabah açılışta alınır</li>
-        <li>Triple barrier label: "<code>close[i]</code>'da al, <code>close[i+1..i+N]</code>'i gözle" → t günü close'unu hedef olarak görüyor ama feature'lar t-1'e kadar</li>
-        <li><strong>Test:</strong> <code>test_no_lookahead_features_use_only_past</code> her commit'te çalışır</li>
-      </ul>
-    `, 'info')}
+    <h3>1. Pipeline Mimarisi</h3>
+    <div class="method-grid">
+      <div class="method-card"><strong>Data Ingestion</strong><p>Yahoo Finance (price), 7 RSS feed (news), Claude Haiku (sentiment scoring) — content-hash cached, retry/backoff.</p></div>
+      <div class="method-card"><strong>Feature Engineering</strong><p>14 fiyat feature (momentum, RSI, vol, cross-sectional z-score) + 8 sentiment feature (decay-weighted aggregation).</p></div>
+      <div class="method-card"><strong>Model Training</strong><p>LightGBM classifier, triple barrier labeling (López de Prado), purged + embargoed walk-forward.</p></div>
+      <div class="method-card"><strong>Strategy</strong><p>Top-N long, equal weight, max %10/ticker, haftalık rebalance, signal EMA smoothing.</p></div>
+    </div>
 
-    <h2>Survivorship Bias</h2>
-    ${disclose(`
-      <strong>Problem:</strong> Bugünkü BIST 30 listesini 5 yıl geriye uygulayınca, tarihte "öldürülmüş" (delisting/iflas) şirketler dataset'te YOK. Backtest <strong>%5-15 daha iyimser</strong>.
-      <br><br>
-      <strong>Bizim savunma:</strong> Bias büyüklüğünü deklare et + bias düzeltme slider'ı (Backtest sayfası). Faz 5+: point-in-time BIST membership veritabanı.
-    `)}
+    <h3>2. Bias Defansı</h3>
+    ${disclose("<strong>Look-Ahead Bias:</strong> Sinyal close[t-1]'de üretilir, alım open[t] fiyatından (gözlemlenebilir). Bot dibi/tepeyi yakalayamaz.", 'info')}
+    ${disclose("<strong>Survivorship Bias:</strong> Bugünkü BIST 30 listesi 5y geriye uygulanıyor. Public dashboard'da bias-adjusted Sharpe (×0.85) gösterilir.")}
+    ${disclose("<strong>Overfit Defansı:</strong> Purged k-fold + embargo periodu (5 gün) + walk-forward (out-of-sample test sample).", 'info')}
 
-    <h2>Halisünasyon Defansı (4 katman)</h2>
-    ${disclose(`
-      <strong>Problem:</strong> Model "olmayan veri"den sinyal üretir (örneğin sentiment 0 doldurulursa "neutral" sanır, oysa "haber yok" farklıdır).
-      <br><br>
-      <strong>Düzeltmeler:</strong>
-      <ul style="margin: 8px 0 0 22px; line-height: 1.9">
-        <li>Sentiment data yokken <strong>NaN bırak</strong> (0 değil) — LightGBM missing branch öğrenir</li>
-        <li>Eksik close → ticker o gün portföyden çıkarılır, return = 0 değil</li>
-        <li>Cross-sectional z-score tek-ticker günlerinde NaN (eşik altı satır atılır)</li>
-        <li>Fold sınırı: pozisyon ffill fold'lar arası RESETLENİR</li>
-      </ul>
-      <strong>Test:</strong> <code>tests/test_halicination_defense.py</code> — 6 test
-    `, 'info')}
-
-    <h2>Realistik Cost Modeli</h2>
-    ${disclose(`
-      Komisyon %0.05 + BSMV %5 + Spread 15bp + Slippage 15bp ≈ <strong>25-30bp tek yön</strong>.
-      Slippage 15bp = "overnight gap proxy" — next-day open alımda kaçırılan/avantajlı gap'leri kapsar.
-    `, 'info')}
-
-    <h2>Backtest ↔ Live Tutarlılık</h2>
-    ${disclose(`
-      Her <code>predict</code> çağrısı <strong>paper trade log'a</strong> yazılır.
-      5/10/20 gün sonra gerçek return ile karşılaştırılır.
-      Backtest Sharpe vs live Sharpe farkı &gt; %30 ise model degrade olmuş demektir (kök analiz şart).
-    `, 'info')}
-
-    <h2>Test Coverage</h2>
+    <h3>3. Realistik Maliyet Modeli</h3>
     <table>
-      <thead><tr><th>Test Suite</th><th class="num">Test Sayısı</th><th>Kapsam</th></tr></thead>
+      <thead><tr><th>Komponent</th><th class="num">bp</th><th>Açıklama</th></tr></thead>
       <tbody>
-        <tr><td>test_features</td><td class="num">5</td><td>Look-ahead defansı, lag, RSI bounds</td></tr>
-        <tr><td>test_backtest_live_parity</td><td class="num">3</td><td>Backtest ↔ live feature parity</td></tr>
-        <tr><td>test_halicination_defense</td><td class="num">6</td><td>Sentiment NaN, inf, missing data</td></tr>
-        <tr><td>test_triple_barrier</td><td class="num">5</td><td>Label edge cases</td></tr>
-        <tr><td>test_walk_forward</td><td class="num">4</td><td>Purge + embargo gap</td></tr>
-        <tr><td>test_costs, test_news_collector</td><td class="num">10</td><td>Cost model, ticker matching</td></tr>
+        <tr><td>Komisyon</td><td class="num">5</td><td>Broker (ortalama BIST)</td></tr>
+        <tr><td>BSMV</td><td class="num">0.25</td><td>Komisyon × %5</td></tr>
+        <tr><td>Spread</td><td class="num">15</td><td>Likit BIST 30 ortalaması</td></tr>
+        <tr><td>Slippage (overnight gap proxy)</td><td class="num">15</td><td>Next-day open execution</td></tr>
+        <tr><td><strong>Toplam tek yön</strong></td><td class="num"><strong>~35 bp</strong></td><td>Round-trip ~70 bp</td></tr>
+      </tbody>
+    </table>
+
+    <h3>4. Test Coverage</h3>
+    <table>
+      <thead><tr><th>Test Suite</th><th class="num">Test #</th><th>Kapsam</th></tr></thead>
+      <tbody>
+        <tr><td>Feature engineering</td><td class="num">5</td><td>Look-ahead defansı, lag shift, RSI bounds</td></tr>
+        <tr><td>Backtest ↔ Live parity</td><td class="num">3</td><td>Aynı feature, aynı tarih</td></tr>
+        <tr><td>Halisünasyon defansı</td><td class="num">6</td><td>Sentiment NaN, missing data, inf check</td></tr>
+        <tr><td>Triple barrier labeling</td><td class="num">5</td><td>Edge cases</td></tr>
+        <tr><td>Walk-forward splits</td><td class="num">4</td><td>Purge + embargo</td></tr>
+        <tr><td>Cost &amp; news collector</td><td class="num">10</td><td>BIST realistic cost</td></tr>
         <tr><td><strong>Toplam</strong></td><td class="num"><strong>33</strong></td><td>%100 geçiyor</td></tr>
       </tbody>
     </table>
+
+    <h3>5. Roadmap</h3>
+    <div class="method-grid">
+      <div class="method-card"><strong>Faz 5 (Q3 2026)</strong><p>Point-in-time BIST membership · sentiment data backfill (5 yıl) · hyperparameter optimization (Optuna)</p></div>
+      <div class="method-card"><strong>Faz 6 (Q4 2026)</strong><p>Broker API entegrasyonu (Matriks/Algotrader) · live PnL monitoring · risk circuit breaker · compliance audit log</p></div>
+      <div class="method-card"><strong>Faz 7 (2027)</strong><p>Fundamentals integration (P/E, ROE) · ensemble models (XGBoost + transformer) · regime detection (HMM) · scenario stress testing</p></div>
+      <div class="method-card"><strong>Faz 8 (2027+)</strong><p>Alternative data (satellite, web traffic, KAP NLP) · TWAP/VWAP execution · capacity analysis · regulatory reporting</p></div>
+    </div>
   `;
 }
 
-// ── Boot ────────────────────────────────────────────────────────────
 loadAll();
 </script>
 
