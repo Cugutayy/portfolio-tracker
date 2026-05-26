@@ -296,7 +296,7 @@
 
 <script>
 // ── State ────────────────────────────────────────────────────────────
-const DATA = { backtest: null, trades: null, shortlist: null, paper: null };
+const DATA = { backtest: null, trades: null, shortlist: null, paper: null, paperBook: null };
 const FMT_PCT = (x, d=2) => x == null || isNaN(x) ? '–' : (x*100).toFixed(d) + '%';
 const FMT_PCT_S = (x, d=2) => x == null || isNaN(x) ? '–' : (x>=0 ? '+' : '') + (x*100).toFixed(d) + '%';
 
@@ -405,15 +405,26 @@ const I18N = {
     slCol3: 'Güncel Fiyat (TL)',
     // Paper
     paperH: 'Paper Trading',
-    paperHSub: 'backtest ↔ live cross-check',
-    paperCaption: 'Live predict çıktıları zaman içinde gerçek getirilerle karşılaştırılır',
-    paperEmpty: 'Paper trade yok',
-    kpiTotalPred: 'Toplam Tahmin',
-    kpiTotalPredSub: 'log kayıt',
-    kpi5dScored: '5-gün Scored',
-    paperInfo: '<strong>Paper trading nedir?</strong> Bot gerçek emir vermez ama önerilerini kaydeder. 5/10/20 gün sonra gerçek piyasa hareketi ile karşılaştırılır. Backtest Sharpe ↔ live Sharpe gap\'i &lt;%20 ise model sağlam.',
-    paperRecH: 'Tahmin Kayıtları',
-    pCol1: 'Tarih', pCol2: 'Ticker', pCol3: 'Rank', pCol4: 'Entry (TL)',
+    paperHSub: 'açık & kapalı pozisyon kitabı',
+    paperCaption: 'Bot her iş günü top-N seçer, triple barrier ile otomatik kapatır (TP/SL/zaman). Veriler GitHub Actions ile günlük güncellenir.',
+    paperEmpty: 'Henüz paper trade yok',
+    kpiOpen: 'Açık Pozisyon',
+    kpiOpenSub: 'devam eden',
+    kpiClosed: 'Kapanan',
+    kpiClosedSub: 'toplam',
+    kpiTotalPnl: 'Toplam PnL',
+    kpiTotalPnlSub: 'kapalı işlem toplamı',
+    kpiAvgPnlPaper: 'Ort. PnL / trade',
+    kpiAvgPnlPaperSub: 'kapanan trade ortalaması',
+    kpiBest: 'En İyi',
+    kpiWorst: 'En Kötü',
+    kpiWinRatePaper: 'Kazanç Oranı',
+    paperInfo: '<strong>Nasıl çalışır?</strong> Bot her iş günü kapanışından sonra modelin top-N seçimini açık pozisyon olarak kaydeder. Sonraki günlerde fiyat <strong>+%2.5\'a (TP)</strong> ulaşırsa, <strong>-%1.5\'a (SL)</strong> düşerse veya <strong>10 iş günü</strong> dolarsa pozisyon otomatik kapanır — backtest\'in birebir aynısı.',
+    openH: 'Açık Pozisyonlar',
+    closedH: 'Kapanan İşlemler',
+    pCol1: 'Açılış', pCol2: 'Ticker', pCol3: 'Entry', pColClose: 'Kapanış', pColClosePrice: 'Close', pColReason: 'Sebep', pColPnl: 'PnL', pColDays: 'Gün',
+    legacyH: 'Eski Tahmin Kayıtları (5/10/20 gün horizon)',
+    reasonTP: 'KAR AL', reasonSL: 'ZARAR KES', reasonTIME: 'SÜRE DOLDU',
     // Methodology
     methH: 'Metodoloji',
     methLead: 'Sistem akademik literatürdeki ileri quant trading metodolojileriyle inşa edildi. Her aşama purged walk-forward + look-ahead defansı + halisünasyon koruması ile test edilmiştir.',
@@ -546,15 +557,26 @@ const I18N = {
     slCol3: 'Current Price (TL)',
     // Paper
     paperH: 'Paper Trading',
-    paperHSub: 'backtest ↔ live cross-check',
-    paperCaption: 'Live predict outputs are compared to actual returns over time',
-    paperEmpty: 'No paper trades',
-    kpiTotalPred: 'Total Predictions',
-    kpiTotalPredSub: 'log entries',
-    kpi5dScored: '5-day Scored',
-    paperInfo: '<strong>What is paper trading?</strong> The bot does not place real orders but records its recommendations. After 5/10/20 days, predictions are compared to actual market moves. If the backtest Sharpe ↔ live Sharpe gap is &lt;20%, the model is robust.',
-    paperRecH: 'Prediction Records',
-    pCol1: 'Date', pCol2: 'Ticker', pCol3: 'Rank', pCol4: 'Entry (TL)',
+    paperHSub: 'open & closed position book',
+    paperCaption: 'Each trading day the bot picks the top-N and auto-closes via triple barrier (TP/SL/time). Data is updated daily via GitHub Actions.',
+    paperEmpty: 'No paper trades yet',
+    kpiOpen: 'Open Positions',
+    kpiOpenSub: 'ongoing',
+    kpiClosed: 'Closed',
+    kpiClosedSub: 'total',
+    kpiTotalPnl: 'Total PnL',
+    kpiTotalPnlSub: 'sum of closed trades',
+    kpiAvgPnlPaper: 'Avg PnL / trade',
+    kpiAvgPnlPaperSub: 'closed-trade average',
+    kpiBest: 'Best',
+    kpiWorst: 'Worst',
+    kpiWinRatePaper: 'Win Rate',
+    paperInfo: '<strong>How it works:</strong> After each market close, the bot records the model\'s top-N picks as open positions. Each position auto-closes when price hits <strong>+2.5% (TP)</strong>, drops to <strong>-1.5% (SL)</strong>, or after <strong>10 trading days</strong> — mirroring the backtest exactly.',
+    openH: 'Open Positions',
+    closedH: 'Closed Trades',
+    pCol1: 'Opened', pCol2: 'Ticker', pCol3: 'Entry', pColClose: 'Closed', pColClosePrice: 'Close', pColReason: 'Reason', pColPnl: 'PnL', pColDays: 'Days',
+    legacyH: 'Legacy Prediction Records (5/10/20-day horizon)',
+    reasonTP: 'TAKE PROFIT', reasonSL: 'STOP LOSS', reasonTIME: 'TIME OUT',
     // Methodology
     methH: 'Methodology',
     methLead: 'The system was built using advanced quant-trading methodologies from academic literature. Every stage is tested with purged walk-forward + look-ahead defence + hallucination protection.',
@@ -652,6 +674,7 @@ async function loadAll() {
   try { DATA.trades = await (await fetch('./data/trades.json')).json(); } catch (e) {}
   try { DATA.shortlist = await (await fetch('./data/shortlist.json')).json(); } catch (e) {}
   try { DATA.paper = await (await fetch('./data/paper.json')).json(); } catch (e) {}
+  try { DATA.paperBook = await (await fetch('./data/paper_book.json')).json(); } catch (e) {}
   rerenderAll();
 }
 
@@ -933,24 +956,87 @@ function renderShortlist() {
 // ── PAPER ──────────────────────────────────────────────────────────
 function renderPaper() {
   const el = document.getElementById('page-paper');
-  if (!DATA.paper || !DATA.paper.length) { el.innerHTML = `<h1>${t('paperEmpty')}</h1>`; return; }
-  const scored = DATA.paper.filter(p => p.ret_5d != null);
-  el.innerHTML = `
+  const hasBook = DATA.paperBook && DATA.paperBook.trades && DATA.paperBook.trades.length;
+  const hasLegacy = DATA.paper && DATA.paper.length;
+  if (!hasBook && !hasLegacy) { el.innerHTML = `<h1>${t('paperEmpty')}</h1>`; return; }
+
+  let html = `
     <h2 style="margin-top:0">${t('paperH')} <span style="font-style:normal;color:var(--muted);font-size:0.7em">· ${t('paperHSub')}</span></h2>
     <p class="caption">${t('paperCaption')}</p>
+    ${disclose(t('paperInfo'), 'info')}
+  `;
 
+  if (hasBook) {
+    const s = DATA.paperBook.summary;
+    const trades = DATA.paperBook.trades;
+    const open = trades.filter(t => t.status === 'OPEN').sort((a,b) => b.open_date.localeCompare(a.open_date));
+    const closed = trades.filter(t => t.status === 'CLOSED').sort((a,b) => (b.close_date || '').localeCompare(a.close_date || ''));
+
+    const reasonBadge = (r) => {
+      if (!r) return '–';
+      const cls = r === 'TP' ? 'pos' : r === 'SL' ? 'neg' : '';
+      return `<span class="badge ${r==='TP'?'badge-buy':r==='SL'?'badge-sell':''}" style="${r==='TIME'?'background:var(--gold-soft);color:var(--gold)':''}">${t('reason'+r)}</span>`;
+    };
+
+    html += `
     ${kpiGrid([
-      kpi(t('kpiTotalPred'), String(DATA.paper.length), t('kpiTotalPredSub'), 'neutral'),
-      kpi(t('kpi5dScored'), String(scored.length), `/${DATA.paper.length}`, 'neutral'),
+      kpi(t('kpiOpen'), String(s.open), t('kpiOpenSub'), 'neutral'),
+      kpi(t('kpiClosed'), String(s.closed), `TP ${s.closed_tp} · SL ${s.closed_sl} · TIME ${s.closed_time}`, 'neutral'),
+      kpi(t('kpiTotalPnl'), s.total_pnl != null ? FMT_PCT_S(s.total_pnl, 2) : '–', t('kpiTotalPnlSub'), s.total_pnl > 0 ? 'pos' : 'neg'),
+      kpi(t('kpiWinRatePaper'), s.win_rate != null ? FMT_PCT(s.win_rate, 1) : '–', `${Math.round((s.win_rate||0) * s.closed)} / ${s.closed}`, (s.win_rate||0) > 0.5 ? 'pos' : 'neg'),
+      kpi(t('kpiAvgPnlPaper'), s.avg_pnl != null ? FMT_PCT_S(s.avg_pnl, 3) : '–', t('kpiAvgPnlPaperSub'), (s.avg_pnl||0) > 0 ? 'pos' : 'neg'),
+      kpi(t('kpiBest'), s.best != null ? FMT_PCT_S(s.best, 2) : '–', s.worst != null ? `${t('kpiWorst')}: ${FMT_PCT_S(s.worst, 2)}` : '', 'pos'),
     ])}
 
-    ${disclose(t('paperInfo'), 'info')}
-
-    <h3>${t('paperRecH')}</h3>
-    <table>
-      <thead><tr><th>${t('pCol1')}</th><th>${t('pCol2')}</th><th class="num">${t('pCol3')}</th><th class="num">${t('pCol4')}</th><th class="num">5d</th><th class="num">10d</th><th class="num">20d</th></tr></thead>
+    <h3>${t('openH')} (${open.length})</h3>
+    ${open.length === 0 ? `<p class="caption" style="margin-bottom:18px">—</p>` : `<table>
+      <thead><tr>
+        <th>${t('pCol1')}</th><th>${t('pCol2')}</th>
+        <th class="num">${t('pCol3')}</th><th class="num">TP</th><th class="num">SL</th>
+      </tr></thead>
       <tbody>
-        ${DATA.paper.map(p => `<tr>
+        ${open.map(t_ => `<tr>
+          <td>${t_.open_date}</td>
+          <td><strong>${t_.ticker}</strong></td>
+          <td class="num">${t_.entry_price.toFixed(2)}</td>
+          <td class="num pos">+${(t_.tp_pct*100).toFixed(1)}%</td>
+          <td class="num neg">-${(t_.sl_pct*100).toFixed(1)}%</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`}
+
+    <h3>${t('closedH')} (${closed.length})</h3>
+    ${closed.length === 0 ? `<p class="caption">—</p>` : `<table>
+      <thead><tr>
+        <th>${t('pCol1')}</th><th>${t('pCol2')}</th>
+        <th class="num">${t('pCol3')}</th><th>${t('pColClose')}</th>
+        <th class="num">${t('pColClosePrice')}</th><th>${t('pColReason')}</th>
+        <th class="num">${t('pColDays')}</th><th class="num">${t('pColPnl')}</th>
+      </tr></thead>
+      <tbody>
+        ${closed.slice(0, 200).map(t_ => `<tr>
+          <td>${t_.open_date}</td>
+          <td><strong>${t_.ticker}</strong></td>
+          <td class="num">${t_.entry_price.toFixed(2)}</td>
+          <td>${t_.close_date || '–'}</td>
+          <td class="num">${t_.close_price != null ? t_.close_price.toFixed(2) : '–'}</td>
+          <td>${reasonBadge(t_.close_reason)}</td>
+          <td class="num">${t_.days_held != null ? t_.days_held : '–'}</td>
+          <td class="num ${t_.pnl_pct > 0 ? 'pos' : t_.pnl_pct < 0 ? 'neg' : ''}">${t_.pnl_pct != null ? FMT_PCT_S(t_.pnl_pct, 2) : '–'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`}
+    `;
+  }
+
+  // Legacy 5/10/20-day prediction log (sayfanın alt kısmında, opsiyonel)
+  if (hasLegacy) {
+    html += `
+    <h3 style="margin-top:36px">${t('legacyH')}</h3>
+    <table>
+      <thead><tr><th>${t('pCol1')}</th><th>${t('pCol2')}</th><th class="num">Rank</th><th class="num">Entry (TL)</th><th class="num">5d</th><th class="num">10d</th><th class="num">20d</th></tr></thead>
+      <tbody>
+        ${DATA.paper.slice(0, 100).map(p => `<tr>
           <td>${p.prediction_date}</td>
           <td><strong>${p.ticker}</strong></td>
           <td class="num">${p.rank}</td>
@@ -960,8 +1046,10 @@ function renderPaper() {
           <td class="num ${p.ret_20d > 0 ? 'pos' : p.ret_20d < 0 ? 'neg' : ''}">${p.ret_20d != null ? FMT_PCT_S(p.ret_20d) : '–'}</td>
         </tr>`).join('')}
       </tbody>
-    </table>
-  `;
+    </table>`;
+  }
+
+  el.innerHTML = html;
 }
 
 // ── METHODOLOGY ─────────────────────────────────────────────────────
