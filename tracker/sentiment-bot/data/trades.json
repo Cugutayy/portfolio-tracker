@@ -1,1199 +1,4475 @@
 [
   {
     "date": "2022-05-05",
-    "ticker": "DOHOL.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 3.21,
-    "close_price": 3.2,
-    "pnl_pct": -0.00284
-  },
-  {
-    "date": "2022-05-05",
-    "ticker": "EKGYO.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 2.56,
-    "close_price": 2.55,
-    "pnl_pct": -0.00368
-  },
-  {
-    "date": "2022-05-05",
-    "ticker": "ENKAI.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 12.93,
-    "close_price": 12.88,
-    "pnl_pct": -0.00376
-  },
-  {
-    "date": "2022-05-05",
-    "ticker": "HALKB.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 5.48,
-    "close_price": 5.58,
-    "pnl_pct": 0.01825
-  },
-  {
-    "date": "2022-05-05",
     "ticker": "KCHOL.IS",
     "action": "BUY",
-    "size_pct": 10.0,
+    "size_pct": 33.33,
     "entry_price": 35.41,
     "close_price": 34.66,
     "pnl_pct": -0.02107
   },
   {
     "date": "2022-05-05",
-    "ticker": "SOKM.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 12.48,
-    "close_price": 12.67,
-    "pnl_pct": 0.01517
-  },
-  {
-    "date": "2022-05-05",
     "ticker": "THYAO.IS",
     "action": "BUY",
-    "size_pct": 10.0,
+    "size_pct": 33.33,
     "entry_price": 41.01,
     "close_price": 41.69,
     "pnl_pct": 0.01667
   },
   {
     "date": "2022-05-05",
-    "ticker": "TOASO.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 62.47,
-    "close_price": 63.56,
-    "pnl_pct": 0.01754
-  },
-  {
-    "date": "2022-05-05",
-    "ticker": "TTKOM.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 10.17,
-    "close_price": 10.08,
-    "pnl_pct": -0.00885
-  },
-  {
-    "date": "2022-05-05",
-    "ticker": "TUPRS.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 22.41,
-    "close_price": 22.58,
-    "pnl_pct": 0.00781
-  },
-  {
-    "date": "2022-05-12",
-    "ticker": "AKBNK.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 6.93,
-    "close_price": 6.81,
-    "pnl_pct": -0.01665
-  },
-  {
-    "date": "2022-05-12",
-    "ticker": "ASELS.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 11.66,
-    "close_price": 11.21,
-    "pnl_pct": -0.03823
-  },
-  {
-    "date": "2022-05-12",
-    "ticker": "GUBRF.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 75.3,
-    "close_price": 74.3,
-    "pnl_pct": -0.01328
-  },
-  {
-    "date": "2022-05-12",
-    "ticker": "PETKM.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 10.03,
-    "close_price": 9.78,
-    "pnl_pct": -0.02493
-  },
-  {
-    "date": "2022-05-12",
-    "ticker": "SASA.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 1.74,
-    "close_price": 1.72,
-    "pnl_pct": -0.01662
-  },
-  {
-    "date": "2022-05-12",
     "ticker": "TKFEN.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 17.81,
-    "close_price": 17.06,
-    "pnl_pct": -0.04235
+    "size_pct": 33.33,
+    "entry_price": 17.96,
+    "close_price": 18.72,
+    "pnl_pct": 0.04251
   },
   {
     "date": "2022-05-20",
     "ticker": "EREGL.IS",
     "action": "BUY",
-    "size_pct": 10.0,
+    "size_pct": 33.33,
     "entry_price": 15.54,
     "close_price": 15.18,
     "pnl_pct": -0.0233
   },
   {
     "date": "2022-05-20",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 33.22,
+    "close_price": 33.01,
+    "pnl_pct": 0.00631
+  },
+  {
+    "date": "2022-06-03",
     "ticker": "GARAN.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 12.54,
-    "close_price": 13.11,
-    "pnl_pct": 0.04502
+    "size_pct": 33.33,
+    "entry_price": 12.45,
+    "close_price": 12.4,
+    "pnl_pct": -0.00397
   },
   {
-    "date": "2022-05-20",
-    "ticker": "MGROS.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 40.17,
-    "close_price": 39.2,
-    "pnl_pct": -0.02428
-  },
-  {
-    "date": "2022-05-20",
-    "ticker": "SAHOL.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 17.07,
-    "close_price": 17.33,
-    "pnl_pct": 0.01543
-  },
-  {
-    "date": "2022-05-20",
-    "ticker": "SISE.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 18.56,
-    "close_price": 18.13,
-    "pnl_pct": -0.02314
-  },
-  {
-    "date": "2022-05-20",
+    "date": "2022-06-03",
     "ticker": "TCELL.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 16.98,
-    "close_price": 16.48,
-    "pnl_pct": -0.0292
+    "size_pct": 33.33,
+    "entry_price": 17.25,
+    "close_price": 17.17,
+    "pnl_pct": -0.00462
   },
   {
-    "date": "2023-02-07",
-    "ticker": "YKBNK.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 7.8,
-    "close_price": 7.14,
-    "pnl_pct": -0.08446
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "ASELS.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 28.81,
-    "close_price": 26.35,
-    "pnl_pct": 0.09348
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "DOHOL.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 8.04,
-    "close_price": 7.41,
-    "pnl_pct": 0.08494
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "ENKAI.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 24.3,
-    "close_price": 22.18,
-    "pnl_pct": 0.09554
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "EREGL.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 19.57,
-    "close_price": 18.39,
-    "pnl_pct": 0.0644
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "GARAN.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 18.78,
-    "close_price": 17.34,
-    "pnl_pct": 0.08262
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "GUBRF.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 191.2,
-    "close_price": 175.4,
-    "pnl_pct": 0.09008
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "KCHOL.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 66.27,
-    "close_price": 59.81,
-    "pnl_pct": 0.10805
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "PETKM.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 15.6,
-    "close_price": 14.09,
-    "pnl_pct": 0.10717
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "SAHOL.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 35.04,
-    "close_price": 32.61,
-    "pnl_pct": 0.07431
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "SASA.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 5.46,
-    "close_price": 4.95,
-    "pnl_pct": 0.10293
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "SISE.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 39.94,
-    "close_price": 36.95,
-    "pnl_pct": 0.08089
-  },
-  {
-    "date": "2023-02-07",
-    "ticker": "SOKM.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 22.77,
-    "close_price": 20.99,
-    "pnl_pct": 0.08484
-  },
-  {
-    "date": "2023-02-07",
+    "date": "2022-06-03",
     "ticker": "TUPRS.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 53.09,
-    "close_price": 48.13,
-    "pnl_pct": 0.10312
-  },
-  {
-    "date": "2023-02-20",
-    "ticker": "BIMAS.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 63.33,
-    "close_price": 63.0,
-    "pnl_pct": -0.00517
+    "size_pct": 33.33,
+    "entry_price": 25.04,
+    "close_price": 25.26,
+    "pnl_pct": 0.00846
   },
   {
-    "date": "2023-02-20",
-    "ticker": "GARAN.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 18.78,
-    "close_price": 18.73,
-    "pnl_pct": -0.00263
-  },
-  {
-    "date": "2023-02-20",
-    "ticker": "GUBRF.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 181.7,
-    "close_price": 198.6,
-    "pnl_pct": 0.09301
-  },
-  {
-    "date": "2023-02-20",
-    "ticker": "PETKM.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 15.49,
-    "close_price": 16.7,
-    "pnl_pct": 0.07811
-  },
-  {
-    "date": "2023-02-20",
-    "ticker": "SOKM.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 22.61,
-    "close_price": 22.65,
-    "pnl_pct": 0.00168
-  },
-  {
-    "date": "2023-02-20",
-    "ticker": "TAVHL.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 71.5,
-    "close_price": 73.7,
-    "pnl_pct": 0.03077
-  },
-  {
-    "date": "2023-02-27",
-    "ticker": "EREGL.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 21.65,
-    "close_price": 21.55,
-    "pnl_pct": -0.00452
-  },
-  {
-    "date": "2023-02-27",
-    "ticker": "ISCTR.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 3.73,
-    "close_price": 3.98,
-    "pnl_pct": 0.06605
-  },
-  {
-    "date": "2023-02-27",
-    "ticker": "KCHOL.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 65.18,
-    "close_price": 67.61,
-    "pnl_pct": 0.03726
-  },
-  {
-    "date": "2023-02-27",
-    "ticker": "SAHOL.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 35.71,
-    "close_price": 37.53,
-    "pnl_pct": 0.05116
-  },
-  {
-    "date": "2023-11-13",
-    "ticker": "AKBNK.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 26.27,
-    "close_price": 25.43,
-    "pnl_pct": 0.03286
-  },
-  {
-    "date": "2023-11-13",
-    "ticker": "EKGYO.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 6.71,
-    "close_price": 6.83,
-    "pnl_pct": -0.01712
-  },
-  {
-    "date": "2023-11-13",
+    "date": "2022-06-03",
     "ticker": "EREGL.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 18.78,
-    "close_price": 18.2,
-    "pnl_pct": 0.03172
+    "size_pct": -33.33,
+    "entry_price": 17.08,
+    "close_price": 16.89,
+    "pnl_pct": 0.01101
   },
   {
-    "date": "2023-11-13",
-    "ticker": "GUBRF.IS",
+    "date": "2022-06-03",
+    "ticker": "THYAO.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 365.25,
-    "close_price": 359.5,
-    "pnl_pct": 0.01599
+    "size_pct": -33.33,
+    "entry_price": 48.73,
+    "close_price": 46.87,
+    "pnl_pct": 0.0396
   },
   {
-    "date": "2023-11-13",
-    "ticker": "HALKB.IS",
+    "date": "2022-06-03",
+    "ticker": "TKFEN.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 13.18,
-    "close_price": 12.8,
-    "pnl_pct": 0.02969
+    "size_pct": -33.33,
+    "entry_price": 18.36,
+    "close_price": 18.13,
+    "pnl_pct": 0.01253
   },
   {
-    "date": "2023-11-13",
+    "date": "2022-06-17",
     "ticker": "MGROS.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 347.7,
-    "close_price": 340.79,
-    "pnl_pct": 0.02025
-  },
-  {
-    "date": "2023-11-13",
-    "ticker": "PETKM.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 21.18,
-    "close_price": 20.2,
-    "pnl_pct": 0.04851
-  },
-  {
-    "date": "2023-11-13",
-    "ticker": "THYAO.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 225.66,
-    "close_price": 226.83,
-    "pnl_pct": -0.00517
-  },
-  {
-    "date": "2023-11-13",
-    "ticker": "TKFEN.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 40.69,
-    "close_price": 40.01,
-    "pnl_pct": 0.01692
-  },
-  {
-    "date": "2023-11-13",
-    "ticker": "TOASO.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 209.61,
-    "close_price": 199.9,
-    "pnl_pct": 0.04858
-  },
-  {
-    "date": "2023-11-20",
-    "ticker": "ASELS.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 42.3,
-    "close_price": 44.39,
-    "pnl_pct": 0.04941
+    "size_pct": 33.33,
+    "entry_price": 44.03,
+    "close_price": 43.85,
+    "pnl_pct": -0.00426
   },
   {
-    "date": "2023-11-20",
-    "ticker": "ENKAI.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 29.53,
-    "close_price": 29.6,
-    "pnl_pct": 0.00238
-  },
-  {
-    "date": "2023-11-20",
-    "ticker": "PETKM.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 22.52,
-    "close_price": 22.34,
-    "pnl_pct": -0.00799
-  },
-  {
-    "date": "2023-11-20",
+    "date": "2022-06-17",
     "ticker": "SASA.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 5.51,
-    "close_price": 5.54,
-    "pnl_pct": 0.00499
+    "size_pct": 33.33,
+    "entry_price": 2.45,
+    "close_price": 2.47,
+    "pnl_pct": 0.007
   },
   {
-    "date": "2023-11-20",
-    "ticker": "THYAO.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 251.06,
-    "close_price": 248.86,
-    "pnl_pct": -0.00875
-  },
-  {
-    "date": "2023-11-20",
-    "ticker": "TUPRS.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 118.18,
-    "close_price": 117.34,
-    "pnl_pct": -0.00711
-  },
-  {
-    "date": "2023-11-27",
-    "ticker": "EREGL.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 19.87,
-    "close_price": 20.2,
-    "pnl_pct": 0.01675
-  },
-  {
-    "date": "2023-11-27",
+    "date": "2022-06-17",
     "ticker": "TKFEN.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 46.98,
-    "close_price": 46.48,
-    "pnl_pct": -0.01059
+    "size_pct": 33.33,
+    "entry_price": 17.74,
+    "close_price": 18.58,
+    "pnl_pct": 0.04713
   },
   {
-    "date": "2023-11-27",
-    "ticker": "VAKBN.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 15.01,
-    "close_price": 15.16,
-    "pnl_pct": 0.00999
-  },
-  {
-    "date": "2024-08-16",
-    "ticker": "AKBNK.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 55.49,
-    "close_price": 53.88,
-    "pnl_pct": -0.02904
-  },
-  {
-    "date": "2024-08-16",
-    "ticker": "BIMAS.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 275.11,
-    "close_price": 266.95,
-    "pnl_pct": 0.03058
-  },
-  {
-    "date": "2024-08-16",
+    "date": "2022-06-17",
     "ticker": "GARAN.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 105.94,
-    "close_price": 101.03,
-    "pnl_pct": 0.04862
+    "size_pct": -33.33,
+    "entry_price": 11.9,
+    "close_price": 12.44,
+    "pnl_pct": -0.04305
   },
   {
-    "date": "2024-08-16",
-    "ticker": "ISCTR.IS",
+    "date": "2022-06-17",
+    "ticker": "TCELL.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 12.61,
-    "close_price": 12.3,
-    "pnl_pct": 0.02458
+    "size_pct": -33.33,
+    "entry_price": 15.49,
+    "close_price": 15.82,
+    "pnl_pct": -0.02071
   },
   {
-    "date": "2024-08-16",
-    "ticker": "KCHOL.IS",
+    "date": "2022-06-17",
+    "ticker": "TUPRS.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 171.76,
-    "close_price": 167.07,
-    "pnl_pct": 0.02811
+    "size_pct": -33.33,
+    "entry_price": 24.3,
+    "close_price": 24.71,
+    "pnl_pct": -0.01677
   },
   {
-    "date": "2024-08-16",
-    "ticker": "SASA.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 5.27,
-    "close_price": 5.06,
-    "pnl_pct": 0.0415
-  },
-  {
-    "date": "2024-08-16",
-    "ticker": "SOKM.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 57.38,
-    "close_price": 56.4,
-    "pnl_pct": 0.01742
-  },
-  {
-    "date": "2024-08-16",
-    "ticker": "TAVHL.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 245.5,
-    "close_price": 236.7,
-    "pnl_pct": 0.03718
-  },
-  {
-    "date": "2024-08-16",
-    "ticker": "TTKOM.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 50.2,
-    "close_price": 50.9,
-    "pnl_pct": -0.01375
-  },
-  {
-    "date": "2024-08-16",
-    "ticker": "VAKBN.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 19.39,
-    "close_price": 19.31,
-    "pnl_pct": 0.00414
-  },
-  {
-    "date": "2024-08-16",
-    "ticker": "YKBNK.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 29.28,
-    "close_price": 28.54,
-    "pnl_pct": 0.02593
-  },
-  {
-    "date": "2024-08-23",
-    "ticker": "BIMAS.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 269.59,
-    "close_price": 262.15,
-    "pnl_pct": -0.0276
-  },
-  {
-    "date": "2024-08-23",
-    "ticker": "DOHOL.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 15.91,
-    "close_price": 14.9,
-    "pnl_pct": -0.0637
-  },
-  {
-    "date": "2024-08-23",
-    "ticker": "EKGYO.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 11.73,
-    "close_price": 11.35,
-    "pnl_pct": -0.03237
-  },
-  {
-    "date": "2024-08-23",
+    "date": "2022-07-01",
     "ticker": "FROTO.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 82.49,
-    "close_price": 79.63,
-    "pnl_pct": -0.03467
+    "size_pct": 33.33,
+    "entry_price": 21.52,
+    "close_price": 21.44,
+    "pnl_pct": -0.00367
   },
   {
-    "date": "2024-08-23",
+    "date": "2022-07-01",
     "ticker": "KCHOL.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 177.75,
-    "close_price": 170.56,
-    "pnl_pct": -0.04041
+    "size_pct": 33.33,
+    "entry_price": 31.75,
+    "close_price": 31.85,
+    "pnl_pct": 0.00328
   },
   {
-    "date": "2024-08-23",
-    "ticker": "PGSUS.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 216.5,
-    "close_price": 211.8,
-    "pnl_pct": -0.02171
-  },
-  {
-    "date": "2024-09-02",
-    "ticker": "GUBRF.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 171.0,
-    "close_price": 173.8,
-    "pnl_pct": 0.01637
-  },
-  {
-    "date": "2024-09-02",
-    "ticker": "HALKB.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 15.67,
-    "close_price": 16.38,
-    "pnl_pct": 0.04531
-  },
-  {
-    "date": "2024-09-02",
+    "date": "2022-07-01",
     "ticker": "TTKOM.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 49.2,
-    "close_price": 49.78,
-    "pnl_pct": 0.01179
+    "size_pct": 33.33,
+    "entry_price": 8.77,
+    "close_price": 8.92,
+    "pnl_pct": 0.0171
   },
   {
-    "date": "2024-09-02",
-    "ticker": "VAKBN.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 18.98,
-    "close_price": 20.04,
-    "pnl_pct": 0.05585
-  },
-  {
-    "date": "2024-09-02",
-    "ticker": "YKBNK.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 31.46,
-    "close_price": 33.06,
-    "pnl_pct": 0.05086
-  },
-  {
-    "date": "2025-05-21",
-    "ticker": "TAVHL.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 231.7,
-    "close_price": 225.0,
-    "pnl_pct": -0.02892
-  },
-  {
-    "date": "2025-05-21",
-    "ticker": "AKBNK.IS",
+    "date": "2022-07-01",
+    "ticker": "MGROS.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 50.82,
-    "close_price": 50.87,
-    "pnl_pct": -0.00095
+    "size_pct": -33.33,
+    "entry_price": 45.29,
+    "close_price": 45.59,
+    "pnl_pct": -0.00658
   },
   {
-    "date": "2025-05-21",
+    "date": "2022-07-01",
+    "ticker": "SASA.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 2.19,
+    "close_price": 2.24,
+    "pnl_pct": -0.02297
+  },
+  {
+    "date": "2022-07-01",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 19.74,
+    "close_price": 20.63,
+    "pnl_pct": -0.04317
+  },
+  {
+    "date": "2022-07-20",
+    "ticker": "ASELS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 11.08,
+    "close_price": 10.98,
+    "pnl_pct": -0.00894
+  },
+  {
+    "date": "2022-07-20",
+    "ticker": "EREGL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 13.6,
+    "close_price": 13.82,
+    "pnl_pct": 0.01583
+  },
+  {
+    "date": "2022-07-20",
+    "ticker": "TOASO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 50.02,
+    "close_price": 49.71,
+    "pnl_pct": -0.00626
+  },
+  {
+    "date": "2022-07-20",
+    "ticker": "FROTO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 20.7,
+    "close_price": 20.66,
+    "pnl_pct": 0.00191
+  },
+  {
+    "date": "2022-07-20",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 30.39,
+    "close_price": 30.58,
+    "pnl_pct": -0.00624
+  },
+  {
+    "date": "2022-07-20",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 8.86,
+    "close_price": 9.03,
+    "pnl_pct": -0.01883
+  },
+  {
+    "date": "2022-08-03",
+    "ticker": "HALKB.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 4.88,
+    "close_price": 4.99,
+    "pnl_pct": 0.02254
+  },
+  {
+    "date": "2022-08-03",
+    "ticker": "TTKOM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 9.07,
+    "close_price": 9.14,
+    "pnl_pct": 0.00772
+  },
+  {
+    "date": "2022-08-03",
     "ticker": "ASELS.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 132.83,
-    "close_price": 132.83,
+    "size_pct": -33.33,
+    "entry_price": 11.28,
+    "close_price": 11.49,
+    "pnl_pct": -0.0181
+  },
+  {
+    "date": "2022-08-03",
+    "ticker": "EREGL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 13.63,
+    "close_price": 13.53,
+    "pnl_pct": 0.00723
+  },
+  {
+    "date": "2022-08-17",
+    "ticker": "ENKAI.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 17.06,
+    "close_price": 17.46,
+    "pnl_pct": 0.0229
+  },
+  {
+    "date": "2022-08-17",
+    "ticker": "KCHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 37.37,
+    "close_price": 38.79,
+    "pnl_pct": 0.03807
+  },
+  {
+    "date": "2022-08-17",
+    "ticker": "TOASO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 65.28,
+    "close_price": 65.05,
+    "pnl_pct": 0.00361
+  },
+  {
+    "date": "2022-08-17",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 9.17,
+    "close_price": 9.23,
+    "pnl_pct": -0.0065
+  },
+  {
+    "date": "2022-09-01",
+    "ticker": "MGROS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 75.91,
+    "close_price": 76.75,
+    "pnl_pct": 0.01112
+  },
+  {
+    "date": "2022-09-01",
+    "ticker": "THYAO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 71.41,
+    "close_price": 69.46,
+    "pnl_pct": -0.02736
+  },
+  {
+    "date": "2022-09-01",
+    "ticker": "VAKBN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 7.48,
+    "close_price": 7.66,
+    "pnl_pct": 0.02406
+  },
+  {
+    "date": "2022-09-01",
+    "ticker": "ENKAI.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 16.07,
+    "close_price": 16.06,
+    "pnl_pct": 0.00108
+  },
+  {
+    "date": "2022-09-01",
+    "ticker": "HALKB.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 8.62,
+    "close_price": 8.52,
+    "pnl_pct": 0.01174
+  },
+  {
+    "date": "2022-09-01",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 39.38,
+    "close_price": 38.48,
+    "pnl_pct": 0.02344
+  },
+  {
+    "date": "2022-09-15",
+    "ticker": "HALKB.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 11.9,
+    "close_price": 11.04,
+    "pnl_pct": -0.07227
+  },
+  {
+    "date": "2022-09-15",
+    "ticker": "TTKOM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 12.05,
+    "close_price": 11.6,
+    "pnl_pct": -0.03734
+  },
+  {
+    "date": "2022-09-15",
+    "ticker": "MGROS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 88.05,
+    "close_price": 85.85,
+    "pnl_pct": 0.02567
+  },
+  {
+    "date": "2022-09-15",
+    "ticker": "THYAO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 72.83,
+    "close_price": 72.44,
+    "pnl_pct": 0.00539
+  },
+  {
+    "date": "2022-09-29",
+    "ticker": "AKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 9.5,
+    "close_price": 9.28,
+    "pnl_pct": -0.02342
+  },
+  {
+    "date": "2022-09-29",
+    "ticker": "GARAN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 15.94,
+    "close_price": 15.48,
+    "pnl_pct": -0.02842
+  },
+  {
+    "date": "2022-09-29",
+    "ticker": "ISCTR.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 2.62,
+    "close_price": 2.57,
+    "pnl_pct": -0.01956
+  },
+  {
+    "date": "2022-09-29",
+    "ticker": "HALKB.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 7.23,
+    "close_price": 6.99,
+    "pnl_pct": 0.03433
+  },
+  {
+    "date": "2022-09-29",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 11.2,
+    "close_price": 10.77,
+    "pnl_pct": 0.03993
+  },
+  {
+    "date": "2022-09-29",
+    "ticker": "VAKBN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 7.27,
+    "close_price": 7.04,
+    "pnl_pct": 0.03267
+  },
+  {
+    "date": "2022-10-13",
+    "ticker": "MGROS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 101.08,
+    "close_price": 101.83,
+    "pnl_pct": 0.00742
+  },
+  {
+    "date": "2022-10-13",
+    "ticker": "VAKBN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 7.26,
+    "close_price": 7.22,
+    "pnl_pct": -0.00551
+  },
+  {
+    "date": "2022-10-13",
+    "ticker": "AKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 10.66,
+    "close_price": 10.72,
+    "pnl_pct": -0.00538
+  },
+  {
+    "date": "2022-10-13",
+    "ticker": "GARAN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 17.56,
+    "close_price": 17.43,
+    "pnl_pct": 0.00756
+  },
+  {
+    "date": "2022-10-27",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 63.63,
+    "close_price": 62.48,
+    "pnl_pct": -0.01818
+  },
+  {
+    "date": "2022-10-27",
+    "ticker": "HALKB.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 8.49,
+    "close_price": 8.47,
+    "pnl_pct": -0.00236
+  },
+  {
+    "date": "2022-10-27",
+    "ticker": "SOKM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 22.84,
+    "close_price": 22.48,
+    "pnl_pct": -0.01575
+  },
+  {
+    "date": "2022-10-27",
+    "ticker": "ISCTR.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 3.35,
+    "close_price": 3.21,
+    "pnl_pct": 0.04478
+  },
+  {
+    "date": "2022-10-27",
+    "ticker": "MGROS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 118.34,
+    "close_price": 115.52,
+    "pnl_pct": 0.02435
+  },
+  {
+    "date": "2022-10-27",
+    "ticker": "VAKBN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 8.69,
+    "close_price": 8.8,
+    "pnl_pct": -0.0125
+  },
+  {
+    "date": "2022-11-10",
+    "ticker": "PETKM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 14.15,
+    "close_price": 14.48,
+    "pnl_pct": 0.02332
+  },
+  {
+    "date": "2022-11-10",
+    "ticker": "PGSUS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 80.59,
+    "close_price": 79.04,
+    "pnl_pct": -0.01929
+  },
+  {
+    "date": "2022-11-10",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 65.16,
+    "close_price": 65.9,
+    "pnl_pct": -0.01124
+  },
+  {
+    "date": "2022-11-10",
+    "ticker": "HALKB.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 8.72,
+    "close_price": 8.98,
+    "pnl_pct": -0.02895
+  },
+  {
+    "date": "2022-11-24",
+    "ticker": "TAVHL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 82.95,
+    "close_price": 84.1,
+    "pnl_pct": 0.01386
+  },
+  {
+    "date": "2022-11-24",
+    "ticker": "VAKBN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 10.03,
+    "close_price": 9.8,
+    "pnl_pct": -0.02293
+  },
+  {
+    "date": "2022-11-24",
+    "ticker": "PETKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 16.88,
+    "close_price": 16.7,
+    "pnl_pct": 0.01078
+  },
+  {
+    "date": "2022-11-24",
+    "ticker": "PGSUS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 76.11,
+    "close_price": 75.87,
+    "pnl_pct": 0.00324
+  },
+  {
+    "date": "2022-12-08",
+    "ticker": "ENKAI.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 20.55,
+    "close_price": 19.99,
+    "pnl_pct": -0.02705
+  },
+  {
+    "date": "2022-12-08",
+    "ticker": "YKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 9.41,
+    "close_price": 9.57,
+    "pnl_pct": 0.01681
+  },
+  {
+    "date": "2022-12-08",
+    "ticker": "SOKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 21.65,
+    "close_price": 22.07,
+    "pnl_pct": -0.01888
+  },
+  {
+    "date": "2022-12-08",
+    "ticker": "VAKBN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 9.45,
+    "close_price": 9.62,
+    "pnl_pct": -0.01767
+  },
+  {
+    "date": "2022-12-22",
+    "ticker": "PETKM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 19.5,
+    "close_price": 19.24,
+    "pnl_pct": -0.01333
+  },
+  {
+    "date": "2022-12-22",
+    "ticker": "SASA.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 6.67,
+    "close_price": 6.71,
+    "pnl_pct": 0.00563
+  },
+  {
+    "date": "2022-12-22",
+    "ticker": "TOASO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 118.2,
+    "close_price": 120.55,
+    "pnl_pct": 0.01987
+  },
+  {
+    "date": "2022-12-22",
+    "ticker": "ENKAI.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 23.34,
+    "close_price": 24.25,
+    "pnl_pct": -0.03725
+  },
+  {
+    "date": "2022-12-22",
+    "ticker": "TAVHL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 95.3,
+    "close_price": 94.05,
+    "pnl_pct": 0.01329
+  },
+  {
+    "date": "2022-12-22",
+    "ticker": "YKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 10.64,
+    "close_price": 10.6,
+    "pnl_pct": 0.00331
+  },
+  {
+    "date": "2023-01-05",
+    "ticker": "KCHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 72.43,
+    "close_price": 70.26,
+    "pnl_pct": -0.02994
+  },
+  {
+    "date": "2023-01-05",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 47.8,
+    "close_price": 45.17,
+    "pnl_pct": -0.05513
+  },
+  {
+    "date": "2023-01-05",
+    "ticker": "SASA.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 5.26,
+    "close_price": 5.02,
+    "pnl_pct": 0.04869
+  },
+  {
+    "date": "2023-01-05",
+    "ticker": "TOASO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 132.29,
+    "close_price": 128.61,
+    "pnl_pct": 0.02861
+  },
+  {
+    "date": "2023-01-19",
+    "ticker": "ENKAI.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 28.05,
+    "close_price": 27.49,
+    "pnl_pct": -0.01981
+  },
+  {
+    "date": "2023-01-19",
+    "ticker": "TUPRS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 53.92,
+    "close_price": 53.78,
+    "pnl_pct": -0.00256
+  },
+  {
+    "date": "2023-01-19",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 66.96,
+    "close_price": 68.91,
+    "pnl_pct": -0.02832
+  },
+  {
+    "date": "2023-01-19",
+    "ticker": "PETKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 18.24,
+    "close_price": 18.05,
+    "pnl_pct": 0.01053
+  },
+  {
+    "date": "2023-02-02",
+    "ticker": "EKGYO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 6.71,
+    "close_price": 6.61,
+    "pnl_pct": -0.01543
+  },
+  {
+    "date": "2023-02-02",
+    "ticker": "TTKOM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 19.5,
+    "close_price": 19.8,
+    "pnl_pct": 0.01538
+  },
+  {
+    "date": "2023-02-02",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 31.35,
+    "close_price": 29.9,
+    "pnl_pct": 0.04863
+  },
+  {
+    "date": "2023-02-02",
+    "ticker": "TUPRS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 51.84,
+    "close_price": 50.8,
+    "pnl_pct": 0.02048
+  },
+  {
+    "date": "2023-02-22",
+    "ticker": "SASA.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 6.05,
+    "close_price": 5.76,
+    "pnl_pct": -0.04791
+  },
+  {
+    "date": "2023-02-22",
+    "ticker": "TUPRS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 55.56,
+    "close_price": 54.05,
+    "pnl_pct": -0.02734
+  },
+  {
+    "date": "2023-02-22",
+    "ticker": "YKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 7.88,
+    "close_price": 8.05,
+    "pnl_pct": 0.02118
+  },
+  {
+    "date": "2023-02-22",
+    "ticker": "EKGYO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 8.54,
+    "close_price": 7.57,
+    "pnl_pct": 0.12811
+  },
+  {
+    "date": "2023-02-22",
+    "ticker": "ENKAI.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 24.75,
+    "close_price": 26.07,
+    "pnl_pct": -0.05063
+  },
+  {
+    "date": "2023-02-22",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 18.31,
+    "close_price": 18.69,
+    "pnl_pct": -0.02033
+  },
+  {
+    "date": "2023-03-08",
+    "ticker": "PETKM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 16.12,
+    "close_price": 16.03,
+    "pnl_pct": -0.00558
+  },
+  {
+    "date": "2023-03-08",
+    "ticker": "VAKBN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 9.91,
+    "close_price": 10.32,
+    "pnl_pct": 0.04137
+  },
+  {
+    "date": "2023-03-08",
+    "ticker": "TUPRS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 59.39,
+    "close_price": 59.29,
+    "pnl_pct": 0.00155
+  },
+  {
+    "date": "2023-03-08",
+    "ticker": "YKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 9.4,
+    "close_price": 10.18,
+    "pnl_pct": -0.07679
+  },
+  {
+    "date": "2023-03-22",
+    "ticker": "ASELS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 26.7,
+    "close_price": 27.37,
+    "pnl_pct": 0.02516
+  },
+  {
+    "date": "2023-03-22",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 65.9,
+    "close_price": 65.76,
+    "pnl_pct": -0.00213
+  },
+  {
+    "date": "2023-03-22",
+    "ticker": "YKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 9.92,
+    "close_price": 10.03,
+    "pnl_pct": 0.01159
+  },
+  {
+    "date": "2023-03-22",
+    "ticker": "PETKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 14.35,
+    "close_price": 14.71,
+    "pnl_pct": -0.02447
+  },
+  {
+    "date": "2023-03-22",
+    "ticker": "SASA.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 5.74,
+    "close_price": 5.7,
+    "pnl_pct": 0.00659
+  },
+  {
+    "date": "2023-03-22",
+    "ticker": "VAKBN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 9.19,
+    "close_price": 9.36,
+    "pnl_pct": -0.01816
+  },
+  {
+    "date": "2023-04-05",
+    "ticker": "AKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 15.77,
+    "close_price": 15.31,
+    "pnl_pct": -0.0288
+  },
+  {
+    "date": "2023-04-05",
+    "ticker": "GARAN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 23.42,
+    "close_price": 22.76,
+    "pnl_pct": -0.02813
+  },
+  {
+    "date": "2023-04-05",
+    "ticker": "KCHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 71.26,
+    "close_price": 69.84,
+    "pnl_pct": -0.01991
+  },
+  {
+    "date": "2023-04-05",
+    "ticker": "ASELS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 26.52,
+    "close_price": 25.95,
+    "pnl_pct": 0.02205
+  },
+  {
+    "date": "2023-04-05",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 72.78,
+    "close_price": 71.75,
+    "pnl_pct": 0.01435
+  },
+  {
+    "date": "2023-04-05",
+    "ticker": "YKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 9.43,
+    "close_price": 9.22,
+    "pnl_pct": 0.02287
+  },
+  {
+    "date": "2023-04-19",
+    "ticker": "ENKAI.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 25.82,
+    "close_price": 26.4,
+    "pnl_pct": 0.02245
+  },
+  {
+    "date": "2023-04-19",
+    "ticker": "SAHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 37.08,
+    "close_price": 37.17,
+    "pnl_pct": 0.00248
+  },
+  {
+    "date": "2023-04-19",
+    "ticker": "THYAO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 133.05,
+    "close_price": 131.59,
+    "pnl_pct": -0.01101
+  },
+  {
+    "date": "2023-04-19",
+    "ticker": "AKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 16.39,
+    "close_price": 16.79,
+    "pnl_pct": -0.02381
+  },
+  {
+    "date": "2023-04-19",
+    "ticker": "GARAN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 24.8,
+    "close_price": 26.15,
+    "pnl_pct": -0.05153
+  },
+  {
+    "date": "2023-04-19",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 69.97,
+    "close_price": 70.11,
+    "pnl_pct": -0.0019
+  },
+  {
+    "date": "2023-05-05",
+    "ticker": "GARAN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 23.49,
+    "close_price": 22.6,
+    "pnl_pct": -0.03774
+  },
+  {
+    "date": "2023-05-05",
+    "ticker": "SOKM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 31.23,
+    "close_price": 31.08,
+    "pnl_pct": -0.00485
+  },
+  {
+    "date": "2023-05-05",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 25.97,
+    "close_price": 25.76,
+    "pnl_pct": -0.00801
+  },
+  {
+    "date": "2023-05-05",
+    "ticker": "ENKAI.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 21.89,
+    "close_price": 21.89,
     "pnl_pct": 0.0
   },
   {
-    "date": "2025-05-21",
-    "ticker": "DOHOL.IS",
+    "date": "2023-05-05",
+    "ticker": "SAHOL.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 14.72,
-    "close_price": 14.82,
-    "pnl_pct": -0.00664
+    "size_pct": -33.33,
+    "entry_price": 34.77,
+    "close_price": 34.45,
+    "pnl_pct": 0.00907
   },
   {
-    "date": "2025-05-21",
-    "ticker": "ENKAI.IS",
+    "date": "2023-05-05",
+    "ticker": "THYAO.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 60.68,
-    "close_price": 61.39,
-    "pnl_pct": -0.01162
+    "size_pct": -33.33,
+    "entry_price": 124.94,
+    "close_price": 122.6,
+    "pnl_pct": 0.01912
   },
   {
-    "date": "2025-05-21",
-    "ticker": "EREGL.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 24.67,
-    "close_price": 24.01,
-    "pnl_pct": 0.02723
-  },
-  {
-    "date": "2025-05-21",
-    "ticker": "HALKB.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 21.34,
-    "close_price": 20.66,
-    "pnl_pct": 0.03291
-  },
-  {
-    "date": "2025-05-21",
-    "ticker": "KCHOL.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 149.61,
-    "close_price": 145.94,
-    "pnl_pct": 0.0251
-  },
-  {
-    "date": "2025-05-21",
-    "ticker": "PETKM.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 17.5,
-    "close_price": 17.2,
-    "pnl_pct": 0.01744
-  },
-  {
-    "date": "2025-05-21",
-    "ticker": "PGSUS.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 249.9,
-    "close_price": 241.7,
-    "pnl_pct": 0.03393
-  },
-  {
-    "date": "2025-05-21",
-    "ticker": "TCELL.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 94.6,
-    "close_price": 93.59,
-    "pnl_pct": 0.01079
-  },
-  {
-    "date": "2025-05-21",
-    "ticker": "TKFEN.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 123.02,
-    "close_price": 119.64,
-    "pnl_pct": 0.02829
-  },
-  {
-    "date": "2025-05-21",
-    "ticker": "VAKBN.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 23.54,
-    "close_price": 23.4,
-    "pnl_pct": 0.00598
-  },
-  {
-    "date": "2025-05-28",
-    "ticker": "AKBNK.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 49.42,
-    "close_price": 50.05,
-    "pnl_pct": 0.01275
-  },
-  {
-    "date": "2025-05-28",
+    "date": "2023-05-22",
     "ticker": "ARCLK.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 107.7,
-    "close_price": 106.5,
-    "pnl_pct": -0.01114
+    "size_pct": 33.33,
+    "entry_price": 88.72,
+    "close_price": 85.62,
+    "pnl_pct": -0.0349
   },
   {
-    "date": "2025-05-28",
+    "date": "2023-05-22",
     "ticker": "EREGL.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 23.6,
-    "close_price": 23.64,
-    "pnl_pct": 0.00168
+    "size_pct": 33.33,
+    "entry_price": 15.26,
+    "close_price": 15.26,
+    "pnl_pct": 0.0
   },
   {
-    "date": "2025-05-28",
-    "ticker": "KCHOL.IS",
+    "date": "2023-05-22",
+    "ticker": "GUBRF.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 137.56,
-    "close_price": 138.62,
-    "pnl_pct": 0.00771
+    "size_pct": 33.33,
+    "entry_price": 230.3,
+    "close_price": 236.6,
+    "pnl_pct": 0.02736
   },
   {
-    "date": "2025-05-28",
-    "ticker": "MGROS.IS",
+    "date": "2023-05-22",
+    "ticker": "GARAN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 22.45,
+    "close_price": 21.36,
+    "pnl_pct": 0.05062
+  },
+  {
+    "date": "2023-05-22",
+    "ticker": "SOKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 28.16,
+    "close_price": 27.37,
+    "pnl_pct": 0.02907
+  },
+  {
+    "date": "2023-05-22",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 26.91,
+    "close_price": 26.24,
+    "pnl_pct": 0.0258
+  },
+  {
+    "date": "2023-06-05",
+    "ticker": "DOHOL.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 487.62,
-    "close_price": 483.18,
-    "pnl_pct": -0.0091
+    "size_pct": 33.33,
+    "entry_price": 8.66,
+    "close_price": 9.14,
+    "pnl_pct": 0.05556
   },
   {
-    "date": "2025-05-28",
-    "ticker": "PETKM.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 16.5,
-    "close_price": 16.45,
-    "pnl_pct": -0.00303
+    "date": "2023-06-05",
+    "ticker": "GUBRF.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 269.5,
+    "close_price": 271.5,
+    "pnl_pct": -0.00737
   },
   {
-    "date": "2025-05-28",
+    "date": "2023-06-19",
     "ticker": "PGSUS.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 235.5,
-    "close_price": 240.2,
-    "pnl_pct": 0.01996
+    "size_pct": 33.33,
+    "entry_price": 120.57,
+    "close_price": 116.05,
+    "pnl_pct": -0.0375
   },
   {
-    "date": "2025-06-04",
-    "ticker": "HALKB.IS",
+    "date": "2023-06-19",
+    "ticker": "THYAO.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 20.24,
-    "close_price": 20.44,
+    "size_pct": 33.33,
+    "entry_price": 176.82,
+    "close_price": 169.98,
+    "pnl_pct": -0.03867
+  },
+  {
+    "date": "2023-06-19",
+    "ticker": "DOHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 9.04,
+    "close_price": 8.55,
+    "pnl_pct": 0.05741
+  },
+  {
+    "date": "2023-06-19",
+    "ticker": "EREGL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 18.04,
+    "close_price": 17.5,
+    "pnl_pct": 0.03076
+  },
+  {
+    "date": "2023-07-06",
+    "ticker": "ENKAI.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 26.79,
+    "close_price": 26.49,
+    "pnl_pct": -0.01115
+  },
+  {
+    "date": "2023-07-06",
+    "ticker": "GUBRF.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 288.0,
+    "close_price": 281.9,
+    "pnl_pct": -0.02118
+  },
+  {
+    "date": "2023-07-06",
+    "ticker": "SASA.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 7.4,
+    "close_price": 7.26,
+    "pnl_pct": -0.01943
+  },
+  {
+    "date": "2023-07-06",
+    "ticker": "ARCLK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 132.9,
+    "close_price": 135.95,
+    "pnl_pct": -0.02242
+  },
+  {
+    "date": "2023-07-06",
+    "ticker": "PGSUS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 136.96,
+    "close_price": 137.49,
+    "pnl_pct": -0.00387
+  },
+  {
+    "date": "2023-07-06",
+    "ticker": "THYAO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 211.5,
+    "close_price": 211.59,
+    "pnl_pct": -0.00046
+  },
+  {
+    "date": "2023-07-20",
+    "ticker": "EREGL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 18.53,
+    "close_price": 18.44,
+    "pnl_pct": -0.00475
+  },
+  {
+    "date": "2023-07-20",
+    "ticker": "SASA.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 7.86,
+    "close_price": 7.75,
+    "pnl_pct": 0.01452
+  },
+  {
+    "date": "2023-08-03",
+    "ticker": "EKGYO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 8.42,
+    "close_price": 8.63,
+    "pnl_pct": 0.02428
+  },
+  {
+    "date": "2023-08-03",
+    "ticker": "TAVHL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 110.8,
+    "close_price": 110.0,
+    "pnl_pct": -0.00722
+  },
+  {
+    "date": "2023-08-03",
+    "ticker": "THYAO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 231.52,
+    "close_price": 229.57,
+    "pnl_pct": -0.00844
+  },
+  {
+    "date": "2023-08-03",
+    "ticker": "ENKAI.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 29.87,
+    "close_price": 28.76,
+    "pnl_pct": 0.03848
+  },
+  {
+    "date": "2023-08-03",
+    "ticker": "EREGL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 20.08,
+    "close_price": 19.77,
+    "pnl_pct": 0.01584
+  },
+  {
+    "date": "2023-08-03",
+    "ticker": "GUBRF.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 312.5,
+    "close_price": 331.7,
+    "pnl_pct": -0.05788
+  },
+  {
+    "date": "2023-08-17",
+    "ticker": "ARCLK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 150.89,
+    "close_price": 154.72,
+    "pnl_pct": 0.02541
+  },
+  {
+    "date": "2023-08-17",
+    "ticker": "EKGYO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 8.85,
+    "close_price": 8.69,
+    "pnl_pct": 0.01792
+  },
+  {
+    "date": "2023-09-01",
+    "ticker": "ENKAI.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 29.11,
+    "close_price": 29.29,
+    "pnl_pct": 0.00604
+  },
+  {
+    "date": "2023-09-01",
+    "ticker": "FROTO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 70.76,
+    "close_price": 75.4,
+    "pnl_pct": 0.06549
+  },
+  {
+    "date": "2023-09-01",
+    "ticker": "PETKM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 20.54,
+    "close_price": 20.56,
+    "pnl_pct": 0.00097
+  },
+  {
+    "date": "2023-09-01",
+    "ticker": "ARCLK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 160.72,
+    "close_price": 159.15,
     "pnl_pct": 0.00988
   },
   {
-    "date": "2025-06-04",
-    "ticker": "SASA.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 3.27,
-    "close_price": 3.33,
-    "pnl_pct": 0.01835
-  },
-  {
-    "date": "2025-06-04",
-    "ticker": "SOKM.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 33.86,
-    "close_price": 34.48,
-    "pnl_pct": 0.01831
-  },
-  {
-    "date": "2025-06-04",
-    "ticker": "TCELL.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 90.18,
-    "close_price": 94.36,
-    "pnl_pct": 0.04638
-  },
-  {
-    "date": "2026-02-23",
-    "ticker": "GARAN.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 153.69,
-    "close_price": 152.25,
-    "pnl_pct": -0.00938
-  },
-  {
-    "date": "2026-02-23",
-    "ticker": "ARCLK.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 121.1,
-    "close_price": 124.4,
-    "pnl_pct": -0.02653
-  },
-  {
-    "date": "2026-02-23",
-    "ticker": "EKGYO.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 24.72,
-    "close_price": 24.92,
-    "pnl_pct": -0.00803
-  },
-  {
-    "date": "2026-02-23",
-    "ticker": "FROTO.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 119.4,
-    "close_price": 116.6,
-    "pnl_pct": 0.02405
-  },
-  {
-    "date": "2026-02-23",
-    "ticker": "HALKB.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 49.62,
-    "close_price": 50.35,
-    "pnl_pct": -0.0145
-  },
-  {
-    "date": "2026-02-23",
-    "ticker": "KCHOL.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 208.7,
-    "close_price": 208.6,
-    "pnl_pct": 0.00046
-  },
-  {
-    "date": "2026-02-23",
-    "ticker": "PETKM.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 17.57,
-    "close_price": 18.0,
-    "pnl_pct": -0.02389
-  },
-  {
-    "date": "2026-02-23",
-    "ticker": "PGSUS.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 208.0,
-    "close_price": 203.3,
-    "pnl_pct": 0.02312
-  },
-  {
-    "date": "2026-02-23",
-    "ticker": "SASA.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 2.44,
-    "close_price": 2.43,
-    "pnl_pct": 0.00412
-  },
-  {
-    "date": "2026-02-23",
-    "ticker": "SOKM.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 70.05,
-    "close_price": 68.3,
-    "pnl_pct": 0.02562
-  },
-  {
-    "date": "2026-02-23",
+    "date": "2023-09-01",
     "ticker": "TAVHL.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 336.75,
-    "close_price": 327.75,
-    "pnl_pct": 0.02746
+    "size_pct": -33.33,
+    "entry_price": 122.7,
+    "close_price": 124.7,
+    "pnl_pct": -0.01604
   },
   {
-    "date": "2026-02-23",
-    "ticker": "TTKOM.IS",
+    "date": "2023-09-01",
+    "ticker": "THYAO.IS",
     "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 71.3,
-    "close_price": 70.65,
-    "pnl_pct": 0.0092
+    "size_pct": -33.33,
+    "entry_price": 239.43,
+    "close_price": 248.13,
+    "pnl_pct": -0.03504
   },
   {
-    "date": "2026-02-23",
-    "ticker": "TUPRS.IS",
-    "action": "SELL",
-    "size_pct": -10.0,
-    "entry_price": 214.5,
-    "close_price": 218.06,
-    "pnl_pct": -0.0163
-  },
-  {
-    "date": "2026-03-02",
-    "ticker": "DOHOL.IS",
+    "date": "2023-09-15",
+    "ticker": "ASELS.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 19.2,
-    "close_price": 19.78,
-    "pnl_pct": 0.03021
+    "size_pct": 33.33,
+    "entry_price": 41.56,
+    "close_price": 40.62,
+    "pnl_pct": -0.02251
   },
   {
-    "date": "2026-03-02",
-    "ticker": "HALKB.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 46.48,
-    "close_price": 49.6,
-    "pnl_pct": 0.06713
-  },
-  {
-    "date": "2026-03-02",
-    "ticker": "TTKOM.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 64.05,
-    "close_price": 65.8,
-    "pnl_pct": 0.02732
-  },
-  {
-    "date": "2026-03-02",
-    "ticker": "TUPRS.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 209.89,
-    "close_price": 215.94,
-    "pnl_pct": 0.02883
-  },
-  {
-    "date": "2026-03-02",
-    "ticker": "VAKBN.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 39.16,
-    "close_price": 39.38,
-    "pnl_pct": 0.00562
-  },
-  {
-    "date": "2026-03-09",
-    "ticker": "ENKAI.IS",
-    "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 85.53,
-    "close_price": 90.02,
-    "pnl_pct": 0.05257
-  },
-  {
-    "date": "2026-03-09",
+    "date": "2023-09-15",
     "ticker": "KCHOL.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 175.54,
-    "close_price": 181.03,
-    "pnl_pct": 0.0313
+    "size_pct": 33.33,
+    "entry_price": 125.23,
+    "close_price": 120.97,
+    "pnl_pct": -0.03399
   },
   {
-    "date": "2026-03-09",
+    "date": "2023-09-15",
+    "ticker": "VAKBN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 14.07,
+    "close_price": 14.35,
+    "pnl_pct": 0.0199
+  },
+  {
+    "date": "2023-09-15",
+    "ticker": "ENKAI.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 32.9,
+    "close_price": 32.24,
+    "pnl_pct": 0.02071
+  },
+  {
+    "date": "2023-09-15",
+    "ticker": "FROTO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 74.7,
+    "close_price": 71.51,
+    "pnl_pct": 0.04454
+  },
+  {
+    "date": "2023-09-15",
+    "ticker": "PETKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 19.65,
+    "close_price": 19.41,
+    "pnl_pct": 0.01236
+  },
+  {
+    "date": "2023-09-29",
+    "ticker": "ARCLK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 154.3,
+    "close_price": 163.0,
+    "pnl_pct": 0.05638
+  },
+  {
+    "date": "2023-09-29",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 129.06,
+    "close_price": 130.15,
+    "pnl_pct": 0.00844
+  },
+  {
+    "date": "2023-09-29",
+    "ticker": "GARAN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 45.56,
+    "close_price": 47.2,
+    "pnl_pct": 0.03599
+  },
+  {
+    "date": "2023-09-29",
+    "ticker": "ASELS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 40.23,
+    "close_price": 40.6,
+    "pnl_pct": -0.00931
+  },
+  {
+    "date": "2023-09-29",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 126.29,
+    "close_price": 130.1,
+    "pnl_pct": -0.02931
+  },
+  {
+    "date": "2023-09-29",
+    "ticker": "VAKBN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 14.2,
+    "close_price": 14.38,
+    "pnl_pct": -0.01252
+  },
+  {
+    "date": "2023-10-13",
+    "ticker": "KCHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 134.54,
+    "close_price": 129.75,
+    "pnl_pct": -0.0356
+  },
+  {
+    "date": "2023-10-13",
+    "ticker": "YKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 18.5,
+    "close_price": 17.92,
+    "pnl_pct": -0.03109
+  },
+  {
+    "date": "2023-10-13",
+    "ticker": "ARCLK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 157.4,
+    "close_price": 157.4,
+    "pnl_pct": 0.0
+  },
+  {
+    "date": "2023-10-13",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 152.18,
+    "close_price": 151.61,
+    "pnl_pct": 0.00375
+  },
+  {
+    "date": "2023-10-27",
+    "ticker": "SAHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 50.07,
+    "close_price": 50.21,
+    "pnl_pct": 0.00275
+  },
+  {
+    "date": "2023-10-27",
+    "ticker": "SASA.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 5.41,
+    "close_price": 5.33,
+    "pnl_pct": -0.01525
+  },
+  {
+    "date": "2023-10-27",
+    "ticker": "SISE.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 47.61,
+    "close_price": 47.94,
+    "pnl_pct": 0.00691
+  },
+  {
+    "date": "2023-10-27",
+    "ticker": "GARAN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 42.44,
+    "close_price": 43.54,
+    "pnl_pct": -0.02524
+  },
+  {
+    "date": "2023-10-27",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 124.87,
+    "close_price": 123.1,
+    "pnl_pct": 0.01441
+  },
+  {
+    "date": "2023-10-27",
+    "ticker": "YKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 17.1,
+    "close_price": 17.08,
+    "pnl_pct": 0.00112
+  },
+  {
+    "date": "2023-11-10",
+    "ticker": "ENKAI.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 28.14,
+    "close_price": 29.23,
+    "pnl_pct": 0.0387
+  },
+  {
+    "date": "2023-11-10",
+    "ticker": "GARAN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 42.89,
+    "close_price": 42.37,
+    "pnl_pct": -0.01199
+  },
+  {
+    "date": "2023-11-10",
+    "ticker": "SAHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 53.66,
+    "close_price": 52.42,
+    "pnl_pct": 0.02366
+  },
+  {
+    "date": "2023-11-10",
+    "ticker": "SASA.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 5.53,
+    "close_price": 5.5,
+    "pnl_pct": 0.00636
+  },
+  {
+    "date": "2023-11-24",
+    "ticker": "KCHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 124.69,
+    "close_price": 125.4,
+    "pnl_pct": 0.00569
+  },
+  {
+    "date": "2023-11-24",
+    "ticker": "TUPRS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 114.59,
+    "close_price": 114.97,
+    "pnl_pct": 0.00333
+  },
+  {
+    "date": "2023-11-24",
+    "ticker": "GARAN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 44.54,
+    "close_price": 45.79,
+    "pnl_pct": -0.02711
+  },
+  {
+    "date": "2023-11-24",
+    "ticker": "SISE.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 47.59,
+    "close_price": 47.76,
+    "pnl_pct": -0.00365
+  },
+  {
+    "date": "2023-12-08",
+    "ticker": "TAVHL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 115.0,
+    "close_price": 116.6,
+    "pnl_pct": 0.01391
+  },
+  {
+    "date": "2023-12-08",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 126.64,
+    "close_price": 125.76,
+    "pnl_pct": 0.00705
+  },
+  {
+    "date": "2023-12-22",
+    "ticker": "AKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 35.57,
+    "close_price": 35.57,
+    "pnl_pct": 0.0
+  },
+  {
+    "date": "2023-12-22",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 149.05,
+    "close_price": 148.09,
+    "pnl_pct": -0.00642
+  },
+  {
+    "date": "2023-12-22",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 38.08,
+    "close_price": 36.49,
+    "pnl_pct": -0.04182
+  },
+  {
+    "date": "2023-12-22",
+    "ticker": "ENKAI.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 32.43,
+    "close_price": 31.38,
+    "pnl_pct": 0.03359
+  },
+  {
+    "date": "2023-12-22",
+    "ticker": "TAVHL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 114.0,
+    "close_price": 108.7,
+    "pnl_pct": 0.04876
+  },
+  {
+    "date": "2023-12-22",
+    "ticker": "TUPRS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 116.65,
+    "close_price": 110.61,
+    "pnl_pct": 0.05456
+  },
+  {
+    "date": "2024-01-09",
+    "ticker": "DOHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 11.81,
+    "close_price": 11.57,
+    "pnl_pct": -0.02076
+  },
+  {
+    "date": "2024-01-09",
+    "ticker": "GUBRF.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 152.5,
+    "close_price": 149.0,
+    "pnl_pct": -0.02295
+  },
+  {
+    "date": "2024-01-09",
+    "ticker": "AKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 36.95,
+    "close_price": 36.19,
+    "pnl_pct": 0.02108
+  },
+  {
+    "date": "2024-01-09",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 153.12,
+    "close_price": 152.88,
+    "pnl_pct": 0.00156
+  },
+  {
+    "date": "2024-01-23",
+    "ticker": "THYAO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 247.64,
+    "close_price": 243.05,
+    "pnl_pct": -0.01854
+  },
+  {
+    "date": "2024-01-23",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 39.12,
+    "close_price": 38.38,
+    "pnl_pct": 0.01919
+  },
+  {
+    "date": "2024-02-07",
+    "ticker": "EREGL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 21.77,
+    "close_price": 22.03,
+    "pnl_pct": 0.01169
+  },
+  {
+    "date": "2024-02-07",
+    "ticker": "MGROS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 420.76,
+    "close_price": 408.86,
+    "pnl_pct": -0.02828
+  },
+  {
+    "date": "2024-02-07",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 45.49,
+    "close_price": 44.95,
+    "pnl_pct": -0.01182
+  },
+  {
+    "date": "2024-02-07",
+    "ticker": "DOHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 13.36,
+    "close_price": 13.24,
+    "pnl_pct": 0.00964
+  },
+  {
+    "date": "2024-02-07",
+    "ticker": "GUBRF.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 143.3,
+    "close_price": 143.7,
+    "pnl_pct": -0.00278
+  },
+  {
+    "date": "2024-02-07",
+    "ticker": "THYAO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 285.25,
+    "close_price": 279.39,
+    "pnl_pct": 0.02098
+  },
+  {
+    "date": "2024-02-21",
+    "ticker": "ARCLK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 161.5,
+    "close_price": 160.7,
+    "pnl_pct": -0.00495
+  },
+  {
+    "date": "2024-02-21",
+    "ticker": "FROTO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 83.8,
+    "close_price": 83.33,
+    "pnl_pct": -0.00557
+  },
+  {
+    "date": "2024-02-21",
+    "ticker": "TCELL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 62.88,
+    "close_price": 61.3,
+    "pnl_pct": -0.0252
+  },
+  {
+    "date": "2024-02-21",
+    "ticker": "EREGL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 24.91,
+    "close_price": 23.8,
+    "pnl_pct": 0.04646
+  },
+  {
+    "date": "2024-02-21",
+    "ticker": "MGROS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 443.6,
+    "close_price": 443.37,
+    "pnl_pct": 0.00054
+  },
+  {
+    "date": "2024-02-21",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 45.78,
+    "close_price": 45.88,
+    "pnl_pct": -0.00217
+  },
+  {
+    "date": "2024-03-06",
+    "ticker": "GUBRF.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 185.0,
+    "close_price": 180.1,
+    "pnl_pct": -0.02649
+  },
+  {
+    "date": "2024-03-06",
+    "ticker": "KCHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 146.69,
+    "close_price": 148.37,
+    "pnl_pct": 0.01149
+  },
+  {
+    "date": "2024-03-06",
+    "ticker": "YKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 20.28,
+    "close_price": 20.05,
+    "pnl_pct": -0.01134
+  },
+  {
+    "date": "2024-03-06",
+    "ticker": "ARCLK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 157.7,
+    "close_price": 154.8,
+    "pnl_pct": 0.01873
+  },
+  {
+    "date": "2024-03-06",
+    "ticker": "FROTO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 86.73,
+    "close_price": 88.42,
+    "pnl_pct": -0.01919
+  },
+  {
+    "date": "2024-03-06",
+    "ticker": "TCELL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 59.25,
+    "close_price": 58.17,
+    "pnl_pct": 0.01843
+  },
+  {
+    "date": "2024-03-20",
+    "ticker": "DOHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 12.53,
+    "close_price": 12.51,
+    "pnl_pct": -0.00157
+  },
+  {
+    "date": "2024-03-20",
+    "ticker": "SAHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 70.15,
+    "close_price": 70.93,
+    "pnl_pct": 0.01113
+  },
+  {
+    "date": "2024-03-20",
+    "ticker": "VAKBN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 13.53,
+    "close_price": 13.32,
+    "pnl_pct": -0.01552
+  },
+  {
+    "date": "2024-03-20",
+    "ticker": "GUBRF.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 167.0,
+    "close_price": 165.8,
+    "pnl_pct": 0.00724
+  },
+  {
+    "date": "2024-03-20",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 159.9,
+    "close_price": 166.02,
+    "pnl_pct": -0.03686
+  },
+  {
+    "date": "2024-03-20",
+    "ticker": "YKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 22.56,
+    "close_price": 23.38,
+    "pnl_pct": -0.03525
+  },
+  {
+    "date": "2024-04-03",
+    "ticker": "EKGYO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 8.71,
+    "close_price": 8.76,
+    "pnl_pct": 0.00559
+  },
+  {
+    "date": "2024-04-03",
+    "ticker": "EREGL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 19.02,
+    "close_price": 18.73,
+    "pnl_pct": -0.01543
+  },
+  {
+    "date": "2024-04-03",
+    "ticker": "KCHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 185.62,
+    "close_price": 181.01,
+    "pnl_pct": -0.02484
+  },
+  {
+    "date": "2024-04-03",
+    "ticker": "DOHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 12.56,
+    "close_price": 12.3,
+    "pnl_pct": 0.02073
+  },
+  {
+    "date": "2024-04-03",
+    "ticker": "SAHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 74.51,
+    "close_price": 74.93,
+    "pnl_pct": -0.00552
+  },
+  {
+    "date": "2024-04-03",
+    "ticker": "VAKBN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 14.35,
+    "close_price": 14.54,
+    "pnl_pct": -0.01307
+  },
+  {
+    "date": "2024-04-22",
+    "ticker": "ASELS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 59.08,
+    "close_price": 57.63,
+    "pnl_pct": -0.02447
+  },
+  {
+    "date": "2024-04-22",
+    "ticker": "THYAO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 300.88,
+    "close_price": 295.75,
+    "pnl_pct": -0.01705
+  },
+  {
+    "date": "2024-04-22",
+    "ticker": "VAKBN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 16.65,
+    "close_price": 16.9,
+    "pnl_pct": 0.01502
+  },
+  {
+    "date": "2024-04-22",
+    "ticker": "EKGYO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 8.87,
+    "close_price": 8.8,
+    "pnl_pct": 0.00774
+  },
+  {
+    "date": "2024-04-22",
+    "ticker": "EREGL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 20.55,
+    "close_price": 20.6,
+    "pnl_pct": -0.00241
+  },
+  {
+    "date": "2024-04-22",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 197.95,
+    "close_price": 191.56,
+    "pnl_pct": 0.03333
+  },
+  {
+    "date": "2024-05-08",
+    "ticker": "ENKAI.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 34.41,
+    "close_price": 34.98,
+    "pnl_pct": 0.01658
+  },
+  {
+    "date": "2024-05-08",
+    "ticker": "TTKOM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 41.0,
+    "close_price": 41.06,
+    "pnl_pct": 0.00146
+  },
+  {
+    "date": "2024-05-08",
+    "ticker": "ASELS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 62.32,
+    "close_price": 62.22,
+    "pnl_pct": 0.0016
+  },
+  {
+    "date": "2024-05-08",
+    "ticker": "THYAO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 323.1,
+    "close_price": 320.17,
+    "pnl_pct": 0.00915
+  },
+  {
+    "date": "2024-05-22",
+    "ticker": "ARCLK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 191.1,
+    "close_price": 195.0,
+    "pnl_pct": 0.02041
+  },
+  {
+    "date": "2024-05-22",
     "ticker": "SOKM.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 58.3,
-    "close_price": 59.15,
-    "pnl_pct": 0.01458
+    "size_pct": 33.33,
+    "entry_price": 63.93,
+    "close_price": 63.11,
+    "pnl_pct": -0.01272
   },
   {
-    "date": "2026-03-09",
+    "date": "2024-05-22",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 53.95,
+    "close_price": 55.84,
+    "pnl_pct": 0.03506
+  },
+  {
+    "date": "2024-05-22",
+    "ticker": "ENKAI.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 35.66,
+    "close_price": 36.56,
+    "pnl_pct": -0.0247
+  },
+  {
+    "date": "2024-05-22",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 45.26,
+    "close_price": 45.32,
+    "pnl_pct": -0.00132
+  },
+  {
+    "date": "2024-05-22",
+    "ticker": "VAKBN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 22.82,
+    "close_price": 22.4,
+    "pnl_pct": 0.01875
+  },
+  {
+    "date": "2024-06-05",
+    "ticker": "EKGYO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 8.68,
+    "close_price": 8.53,
+    "pnl_pct": -0.01794
+  },
+  {
+    "date": "2024-06-05",
+    "ticker": "SAHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 93.01,
+    "close_price": 90.87,
+    "pnl_pct": -0.02296
+  },
+  {
+    "date": "2024-06-05",
+    "ticker": "TUPRS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 137.36,
+    "close_price": 135.58,
+    "pnl_pct": -0.013
+  },
+  {
+    "date": "2024-06-05",
+    "ticker": "ARCLK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 177.0,
+    "close_price": 173.9,
+    "pnl_pct": 0.01783
+  },
+  {
+    "date": "2024-06-05",
+    "ticker": "SOKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 57.66,
+    "close_price": 57.42,
+    "pnl_pct": 0.00416
+  },
+  {
+    "date": "2024-06-05",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 52.05,
+    "close_price": 52.65,
+    "pnl_pct": -0.01134
+  },
+  {
+    "date": "2024-06-24",
+    "ticker": "AKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 62.46,
+    "close_price": 63.64,
+    "pnl_pct": 0.01897
+  },
+  {
+    "date": "2024-06-24",
+    "ticker": "GUBRF.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 144.0,
+    "close_price": 142.5,
+    "pnl_pct": -0.01042
+  },
+  {
+    "date": "2024-06-24",
+    "ticker": "MGROS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 517.93,
+    "close_price": 511.16,
+    "pnl_pct": -0.01306
+  },
+  {
+    "date": "2024-06-24",
+    "ticker": "EKGYO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 9.06,
+    "close_price": 9.15,
+    "pnl_pct": -0.00957
+  },
+  {
+    "date": "2024-06-24",
+    "ticker": "SAHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 90.35,
+    "close_price": 88.31,
+    "pnl_pct": 0.02311
+  },
+  {
+    "date": "2024-06-24",
+    "ticker": "TUPRS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 138.83,
+    "close_price": 139.31,
+    "pnl_pct": -0.0035
+  },
+  {
+    "date": "2024-07-08",
+    "ticker": "TCELL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 100.22,
+    "close_price": 101.34,
+    "pnl_pct": 0.01116
+  },
+  {
+    "date": "2024-07-08",
     "ticker": "TOASO.IS",
     "action": "BUY",
-    "size_pct": 10.0,
-    "entry_price": 261.95,
-    "close_price": 270.37,
-    "pnl_pct": 0.03214
+    "size_pct": 33.33,
+    "entry_price": 293.26,
+    "close_price": 281.47,
+    "pnl_pct": -0.04018
+  },
+  {
+    "date": "2024-07-08",
+    "ticker": "AKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 63.55,
+    "close_price": 64.17,
+    "pnl_pct": -0.0096
+  },
+  {
+    "date": "2024-07-08",
+    "ticker": "MGROS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 521.31,
+    "close_price": 536.29,
+    "pnl_pct": -0.02793
+  },
+  {
+    "date": "2024-07-23",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 296.0,
+    "close_price": 295.28,
+    "pnl_pct": -0.00243
+  },
+  {
+    "date": "2024-07-23",
+    "ticker": "TAVHL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 282.0,
+    "close_price": 270.0,
+    "pnl_pct": -0.04255
+  },
+  {
+    "date": "2024-07-23",
+    "ticker": "TUPRS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 132.66,
+    "close_price": 133.55,
+    "pnl_pct": 0.00673
+  },
+  {
+    "date": "2024-07-23",
+    "ticker": "GUBRF.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 155.3,
+    "close_price": 153.2,
+    "pnl_pct": 0.01371
+  },
+  {
+    "date": "2024-07-23",
+    "ticker": "TCELL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 107.03,
+    "close_price": 103.76,
+    "pnl_pct": 0.03145
+  },
+  {
+    "date": "2024-07-23",
+    "ticker": "TOASO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 266.64,
+    "close_price": 263.8,
+    "pnl_pct": 0.01075
+  },
+  {
+    "date": "2024-08-06",
+    "ticker": "DOHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 15.85,
+    "close_price": 15.57,
+    "pnl_pct": -0.018
+  },
+  {
+    "date": "2024-08-06",
+    "ticker": "SOKM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 57.97,
+    "close_price": 56.59,
+    "pnl_pct": -0.02373
+  },
+  {
+    "date": "2024-08-06",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 51.86,
+    "close_price": 49.27,
+    "pnl_pct": -0.0499
+  },
+  {
+    "date": "2024-08-06",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 272.23,
+    "close_price": 271.27,
+    "pnl_pct": 0.00354
+  },
+  {
+    "date": "2024-08-06",
+    "ticker": "TAVHL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 257.0,
+    "close_price": 247.7,
+    "pnl_pct": 0.03755
+  },
+  {
+    "date": "2024-08-06",
+    "ticker": "TUPRS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 129.49,
+    "close_price": 128.27,
+    "pnl_pct": 0.00949
+  },
+  {
+    "date": "2024-08-20",
+    "ticker": "ASELS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 58.08,
+    "close_price": 57.88,
+    "pnl_pct": -0.00343
+  },
+  {
+    "date": "2024-08-20",
+    "ticker": "TUPRS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 134.12,
+    "close_price": 133.14,
+    "pnl_pct": -0.00726
+  },
+  {
+    "date": "2024-08-20",
+    "ticker": "YKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 29.42,
+    "close_price": 29.92,
+    "pnl_pct": 0.017
+  },
+  {
+    "date": "2024-08-20",
+    "ticker": "DOHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 15.79,
+    "close_price": 15.86,
+    "pnl_pct": -0.00434
+  },
+  {
+    "date": "2024-08-20",
+    "ticker": "SOKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 57.33,
+    "close_price": 55.96,
+    "pnl_pct": 0.02458
+  },
+  {
+    "date": "2024-08-20",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 54.04,
+    "close_price": 53.1,
+    "pnl_pct": 0.01781
+  },
+  {
+    "date": "2024-09-04",
+    "ticker": "EKGYO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 12.01,
+    "close_price": 12.37,
+    "pnl_pct": 0.02917
+  },
+  {
+    "date": "2024-09-04",
+    "ticker": "ENKAI.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 46.11,
+    "close_price": 46.76,
+    "pnl_pct": 0.01399
+  },
+  {
+    "date": "2024-09-04",
+    "ticker": "SAHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 87.08,
+    "close_price": 89.45,
+    "pnl_pct": 0.02725
+  },
+  {
+    "date": "2024-09-04",
+    "ticker": "ASELS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 56.93,
+    "close_price": 56.64,
+    "pnl_pct": 0.00528
+  },
+  {
+    "date": "2024-09-04",
+    "ticker": "TUPRS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 133.95,
+    "close_price": 133.95,
+    "pnl_pct": 0.0
+  },
+  {
+    "date": "2024-09-04",
+    "ticker": "YKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 32.28,
+    "close_price": 32.92,
+    "pnl_pct": -0.01944
+  },
+  {
+    "date": "2024-09-18",
+    "ticker": "ASELS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 57.73,
+    "close_price": 57.58,
+    "pnl_pct": -0.00259
+  },
+  {
+    "date": "2024-09-18",
+    "ticker": "TUPRS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 133.87,
+    "close_price": 133.63,
+    "pnl_pct": -0.00182
+  },
+  {
+    "date": "2024-09-18",
+    "ticker": "EKGYO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 10.9,
+    "close_price": 10.97,
+    "pnl_pct": -0.0071
+  },
+  {
+    "date": "2024-09-18",
+    "ticker": "ENKAI.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 44.68,
+    "close_price": 44.13,
+    "pnl_pct": 0.01253
+  },
+  {
+    "date": "2024-10-02",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 233.35,
+    "close_price": 225.61,
+    "pnl_pct": -0.0332
+  },
+  {
+    "date": "2024-10-02",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 49.29,
+    "close_price": 46.86,
+    "pnl_pct": -0.04927
+  },
+  {
+    "date": "2024-10-02",
+    "ticker": "TTKOM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 48.82,
+    "close_price": 47.62,
+    "pnl_pct": -0.02458
+  },
+  {
+    "date": "2024-10-02",
+    "ticker": "ASELS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 58.28,
+    "close_price": 56.04,
+    "pnl_pct": 0.04004
+  },
+  {
+    "date": "2024-10-02",
+    "ticker": "SAHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 89.78,
+    "close_price": 84.13,
+    "pnl_pct": 0.06712
+  },
+  {
+    "date": "2024-10-02",
+    "ticker": "TUPRS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 135.51,
+    "close_price": 134.03,
+    "pnl_pct": 0.01107
+  },
+  {
+    "date": "2024-10-16",
+    "ticker": "EKGYO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 9.5,
+    "close_price": 9.79,
+    "pnl_pct": 0.03074
+  },
+  {
+    "date": "2024-10-16",
+    "ticker": "SAHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 83.23,
+    "close_price": 83.99,
+    "pnl_pct": 0.00912
+  },
+  {
+    "date": "2024-10-16",
+    "ticker": "YKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 26.56,
+    "close_price": 27.1,
+    "pnl_pct": 0.02033
+  },
+  {
+    "date": "2024-10-16",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 228.75,
+    "close_price": 228.51,
+    "pnl_pct": 0.00106
+  },
+  {
+    "date": "2024-10-16",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 66.69,
+    "close_price": 65.34,
+    "pnl_pct": 0.02056
+  },
+  {
+    "date": "2024-10-16",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 46.12,
+    "close_price": 47.52,
+    "pnl_pct": -0.02946
+  },
+  {
+    "date": "2024-10-31",
+    "ticker": "GARAN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 101.49,
+    "close_price": 99.08,
+    "pnl_pct": -0.02374
+  },
+  {
+    "date": "2024-10-31",
+    "ticker": "GUBRF.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 203.0,
+    "close_price": 201.9,
+    "pnl_pct": -0.00542
+  },
+  {
+    "date": "2024-10-31",
+    "ticker": "SOKM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 39.96,
+    "close_price": 39.3,
+    "pnl_pct": -0.01652
+  },
+  {
+    "date": "2024-10-31",
+    "ticker": "EKGYO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 9.98,
+    "close_price": 9.8,
+    "pnl_pct": 0.01787
+  },
+  {
+    "date": "2024-10-31",
+    "ticker": "SAHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 81.38,
+    "close_price": 79.01,
+    "pnl_pct": 0.03003
+  },
+  {
+    "date": "2024-10-31",
+    "ticker": "YKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 24.84,
+    "close_price": 24.48,
+    "pnl_pct": 0.01471
+  },
+  {
+    "date": "2024-11-14",
+    "ticker": "TTKOM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 45.4,
+    "close_price": 45.84,
+    "pnl_pct": 0.00969
+  },
+  {
+    "date": "2024-11-14",
+    "ticker": "VAKBN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 23.46,
+    "close_price": 24.04,
+    "pnl_pct": 0.02472
+  },
+  {
+    "date": "2024-11-14",
+    "ticker": "GARAN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 105.85,
+    "close_price": 105.48,
+    "pnl_pct": 0.00351
+  },
+  {
+    "date": "2024-11-14",
+    "ticker": "SOKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 39.3,
+    "close_price": 39.38,
+    "pnl_pct": -0.00203
+  },
+  {
+    "date": "2024-11-28",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 232.14,
+    "close_price": 235.29,
+    "pnl_pct": 0.01356
+  },
+  {
+    "date": "2024-11-28",
+    "ticker": "PGSUS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 223.9,
+    "close_price": 218.6,
+    "pnl_pct": -0.02367
+  },
+  {
+    "date": "2024-11-28",
+    "ticker": "GUBRF.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 233.5,
+    "close_price": 237.1,
+    "pnl_pct": -0.01518
+  },
+  {
+    "date": "2024-11-28",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 46.38,
+    "close_price": 45.96,
+    "pnl_pct": 0.00914
+  },
+  {
+    "date": "2024-12-12",
+    "ticker": "MGROS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 515.41,
+    "close_price": 506.17,
+    "pnl_pct": -0.01792
+  },
+  {
+    "date": "2024-12-12",
+    "ticker": "PETKM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 18.9,
+    "close_price": 18.74,
+    "pnl_pct": -0.00847
+  },
+  {
+    "date": "2024-12-12",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 76.64,
+    "close_price": 75.29,
+    "pnl_pct": -0.01753
+  },
+  {
+    "date": "2024-12-12",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 261.92,
+    "close_price": 259.5,
+    "pnl_pct": 0.00933
+  },
+  {
+    "date": "2024-12-12",
+    "ticker": "PGSUS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 223.2,
+    "close_price": 224.6,
+    "pnl_pct": -0.00623
+  },
+  {
+    "date": "2024-12-12",
+    "ticker": "VAKBN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 22.28,
+    "close_price": 22.74,
+    "pnl_pct": -0.02023
+  },
+  {
+    "date": "2024-12-27",
+    "ticker": "GUBRF.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 275.75,
+    "close_price": 282.5,
+    "pnl_pct": 0.02448
+  },
+  {
+    "date": "2024-12-27",
+    "ticker": "SASA.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 4.18,
+    "close_price": 4.18,
+    "pnl_pct": 0.0
+  },
+  {
+    "date": "2024-12-27",
+    "ticker": "YKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 30.66,
+    "close_price": 31.12,
+    "pnl_pct": 0.015
+  },
+  {
+    "date": "2024-12-27",
+    "ticker": "MGROS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 510.54,
+    "close_price": 520.27,
+    "pnl_pct": -0.01869
+  },
+  {
+    "date": "2024-12-27",
+    "ticker": "PETKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 18.48,
+    "close_price": 18.83,
+    "pnl_pct": -0.01859
+  },
+  {
+    "date": "2024-12-27",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 70.47,
+    "close_price": 69.72,
+    "pnl_pct": 0.01071
+  },
+  {
+    "date": "2025-01-13",
+    "ticker": "EKGYO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 13.58,
+    "close_price": 13.56,
+    "pnl_pct": -0.00143
+  },
+  {
+    "date": "2025-01-13",
+    "ticker": "HALKB.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 17.11,
+    "close_price": 16.89,
+    "pnl_pct": -0.01286
+  },
+  {
+    "date": "2025-01-13",
+    "ticker": "MGROS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 521.73,
+    "close_price": 518.81,
+    "pnl_pct": -0.00559
+  },
+  {
+    "date": "2025-01-13",
+    "ticker": "GUBRF.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 291.5,
+    "close_price": 280.0,
+    "pnl_pct": 0.04107
+  },
+  {
+    "date": "2025-01-13",
+    "ticker": "SASA.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 3.98,
+    "close_price": 3.87,
+    "pnl_pct": 0.02842
+  },
+  {
+    "date": "2025-01-13",
+    "ticker": "YKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 30.58,
+    "close_price": 29.86,
+    "pnl_pct": 0.02411
+  },
+  {
+    "date": "2025-01-28",
+    "ticker": "GUBRF.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 274.25,
+    "close_price": 269.0,
+    "pnl_pct": -0.01914
+  },
+  {
+    "date": "2025-01-28",
+    "ticker": "HALKB.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 18.73,
+    "close_price": 19.43,
+    "pnl_pct": -0.03603
+  },
+  {
+    "date": "2025-02-11",
+    "ticker": "ASELS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 81.25,
+    "close_price": 81.65,
+    "pnl_pct": 0.00492
+  },
+  {
+    "date": "2025-02-11",
+    "ticker": "GUBRF.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 273.0,
+    "close_price": 277.0,
+    "pnl_pct": -0.01444
+  },
+  {
+    "date": "2025-02-25",
+    "ticker": "EREGL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 21.87,
+    "close_price": 21.66,
+    "pnl_pct": -0.00996
+  },
+  {
+    "date": "2025-02-25",
+    "ticker": "KCHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 139.07,
+    "close_price": 138.24,
+    "pnl_pct": -0.00596
+  },
+  {
+    "date": "2025-02-25",
+    "ticker": "TOASO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 176.56,
+    "close_price": 172.64,
+    "pnl_pct": -0.02224
+  },
+  {
+    "date": "2025-02-25",
+    "ticker": "ASELS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 83.94,
+    "close_price": 80.9,
+    "pnl_pct": 0.03765
+  },
+  {
+    "date": "2025-02-25",
+    "ticker": "EKGYO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 13.12,
+    "close_price": 13.11,
+    "pnl_pct": 0.00074
+  },
+  {
+    "date": "2025-02-25",
+    "ticker": "MGROS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 544.58,
+    "close_price": 539.23,
+    "pnl_pct": 0.00992
+  },
+  {
+    "date": "2025-03-11",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 253.22,
+    "close_price": 252.0,
+    "pnl_pct": -0.00482
+  },
+  {
+    "date": "2025-03-11",
+    "ticker": "ENKAI.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 49.94,
+    "close_price": 50.9,
+    "pnl_pct": 0.01937
+  },
+  {
+    "date": "2025-03-11",
+    "ticker": "EREGL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 24.27,
+    "close_price": 24.59,
+    "pnl_pct": -0.01289
+  },
+  {
+    "date": "2025-03-11",
+    "ticker": "TOASO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 181.63,
+    "close_price": 186.08,
+    "pnl_pct": -0.02392
+  },
+  {
+    "date": "2025-03-25",
+    "ticker": "ASELS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 122.64,
+    "close_price": 117.35,
+    "pnl_pct": -0.04316
+  },
+  {
+    "date": "2025-03-25",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 128.59,
+    "close_price": 129.99,
+    "pnl_pct": 0.01084
+  },
+  {
+    "date": "2025-03-25",
+    "ticker": "TTKOM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 47.7,
+    "close_price": 50.65,
+    "pnl_pct": 0.06184
+  },
+  {
+    "date": "2025-03-25",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 206.87,
+    "close_price": 222.12,
+    "pnl_pct": -0.06864
+  },
+  {
+    "date": "2025-03-25",
+    "ticker": "ENKAI.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 55.88,
+    "close_price": 56.85,
+    "pnl_pct": -0.01702
+  },
+  {
+    "date": "2025-03-25",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 151.96,
+    "close_price": 156.93,
+    "pnl_pct": -0.03169
+  },
+  {
+    "date": "2025-04-10",
+    "ticker": "HALKB.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 20.4,
+    "close_price": 19.49,
+    "pnl_pct": -0.04461
+  },
+  {
+    "date": "2025-04-10",
+    "ticker": "ASELS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 120.35,
+    "close_price": 122.94,
+    "pnl_pct": -0.02112
+  },
+  {
+    "date": "2025-04-25",
+    "ticker": "GARAN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 100.83,
+    "close_price": 98.61,
+    "pnl_pct": -0.02193
+  },
+  {
+    "date": "2025-04-25",
+    "ticker": "ISCTR.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 10.52,
+    "close_price": 10.27,
+    "pnl_pct": -0.0237
+  },
+  {
+    "date": "2025-04-25",
+    "ticker": "TOASO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 191.78,
+    "close_price": 190.01,
+    "pnl_pct": -0.00927
+  },
+  {
+    "date": "2025-04-25",
+    "ticker": "HALKB.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 20.6,
+    "close_price": 19.96,
+    "pnl_pct": 0.03206
+  },
+  {
+    "date": "2025-04-25",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 142.33,
+    "close_price": 133.27,
+    "pnl_pct": 0.06796
+  },
+  {
+    "date": "2025-04-25",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 56.1,
+    "close_price": 54.2,
+    "pnl_pct": 0.03506
+  },
+  {
+    "date": "2025-05-12",
+    "ticker": "ASELS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 148.11,
+    "close_price": 140.22,
+    "pnl_pct": -0.05327
+  },
+  {
+    "date": "2025-05-12",
+    "ticker": "THYAO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 298.44,
+    "close_price": 302.35,
+    "pnl_pct": 0.01309
+  },
+  {
+    "date": "2025-05-12",
+    "ticker": "GARAN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 100.15,
+    "close_price": 102.27,
+    "pnl_pct": -0.02068
+  },
+  {
+    "date": "2025-05-12",
+    "ticker": "ISCTR.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 10.18,
+    "close_price": 10.37,
+    "pnl_pct": -0.01758
+  },
+  {
+    "date": "2025-05-27",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 236.14,
+    "close_price": 234.07,
+    "pnl_pct": -0.00878
+  },
+  {
+    "date": "2025-05-27",
+    "ticker": "SAHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 76.72,
+    "close_price": 75.63,
+    "pnl_pct": -0.01411
+  },
+  {
+    "date": "2025-05-27",
+    "ticker": "TAVHL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 225.3,
+    "close_price": 221.6,
+    "pnl_pct": -0.01642
+  },
+  {
+    "date": "2025-05-27",
+    "ticker": "ASELS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 135.63,
+    "close_price": 137.42,
+    "pnl_pct": -0.01308
+  },
+  {
+    "date": "2025-05-27",
+    "ticker": "THYAO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 274.02,
+    "close_price": 268.64,
+    "pnl_pct": 0.02
+  },
+  {
+    "date": "2025-05-27",
+    "ticker": "TOASO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 182.24,
+    "close_price": 177.75,
+    "pnl_pct": 0.02526
+  },
+  {
+    "date": "2025-06-12",
+    "ticker": "AKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 57.17,
+    "close_price": 57.36,
+    "pnl_pct": 0.00339
+  },
+  {
+    "date": "2025-06-12",
+    "ticker": "ARCLK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 111.0,
+    "close_price": 109.9,
+    "pnl_pct": -0.00991
+  },
+  {
+    "date": "2025-06-12",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 251.27,
+    "close_price": 246.63,
+    "pnl_pct": 0.01879
+  },
+  {
+    "date": "2025-06-12",
+    "ticker": "TAVHL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 243.7,
+    "close_price": 244.0,
+    "pnl_pct": -0.00123
+  },
+  {
+    "date": "2025-06-26",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 234.47,
+    "close_price": 229.92,
+    "pnl_pct": -0.0194
+  },
+  {
+    "date": "2025-06-26",
+    "ticker": "FROTO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 78.75,
+    "close_price": 76.71,
+    "pnl_pct": -0.02592
+  },
+  {
+    "date": "2025-06-26",
+    "ticker": "SASA.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 2.9,
+    "close_price": 2.87,
+    "pnl_pct": -0.01034
+  },
+  {
+    "date": "2025-06-26",
+    "ticker": "AKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 58.77,
+    "close_price": 58.91,
+    "pnl_pct": -0.00247
+  },
+  {
+    "date": "2025-06-26",
+    "ticker": "ARCLK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 116.6,
+    "close_price": 120.0,
+    "pnl_pct": -0.02833
+  },
+  {
+    "date": "2025-06-26",
+    "ticker": "SAHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 80.31,
+    "close_price": 79.23,
+    "pnl_pct": 0.01366
+  },
+  {
+    "date": "2025-07-10",
+    "ticker": "EKGYO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 18.35,
+    "close_price": 19.0,
+    "pnl_pct": 0.03542
+  },
+  {
+    "date": "2025-07-10",
+    "ticker": "SISE.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 36.04,
+    "close_price": 36.02,
+    "pnl_pct": -0.00055
+  },
+  {
+    "date": "2025-07-10",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 244.43,
+    "close_price": 245.41,
+    "pnl_pct": -0.00401
+  },
+  {
+    "date": "2025-07-10",
+    "ticker": "FROTO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 86.28,
+    "close_price": 87.41,
+    "pnl_pct": -0.01297
+  },
+  {
+    "date": "2025-07-25",
+    "ticker": "GUBRF.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 257.25,
+    "close_price": 253.75,
+    "pnl_pct": -0.01361
+  },
+  {
+    "date": "2025-07-25",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 110.78,
+    "close_price": 110.48,
+    "pnl_pct": -0.0027
+  },
+  {
+    "date": "2025-07-25",
+    "ticker": "EKGYO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 19.84,
+    "close_price": 19.44,
+    "pnl_pct": 0.02058
+  },
+  {
+    "date": "2025-07-25",
+    "ticker": "SISE.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 37.98,
+    "close_price": 37.3,
+    "pnl_pct": 0.01823
+  },
+  {
+    "date": "2025-08-08",
+    "ticker": "TTKOM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 56.6,
+    "close_price": 56.85,
+    "pnl_pct": 0.00442
+  },
+  {
+    "date": "2025-08-08",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 100.53,
+    "close_price": 100.63,
+    "pnl_pct": -0.00099
+  },
+  {
+    "date": "2025-08-22",
+    "ticker": "DOHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 19.01,
+    "close_price": 19.06,
+    "pnl_pct": 0.00259
+  },
+  {
+    "date": "2025-08-22",
+    "ticker": "THYAO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 334.06,
+    "close_price": 334.06,
+    "pnl_pct": 0.0
+  },
+  {
+    "date": "2025-08-22",
+    "ticker": "GUBRF.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 285.75,
+    "close_price": 285.75,
+    "pnl_pct": 0.0
+  },
+  {
+    "date": "2025-08-22",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 58.45,
+    "close_price": 58.05,
+    "pnl_pct": 0.00689
+  },
+  {
+    "date": "2025-09-05",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 254.76,
+    "close_price": 253.28,
+    "pnl_pct": -0.00579
+  },
+  {
+    "date": "2025-09-05",
+    "ticker": "GUBRF.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 281.5,
+    "close_price": 269.5,
+    "pnl_pct": -0.04263
+  },
+  {
+    "date": "2025-09-05",
+    "ticker": "DOHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 18.0,
+    "close_price": 17.86,
+    "pnl_pct": 0.00784
+  },
+  {
+    "date": "2025-09-05",
+    "ticker": "SASA.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 4.46,
+    "close_price": 4.43,
+    "pnl_pct": 0.00677
+  },
+  {
+    "date": "2025-09-19",
+    "ticker": "FROTO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 94.63,
+    "close_price": 95.99,
+    "pnl_pct": 0.01438
+  },
+  {
+    "date": "2025-09-19",
+    "ticker": "SASA.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 4.04,
+    "close_price": 4.07,
+    "pnl_pct": 0.00743
+  },
+  {
+    "date": "2025-09-19",
+    "ticker": "GUBRF.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 293.0,
+    "close_price": 290.25,
+    "pnl_pct": 0.00947
+  },
+  {
+    "date": "2025-09-19",
+    "ticker": "THYAO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 319.0,
+    "close_price": 319.75,
+    "pnl_pct": -0.00235
+  },
+  {
+    "date": "2025-10-03",
+    "ticker": "TAVHL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 237.7,
+    "close_price": 233.6,
+    "pnl_pct": -0.01725
+  },
+  {
+    "date": "2025-10-03",
+    "ticker": "TCELL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 99.83,
+    "close_price": 96.29,
+    "pnl_pct": -0.0354
+  },
+  {
+    "date": "2025-10-03",
+    "ticker": "TTKOM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 53.0,
+    "close_price": 51.2,
+    "pnl_pct": -0.03396
+  },
+  {
+    "date": "2025-10-03",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 281.99,
+    "close_price": 279.26,
+    "pnl_pct": 0.00976
+  },
+  {
+    "date": "2025-10-03",
+    "ticker": "FROTO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 91.18,
+    "close_price": 89.64,
+    "pnl_pct": 0.01721
+  },
+  {
+    "date": "2025-10-03",
+    "ticker": "SASA.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 3.4,
+    "close_price": 3.34,
+    "pnl_pct": 0.01796
+  },
+  {
+    "date": "2025-10-17",
+    "ticker": "GARAN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 114.76,
+    "close_price": 113.51,
+    "pnl_pct": -0.01089
+  },
+  {
+    "date": "2025-10-17",
+    "ticker": "HALKB.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 25.64,
+    "close_price": 25.32,
+    "pnl_pct": -0.01248
+  },
+  {
+    "date": "2025-10-17",
+    "ticker": "YKBNK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 28.28,
+    "close_price": 28.12,
+    "pnl_pct": -0.00566
+  },
+  {
+    "date": "2025-10-17",
+    "ticker": "TAVHL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 224.1,
+    "close_price": 224.3,
+    "pnl_pct": -0.00089
+  },
+  {
+    "date": "2025-10-17",
+    "ticker": "TCELL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 93.99,
+    "close_price": 92.51,
+    "pnl_pct": 0.01592
+  },
+  {
+    "date": "2025-10-17",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 50.2,
+    "close_price": 48.12,
+    "pnl_pct": 0.04323
+  },
+  {
+    "date": "2025-11-03",
+    "ticker": "MGROS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 450.15,
+    "close_price": 452.61,
+    "pnl_pct": 0.00548
+  },
+  {
+    "date": "2025-11-03",
+    "ticker": "PGSUS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 210.6,
+    "close_price": 213.5,
+    "pnl_pct": 0.01377
+  },
+  {
+    "date": "2025-11-03",
+    "ticker": "SAHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 80.61,
+    "close_price": 81.05,
+    "pnl_pct": 0.00549
+  },
+  {
+    "date": "2025-11-03",
+    "ticker": "GARAN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 130.14,
+    "close_price": 129.28,
+    "pnl_pct": 0.00669
+  },
+  {
+    "date": "2025-11-03",
+    "ticker": "HALKB.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 26.78,
+    "close_price": 27.14,
+    "pnl_pct": -0.01326
+  },
+  {
+    "date": "2025-11-03",
+    "ticker": "YKBNK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 33.8,
+    "close_price": 33.44,
+    "pnl_pct": 0.01077
+  },
+  {
+    "date": "2025-11-17",
+    "ticker": "SISE.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 35.76,
+    "close_price": 35.82,
+    "pnl_pct": 0.00168
+  },
+  {
+    "date": "2025-11-17",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 70.27,
+    "close_price": 72.91,
+    "pnl_pct": 0.03754
+  },
+  {
+    "date": "2025-11-17",
+    "ticker": "MGROS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 504.09,
+    "close_price": 500.62,
+    "pnl_pct": 0.00694
+  },
+  {
+    "date": "2025-11-17",
+    "ticker": "PGSUS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 207.0,
+    "close_price": 204.0,
+    "pnl_pct": 0.01471
+  },
+  {
+    "date": "2025-12-01",
+    "ticker": "EREGL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 23.86,
+    "close_price": 23.98,
+    "pnl_pct": 0.00503
+  },
+  {
+    "date": "2025-12-01",
+    "ticker": "TTKOM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 55.8,
+    "close_price": 57.35,
+    "pnl_pct": 0.02778
+  },
+  {
+    "date": "2025-12-01",
+    "ticker": "SAHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 80.56,
+    "close_price": 83.75,
+    "pnl_pct": -0.03819
+  },
+  {
+    "date": "2025-12-01",
+    "ticker": "SISE.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 37.34,
+    "close_price": 37.54,
+    "pnl_pct": -0.00533
+  },
+  {
+    "date": "2025-12-15",
+    "ticker": "HALKB.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 36.4,
+    "close_price": 36.4,
+    "pnl_pct": 0.0
+  },
+  {
+    "date": "2025-12-15",
+    "ticker": "ISCTR.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 13.36,
+    "close_price": 13.47,
+    "pnl_pct": 0.00861
+  },
+  {
+    "date": "2025-12-15",
+    "ticker": "SAHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 84.89,
+    "close_price": 85.87,
+    "pnl_pct": 0.01159
+  },
+  {
+    "date": "2025-12-15",
+    "ticker": "EREGL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 24.6,
+    "close_price": 24.86,
+    "pnl_pct": -0.01046
+  },
+  {
+    "date": "2025-12-15",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 70.07,
+    "close_price": 70.32,
+    "pnl_pct": -0.00354
+  },
+  {
+    "date": "2025-12-15",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 58.2,
+    "close_price": 57.9,
+    "pnl_pct": 0.00518
+  },
+  {
+    "date": "2025-12-30",
+    "ticker": "ASELS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 222.0,
+    "close_price": 229.0,
+    "pnl_pct": 0.03153
+  },
+  {
+    "date": "2025-12-30",
+    "ticker": "EREGL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 23.68,
+    "close_price": 23.94,
+    "pnl_pct": 0.01098
+  },
+  {
+    "date": "2025-12-30",
+    "ticker": "THYAO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 265.0,
+    "close_price": 267.75,
+    "pnl_pct": 0.01038
+  },
+  {
+    "date": "2025-12-30",
+    "ticker": "HALKB.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 37.72,
+    "close_price": 37.04,
+    "pnl_pct": 0.01836
+  },
+  {
+    "date": "2025-12-30",
+    "ticker": "ISCTR.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 12.99,
+    "close_price": 13.02,
+    "pnl_pct": -0.00295
+  },
+  {
+    "date": "2025-12-30",
+    "ticker": "SAHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 82.72,
+    "close_price": 82.18,
+    "pnl_pct": 0.00659
+  },
+  {
+    "date": "2026-01-14",
+    "ticker": "DOHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 18.69,
+    "close_price": 19.3,
+    "pnl_pct": 0.03264
+  },
+  {
+    "date": "2026-01-14",
+    "ticker": "SASA.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 2.37,
+    "close_price": 2.32,
+    "pnl_pct": -0.0211
+  },
+  {
+    "date": "2026-01-14",
+    "ticker": "TOASO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 269.43,
+    "close_price": 261.25,
+    "pnl_pct": -0.03038
+  },
+  {
+    "date": "2026-01-14",
+    "ticker": "ASELS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 292.0,
+    "close_price": 288.0,
+    "pnl_pct": 0.01389
+  },
+  {
+    "date": "2026-01-14",
+    "ticker": "EREGL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 25.24,
+    "close_price": 25.56,
+    "pnl_pct": -0.01252
+  },
+  {
+    "date": "2026-01-14",
+    "ticker": "THYAO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 288.5,
+    "close_price": 280.25,
+    "pnl_pct": 0.02944
+  },
+  {
+    "date": "2026-01-29",
+    "ticker": "ARCLK.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 114.1,
+    "close_price": 116.7,
+    "pnl_pct": 0.02279
+  },
+  {
+    "date": "2026-01-29",
+    "ticker": "HALKB.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 45.2,
+    "close_price": 44.34,
+    "pnl_pct": -0.01903
+  },
+  {
+    "date": "2026-01-29",
+    "ticker": "PETKM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 18.35,
+    "close_price": 18.52,
+    "pnl_pct": 0.00926
+  },
+  {
+    "date": "2026-01-29",
+    "ticker": "DOHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 21.9,
+    "close_price": 21.7,
+    "pnl_pct": 0.00922
+  },
+  {
+    "date": "2026-01-29",
+    "ticker": "SASA.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 2.58,
+    "close_price": 2.6,
+    "pnl_pct": -0.00769
+  },
+  {
+    "date": "2026-01-29",
+    "ticker": "TOASO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 294.69,
+    "close_price": 298.44,
+    "pnl_pct": -0.01254
+  },
+  {
+    "date": "2026-02-12",
+    "ticker": "PGSUS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 208.2,
+    "close_price": 217.5,
+    "pnl_pct": 0.04467
+  },
+  {
+    "date": "2026-02-12",
+    "ticker": "TOASO.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 296.56,
+    "close_price": 309.19,
+    "pnl_pct": 0.04259
+  },
+  {
+    "date": "2026-02-12",
+    "ticker": "ARCLK.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 123.1,
+    "close_price": 131.3,
+    "pnl_pct": -0.06245
+  },
+  {
+    "date": "2026-02-12",
+    "ticker": "HALKB.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 46.2,
+    "close_price": 48.0,
+    "pnl_pct": -0.0375
+  },
+  {
+    "date": "2026-02-26",
+    "ticker": "ASELS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 308.25,
+    "close_price": 311.0,
+    "pnl_pct": 0.00892
+  },
+  {
+    "date": "2026-02-26",
+    "ticker": "BIMAS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 342.5,
+    "close_price": 338.75,
+    "pnl_pct": -0.01095
+  },
+  {
+    "date": "2026-02-26",
+    "ticker": "EREGL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 31.22,
+    "close_price": 31.9,
+    "pnl_pct": 0.02178
+  },
+  {
+    "date": "2026-02-26",
+    "ticker": "PETKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 17.7,
+    "close_price": 17.72,
+    "pnl_pct": -0.00113
+  },
+  {
+    "date": "2026-02-26",
+    "ticker": "PGSUS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 198.7,
+    "close_price": 202.2,
+    "pnl_pct": -0.01731
+  },
+  {
+    "date": "2026-02-26",
+    "ticker": "TOASO.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 300.54,
+    "close_price": 301.71,
+    "pnl_pct": -0.00388
+  },
+  {
+    "date": "2026-03-12",
+    "ticker": "SOKM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 56.85,
+    "close_price": 56.95,
+    "pnl_pct": 0.00176
+  },
+  {
+    "date": "2026-03-12",
+    "ticker": "TTKOM.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 61.4,
+    "close_price": 61.85,
+    "pnl_pct": 0.00733
+  },
+  {
+    "date": "2026-03-12",
+    "ticker": "TUPRS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 246.4,
+    "close_price": 254.32,
+    "pnl_pct": 0.03216
+  },
+  {
+    "date": "2026-03-12",
+    "ticker": "ASELS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 336.75,
+    "close_price": 330.0,
+    "pnl_pct": 0.02045
+  },
+  {
+    "date": "2026-03-12",
+    "ticker": "BIMAS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 346.25,
+    "close_price": 354.25,
+    "pnl_pct": -0.02258
+  },
+  {
+    "date": "2026-03-12",
+    "ticker": "EREGL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 28.8,
+    "close_price": 28.66,
+    "pnl_pct": 0.00488
+  },
+  {
+    "date": "2026-03-27",
+    "ticker": "MGROS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 599.94,
+    "close_price": 598.95,
+    "pnl_pct": -0.00166
+  },
+  {
+    "date": "2026-03-27",
+    "ticker": "SAHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 89.02,
+    "close_price": 87.69,
+    "pnl_pct": -0.01493
+  },
+  {
+    "date": "2026-03-27",
+    "ticker": "TCELL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 106.3,
+    "close_price": 106.4,
+    "pnl_pct": 0.00094
+  },
+  {
+    "date": "2026-03-27",
+    "ticker": "SOKM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 48.14,
+    "close_price": 48.18,
+    "pnl_pct": -0.00083
+  },
+  {
+    "date": "2026-03-27",
+    "ticker": "TTKOM.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 58.35,
+    "close_price": 58.5,
+    "pnl_pct": -0.00256
+  },
+  {
+    "date": "2026-03-27",
+    "ticker": "TUPRS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 240.7,
+    "close_price": 240.5,
+    "pnl_pct": 0.00083
+  },
+  {
+    "date": "2026-04-10",
+    "ticker": "DOHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 20.74,
+    "close_price": 21.08,
+    "pnl_pct": 0.01639
+  },
+  {
+    "date": "2026-04-10",
+    "ticker": "ISCTR.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 14.5,
+    "close_price": 14.71,
+    "pnl_pct": 0.01448
+  },
+  {
+    "date": "2026-04-10",
+    "ticker": "TKFEN.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 110.3,
+    "close_price": 107.6,
+    "pnl_pct": -0.02448
+  },
+  {
+    "date": "2026-04-10",
+    "ticker": "MGROS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 641.16,
+    "close_price": 651.59,
+    "pnl_pct": -0.01601
+  },
+  {
+    "date": "2026-04-10",
+    "ticker": "SAHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 98.0,
+    "close_price": 102.0,
+    "pnl_pct": -0.03922
+  },
+  {
+    "date": "2026-04-10",
+    "ticker": "TCELL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 116.1,
+    "close_price": 117.3,
+    "pnl_pct": -0.01023
+  },
+  {
+    "date": "2026-04-24",
+    "ticker": "ASELS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 399.0,
+    "close_price": 392.0,
+    "pnl_pct": -0.01754
+  },
+  {
+    "date": "2026-04-24",
+    "ticker": "KCHOL.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 203.7,
+    "close_price": 207.0,
+    "pnl_pct": 0.0162
+  },
+  {
+    "date": "2026-04-24",
+    "ticker": "MGROS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 651.1,
+    "close_price": 634.21,
+    "pnl_pct": -0.02593
+  },
+  {
+    "date": "2026-04-24",
+    "ticker": "DOHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 21.22,
+    "close_price": 21.48,
+    "pnl_pct": -0.0121
+  },
+  {
+    "date": "2026-04-24",
+    "ticker": "ISCTR.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 14.72,
+    "close_price": 14.45,
+    "pnl_pct": 0.01869
+  },
+  {
+    "date": "2026-04-24",
+    "ticker": "TKFEN.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 134.0,
+    "close_price": 135.1,
+    "pnl_pct": -0.00814
+  },
+  {
+    "date": "2026-05-08",
+    "ticker": "ISCTR.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 14.51,
+    "close_price": 14.55,
+    "pnl_pct": 0.00276
+  },
+  {
+    "date": "2026-05-08",
+    "ticker": "TUPRS.IS",
+    "action": "BUY",
+    "size_pct": 33.33,
+    "entry_price": 262.0,
+    "close_price": 258.5,
+    "pnl_pct": -0.01336
+  },
+  {
+    "date": "2026-05-08",
+    "ticker": "ASELS.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 431.0,
+    "close_price": 428.5,
+    "pnl_pct": 0.00583
+  },
+  {
+    "date": "2026-05-08",
+    "ticker": "KCHOL.IS",
+    "action": "SELL",
+    "size_pct": -33.33,
+    "entry_price": 210.5,
+    "close_price": 213.0,
+    "pnl_pct": -0.01174
   }
 ]

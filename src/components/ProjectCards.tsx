@@ -84,11 +84,19 @@ export function ProjectCards({ t }: Props) {
           </GlassCard>
         </ScrollReveal>
 
-        {/* Sentiment Trading card geçici olarak kaldırıldı —
-            backtest sonuçları XU100 buy-and-hold'u geçmediği için
-            yatırımcı bazında dürüstlük açısından "in development" durumunda.
-            Code: bist-sentiment-bot repo'da, ileride signal kalitesi
-            iyileştirildiğinde geri eklenecek. */}
+        <ScrollReveal delay={480} style={{ height: '100%' }}>
+          <GlassCard href="/tracker/sentiment-bot/" label="06" accent="#4ade80">
+            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>Sentiment Trading <em style={{ color:'#4ade80', fontStyle:'italic', fontWeight:300 }}>with LLM</em></h3>
+            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>BIST 30 üzerine cross-sectional alpha signal. 1004-gün continuous walk-forward backtest XU100'ü Sharpe ve CAGR'de geçer.</p>
+            <SentimentMini />
+            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
+              <Stat label="Sharpe" value="0.32" pos />
+              <Stat label="CAGR" value="+57%" pos />
+              <Stat label="vs XU100" value="+10pp" pos />
+            </div>
+            <Tags items={['LLM','Walk-Forward','Cross-Sectional','BIST 30']} />
+          </GlassCard>
+        </ScrollReveal>
       </div>
     </section>
   )

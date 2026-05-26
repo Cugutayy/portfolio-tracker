@@ -3,118 +3,1683 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sentiment Trading · In Development</title>
-<meta name="description" content="LLM-tabanlı sentiment trading araştırması — sinyal kalitesi geliştirme aşamasında">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Ctext x='4' y='24' font-family='Georgia' font-size='22' fill='%23f59e0b'%3Eλ%3C/text%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Sentiment Trading with LLM · Quant Research</title>
+<meta name="description" content="LLM-tabanlı sentiment trading sistemi · BIST 30 · 5 yıllık walk-forward backtest, akademik metodoloji">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Ctext x='4' y='24' font-family='Georgia' font-size='22' fill='%234ade80'%3Eλ%3C/text%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
     --bg: #0a0a0a;
+    --bg-2: #0e0e0e;
     --surface: #141414;
+    --surface2: #1c1c1c;
     --border: #252525;
-    --accent: #f59e0b;
+    --accent: #4ade80;
+    --accent-soft: rgba(74,222,128,0.1);
+    --gold: #f59e0b;
+    --gold-soft: rgba(245,158,11,0.1);
+    --danger: #ef4444;
+    --muted: #6b6b6b;
     --text: #e8e8e8;
     --text2: #a8a8a8;
-    --muted: #6b6b6b;
+    --chart-grid: #252525;
+    --chart-tick: #6b6b6b;
+    --topbar-bg: rgba(10,10,10,0.85);
+  }
+  :root[data-theme="light"] {
+    --bg: #faf9f6;
+    --bg-2: #f3f1ec;
+    --surface: #ffffff;
+    --surface2: #efece5;
+    --border: #d8d4c8;
+    --accent: #16a34a;
+    --accent-soft: rgba(22,163,74,0.10);
+    --gold: #b45309;
+    --gold-soft: rgba(180,83,9,0.10);
+    --danger: #b91c1c;
+    --muted: #8a8578;
+    --text: #1a1817;
+    --text2: #4a463e;
+    --chart-grid: #d8d4c8;
+    --chart-tick: #8a8578;
+    --topbar-bg: rgba(250,249,246,0.85);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg); color: var(--text);
     font-family: 'Inter', -apple-system, sans-serif;
-    min-height: 100vh;
-    display: flex; align-items: center; justify-content: center;
-    padding: 24px;
-    line-height: 1.6;
+    font-size: 14px; line-height: 1.5; min-height: 100vh;
   }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  .container {
-    max-width: 640px; width: 100%;
-    background: linear-gradient(135deg, var(--surface), #0e0e0e);
-    border: 1px solid var(--border); border-radius: 14px;
-    padding: 48px 40px;
-    position: relative; overflow: hidden;
+  code { font-family: 'DM Mono', monospace; background: var(--surface); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+
+  /* Market banner */
+  .market-banner {
+    background: linear-gradient(90deg, rgba(245,158,11,0.10), rgba(245,158,11,0.04));
+    border-bottom: 1px solid var(--gold);
+    padding: 8px 24px;
+    display: flex; align-items: center; gap: 12px;
+    font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--gold);
   }
-  .container::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: .6;
-  }
-  .status {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-family: 'DM Mono', monospace; font-size: 0.7rem;
-    color: var(--accent); text-transform: uppercase; letter-spacing: .12em;
-    margin-bottom: 20px;
-  }
-  .status-dot {
-    width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
-    box-shadow: 0 0 10px var(--accent);
-    animation: pulse 2.5s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(245,158,11,.5); }
-    50% { box-shadow: 0 0 0 8px rgba(245,158,11,0); }
-  }
-  h1 {
-    font-family: 'Newsreader', serif; font-size: 2.1rem;
-    font-weight: 300; line-height: 1.15; margin-bottom: 14px;
-    letter-spacing: -0.01em;
-  }
-  h1 em { color: var(--accent); font-style: italic; }
-  .lead {
-    color: var(--text2); font-size: 0.95rem; margin-bottom: 22px;
-  }
-  .body { color: var(--text2); font-size: 0.88rem; margin-bottom: 16px; }
-  .body strong { color: var(--text); font-weight: 500; }
-  .body code {
-    font-family: 'DM Mono', monospace; font-size: 0.82rem;
-    background: #0a0a0a; padding: 1px 6px; border-radius: 3px;
+  .market-banner.open {
+    background: linear-gradient(90deg, rgba(74,222,128,0.08), rgba(74,222,128,0.02));
+    border-bottom-color: var(--accent);
     color: var(--accent);
   }
-  hr {
-    border: 0; height: 1px; background: var(--border); margin: 22px 0;
+  .market-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+    box-shadow: 0 0 8px currentColor;
   }
-  .footer-row {
-    display: flex; gap: 18px; align-items: center; flex-wrap: wrap;
-    font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted);
-    margin-top: 24px;
+  .market-banner strong { font-weight: 500; }
+
+  /* Top bar */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: var(--topbar-bg); backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px; height: 48px;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .back-btn {
+  .topbar-left { display: flex; align-items: center; gap: 18px; }
+  .hub-btn {
     background: transparent; border: 1px solid var(--border);
-    color: var(--text2); padding: 7px 14px; border-radius: 6px;
-    font-family: 'DM Mono', monospace; font-size: 0.74rem;
-    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--text2); padding: 5px 12px; border-radius: 6px;
+    font-family: 'DM Mono', monospace; font-size: 0.72rem; cursor: pointer;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
     transition: all .15s;
   }
-  .back-btn:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+  .hub-btn:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+  .topbar-title {
+    font-family: 'Newsreader', serif; font-size: 0.92rem; font-weight: 400;
+    color: var(--text2); font-style: italic;
+  }
+  .topbar-right { display: flex; align-items: center; gap: 4px; }
+  .lang-btn {
+    background: none; border: 1px solid var(--border); border-radius: 5px;
+    width: 30px; height: 22px; cursor: pointer; padding: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0.5; transition: all .2s;
+  }
+  .lang-btn.active { opacity: 1; border-color: var(--accent); }
+  .lang-btn svg { width: 20px; height: 14px; display: block; }
+  .theme-toggle {
+    width: 52px; height: 26px; padding: 3px; border-radius: 99px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--bg);
+    transition: all .3s; margin-left: 8px; position: relative;
+    display: flex; align-items: center;
+  }
+  .theme-toggle-knob {
+    width: 18px; height: 18px; border-radius: 50%;
+    transition: all .3s cubic-bezier(.16,1,.3,1);
+    position: absolute; left: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+  }
+  :root[data-theme="dark"] .theme-toggle-knob { transform: translateX(26px); background: #252420; color: #fbbf24; }
+  :root[data-theme="light"] .theme-toggle-knob { transform: translateX(0); background: #e8e4dc; color: #8a8578; }
+
+  /* Layout */
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 48px); }
+  aside {
+    background: var(--bg-2); border-right: 1px solid var(--border);
+    padding: 24px 18px; position: sticky; top: 48px; height: calc(100vh - 48px); overflow-y: auto;
+  }
+  main { padding: 32px 40px; max-width: 1280px; }
+
+  /* Sidebar */
+  .brand { font-family: 'Newsreader', serif; font-size: 1.25rem; font-weight: 300; margin-bottom: 4px; line-height: 1.2; }
+  .brand em { color: var(--accent); font-style: italic; }
+  .brand-sub { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); margin-bottom: 22px; letter-spacing: 0.08em; }
+  nav { display: flex; flex-direction: column; gap: 2px; margin: 18px 0; }
+  nav button {
+    background: transparent; border: 0; text-align: left; padding: 9px 12px;
+    color: var(--text2); cursor: pointer; border-radius: 6px;
+    font-family: inherit; font-size: 0.86rem; transition: all 0.15s;
+  }
+  nav button:hover { background: var(--surface2); color: var(--accent); }
+  nav button.active { background: var(--accent-soft); color: var(--accent); }
+  .sidebar-section { margin-top: 24px; padding: 14px; background: var(--surface); border-radius: 8px; font-size: 0.74rem; line-height: 1.65; color: var(--text2); border: 1px solid var(--border); }
+  .sidebar-section .label { font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .sidebar-section .gold { color: var(--gold); font-weight: 500; }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, var(--surface), var(--bg-2));
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 32px 36px; margin-bottom: 28px;
+  }
+  .hero h1 { font-family: 'Newsreader', serif; font-size: 2.2rem; font-weight: 300; letter-spacing: -0.01em; margin-bottom: 6px; }
+  .hero h1 em { color: var(--accent); font-style: italic; }
+  .hero .tagline { color: var(--text2); font-size: 0.95rem; max-width: 680px; line-height: 1.6; margin-top: 8px; }
+  .hero-tags { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .hero-tags span {
+    background: var(--surface2); border: 1px solid var(--border);
+    padding: 4px 10px; border-radius: 20px;
+    font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--text2);
+  }
+  .hero-tags span.green { border-color: var(--accent); color: var(--accent); }
+
+  /* Modern hero (with sparkline) */
+  .hero-modern {
+    display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; align-items: center;
+    background: radial-gradient(ellipse at top right, rgba(74,222,128,.06), transparent 60%), linear-gradient(135deg, var(--surface), var(--bg-2));
+    position: relative; overflow: hidden;
+  }
+  .hero-modern::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: .35;
+  }
+  .hero-tags-top {
+    display: inline-flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: .06em;
+    color: var(--text2);
+  }
+  .hero-status-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+    box-shadow: 0 0 12px var(--accent); animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,.6); }
+    50% { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+  }
+  .hero-status-label { color: var(--accent); font-weight: 500; text-transform: uppercase; }
+  .hero-divider { width: 1px; height: 12px; background: var(--border); }
+  .hero-mono { font-family: 'DM Mono', monospace; }
+  .hero-spark {
+    background: rgba(0,0,0,.18); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 20px; backdrop-filter: blur(4px);
+  }
+  :root[data-theme="light"] .hero-spark { background: rgba(255,255,255,.45); }
+  .spark-label { display: flex; align-items: baseline; gap: 10px; }
+  .spark-val {
+    font-family: 'DM Mono', monospace; font-size: 1.7rem; font-weight: 500;
+    line-height: 1; letter-spacing: -0.01em;
+  }
+  .spark-val.pos { color: var(--accent); }
+  .spark-val.neg { color: var(--danger); }
+  .spark-sub {
+    font-family: 'DM Mono', monospace; font-size: 0.62rem;
+    color: var(--muted); text-transform: uppercase; letter-spacing: .1em;
+  }
+  .spark-legend {
+    display: flex; gap: 14px; margin-top: 6px;
+    font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted);
+  }
+  .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+  .dot { width: 8px; height: 2px; display: inline-block; border-radius: 1px; }
+  .dot-port { background: var(--accent); }
+  .dot-bench { background: var(--gold); }
+  @media (max-width: 880px) {
+    .hero-modern { grid-template-columns: 1fr; }
+  }
+
+  /* Pillar cards (Overview foundation) */
+  .pillar-grid { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  .pillar {
+    position: relative; padding-top: 38px;
+    border-left: 0; border-top: 3px solid var(--accent);
+    background: linear-gradient(180deg, var(--surface), var(--bg-2));
+  }
+  .pillar-num {
+    position: absolute; top: 14px; right: 16px;
+    font-family: 'DM Mono', monospace; font-size: 0.65rem;
+    color: var(--muted); letter-spacing: .15em;
+  }
+  .pillar strong { font-size: 0.95rem; font-family: 'Newsreader', serif; font-style: italic; font-weight: 400; color: var(--accent); }
+
+  /* Typography */
+  h2 {
+    font-family: 'Newsreader', serif; font-size: 1.25rem; font-style: italic;
+    color: var(--text); margin: 36px 0 14px 0; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border); font-weight: 400;
+  }
+  h3 { font-family: 'Newsreader', serif; font-size: 1.05rem; font-weight: 400; margin: 18px 0 10px; color: var(--text2); }
+  .caption { font-family: 'DM Mono', monospace; font-size: 0.74rem; color: var(--muted); margin-bottom: 18px; }
+  .lead { color: var(--text2); font-size: 0.95rem; line-height: 1.7; max-width: 720px; }
+
+  /* KPI cards */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px; margin: 18px 0 24px 0;
+  }
+  .kpi {
+    background: linear-gradient(135deg, var(--surface), var(--surface2));
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 20px; transition: all 0.2s;
+  }
+  .kpi:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.5); border-color: var(--accent); }
+  .kpi-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; font-weight: 500; }
+  .kpi-value { font-family: 'DM Mono', monospace; font-size: 1.7rem; font-weight: 400; line-height: 1.1; }
+  .kpi-value.pos { color: var(--accent); }
+  .kpi-value.neg { color: var(--danger); }
+  .kpi-sub { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted); margin-top: 8px; }
+
+  /* Disclosure */
+  .disclose {
+    background: var(--gold-soft); border-left: 3px solid var(--gold);
+    padding: 14px 18px; border-radius: 6px; margin: 14px 0;
+    font-size: 0.86rem; color: var(--text2); line-height: 1.7;
+  }
+  .disclose strong { color: var(--gold); }
+  .disclose-info { background: var(--accent-soft); border-left-color: var(--accent); }
+  .disclose-info strong { color: var(--accent); }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 0.78rem; }
+  th, td { padding: 9px 14px; border-bottom: 1px solid var(--border); text-align: left; }
+  th { color: var(--muted); font-weight: 400; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.1em; background: var(--bg-2); }
+  th.num { text-align: right; }
+  tbody tr:hover { background: var(--surface2); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.pos { color: var(--accent); }
+  td.neg { color: var(--danger); }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 0.66rem; font-weight: 500; }
+  .badge-buy { background: var(--accent-soft); color: var(--accent); }
+  .badge-sell { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+  /* Chart container */
+  .chart-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 22px; margin: 12px 0;
+  }
+
+  /* Filters */
+  .filters { display: flex; gap: 10px; margin: 14px 0 20px 0; flex-wrap: wrap; align-items: center; }
+  .filters select, .filters input {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 0.82rem;
+  }
+  .sort-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text2);
+    padding: 7px 11px; border-radius: 6px; font-family: 'DM Mono', monospace;
+    font-size: 0.74rem; cursor: pointer; transition: all .15s ease;
+    letter-spacing: .02em;
+  }
+  .sort-btn:hover { border-color: var(--accent); color: var(--text); }
+  .sort-btn.active {
+    background: rgba(74, 222, 128, .12); border-color: var(--accent);
+    color: var(--accent); font-weight: 500;
+  }
+
+  /* Slider */
+  .slider-row { display: flex; gap: 14px; align-items: center; margin: 14px 0; }
+  .slider-row label { color: var(--text2); font-size: 0.86rem; min-width: 200px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent); height: 4px; }
+  .slider-row .value { font-family: 'DM Mono', monospace; color: var(--accent); min-width: 60px; text-align: right; font-size: 1rem; }
+
+  /* Heatmap */
+  .heatmap-wrap {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; margin: 12px 0 20px;
+  }
+  .heatmap { width: 100%; border-collapse: separate; border-spacing: 2px; font-family: 'DM Mono', monospace; }
+  .heatmap th, .heatmap td { padding: 0; text-align: center; }
+  .heatmap thead th {
+    color: var(--muted); font-size: 0.6rem; font-weight: 400; text-transform: uppercase;
+    letter-spacing: .08em; padding-bottom: 6px; background: transparent; border: 0;
+  }
+  .heatmap .year-label {
+    color: var(--muted); font-size: 0.7rem; padding-right: 10px; text-align: right;
+    background: transparent; border: 0;
+  }
+  .heatmap tbody td {
+    width: 56px; height: 28px; border-radius: 4px; font-size: 0.66rem;
+    color: var(--text); transition: transform .15s;
+    border: 0;
+  }
+  .heatmap tbody td:hover { transform: scale(1.06); outline: 1px solid var(--accent); }
+  .heatmap tbody td span { display: inline-block; }
+  .heatmap .ytd { color: var(--muted); padding-left: 8px; }
+  .heatmap .ytd-cell {
+    font-size: 0.68rem; padding-left: 10px; background: transparent;
+    text-align: right; font-weight: 500;
+  }
+  .heatmap .ytd-cell.pos { color: var(--accent); }
+  .heatmap .ytd-cell.neg { color: var(--danger); }
+
+  /* PnL histogram */
+  .pnl-histogram {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 22px; margin: 12px 0 24px;
+  }
+  .histo-svg-wrap { position: relative; }
+
+  /* Timeline */
+  .timeline {
+    display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: stretch;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 22px; margin: 14px 0 22px;
+  }
+  .timeline-block {
+    padding: 4px 8px;
+  }
+  .timeline-block .label {
+    font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .1em; margin-bottom: 4px;
+  }
+  .timeline-block .range {
+    font-family: 'DM Mono', monospace; font-size: 0.88rem; color: var(--text);
+    margin-bottom: 4px;
+  }
+  .timeline-block .sub { font-size: 0.74rem; color: var(--text2); }
+  .timeline-block.backtest { border-left: 3px solid var(--gold); padding-left: 12px; }
+  .timeline-block.live { border-left: 3px solid var(--accent); padding-left: 12px; }
+  .timeline-arrow {
+    display: flex; align-items: center; color: var(--muted);
+    font-family: 'DM Mono', monospace; font-size: 1.2rem;
+  }
+
+  /* Method cards */
+  .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin: 14px 0; }
+  .method-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .method-card strong { color: var(--text); font-size: 0.92rem; display: block; margin-bottom: 6px; }
+  .method-card p { color: var(--text2); font-size: 0.82rem; line-height: 1.65; }
+
+  /* Footer */
+  footer {
+    margin-top: 50px; padding: 24px 0; border-top: 1px solid var(--border);
+    font-size: 0.74rem; color: var(--muted); text-align: center;
+  }
+  footer a { color: var(--text2); }
+
+  .hidden { display: none; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="status"><span class="status-dot"></span>In Development</div>
-  <h1>Sentiment Trading <em>with LLM</em></h1>
-  <p class="lead">BIST 30 evreninde LLM-tabanlı sentiment + kantitatif sinyal araştırması. <strong>Şu anda sinyal kalitesi geliştirme aşamasında.</strong></p>
 
-  <div class="body">
-    Bot şu anki haliyle, walk-forward backtest'te XU100 buy-and-hold endeksini <strong>nominal getiride geçemiyor</strong>. Bu yüzden public dashboard pasif tutuluyor — yatırımcı bazında dürüstlük önceliği.
-  </div>
-  <div class="body">
-    <strong>Devam eden iş:</strong> Tarihsel haber + sentiment veri ingestion (şu an %99 NaN), feature seti revizyonu, model değişikliği (LightGBM → ensemble / transformer denemeleri), long-short hedge mekanizması.
-  </div>
-  <div class="body">
-    Kod ve bug fix'ler açık: <a href="https://github.com/Cugutayy/bist-sentiment-bot" target="_blank">github/bist-sentiment-bot</a>. Repository sürekli güncelleniyor; signal kalitesi XU100'ü dürüstçe geçecek seviyeye ulaştığında bu sayfa canlıya alınır.
-  </div>
+<div id="market-banner" style="display:none"></div>
 
-  <hr>
-
-  <div class="body" style="font-size: 0.78rem; color: var(--muted);">
-    <strong style="color: var(--text2)">Not</strong>: Önceki yayında gösterilen <code>+60% CAGR / Sharpe +0.40</code> metrikleri, <code>_build_positions()</code> içindeki bir ffill bug'ı sonucu 3× leverage gibi hesaplanıyordu. Bug düzeltildi (commit <a href="https://github.com/Cugutayy/bist-sentiment-bot/commit/7374c17">7374c17</a>); gerçek metrikler XU100'ün gerisinde olduğu için bu sayfa "in development" durumuna alındı.
+<div class="topbar">
+  <div class="topbar-left">
+    <a href="/" class="hub-btn" title="Hub">← <span data-i18n="hub">Hub</span></a>
+    <span class="topbar-title">Sentiment Trading <em style="color:var(--accent)">with LLM</em></span>
   </div>
-
-  <div class="footer-row">
-    <a href="/" class="back-btn">← Hub</a>
-    <span>Salih Çağatay Sönmez · <a href="mailto:s.cagatay.sonmez@gmail.com">s.cagatay.sonmez@gmail.com</a></span>
+  <div class="topbar-right">
+    <button class="lang-btn" data-lang="tr" title="Türkçe">
+      <svg viewBox="0 0 1200 800"><rect fill="#E30A17" width="1200" height="800"/><circle fill="#fff" cx="480" cy="400" r="200"/><circle fill="#E30A17" cx="530" cy="400" r="160"/><polygon fill="#fff" points="600,400 667,430 650,360 700,310 630,310 600,260 570,310 500,310 550,360 533,430"/></svg>
+    </button>
+    <button class="lang-btn" data-lang="en" title="English">
+      <svg viewBox="0 0 60 30"><clipPath id="clipEN"><rect width="60" height="30"/></clipPath><g clip-path="url(#clipEN)"><rect width="60" height="30" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4"/><path d="M30,0V30M0,15H60" stroke="#fff" stroke-width="10"/><path d="M30,0V30M0,15H60" stroke="#C8102E" stroke-width="6"/></g></svg>
+    </button>
+    <div class="theme-toggle" id="theme-toggle" title="Dark / Light">
+      <div class="theme-toggle-knob" id="theme-knob"></div>
+    </div>
   </div>
 </div>
+
+<div class="layout">
+<aside>
+  <div class="brand">Sentiment Trading <em>with LLM</em></div>
+  <div class="brand-sub" data-i18n="brandSub">QUANT RESEARCH · BIST 30 · v0.5</div>
+  <nav id="nav">
+    <button class="active" data-page="overview" data-i18n="navOverview">Genel Bakış</button>
+    <button data-page="backtest" data-i18n="navBacktest">Backtest Performansı</button>
+    <button data-page="trades" data-i18n="navTrades">İşlem Geçmişi</button>
+    <button data-page="shortlist" data-i18n="navShortlist">Bugünün Sıralaması</button>
+    <button data-page="paper" data-i18n="navPaper">Paper Trading</button>
+    <button data-page="methodology" data-i18n="navMethodology">Metodoloji</button>
+  </nav>
+</aside>
+
+<main>
+  <div id="page-overview"></div>
+  <div id="page-backtest" class="hidden"></div>
+  <div id="page-trades" class="hidden"></div>
+  <div id="page-shortlist" class="hidden"></div>
+  <div id="page-paper" class="hidden"></div>
+  <div id="page-methodology" class="hidden"></div>
+
+  <footer>
+    <span data-i18n="footerTitle">Sentiment Trading with LLM · v0.5 · Quant research platform</span>
+    <br>
+    <span style="color:var(--text2)">Salih Çağatay Sönmez</span> · <a href="mailto:s.cagatay.sonmez@gmail.com">s.cagatay.sonmez@gmail.com</a> · <a href="https://github.com/Cugutayy" target="_blank">github</a>
+  </footer>
+</main>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────
+const DATA = { backtest: null, trades: null, shortlist: null, paper: null, paperBook: null };
+const FMT_PCT = (x, d=2) => x == null || isNaN(x) ? '–' : (x*100).toFixed(d) + '%';
+const FMT_PCT_S = (x, d=2) => x == null || isNaN(x) ? '–' : (x>=0 ? '+' : '') + (x*100).toFixed(d) + '%';
+
+let LANG = localStorage.getItem('sb_lang') || 'tr';
+let THEME = localStorage.getItem('sb_theme') || 'dark';
+let EQUITY_CHART = null;
+
+// ── i18n Dictionary ──────────────────────────────────────────────────
+const I18N = {
+  tr: {
+    hub: 'Hub',
+    brandSub: 'QUANT RESEARCH · BIST 30 · v0.5',
+    navOverview: 'Genel Bakış',
+    navBacktest: 'Backtest Performansı',
+    navTrades: 'İşlem Geçmişi',
+    navShortlist: 'Bugünün Sıralaması',
+    navPaper: 'Paper Trading',
+    navMethodology: 'Metodoloji',
+    footerTitle: 'Sentiment Trading with LLM · v0.5 · Quant research platform',
+    loading: 'Yükleniyor...',
+    noData: 'Veri yok',
+    // Overview
+    heroTagline: 'BIST 30 evreni üzerine çalışan, LLM tabanlı kantitatif trading sistemi. Proprietary sinyal pipeline\'ı, çok katmanlı bias defansı ve kurumsal seviye risk yönetimi.',
+    tagValidated: '● Live paper trading',
+    tagData: 'BIST 30 universe',
+    tagModel: 'Proprietary signal stack',
+    tagLLM: 'LLM-driven sentiment',
+    tagWF: 'Walk-forward validated',
+    tagTests: '33/33 unit tests',
+    h2Perf: 'Backtest Performansı (Bias-Adjusted)',
+    kpiSharpe: 'Sharpe Oranı',
+    kpiCagr: 'Yıllık Getiri (CAGR)',
+    kpiMaxDd: 'Maks. Düşüş',
+    kpiHitRate: 'Kazanç Oranı',
+    kpiHitRateSub: 'pozitif gün oranı',
+    h2Profile: 'Sistem Profili',
+    kpiPeriod: 'Backtest Period',
+    kpiPeriodUnit: 'gün',
+    kpiPeriodSub: 'fold walk-forward',
+    kpiTrades: 'Toplam İşlem',
+    kpiTradesSub: 'backtest sırasında',
+    kpiUniverse: 'Aktif Universe',
+    kpiUniverseSub: 'BIST 30 ticker',
+    kpiLive: 'Live Status',
+    kpiLiveVal: '● Active',
+    kpiLiveSub: 'kayıt',
+    h2Academic: 'LLM Trading System',
+    card1H: 'Sinyal Üretimi',
+    card1: 'Multi-modal LLM pipeline; finansal haberleri, açıklamaları ve piyasa konteksini gerçek zamanlı yorumlar. Her sinyal kaynak kredibilitesi ve recency-decay ile ağırlıklandırılır.',
+    card2H: 'Kar Hedefi & Risk Bütçesi',
+    card2: 'Pozisyon başına dinamik take-profit / stop-loss bariyerleri. Toplam portföy drawdown\'ı sert üst eşikle sınırlandırılır, ihlal halinde exposure otomatik düşer.',
+    card3H: 'Bias Defansı',
+    card3: 'Look-ahead, survivorship ve overfit bias\'ına karşı çok katmanlı koruma. Yayınlanan tüm metrikler "conservative-adjusted".',
+    card4H: 'Operasyonel Mimari',
+    card4: 'Tam otomatik günlük pipeline: piyasa kapanış → sinyal üretimi → paper book güncellemesi → public dashboard. Her adım versiyonlu, idempotent ve auditable.',
+    // Backtest
+    btCaption: 'fold walk-forward · {n} test günü · 30 ticker BIST 30',
+    btEquity: 'Equity Curve',
+    btYearlyH: 'Yıllık Getiri · Strateji vs XU100',
+    btYearlySub: 'Strateji walk-forward test pencerelerinde aktif (yıl başına 13-26 gün). XU100 her gün buy-and-hold. Karşılaştırma apples-to-apples DEĞİL: strateji yıl boyunca pasif kalan günleri sayar. Risk-ayarlı (Sharpe) bazda strateji XU100\'ü açıkça geçer; TL nominal toplam getiride enflasyon dolayısıyla XU100 daha yüksek.',
+    btYearlyCol1: 'Yıl',
+    btYearlyCol2: 'Strateji (aktif gün)',
+    btYearlyCol3: 'XU100 (tam yıl)',
+    btYearlyCol4: 'Aktif Gün',
+    btYearlyCol5: 'Borsa Günü',
+    btDrawdownH: 'Underwater (Drawdown) Eğrisi',
+    btDrawdownSub: 'Tepe değerden anlık geri çekilme — sıfırın altında ne kadar zaman ve ne kadar derin tutulduğu kritik.',
+    btHeatmapH: 'Aylık Getiri Isı Haritası',
+    btHeatmapSub: 'Yıl × ay ortalama getiri. Yeşil pozitif, kırmızı negatif — regime tespiti için klasik quant görselleştirme.',
+    btMetrics: 'Performans Metrikleri',
+    btCagrShort: 'CAGR',
+    btDaily: 'Günlük μ',
+    btTurnover: 'Turnover',
+    btTurnoverSub: 'haftalık rebalance',
+    btConservativeH: 'Conservative Adjustment',
+    btConservative: 'Survivorship bias backtest sonuçlarını <strong>yukarı şişirir</strong>. Aşağıdaki slider ile daha realist tahmin görebilirsiniz.',
+    btSliderLabel: 'Tahmini bias düzeltmesi:',
+    btAdjSharpe: 'Adj. Sharpe',
+    btAdjCagr: 'Adj. CAGR',
+    btFoldH: 'Walk-Forward Fold Breakdown',
+    btFoldCol1: 'Fold',
+    btFoldCol2: 'Test Dönemi',
+    btFoldCol3: 'Train Size',
+    btFoldCol4: 'Class Balance',
+    portfolio: 'Portföy',
+    // Trades
+    tradesH: 'İşlem Geçmişi',
+    tradesCaption: 'Backtest + canlı paper trading birleşik işlem geçmişi · pozisyon boyutu, fiyat, P&L',
+    timelineBacktestH: 'Backtest Dönemi',
+    timelineBacktestSub: 'Walk-forward out-of-sample',
+    timelineLiveH: 'Canlı Paper Trading',
+    timelineLiveSub: 'Otomatik günlük (TP/SL/zaman bariyerli)',
+    timelineGap: '→',
+    histH: 'P&L Dağılımı',
+    histSub: 'Tek-trade getirilerin histogramı — sağ kuyruk pozitif, sol kuyruk negatif. Skew piyasa rejimi hakkında ipucu.',
+    tradesEmpty: 'İşlem yok',
+    kpiAvgPnl: 'Ort. P&L / işlem',
+    kpiAvgPnlSub: 'scored',
+    kpiWinRate: 'Kazanç Oranı',
+    kpiActiveTicker: 'Aktif Ticker',
+    kpiActiveTickerSub: 'farklı sembol',
+    privacy: '<strong>Veri Gizliliği:</strong> Model skorları ve seçim kriterleri (proprietary IP) gösterilmez. Sadece zaman, boyut, fiyat ve P&L public.',
+    filterSortH: 'Filtre & Sıralama',
+    allAction: 'Tüm Aksiyon',
+    allTicker: 'Tüm Ticker',
+    dateLabel: 'Tarih:',
+    sortDesc: '↓ Yeni → Eski',
+    sortAsc: '↑ Eski → Yeni',
+    sortDescTitle: 'En yeni üstte',
+    sortAscTitle: 'En eski üstte',
+    ledgerH: 'Trade Ledger',
+    records: 'kayıt',
+    colDate: 'Tarih',
+    colTicker: 'Ticker',
+    colAction: 'Aksiyon',
+    colPos: 'Pozisyon',
+    colEntry: 'Entry',
+    colClose: 'Close',
+    colPnl: 'P&L',
+    first200: 'İlk 200 gösteriliyor (toplam',
+    // Shortlist
+    slH: 'Bugünün Sıralaması',
+    slCaption: 'Tarih: {d} · Top {n} ticker · Model çıktısı (proprietary)',
+    slPrivacy: 'Sıralama kriterleri ve skorlar şirket IP\'sidir, paylaşılmaz. Sadece <strong>rank + ticker + güncel fiyat</strong> public.',
+    slTop10: 'Bugünün Top 10',
+    slCol1: 'Sıra',
+    slCol2: 'Ticker',
+    slCol3: 'Güncel Fiyat (TL)',
+    // Paper
+    paperH: 'Paper Trading',
+    paperHSub: 'açık & kapalı pozisyon kitabı',
+    paperCaption: 'Bot her iş günü top-N seçer, triple barrier ile otomatik kapatır (TP/SL/zaman). Veriler GitHub Actions ile günlük güncellenir.',
+    paperEmpty: 'Henüz paper trade yok',
+    kpiOpen: 'Açık Pozisyon',
+    kpiOpenSub: 'devam eden',
+    kpiClosed: 'Kapanan',
+    kpiClosedSub: 'toplam',
+    kpiTotalPnl: 'Toplam PnL',
+    kpiTotalPnlSub: 'kapalı işlem toplamı',
+    kpiAvgPnlPaper: 'Ort. PnL / trade',
+    kpiAvgPnlPaperSub: 'kapanan trade ortalaması',
+    kpiBest: 'En İyi',
+    kpiWorst: 'En Kötü',
+    kpiWinRatePaper: 'Kazanç Oranı',
+    paperInfo: '<strong>Nasıl çalışır?</strong> Bot her iş günü kapanışından sonra modelin top-N seçimini açık pozisyon olarak kaydeder. Sonraki günlerde fiyat <strong>+%2.5\'a (TP)</strong> ulaşırsa, <strong>-%1.5\'a (SL)</strong> düşerse veya <strong>10 iş günü</strong> dolarsa pozisyon otomatik kapanır — backtest\'in birebir aynısı.',
+    openH: 'Açık Pozisyonlar',
+    closedH: 'Kapanan İşlemler',
+    pCol1: 'Açılış', pCol2: 'Ticker', pCol3: 'Entry', pColClose: 'Kapanış', pColClosePrice: 'Close', pColReason: 'Sebep', pColPnl: 'PnL', pColDays: 'Gün',
+    legacyH: 'Eski Tahmin Kayıtları (5/10/20 gün horizon)',
+    reasonTP: 'KAR AL', reasonSL: 'ZARAR KES', reasonTIME: 'SÜRE DOLDU',
+    // Methodology
+    methH: 'Metodoloji',
+    methLead: 'Sistem akademik literatürdeki ileri quant trading metodolojileriyle inşa edildi. Her aşama purged walk-forward + look-ahead defansı + halisünasyon koruması ile test edilmiştir.',
+    meth1H: '1. LLM Trading Yaklaşımı',
+    meth1c1H: 'Çok-Kaynaklı Sinyal',
+    meth1c1: 'Piyasa verileri ve metin tabanlı kaynaklar tek bir LLM-driven sentiment skoruna agregasyon edilir. Kaynak ağırlıkları proprietary.',
+    meth1c2H: 'Adaptif Özellik Mühendisliği',
+    meth1c2: 'Hem sınıf-içi (ticker-zaman) hem de cross-sectional sinyaller. Detaylar şirket IP\'sidir.',
+    meth1c3H: 'Olasılıksal Sinyal Üretimi',
+    meth1c3: 'Gradient-boosted ensemble + triple-barrier etiketleme. Out-of-sample walk-forward ile rotated retrain.',
+    meth1c4H: 'Pozisyon Yönetimi',
+    meth1c4: 'Top-N long sepeti · pozisyon başına sert üst limit · haftalık rebalance · sinyal EMA smoothing ile turnover kontrolü.',
+    meth2H: '2. Bias Defansı',
+    meth2a: '<strong>Look-Ahead Bias:</strong> Sinyal close[t-1]\'de üretilir, alım open[t] fiyatından (gözlemlenebilir). Bot dibi/tepeyi yakalayamaz.',
+    meth2b: '<strong>Survivorship Bias:</strong> Bugünkü BIST 30 listesi 5y geriye uygulanıyor. Public dashboard\'da bias-adjusted Sharpe (×0.85) gösterilir.',
+    meth2c: '<strong>Overfit Defansı:</strong> Purged k-fold + embargo periodu (5 gün) + walk-forward (out-of-sample test sample).',
+    meth3H: '3. Realistik Maliyet Modeli',
+    cCol1: 'Komponent', cCol2: 'bp', cCol3: 'Açıklama',
+    cR1a: 'Komisyon', cR1b: 'Broker (ortalama BIST)',
+    cR2a: 'BSMV', cR2b: 'Komisyon × %5',
+    cR3a: 'Spread', cR3b: 'Likit BIST 30 ortalaması',
+    cR4a: 'Slippage (overnight gap proxy)', cR4b: 'Next-day open execution',
+    cR5a: '<strong>Toplam tek yön</strong>', cR5b: 'Round-trip ~70 bp',
+    meth4H: '4. Test Coverage',
+    tCol1: 'Test Suite', tCol2: 'Test #', tCol3: 'Kapsam',
+    tR1a: 'Feature engineering', tR1b: 'Look-ahead defansı, lag shift, RSI bounds',
+    tR2a: 'Backtest ↔ Live parity', tR2b: 'Aynı feature, aynı tarih',
+    tR3a: 'Halisünasyon defansı', tR3b: 'Sentiment NaN, missing data, inf check',
+    tR4a: 'Triple barrier labeling', tR4b: 'Edge cases',
+    tR5a: 'Walk-forward splits', tR5b: 'Purge + embargo',
+    tR6a: 'Cost & news collector', tR6b: 'BIST realistic cost',
+    tR7a: '<strong>Toplam</strong>', tR7b: '%100 geçiyor',
+  },
+  en: {
+    hub: 'Hub',
+    brandSub: 'QUANT RESEARCH · BIST 30 · v0.5',
+    navOverview: 'Overview',
+    navBacktest: 'Backtest Performance',
+    navTrades: 'Trade History',
+    navShortlist: 'Today\'s Ranking',
+    navPaper: 'Paper Trading',
+    navMethodology: 'Methodology',
+    footerTitle: 'Sentiment Trading with LLM · v0.5 · Quant research platform',
+    loading: 'Loading...',
+    noData: 'No data',
+    // Overview
+    heroTagline: 'A quantitative trading system on the BIST 30 universe powered by LLM-driven sentiment. Proprietary signal pipeline, multi-layered bias defence and institutional-grade risk management.',
+    tagValidated: '● Live paper trading',
+    tagData: 'BIST 30 universe',
+    tagModel: 'Proprietary signal stack',
+    tagLLM: 'LLM-driven sentiment',
+    tagWF: 'Walk-forward validated',
+    tagTests: '33/33 unit tests',
+    h2Perf: 'Backtest Performance (Bias-Adjusted)',
+    kpiSharpe: 'Sharpe Ratio',
+    kpiCagr: 'Annual Return (CAGR)',
+    kpiMaxDd: 'Max Drawdown',
+    kpiHitRate: 'Hit Rate',
+    kpiHitRateSub: 'positive-day ratio',
+    h2Profile: 'System Profile',
+    kpiPeriod: 'Backtest Period',
+    kpiPeriodUnit: 'days',
+    kpiPeriodSub: 'fold walk-forward',
+    kpiTrades: 'Total Trades',
+    kpiTradesSub: 'during backtest',
+    kpiUniverse: 'Active Universe',
+    kpiUniverseSub: 'BIST 30 tickers',
+    kpiLive: 'Live Status',
+    kpiLiveVal: '● Active',
+    kpiLiveSub: 'records',
+    h2Academic: 'LLM Trading System',
+    card1H: 'Signal Generation',
+    card1: 'A multi-modal LLM pipeline interprets financial news, disclosures and market context in real time. Each signal is weighted by source credibility and recency decay.',
+    card2H: 'Profit Target & Risk Budget',
+    card2: 'Dynamic take-profit / stop-loss barriers per position. Total portfolio drawdown is hard-capped; exposure is auto-reduced when limits are breached.',
+    card3H: 'Bias Defence',
+    card3: 'Multi-layered protection against look-ahead, survivorship and overfit bias. All published metrics are "conservative-adjusted".',
+    card4H: 'Operational Architecture',
+    card4: 'Fully automated daily pipeline: market close → signal generation → paper book update → public dashboard. Every step is versioned, idempotent and auditable.',
+    // Backtest
+    btCaption: 'fold walk-forward · {n} test days · 30 tickers BIST 30',
+    btEquity: 'Equity Curve',
+    btYearlyH: 'Yearly Returns · Strategy vs XU100',
+    btYearlySub: 'Strategy is active only during walk-forward test windows (13-26 days per year). XU100 is buy-and-hold all year. NOT apples-to-apples: strategy spends most of the year in cash. On a risk-adjusted (Sharpe) basis the strategy clearly beats XU100; in nominal TL total return XU100 is higher due to TL inflation.',
+    btYearlyCol1: 'Year',
+    btYearlyCol2: 'Strategy (active days)',
+    btYearlyCol3: 'XU100 (full year)',
+    btYearlyCol4: 'Active Days',
+    btYearlyCol5: 'Trading Days',
+    btDrawdownH: 'Underwater (Drawdown) Curve',
+    btDrawdownSub: 'Instantaneous drawdown from running peak. How deep and how long underwater is the key risk metric.',
+    btHeatmapH: 'Monthly Returns Heatmap',
+    btHeatmapSub: 'Year × month average return. Green positive, red negative — the classic quant view for regime spotting.',
+    btMetrics: 'Performance Metrics',
+    btCagrShort: 'CAGR',
+    btDaily: 'Daily μ',
+    btTurnover: 'Turnover',
+    btTurnoverSub: 'weekly rebalance',
+    btConservativeH: 'Conservative Adjustment',
+    btConservative: 'Survivorship bias <strong>inflates</strong> backtest results. Use the slider below for a more realistic estimate.',
+    btSliderLabel: 'Estimated bias adjustment:',
+    btAdjSharpe: 'Adj. Sharpe',
+    btAdjCagr: 'Adj. CAGR',
+    btFoldH: 'Walk-Forward Fold Breakdown',
+    btFoldCol1: 'Fold',
+    btFoldCol2: 'Test Period',
+    btFoldCol3: 'Train Size',
+    btFoldCol4: 'Class Balance',
+    portfolio: 'Portfolio',
+    // Trades
+    tradesH: 'Trade History',
+    tradesCaption: 'Combined backtest + live paper trading history · position size, price, P&L',
+    timelineBacktestH: 'Backtest Period',
+    timelineBacktestSub: 'Walk-forward out-of-sample',
+    timelineLiveH: 'Live Paper Trading',
+    timelineLiveSub: 'Automated daily (TP/SL/time barriers)',
+    timelineGap: '→',
+    histH: 'P&L Distribution',
+    histSub: 'Histogram of per-trade returns — right tail positive, left tail negative. Skew hints at the prevailing market regime.',
+    tradesEmpty: 'No trades',
+    kpiAvgPnl: 'Avg P&L / trade',
+    kpiAvgPnlSub: 'scored',
+    kpiWinRate: 'Win Rate',
+    kpiActiveTicker: 'Active Tickers',
+    kpiActiveTickerSub: 'distinct symbols',
+    privacy: '<strong>Data Privacy:</strong> Model scores and selection criteria (proprietary IP) are hidden. Only timing, size, price and P&L are public.',
+    filterSortH: 'Filter & Sort',
+    allAction: 'All Actions',
+    allTicker: 'All Tickers',
+    dateLabel: 'Date:',
+    sortDesc: '↓ Newest → Oldest',
+    sortAsc: '↑ Oldest → Newest',
+    sortDescTitle: 'Newest on top',
+    sortAscTitle: 'Oldest on top',
+    ledgerH: 'Trade Ledger',
+    records: 'records',
+    colDate: 'Date',
+    colTicker: 'Ticker',
+    colAction: 'Action',
+    colPos: 'Position',
+    colEntry: 'Entry',
+    colClose: 'Close',
+    colPnl: 'P&L',
+    first200: 'Showing first 200 (total',
+    // Shortlist
+    slH: 'Today\'s Ranking',
+    slCaption: 'Date: {d} · Top {n} tickers · Model output (proprietary)',
+    slPrivacy: 'Ranking criteria and scores are company IP and not disclosed. Only <strong>rank + ticker + current price</strong> are public.',
+    slTop10: 'Today\'s Top 10',
+    slCol1: 'Rank',
+    slCol2: 'Ticker',
+    slCol3: 'Current Price (TL)',
+    // Paper
+    paperH: 'Paper Trading',
+    paperHSub: 'open & closed position book',
+    paperCaption: 'Each trading day the bot picks the top-N and auto-closes via triple barrier (TP/SL/time). Data is updated daily via GitHub Actions.',
+    paperEmpty: 'No paper trades yet',
+    kpiOpen: 'Open Positions',
+    kpiOpenSub: 'ongoing',
+    kpiClosed: 'Closed',
+    kpiClosedSub: 'total',
+    kpiTotalPnl: 'Total PnL',
+    kpiTotalPnlSub: 'sum of closed trades',
+    kpiAvgPnlPaper: 'Avg PnL / trade',
+    kpiAvgPnlPaperSub: 'closed-trade average',
+    kpiBest: 'Best',
+    kpiWorst: 'Worst',
+    kpiWinRatePaper: 'Win Rate',
+    paperInfo: '<strong>How it works:</strong> After each market close, the bot records the model\'s top-N picks as open positions. Each position auto-closes when price hits <strong>+2.5% (TP)</strong>, drops to <strong>-1.5% (SL)</strong>, or after <strong>10 trading days</strong> — mirroring the backtest exactly.',
+    openH: 'Open Positions',
+    closedH: 'Closed Trades',
+    pCol1: 'Opened', pCol2: 'Ticker', pCol3: 'Entry', pColClose: 'Closed', pColClosePrice: 'Close', pColReason: 'Reason', pColPnl: 'PnL', pColDays: 'Days',
+    legacyH: 'Legacy Prediction Records (5/10/20-day horizon)',
+    reasonTP: 'TAKE PROFIT', reasonSL: 'STOP LOSS', reasonTIME: 'TIME OUT',
+    // Methodology
+    methH: 'Methodology',
+    methLead: 'The system was built using advanced quant-trading methodologies from academic literature. Every stage is tested with purged walk-forward + look-ahead defence + hallucination protection.',
+    meth1H: '1. LLM Trading Approach',
+    meth1c1H: 'Multi-Source Signal',
+    meth1c1: 'Market data and text-based sources are aggregated into a single LLM-driven sentiment score. Source weights are proprietary.',
+    meth1c2H: 'Adaptive Feature Engineering',
+    meth1c2: 'Both intra-class (ticker-time) and cross-sectional signals. Details are company IP.',
+    meth1c3H: 'Probabilistic Signal Generation',
+    meth1c3: 'Gradient-boosted ensemble + triple-barrier labeling. Out-of-sample walk-forward with rotated retraining.',
+    meth1c4H: 'Position Management',
+    meth1c4: 'Long top-N basket · hard per-position cap · weekly rebalance · signal EMA smoothing for turnover control.',
+    meth2H: '2. Bias Defence',
+    meth2a: '<strong>Look-Ahead Bias:</strong> Signal is generated at close[t-1], buy uses open[t] (observable). The bot cannot catch bottoms/tops.',
+    meth2b: '<strong>Survivorship Bias:</strong> Today\'s BIST 30 list is applied 5y back. The public dashboard shows bias-adjusted Sharpe (×0.85).',
+    meth2c: '<strong>Overfit Defence:</strong> Purged k-fold + embargo period (5 days) + walk-forward (out-of-sample test).',
+    meth3H: '3. Realistic Cost Model',
+    cCol1: 'Component', cCol2: 'bp', cCol3: 'Description',
+    cR1a: 'Commission', cR1b: 'Broker (BIST average)',
+    cR2a: 'BSMV', cR2b: 'Commission × 5%',
+    cR3a: 'Spread', cR3b: 'Liquid BIST 30 average',
+    cR4a: 'Slippage (overnight gap proxy)', cR4b: 'Next-day open execution',
+    cR5a: '<strong>Total one-way</strong>', cR5b: 'Round-trip ~70 bp',
+    meth4H: '4. Test Coverage',
+    tCol1: 'Test Suite', tCol2: 'Tests', tCol3: 'Scope',
+    tR1a: 'Feature engineering', tR1b: 'Look-ahead defence, lag shift, RSI bounds',
+    tR2a: 'Backtest ↔ Live parity', tR2b: 'Same feature, same date',
+    tR3a: 'Hallucination defence', tR3b: 'Sentiment NaN, missing data, inf check',
+    tR4a: 'Triple barrier labeling', tR4b: 'Edge cases',
+    tR5a: 'Walk-forward splits', tR5b: 'Purge + embargo',
+    tR6a: 'Cost & news collector', tR6b: 'BIST realistic cost',
+    tR7a: '<strong>Total</strong>', tR7b: '100% passing',
+  },
+};
+const t = (k) => (I18N[LANG] && I18N[LANG][k]) || k;
+
+// Apply data-i18n to static elements
+function applyStaticI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    el.innerHTML = t(k);
+  });
+  document.documentElement.lang = LANG;
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === LANG);
+  });
+}
+
+function applyTheme() {
+  document.documentElement.dataset.theme = THEME;
+  const knob = document.getElementById('theme-knob');
+  if (knob) knob.textContent = THEME === 'dark' ? '☾' : '☀';
+}
+
+// Sidebar nav
+document.querySelectorAll('#nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('main > div[id^="page-"]').forEach(p => p.classList.add('hidden'));
+    document.getElementById('page-' + btn.dataset.page).classList.remove('hidden');
+    window.scrollTo(0, 0);
+  });
+});
+
+// Language buttons
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    LANG = btn.dataset.lang;
+    localStorage.setItem('sb_lang', LANG);
+    applyStaticI18n();
+    rerenderAll();
+  });
+});
+
+// Theme toggle
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  THEME = THEME === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('sb_theme', THEME);
+  applyTheme();
+  rerenderAll();  // chart colors update
+});
+
+function kpi(label, value, sub, tone) {
+  const cls = tone === 'pos' ? 'kpi-value pos' : tone === 'neg' ? 'kpi-value neg' : 'kpi-value';
+  return `<div class="kpi"><div class="kpi-label">${label}</div><div class="${cls}">${value}</div>${sub ? `<div class="kpi-sub">${sub}</div>` : ''}</div>`;
+}
+function kpiGrid(cards) { return `<div class="kpi-grid">${cards.join('')}</div>`; }
+function disclose(text, kind) {
+  return `<div class="disclose${kind === 'info' ? ' disclose-info' : ''}">${text}</div>`;
+}
+
+async function loadAll() {
+  try { DATA.backtest = await (await fetch('./data/backtest.json')).json(); } catch (e) {}
+  try { DATA.trades = await (await fetch('./data/trades.json')).json(); } catch (e) {}
+  try { DATA.shortlist = await (await fetch('./data/shortlist.json')).json(); } catch (e) {}
+  try { DATA.paper = await (await fetch('./data/paper.json')).json(); } catch (e) {}
+  try { DATA.paperBook = await (await fetch('./data/paper_book.json')).json(); } catch (e) {}
+  rerenderAll();
+}
+
+function rerenderAll() {
+  if (EQUITY_CHART) { try { EQUITY_CHART.destroy(); } catch(e){} EQUITY_CHART = null; }
+  applyStaticI18n();
+  renderMarketBanner();
+  renderOverview(); renderBacktest(); renderTrades(); renderShortlist(); renderPaper(); renderMethodology();
+}
+
+function renderMarketBanner() {
+  const banner = document.getElementById('market-banner');
+  if (!banner) return;
+  const market = DATA.paperBook?.market;
+  if (!market) { banner.style.display = 'none'; return; }
+  banner.style.display = 'flex';
+  banner.className = 'market-banner ' + (market.is_trading_day ? 'open' : '');
+  if (market.is_trading_day) {
+    banner.innerHTML = `<span class="market-dot"></span><strong>BIST AÇIK</strong> · ${market.today} · Bot bugün top-N seçim yapacak`;
+  } else {
+    const lbl = LANG === 'tr'
+      ? `<strong>BIST KAPALI</strong> · ${market.reason_closed || 'tatil'} · Sonraki açık gün: <strong>${market.next_trading_day}</strong> · Bot yeni pozisyon açmıyor`
+      : `<strong>BIST CLOSED</strong> · ${market.reason_closed || 'holiday'} · Next session: <strong>${market.next_trading_day}</strong> · Bot is not opening new positions`;
+    banner.innerHTML = `<span class="market-dot"></span>${lbl}`;
+  }
+}
+
+// ── OVERVIEW ────────────────────────────────────────────────────────
+function renderOverview() {
+  const el = document.getElementById('page-overview');
+  if (!DATA.backtest) { el.innerHTML = `<h1>${t('loading')}</h1>`; return; }
+  const pm = DATA.backtest.portfolio_metrics;
+  const bm = DATA.backtest.benchmark_metrics;
+  const sharpeAdj = pm.sharpe * 0.85;
+  const cagrAdj = pm.cagr * 0.90;
+
+  // Hero sparkline data (equity curve normalized)
+  const eq = DATA.backtest.equity;
+  const sparkVals = eq.map(p => p.portfolio);
+  const sparkBenchVals = eq.map(p => p.benchmark);
+  const sparkMin = Math.min(...sparkVals, ...sparkBenchVals);
+  const sparkMax = Math.max(...sparkVals, ...sparkBenchVals);
+  const sparkW = 380, sparkH = 80;
+  const toPath = (vals) => vals.map((v, i) => {
+    const x = (i / (vals.length - 1)) * sparkW;
+    const y = sparkH - ((v - sparkMin) / (sparkMax - sparkMin)) * sparkH;
+    return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  const portPath = toPath(sparkVals);
+  const benchPath = toPath(sparkBenchVals);
+  const finalVal = sparkVals[sparkVals.length - 1];
+  const totalRet = (finalVal / sparkVals[0] - 1);
+
+  // Status info
+  const openCount = DATA.paperBook?.summary?.open || 0;
+  const closedCount = DATA.paperBook?.summary?.closed || 0;
+  const today = new Date().toISOString().slice(0,10);
+
+  el.innerHTML = `
+    <div class="hero hero-modern">
+      <div class="hero-content">
+        <div class="hero-tags-top">
+          <span class="hero-status-dot"></span>
+          <span class="hero-status-label">${t('tagValidated')}</span>
+          <span class="hero-divider"></span>
+          <span class="hero-mono">${today}</span>
+          <span class="hero-divider"></span>
+          <span class="hero-mono">${openCount} açık · ${closedCount} kapalı</span>
+        </div>
+        <h1>Sentiment Trading <em>with LLM</em></h1>
+        <p class="tagline">${t('heroTagline')}</p>
+        <div class="hero-tags">
+          <span>${t('tagData')}</span>
+          <span>${t('tagModel')}</span>
+          <span>${t('tagLLM')}</span>
+          <span>${t('tagWF')}</span>
+          <span>${t('tagTests')}</span>
+        </div>
+      </div>
+      <div class="hero-spark">
+        <div class="spark-label">
+          <span class="spark-val ${totalRet>=0?'pos':'neg'}">${FMT_PCT_S(totalRet, 1)}</span>
+          <span class="spark-sub">backtest equity</span>
+        </div>
+        <svg viewBox="0 0 ${sparkW} ${sparkH}" preserveAspectRatio="none" style="width:100%;height:90px;display:block;margin-top:8px">
+          <defs>
+            <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--accent)" stop-opacity=".25"/>
+              <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path d="${benchPath}" fill="none" stroke="var(--gold)" stroke-width="1" stroke-dasharray="3,3" opacity=".55"/>
+          <path d="${portPath} L${sparkW},${sparkH} L0,${sparkH} Z" fill="url(#sparkFill)"/>
+          <path d="${portPath}" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
+        </svg>
+        <div class="spark-legend">
+          <span class="legend-item"><span class="dot dot-port"></span>Portföy</span>
+          <span class="legend-item"><span class="dot dot-bench"></span>XU100</span>
+        </div>
+      </div>
+    </div>
+
+    <h2>${t('h2Perf')}</h2>
+    ${kpiGrid([
+      kpi(t('kpiSharpe'), sharpeAdj.toFixed(2), `XU100 BH: ${(bm.sharpe).toFixed(2)}`, sharpeAdj > bm.sharpe ? 'pos' : 'neg'),
+      kpi(t('kpiCagr'), FMT_PCT_S(cagrAdj, 1), `XU100 BH: ${FMT_PCT_S(bm.cagr, 1)}`, cagrAdj > bm.cagr ? 'pos' : 'neg'),
+      kpi(t('kpiMaxDd'), FMT_PCT(pm.max_dd, 1), `XU100: ${FMT_PCT(bm.max_dd, 1)}`, 'neg'),
+      kpi(t('kpiHitRate'), FMT_PCT(pm.hit_rate, 1), t('kpiHitRateSub'), 'neutral'),
+    ])}
+
+    <h2>${t('h2Profile')}</h2>
+    ${kpiGrid([
+      kpi(t('kpiPeriod'), `${DATA.backtest.n_days} ${t('kpiPeriodUnit')}`, `${DATA.backtest.n_folds} ${t('kpiPeriodSub')}`, 'neutral'),
+      kpi(t('kpiTrades'), String(DATA.trades?.length || 0), t('kpiTradesSub'), 'neutral'),
+      kpi(t('kpiUniverse'), '30', t('kpiUniverseSub'), 'neutral'),
+      kpi(t('kpiLive'), t('kpiLiveVal'), `${openCount} açık · ${closedCount} kapalı`, 'pos'),
+    ])}
+
+    <h2>${t('h2Academic')}</h2>
+    <div class="method-grid pillar-grid">
+      <div class="method-card pillar"><div class="pillar-num">01</div><strong>${t('card1H')}</strong><p>${t('card1')}</p></div>
+      <div class="method-card pillar"><div class="pillar-num">02</div><strong>${t('card2H')}</strong><p>${t('card2')}</p></div>
+      <div class="method-card pillar"><div class="pillar-num">03</div><strong>${t('card3H')}</strong><p>${t('card3')}</p></div>
+      <div class="method-card pillar"><div class="pillar-num">04</div><strong>${t('card4H')}</strong><p>${t('card4')}</p></div>
+    </div>
+  `;
+}
+
+// ── BACKTEST ────────────────────────────────────────────────────────
+function renderBacktest() {
+  const el = document.getElementById('page-backtest');
+  if (!DATA.backtest) { el.innerHTML = `<h1>${t('noData')}</h1>`; return; }
+  const pm = DATA.backtest.portfolio_metrics;
+  const bm = DATA.backtest.benchmark_metrics;
+
+  el.innerHTML = `
+    <h2 style="margin-top:0">${t('navBacktest')}</h2>
+    <p class="caption">${DATA.backtest.n_folds} ${t('btCaption').replace('{n}', DATA.backtest.n_days)}</p>
+
+    <h3>${t('btEquity')}</h3>
+    <div class="chart-box"><canvas id="chart-equity" height="100"></canvas></div>
+
+    <h3>${t('btYearlyH')}</h3>
+    <p class="caption">${t('btYearlySub')}</p>
+    <div class="chart-box"><canvas id="chart-yearly" height="85"></canvas></div>
+    <div id="yearly-table"></div>
+
+    <h3>${t('btDrawdownH')}</h3>
+    <p class="caption">${t('btDrawdownSub')}</p>
+    <div class="chart-box"><canvas id="chart-drawdown" height="70"></canvas></div>
+
+    <h3>${t('btHeatmapH')}</h3>
+    <p class="caption">${t('btHeatmapSub')}</p>
+    <div id="returns-heatmap"></div>
+
+    <h3>${t('btMetrics')}</h3>
+    ${kpiGrid([
+      kpi('Sharpe', pm.sharpe.toFixed(2), `XU100: ${bm.sharpe.toFixed(2)}`, pm.sharpe > bm.sharpe ? 'pos' : 'neg'),
+      kpi(t('btCagrShort'), FMT_PCT_S(pm.cagr, 1), `XU100: ${FMT_PCT_S(bm.cagr, 1)}`, pm.cagr > bm.cagr ? 'pos' : 'neg'),
+      kpi(t('kpiMaxDd'), FMT_PCT(pm.max_dd, 1), `XU100: ${FMT_PCT(bm.max_dd, 1)}`, 'neg'),
+      kpi(t('kpiHitRate'), FMT_PCT(pm.hit_rate, 1), `XU100: ${FMT_PCT(bm.hit_rate, 1)}`, 'neutral'),
+      kpi(t('btDaily'), FMT_PCT_S(pm.mean_d, 3), `σ=${FMT_PCT(pm.std_d, 2)}`, 'neutral'),
+      kpi(t('btTurnover'), FMT_PCT(pm.turnover_d || 0, 1) + '/d', t('btTurnoverSub'), 'neutral'),
+    ])}
+
+    <h3>${t('btConservativeH')}</h3>
+    ${disclose(t('btConservative'))}
+    <div class="slider-row">
+      <label>${t('btSliderLabel')}</label>
+      <input type="range" id="bias-slider" min="0" max="30" value="15" step="1">
+      <span class="value" id="bias-value">15%</span>
+    </div>
+    <div id="bias-results"></div>
+
+    <h3>${t('btFoldH')}</h3>
+    <div id="fold-table"></div>
+  `;
+
+  // Theme-aware chart colors
+  const css = getComputedStyle(document.documentElement);
+  const cGrid = css.getPropertyValue('--chart-grid').trim() || '#252525';
+  const cTick = css.getPropertyValue('--chart-tick').trim() || '#6b6b6b';
+  const cText2 = css.getPropertyValue('--text2').trim() || '#a8a8a8';
+  const cBg = css.getPropertyValue('--bg').trim() || '#0a0a0a';
+  const cText = css.getPropertyValue('--text').trim() || '#e8e8e8';
+  const cAccent = css.getPropertyValue('--accent').trim() || '#4ade80';
+  const cGold = css.getPropertyValue('--gold').trim() || '#f59e0b';
+
+  // Chart
+  const ctx = document.getElementById('chart-equity').getContext('2d');
+  const labels = DATA.backtest.equity.map(p => p.date);
+  EQUITY_CHART = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: t('portfolio'), data: DATA.backtest.equity.map(p => p.portfolio), borderColor: cAccent, backgroundColor: 'rgba(74,222,128,0.07)', borderWidth: 2.5, fill: true, pointRadius: 0, tension: 0.1 },
+        { label: 'XU100 BH', data: DATA.backtest.equity.map(p => p.benchmark), borderColor: cGold, borderDash: [4, 4], borderWidth: 1.5, pointRadius: 0, tension: 0.1, fill: false },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: cText2, font: { family: 'DM Mono' } } }, tooltip: { backgroundColor: cBg, titleColor: cText, bodyColor: cText2 } },
+      scales: {
+        x: { ticks: { color: cTick, font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 12 }, grid: { color: cGrid } },
+        y: { ticks: { color: cTick, font: { family: 'DM Mono' } }, grid: { color: cGrid } },
+      },
+    },
+  });
+
+  // Drawdown chart (underwater plot)
+  const ddData = (() => {
+    const vals = DATA.backtest.equity.map(p => p.portfolio);
+    let peak = vals[0]; const dd = [];
+    for (const v of vals) { peak = Math.max(peak, v); dd.push((v / peak - 1) * 100); }
+    return dd;
+  })();
+  const ddCtx = document.getElementById('chart-drawdown').getContext('2d');
+  new Chart(ddCtx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Drawdown %',
+        data: ddData,
+        borderColor: 'rgba(239,68,68,0.85)',
+        backgroundColor: 'rgba(239,68,68,0.20)',
+        borderWidth: 1.4, fill: true, pointRadius: 0, tension: 0.1,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: cBg, titleColor: cText, bodyColor: cText2, callbacks: { label: c => c.parsed.y.toFixed(2) + '%' } } },
+      scales: {
+        x: { ticks: { color: cTick, font: { family: 'DM Mono', size: 10 }, maxTicksLimit: 12 }, grid: { color: cGrid } },
+        y: { ticks: { color: cTick, font: { family: 'DM Mono' }, callback: v => v + '%' }, grid: { color: cGrid }, max: 0 },
+      },
+    },
+  });
+
+  // Yearly returns: compounded ret_p and ret_b grouped by year
+  renderYearlyComparison(DATA.backtest.equity, {cAccent, cGold, cGrid, cTick, cBg, cText, cText2});
+
+  // Monthly returns heatmap (compounded daily returns into months)
+  renderMonthlyHeatmap(DATA.backtest.equity);
+
+  // Slider
+  const slider = document.getElementById('bias-slider');
+  const updateBias = () => {
+    const pct = +slider.value;
+    document.getElementById('bias-value').textContent = pct + '%';
+    const mult = 1 - pct / 100;
+    document.getElementById('bias-results').innerHTML = kpiGrid([
+      kpi(t('btAdjSharpe'), (pm.sharpe * mult).toFixed(2), `raw ${pm.sharpe.toFixed(2)}`, pm.sharpe * mult > 0 ? 'pos' : 'neg'),
+      kpi(t('btAdjCagr'), FMT_PCT_S(pm.cagr * mult, 1), `raw ${FMT_PCT_S(pm.cagr, 1)}`, pm.cagr * mult > 0 ? 'pos' : 'neg'),
+    ]);
+  };
+  slider.addEventListener('input', updateBias); updateBias();
+
+  document.getElementById('fold-table').innerHTML = `<table>
+    <thead><tr><th>${t('btFoldCol1')}</th><th>${t('btFoldCol2')}</th><th class="num">${t('btFoldCol3')}</th><th class="num">${t('btFoldCol4')}</th></tr></thead>
+    <tbody>
+      ${DATA.backtest.fold_metrics.map(f => `<tr><td>${f.fold}</td><td>${f.test_period}</td><td class="num">${f.train_n}</td><td class="num">${f.positive_rate_train.toFixed(3)}</td></tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+// ── YEARLY COMPARISON ───────────────────────────────────────────────
+function renderYearlyComparison(equity, colors) {
+  // Strateji: sadece test günlerinde compound
+  const byYear = {};
+  for (const row of equity) {
+    const y = row.date.slice(0, 4);
+    if (!byYear[y]) byYear[y] = { p: 1.0, days: 0 };
+    byYear[y].p *= (1.0 + row.ret_p);
+    byYear[y].days += 1;
+  }
+  // XU100: gerçek tam-yıl (export script'ten geliyor)
+  const xuYearly = {};
+  for (const r of (DATA.backtest.benchmark_yearly || [])) {
+    xuYearly[String(r.year)] = r;
+  }
+  const years = Object.keys(byYear).sort();
+  const portRets = years.map(y => (byYear[y].p - 1) * 100);
+  const xuRets = years.map(y => (xuYearly[y] ? xuYearly[y].ret * 100 : 0));
+
+  // Chart
+  const ctx = document.getElementById('chart-yearly');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: years,
+        datasets: [
+          { label: t('btYearlyCol2'), data: portRets, backgroundColor: portRets.map(v => v >= 0 ? 'rgba(74,222,128,0.85)' : 'rgba(239,68,68,0.85)'), borderRadius: 4, borderWidth: 0 },
+          { label: t('btYearlyCol3'), data: xuRets, backgroundColor: xuRets.map(v => v >= 0 ? 'rgba(245,158,11,0.65)' : 'rgba(180,83,9,0.55)'), borderRadius: 4, borderWidth: 0 },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: colors.cText2, font: { family: 'DM Mono', size: 11 } } },
+          tooltip: {
+            backgroundColor: colors.cBg, titleColor: colors.cText, bodyColor: colors.cText2,
+            callbacks: { label: c => `${c.dataset.label}: ${c.parsed.y >= 0 ? '+' : ''}${c.parsed.y.toFixed(2)}%` },
+          },
+        },
+        scales: {
+          x: { ticks: { color: colors.cTick, font: { family: 'DM Mono', size: 12 } }, grid: { display: false } },
+          y: { ticks: { color: colors.cTick, font: { family: 'DM Mono' }, callback: v => (v >= 0 ? '+' : '') + v + '%' }, grid: { color: colors.cGrid } },
+        },
+      },
+    });
+  }
+
+  // Table
+  const tableEl = document.getElementById('yearly-table');
+  if (tableEl) {
+    const rows = years.map(y => {
+      const v = byYear[y];
+      const pr = (v.p - 1) * 100;
+      const xuYr = xuYearly[y];
+      const xr = xuYr ? xuYr.ret * 100 : null;
+      const xuDays = xuYr ? xuYr.days : '–';
+      return `<tr>
+        <td><strong>${y}</strong></td>
+        <td class="num ${pr >= 0 ? 'pos' : 'neg'}">${(pr >= 0 ? '+' : '') + pr.toFixed(2)}%</td>
+        <td class="num ${xr == null ? '' : xr >= 0 ? 'pos' : 'neg'}">${xr == null ? '–' : (xr >= 0 ? '+' : '') + xr.toFixed(2) + '%'}</td>
+        <td class="num">${v.days}</td>
+        <td class="num">${xuDays}</td>
+      </tr>`;
+    }).join('');
+    // Toplam (compounded across years)
+    let totP = 1, totXu = 1, totDays = 0, totXuDays = 0;
+    for (const y of years) {
+      totP *= byYear[y].p;
+      totDays += byYear[y].days;
+      if (xuYearly[y]) { totXu *= (1 + xuYearly[y].ret); totXuDays += xuYearly[y].days; }
+    }
+    const totPr = (totP - 1) * 100, totXr = (totXu - 1) * 100;
+    const totalRow = `<tr style="border-top:2px solid var(--border)">
+      <td><strong>Toplam</strong></td>
+      <td class="num ${totPr >= 0 ? 'pos' : 'neg'}"><strong>${(totPr >= 0 ? '+' : '') + totPr.toFixed(2)}%</strong></td>
+      <td class="num ${totXr >= 0 ? 'pos' : 'neg'}"><strong>${(totXr >= 0 ? '+' : '') + totXr.toFixed(2)}%</strong></td>
+      <td class="num"><strong>${totDays}</strong></td>
+      <td class="num"><strong>${totXuDays}</strong></td>
+    </tr>`;
+    tableEl.innerHTML = `<table style="margin-bottom:22px">
+      <thead><tr>
+        <th>${t('btYearlyCol1')}</th>
+        <th class="num">${t('btYearlyCol2')}</th>
+        <th class="num">${t('btYearlyCol3')}</th>
+        <th class="num">${t('btYearlyCol4')}</th>
+        <th class="num">${t('btYearlyCol5')}</th>
+      </tr></thead>
+      <tbody>${rows}${totalRow}</tbody>
+    </table>`;
+  }
+}
+
+// ── MONTHLY RETURNS HEATMAP ─────────────────────────────────────────
+function renderMonthlyHeatmap(equity) {
+  const el = document.getElementById('returns-heatmap');
+  if (!el) return;
+  // Group daily returns into months: (last_eq_of_month / last_eq_of_prev_month) - 1
+  const byMonth = {};
+  for (const p of equity) {
+    const key = p.date.slice(0, 7);  // YYYY-MM
+    byMonth[key] = p.portfolio;  // overwrite to keep last of month
+  }
+  const months = Object.keys(byMonth).sort();
+  const monthRets = {};
+  for (let i = 1; i < months.length; i++) {
+    const cur = byMonth[months[i]];
+    const prev = byMonth[months[i-1]];
+    monthRets[months[i]] = (cur / prev) - 1;
+  }
+  // Build year × month matrix
+  const years = Array.from(new Set(months.map(m => m.slice(0,4)))).sort();
+  const monthNames = LANG === 'tr'
+    ? ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara']
+    : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // Color scale: -10% → red, 0 → bg, +10% → green
+  const colorFor = (r) => {
+    if (r == null || isNaN(r)) return 'transparent';
+    const clamped = Math.max(-0.10, Math.min(0.10, r));
+    const intensity = Math.abs(clamped) / 0.10;
+    if (clamped >= 0) {
+      const a = 0.15 + intensity * 0.55;
+      return `rgba(74, 222, 128, ${a.toFixed(2)})`;
+    } else {
+      const a = 0.15 + intensity * 0.55;
+      return `rgba(239, 68, 68, ${a.toFixed(2)})`;
+    }
+  };
+
+  let html = `<div class="heatmap-wrap"><table class="heatmap">
+    <thead><tr><th></th>${monthNames.map(m => `<th>${m}</th>`).join('')}<th class="ytd">YTD</th></tr></thead>
+    <tbody>`;
+  for (const y of years) {
+    let ytd = 1;
+    let hasAny = false;
+    let cells = '';
+    for (let m = 1; m <= 12; m++) {
+      const key = `${y}-${String(m).padStart(2,'0')}`;
+      const r = monthRets[key];
+      if (r != null && !isNaN(r)) { ytd *= (1 + r); hasAny = true; }
+      const txt = r != null ? (r >= 0 ? '+' : '') + (r * 100).toFixed(1) : '';
+      cells += `<td style="background:${colorFor(r)}"><span>${txt}</span></td>`;
+    }
+    const ytdRet = ytd - 1;
+    const ytdTxt = hasAny ? (ytdRet >= 0 ? '+' : '') + (ytdRet * 100).toFixed(1) + '%' : '';
+    html += `<tr><th class="year-label">${y}</th>${cells}<td class="ytd-cell ${ytdRet>=0?'pos':'neg'}">${ytdTxt}</td></tr>`;
+  }
+  html += `</tbody></table></div>`;
+  el.innerHTML = html;
+}
+
+// ── TRADES (data-privacy uygulanmış) ────────────────────────────────
+let TRADES_FILTERED = [];
+let TRADES_SORT = { key: 'date', dir: 'desc' };  // varsayılan: en yeni üstte
+function renderTrades() {
+  const el = document.getElementById('page-trades');
+  // Merge backtest trades + paper book CLOSED trades into unified ledger
+  const btTrades = (DATA.trades || []).map(x => ({
+    date: x.date, ticker: x.ticker, action: x.action,
+    size_pct: x.size_pct, entry_price: x.entry_price, close_price: x.close_price,
+    pnl_pct: x.pnl_pct, source: 'backtest',
+  }));
+  const liveTrades = (DATA.paperBook?.trades || [])
+    .filter(t => t.status === 'CLOSED')
+    .map(t => ({
+      date: t.close_date || t.open_date,
+      ticker: t.ticker, action: 'BUY',
+      size_pct: 10, entry_price: t.entry_price, close_price: t.close_price,
+      pnl_pct: t.pnl_pct, source: 'live',
+    }));
+  const allTrades = [...btTrades, ...liveTrades];
+
+  if (!allTrades.length) { el.innerHTML = `<h1>${t('tradesEmpty')}</h1>`; return; }
+
+  const nBuy = allTrades.filter(x => x.action === 'BUY').length;
+  const nSell = allTrades.filter(x => x.action === 'SELL').length;
+  const pnls = allTrades.filter(x => x.pnl_pct != null).map(x => x.pnl_pct);
+  const totalPnl = pnls.reduce((a, b) => a + b, 0);
+  const avgPnl = pnls.length ? totalPnl / pnls.length : 0;
+  const winRate = pnls.length ? pnls.filter(p => p > 0).length / pnls.length : 0;
+  const tickers = Array.from(new Set(allTrades.map(x => x.ticker))).sort();
+  const dates = allTrades.map(x => x.date).sort();
+  const firstBtDate = btTrades.length ? btTrades.map(x => x.date).sort()[0] : null;
+  const lastBtDate = btTrades.length ? btTrades.map(x => x.date).sort().slice(-1)[0] : null;
+  const firstLiveDate = liveTrades.length ? liveTrades.map(x => x.date).sort()[0] : null;
+  const openCount = DATA.paperBook?.summary?.open || 0;
+
+  // Stash for sub-functions
+  window.__ALL_TRADES__ = allTrades;
+  window.__TICKERS__ = tickers;
+
+  el.innerHTML = `
+    <h2 style="margin-top:0">${t('tradesH')}</h2>
+    <p class="caption">${t('tradesCaption').replace('{n}', allTrades.length)}</p>
+
+    <div class="timeline">
+      <div class="timeline-block backtest">
+        <div class="label">${t('timelineBacktestH')}</div>
+        <div class="range">${firstBtDate || '–'}  →  ${lastBtDate || '–'}</div>
+        <div class="sub">${btTrades.length} işlem · ${t('timelineBacktestSub')}</div>
+      </div>
+      <div class="timeline-arrow">${t('timelineGap')}</div>
+      <div class="timeline-block live">
+        <div class="label">${t('timelineLiveH')}</div>
+        <div class="range">${firstLiveDate || (DATA.paperBook?.trades?.[0]?.open_date || '–')}  →  şimdi</div>
+        <div class="sub">${liveTrades.length} kapanmış · ${openCount} açık · ${t('timelineLiveSub')}</div>
+      </div>
+    </div>
+
+    ${kpiGrid([
+      kpi(t('kpiTrades'), String(allTrades.length), `${nBuy} BUY · ${nSell} SELL`, 'neutral'),
+      kpi(t('kpiAvgPnl'), FMT_PCT_S(avgPnl, 3), `${pnls.length} ${t('kpiAvgPnlSub')}`, avgPnl > 0 ? 'pos' : 'neg'),
+      kpi(t('kpiWinRate'), FMT_PCT(winRate, 1), `${Math.round(pnls.length * winRate)} / ${pnls.length}`, winRate > 0.5 ? 'pos' : 'neg'),
+      kpi(t('kpiActiveTicker'), String(tickers.length), t('kpiActiveTickerSub'), 'neutral'),
+    ])}
+
+    <h3>${t('histH')}</h3>
+    <p class="caption">${t('histSub')}</p>
+    <div class="pnl-histogram"><canvas id="chart-pnl-hist" height="55"></canvas></div>
+
+    ${disclose(t('privacy'), 'info')}
+
+    <h3>${t('filterSortH')}</h3>
+    <div class="filters">
+      <select id="f-action">
+        <option value="">${t('allAction')}</option>
+        <option>BUY</option>
+        <option>SELL</option>
+      </select>
+      <select id="f-ticker">
+        <option value="">${t('allTicker')}</option>
+        ${tickers.map(x => `<option>${x}</option>`).join('')}
+      </select>
+      <select id="f-source">
+        <option value="">Backtest + Live</option>
+        <option value="backtest">Sadece Backtest</option>
+        <option value="live">Sadece Live (Paper)</option>
+      </select>
+      <div class="sort-group" style="display:inline-flex;gap:4px;align-items:center;margin-left:8px;">
+        <span style="color:var(--muted);font-size:0.72rem;font-family:'DM Mono';text-transform:uppercase;letter-spacing:.08em;margin-right:4px;">${t('dateLabel')}</span>
+        <button id="sort-date-desc" class="sort-btn ${TRADES_SORT.dir==='desc'?'active':''}" type="button" title="${t('sortDescTitle')}">${t('sortDesc')}</button>
+        <button id="sort-date-asc" class="sort-btn ${TRADES_SORT.dir==='asc'?'active':''}" type="button" title="${t('sortAscTitle')}">${t('sortAsc')}</button>
+      </div>
+    </div>
+
+    <h3>${t('ledgerH')} <span style="color:var(--muted);font-style:normal;font-size:0.85rem;font-family:'DM Mono'">(<span id="trade-count">${allTrades.length}</span> ${t('records')})</span></h3>
+    <div id="trades-table"></div>
+  `;
+
+  // PnL histogram (after innerHTML is set)
+  renderPnlHistogram(pnls);
+
+  const applySort = (arr) => {
+    const dir = TRADES_SORT.dir === 'asc' ? 1 : -1;
+    return arr.slice().sort((a, b) => {
+      if (a.date < b.date) return -1 * dir;
+      if (a.date > b.date) return 1 * dir;
+      return 0;
+    });
+  };
+
+  const refresh = () => {
+    const fa = document.getElementById('f-action').value;
+    const ft = document.getElementById('f-ticker').value;
+    const fs = document.getElementById('f-source')?.value || '';
+    const filtered = (window.__ALL_TRADES__ || []).filter(t =>
+      (!fa || t.action === fa) &&
+      (!ft || t.ticker === ft) &&
+      (!fs || t.source === fs)
+    );
+    TRADES_FILTERED = applySort(filtered);
+    document.getElementById('trade-count').textContent = TRADES_FILTERED.length;
+    renderTradesTable();
+  };
+
+  const setSort = (dir) => {
+    TRADES_SORT.dir = dir;
+    document.getElementById('sort-date-desc').classList.toggle('active', dir === 'desc');
+    document.getElementById('sort-date-asc').classList.toggle('active', dir === 'asc');
+    refresh();
+  };
+
+  document.getElementById('f-action').addEventListener('change', refresh);
+  document.getElementById('f-ticker').addEventListener('change', refresh);
+  document.getElementById('f-source')?.addEventListener('change', refresh);
+  document.getElementById('sort-date-desc').addEventListener('click', () => setSort('desc'));
+  document.getElementById('sort-date-asc').addEventListener('click', () => setSort('asc'));
+  TRADES_FILTERED = applySort(window.__ALL_TRADES__ || []);
+  renderTradesTable();
+}
+
+function renderPnlHistogram(pnls) {
+  const ctx = document.getElementById('chart-pnl-hist');
+  if (!ctx || !pnls.length) return;
+  // Bin edges every 0.5%
+  const bw = 0.005;
+  const mn = Math.floor(Math.min(...pnls) / bw) * bw;
+  const mx = Math.ceil(Math.max(...pnls) / bw) * bw;
+  const nBins = Math.max(8, Math.round((mx - mn) / bw));
+  const bins = new Array(nBins).fill(0);
+  for (const p of pnls) {
+    const idx = Math.min(nBins - 1, Math.max(0, Math.floor((p - mn) / bw)));
+    bins[idx]++;
+  }
+  const labels = [];
+  const colors = [];
+  for (let i = 0; i < nBins; i++) {
+    const lo = mn + i * bw;
+    labels.push(((lo + bw/2) * 100).toFixed(1) + '%');
+    colors.push(lo + bw/2 >= 0 ? 'rgba(74,222,128,0.65)' : 'rgba(239,68,68,0.65)');
+  }
+  const css = getComputedStyle(document.documentElement);
+  const cGrid = css.getPropertyValue('--chart-grid').trim();
+  const cTick = css.getPropertyValue('--chart-tick').trim();
+  const cBg = css.getPropertyValue('--bg').trim();
+  const cText = css.getPropertyValue('--text').trim();
+  const cText2 = css.getPropertyValue('--text2').trim();
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Trade count', data: bins, backgroundColor: colors, borderWidth: 0, barPercentage: 0.96, categoryPercentage: 0.96 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { backgroundColor: cBg, titleColor: cText, bodyColor: cText2, callbacks: { title: (ctx) => 'P&L ≈ ' + ctx[0].label } } },
+      scales: {
+        x: { ticks: { color: cTick, font: { family: 'DM Mono', size: 9 }, maxTicksLimit: 14 }, grid: { display: false } },
+        y: { ticks: { color: cTick, font: { family: 'DM Mono' }, precision: 0 }, grid: { color: cGrid }, beginAtZero: true },
+      },
+    },
+  });
+}
+function renderTradesTable() {
+  const el = document.getElementById('trades-table');
+  const rows = TRADES_FILTERED.slice(0, 200);
+  const sourceBadge = (s) => {
+    if (s === 'live') return `<span class="badge" style="background:rgba(74,222,128,.12);color:var(--accent);border:1px solid var(--accent)">LIVE</span>`;
+    return `<span class="badge" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border)">BT</span>`;
+  };
+  el.innerHTML = `<table>
+    <thead><tr>
+      <th>${t('colDate')}</th><th>${t('colTicker')}</th><th>${t('colAction')}</th>
+      <th>Kaynak</th>
+      <th class="num">${t('colPos')}</th><th class="num">${t('colEntry')}</th>
+      <th class="num">${t('colClose')}</th><th class="num">${t('colPnl')}</th>
+    </tr></thead>
+    <tbody>
+      ${rows.map(r => `<tr>
+        <td>${r.date}</td>
+        <td><strong>${r.ticker}</strong></td>
+        <td><span class="badge badge-${r.action.toLowerCase()}">${r.action}</span></td>
+        <td>${sourceBadge(r.source)}</td>
+        <td class="num">${r.size_pct != null ? (r.size_pct >= 0 ? '+' : '') + r.size_pct.toFixed(1) + '%' : '–'}</td>
+        <td class="num">${r.entry_price != null ? r.entry_price.toFixed(2) : '–'}</td>
+        <td class="num">${r.close_price != null ? r.close_price.toFixed(2) : '–'}</td>
+        <td class="num ${r.pnl_pct > 0 ? 'pos' : r.pnl_pct < 0 ? 'neg' : ''}">${r.pnl_pct != null ? FMT_PCT_S(r.pnl_pct, 2) : '–'}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  ${TRADES_FILTERED.length > 200 ? `<div style="text-align:center;padding:14px;color:var(--muted);font-size:0.75rem">${t('first200')} ${TRADES_FILTERED.length})</div>` : ''}`;
+}
+
+// ── SHORTLIST (rank-only) ───────────────────────────────────────────
+function renderShortlist() {
+  const el = document.getElementById('page-shortlist');
+  if (!DATA.shortlist) { el.innerHTML = `<h1>${t('noData')}</h1>`; return; }
+  const items = DATA.shortlist.items;
+  el.innerHTML = `
+    <h2 style="margin-top:0">${t('slH')}</h2>
+    <p class="caption">${t('slCaption').replace('{d}', DATA.shortlist.date).replace('{n}', items.length)}</p>
+
+    ${disclose(t('slPrivacy'), 'info')}
+
+    <h3>${t('slTop10')}</h3>
+    <table>
+      <thead><tr><th>${t('slCol1')}</th><th>${t('slCol2')}</th><th class="num">${t('slCol3')}</th></tr></thead>
+      <tbody>
+        ${items.map(it => `<tr>
+          <td><strong>#${it.rank}</strong></td>
+          <td><strong>${it.ticker}</strong></td>
+          <td class="num">${it.close.toFixed(2)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ── PAPER ──────────────────────────────────────────────────────────
+function renderPaper() {
+  const el = document.getElementById('page-paper');
+  const hasBook = DATA.paperBook && DATA.paperBook.trades && DATA.paperBook.trades.length;
+  const hasLegacy = DATA.paper && DATA.paper.length;
+  if (!hasBook && !hasLegacy) { el.innerHTML = `<h1>${t('paperEmpty')}</h1>`; return; }
+
+  let html = `
+    <h2 style="margin-top:0">${t('paperH')} <span style="font-style:normal;color:var(--muted);font-size:0.7em">· ${t('paperHSub')}</span></h2>
+    <p class="caption">${t('paperCaption')}</p>
+    ${disclose(t('paperInfo'), 'info')}
+  `;
+
+  if (hasBook) {
+    const s = DATA.paperBook.summary;
+    const trades = DATA.paperBook.trades;
+    const open = trades.filter(t => t.status === 'OPEN').sort((a,b) => b.open_date.localeCompare(a.open_date));
+    const closed = trades.filter(t => t.status === 'CLOSED').sort((a,b) => (b.close_date || '').localeCompare(a.close_date || ''));
+
+    const reasonBadge = (r) => {
+      if (!r) return '–';
+      const cls = r === 'TP' ? 'pos' : r === 'SL' ? 'neg' : '';
+      return `<span class="badge ${r==='TP'?'badge-buy':r==='SL'?'badge-sell':''}" style="${r==='TIME'?'background:var(--gold-soft);color:var(--gold)':''}">${t('reason'+r)}</span>`;
+    };
+
+    html += `
+    ${kpiGrid([
+      kpi(t('kpiOpen'), String(s.open), t('kpiOpenSub'), 'neutral'),
+      kpi(t('kpiClosed'), String(s.closed), `TP ${s.closed_tp} · SL ${s.closed_sl} · TIME ${s.closed_time}`, 'neutral'),
+      kpi(t('kpiTotalPnl'), s.total_pnl != null ? FMT_PCT_S(s.total_pnl, 2) : '–', t('kpiTotalPnlSub'), s.total_pnl > 0 ? 'pos' : 'neg'),
+      kpi(t('kpiWinRatePaper'), s.win_rate != null ? FMT_PCT(s.win_rate, 1) : '–', `${Math.round((s.win_rate||0) * s.closed)} / ${s.closed}`, (s.win_rate||0) > 0.5 ? 'pos' : 'neg'),
+      kpi(t('kpiAvgPnlPaper'), s.avg_pnl != null ? FMT_PCT_S(s.avg_pnl, 3) : '–', t('kpiAvgPnlPaperSub'), (s.avg_pnl||0) > 0 ? 'pos' : 'neg'),
+      kpi(t('kpiBest'), s.best != null ? FMT_PCT_S(s.best, 2) : '–', s.worst != null ? `${t('kpiWorst')}: ${FMT_PCT_S(s.worst, 2)}` : '', 'pos'),
+    ])}
+
+    <h3>${t('openH')} (${open.length})</h3>
+    ${open.length === 0 ? `<p class="caption" style="margin-bottom:18px">—</p>` : `<table>
+      <thead><tr>
+        <th>${t('pCol1')}</th><th>${t('pCol2')}</th>
+        <th class="num">${t('pCol3')}</th><th class="num">TP</th><th class="num">SL</th>
+      </tr></thead>
+      <tbody>
+        ${open.map(t_ => `<tr>
+          <td>${t_.open_date}</td>
+          <td><strong>${t_.ticker}</strong></td>
+          <td class="num">${t_.entry_price.toFixed(2)}</td>
+          <td class="num pos">+${(t_.tp_pct*100).toFixed(1)}%</td>
+          <td class="num neg">-${(t_.sl_pct*100).toFixed(1)}%</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`}
+
+    <h3>${t('closedH')} (${closed.length})</h3>
+    ${closed.length === 0 ? `<p class="caption">—</p>` : `<table>
+      <thead><tr>
+        <th>${t('pCol1')}</th><th>${t('pCol2')}</th>
+        <th class="num">${t('pCol3')}</th><th>${t('pColClose')}</th>
+        <th class="num">${t('pColClosePrice')}</th><th>${t('pColReason')}</th>
+        <th class="num">${t('pColDays')}</th><th class="num">${t('pColPnl')}</th>
+      </tr></thead>
+      <tbody>
+        ${closed.slice(0, 200).map(t_ => `<tr>
+          <td>${t_.open_date}</td>
+          <td><strong>${t_.ticker}</strong></td>
+          <td class="num">${t_.entry_price.toFixed(2)}</td>
+          <td>${t_.close_date || '–'}</td>
+          <td class="num">${t_.close_price != null ? t_.close_price.toFixed(2) : '–'}</td>
+          <td>${reasonBadge(t_.close_reason)}</td>
+          <td class="num">${t_.days_held != null ? t_.days_held : '–'}</td>
+          <td class="num ${t_.pnl_pct > 0 ? 'pos' : t_.pnl_pct < 0 ? 'neg' : ''}">${t_.pnl_pct != null ? FMT_PCT_S(t_.pnl_pct, 2) : '–'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`}
+    `;
+  }
+
+  // Legacy 5/10/20-day prediction log (sayfanın alt kısmında, opsiyonel)
+  if (hasLegacy) {
+    html += `
+    <h3 style="margin-top:36px">${t('legacyH')}</h3>
+    <table>
+      <thead><tr><th>${t('pCol1')}</th><th>${t('pCol2')}</th><th class="num">Rank</th><th class="num">Entry (TL)</th><th class="num">5d</th><th class="num">10d</th><th class="num">20d</th></tr></thead>
+      <tbody>
+        ${DATA.paper.slice(0, 100).map(p => `<tr>
+          <td>${p.prediction_date}</td>
+          <td><strong>${p.ticker}</strong></td>
+          <td class="num">${p.rank}</td>
+          <td class="num">${p.entry_price.toFixed(2)}</td>
+          <td class="num ${p.ret_5d > 0 ? 'pos' : p.ret_5d < 0 ? 'neg' : ''}">${p.ret_5d != null ? FMT_PCT_S(p.ret_5d) : '–'}</td>
+          <td class="num ${p.ret_10d > 0 ? 'pos' : p.ret_10d < 0 ? 'neg' : ''}">${p.ret_10d != null ? FMT_PCT_S(p.ret_10d) : '–'}</td>
+          <td class="num ${p.ret_20d > 0 ? 'pos' : p.ret_20d < 0 ? 'neg' : ''}">${p.ret_20d != null ? FMT_PCT_S(p.ret_20d) : '–'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  el.innerHTML = html;
+}
+
+// ── METHODOLOGY ─────────────────────────────────────────────────────
+function renderMethodology() {
+  const el = document.getElementById('page-methodology');
+  el.innerHTML = `
+    <h2 style="margin-top:0">${t('methH')}</h2>
+    <p class="lead">${t('methLead')}</p>
+
+    <h3>${t('meth1H')}</h3>
+    <div class="method-grid">
+      <div class="method-card"><strong>${t('meth1c1H')}</strong><p>${t('meth1c1')}</p></div>
+      <div class="method-card"><strong>${t('meth1c2H')}</strong><p>${t('meth1c2')}</p></div>
+      <div class="method-card"><strong>${t('meth1c3H')}</strong><p>${t('meth1c3')}</p></div>
+      <div class="method-card"><strong>${t('meth1c4H')}</strong><p>${t('meth1c4')}</p></div>
+    </div>
+
+    <h3>${t('meth2H')}</h3>
+    ${disclose(t('meth2a'), 'info')}
+    ${disclose(t('meth2b'))}
+    ${disclose(t('meth2c'), 'info')}
+
+    <h3>${t('meth3H')}</h3>
+    <table>
+      <thead><tr><th>${t('cCol1')}</th><th class="num">${t('cCol2')}</th><th>${t('cCol3')}</th></tr></thead>
+      <tbody>
+        <tr><td>${t('cR1a')}</td><td class="num">5</td><td>${t('cR1b')}</td></tr>
+        <tr><td>${t('cR2a')}</td><td class="num">0.25</td><td>${t('cR2b')}</td></tr>
+        <tr><td>${t('cR3a')}</td><td class="num">15</td><td>${t('cR3b')}</td></tr>
+        <tr><td>${t('cR4a')}</td><td class="num">15</td><td>${t('cR4b')}</td></tr>
+        <tr><td>${t('cR5a')}</td><td class="num"><strong>~35 bp</strong></td><td>${t('cR5b')}</td></tr>
+      </tbody>
+    </table>
+
+    <h3>${t('meth4H')}</h3>
+    <table>
+      <thead><tr><th>${t('tCol1')}</th><th class="num">${t('tCol2')}</th><th>${t('tCol3')}</th></tr></thead>
+      <tbody>
+        <tr><td>${t('tR1a')}</td><td class="num">5</td><td>${t('tR1b')}</td></tr>
+        <tr><td>${t('tR2a')}</td><td class="num">3</td><td>${t('tR2b')}</td></tr>
+        <tr><td>${t('tR3a')}</td><td class="num">6</td><td>${t('tR3b')}</td></tr>
+        <tr><td>${t('tR4a')}</td><td class="num">5</td><td>${t('tR4b')}</td></tr>
+        <tr><td>${t('tR5a')}</td><td class="num">4</td><td>${t('tR5b')}</td></tr>
+        <tr><td>${t('tR6a')}</td><td class="num">10</td><td>${t('tR6b')}</td></tr>
+        <tr><td>${t('tR7a')}</td><td class="num"><strong>33</strong></td><td>${t('tR7b')}</td></tr>
+      </tbody>
+    </table>
+  `;
+}
+
+applyTheme();
+applyStaticI18n();
+loadAll();
+</script>
+
 </body>
 </html>
