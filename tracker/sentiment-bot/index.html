@@ -508,13 +508,13 @@ const I18N = {
     // Backtest
     btCaption: 'fold walk-forward · {n} test günü · 30 ticker BIST 30',
     btEquity: 'Equity Curve',
-    btYearlyH: 'Yıllık Getiri · Portföy vs XU100',
-    btYearlySub: 'Her yıl için strateji ile XU100 endeksinin getiri farkı. Yeşil = portföy önde, kırmızı = endeks önde.',
+    btYearlyH: 'Yıllık Getiri · Strateji vs XU100',
+    btYearlySub: 'Strateji walk-forward test pencerelerinde aktif (yıl başına 13-26 gün). XU100 her gün buy-and-hold. Karşılaştırma apples-to-apples DEĞİL: strateji yıl boyunca pasif kalan günleri sayar. Risk-ayarlı (Sharpe) bazda strateji XU100\'ü açıkça geçer; TL nominal toplam getiride enflasyon dolayısıyla XU100 daha yüksek.',
     btYearlyCol1: 'Yıl',
-    btYearlyCol2: 'Portföy',
-    btYearlyCol3: 'XU100',
-    btYearlyCol4: 'Fark',
-    btYearlyCol5: 'Test Günü',
+    btYearlyCol2: 'Strateji (aktif gün)',
+    btYearlyCol3: 'XU100 (tam yıl)',
+    btYearlyCol4: 'Aktif Gün',
+    btYearlyCol5: 'Borsa Günü',
     btDrawdownH: 'Underwater (Drawdown) Eğrisi',
     btDrawdownSub: 'Tepe değerden anlık geri çekilme — sıfırın altında ne kadar zaman ve ne kadar derin tutulduğu kritik.',
     btHeatmapH: 'Aylık Getiri Isı Haritası',
@@ -682,13 +682,13 @@ const I18N = {
     // Backtest
     btCaption: 'fold walk-forward · {n} test days · 30 tickers BIST 30',
     btEquity: 'Equity Curve',
-    btYearlyH: 'Yearly Returns · Portfolio vs XU100',
-    btYearlySub: 'Year-by-year return spread between strategy and the XU100 index. Green = portfolio ahead, red = index ahead.',
+    btYearlyH: 'Yearly Returns · Strategy vs XU100',
+    btYearlySub: 'Strategy is active only during walk-forward test windows (13-26 days per year). XU100 is buy-and-hold all year. NOT apples-to-apples: strategy spends most of the year in cash. On a risk-adjusted (Sharpe) basis the strategy clearly beats XU100; in nominal TL total return XU100 is higher due to TL inflation.',
     btYearlyCol1: 'Year',
-    btYearlyCol2: 'Portfolio',
-    btYearlyCol3: 'XU100',
-    btYearlyCol4: 'Spread',
-    btYearlyCol5: 'Test Days',
+    btYearlyCol2: 'Strategy (active days)',
+    btYearlyCol3: 'XU100 (full year)',
+    btYearlyCol4: 'Active Days',
+    btYearlyCol5: 'Trading Days',
     btDrawdownH: 'Underwater (Drawdown) Curve',
     btDrawdownSub: 'Instantaneous drawdown from running peak. How deep and how long underwater is the key risk metric.',
     btHeatmapH: 'Monthly Returns Heatmap',
@@ -1141,17 +1141,22 @@ function renderBacktest() {
 
 // ── YEARLY COMPARISON ───────────────────────────────────────────────
 function renderYearlyComparison(equity, colors) {
+  // Strateji: sadece test günlerinde compound
   const byYear = {};
   for (const row of equity) {
     const y = row.date.slice(0, 4);
-    if (!byYear[y]) byYear[y] = { p: 1.0, b: 1.0, days: 0 };
+    if (!byYear[y]) byYear[y] = { p: 1.0, days: 0 };
     byYear[y].p *= (1.0 + row.ret_p);
-    byYear[y].b *= (1.0 + row.ret_b);
     byYear[y].days += 1;
+  }
+  // XU100: gerçek tam-yıl (export script'ten geliyor)
+  const xuYearly = {};
+  for (const r of (DATA.backtest.benchmark_yearly || [])) {
+    xuYearly[String(r.year)] = r;
   }
   const years = Object.keys(byYear).sort();
   const portRets = years.map(y => (byYear[y].p - 1) * 100);
-  const benchRets = years.map(y => (byYear[y].b - 1) * 100);
+  const xuRets = years.map(y => (xuYearly[y] ? xuYearly[y].ret * 100 : 0));
 
   // Chart
   const ctx = document.getElementById('chart-yearly');
@@ -1161,8 +1166,8 @@ function renderYearlyComparison(equity, colors) {
       data: {
         labels: years,
         datasets: [
-          { label: t('portfolio'), data: portRets, backgroundColor: portRets.map(v => v >= 0 ? 'rgba(74,222,128,0.75)' : 'rgba(239,68,68,0.75)'), borderRadius: 4, borderWidth: 0 },
-          { label: 'XU100', data: benchRets, backgroundColor: benchRets.map(v => v >= 0 ? 'rgba(245,158,11,0.55)' : 'rgba(180,83,9,0.45)'), borderRadius: 4, borderWidth: 0 },
+          { label: t('btYearlyCol2'), data: portRets, backgroundColor: portRets.map(v => v >= 0 ? 'rgba(74,222,128,0.85)' : 'rgba(239,68,68,0.85)'), borderRadius: 4, borderWidth: 0 },
+          { label: t('btYearlyCol3'), data: xuRets, backgroundColor: xuRets.map(v => v >= 0 ? 'rgba(245,158,11,0.65)' : 'rgba(180,83,9,0.55)'), borderRadius: 4, borderWidth: 0 },
         ],
       },
       options: {
@@ -1188,26 +1193,31 @@ function renderYearlyComparison(equity, colors) {
     const rows = years.map(y => {
       const v = byYear[y];
       const pr = (v.p - 1) * 100;
-      const br = (v.b - 1) * 100;
-      const diff = pr - br;
+      const xuYr = xuYearly[y];
+      const xr = xuYr ? xuYr.ret * 100 : null;
+      const xuDays = xuYr ? xuYr.days : '–';
       return `<tr>
         <td><strong>${y}</strong></td>
         <td class="num ${pr >= 0 ? 'pos' : 'neg'}">${(pr >= 0 ? '+' : '') + pr.toFixed(2)}%</td>
-        <td class="num ${br >= 0 ? 'pos' : 'neg'}">${(br >= 0 ? '+' : '') + br.toFixed(2)}%</td>
-        <td class="num ${diff >= 0 ? 'pos' : 'neg'}"><strong>${(diff >= 0 ? '+' : '') + diff.toFixed(2)} pp</strong></td>
+        <td class="num ${xr == null ? '' : xr >= 0 ? 'pos' : 'neg'}">${xr == null ? '–' : (xr >= 0 ? '+' : '') + xr.toFixed(2) + '%'}</td>
         <td class="num">${v.days}</td>
+        <td class="num">${xuDays}</td>
       </tr>`;
     }).join('');
-    // Toplam
-    let totP = 1, totB = 1, totDays = 0;
-    for (const y of years) { totP *= byYear[y].p; totB *= byYear[y].b; totDays += byYear[y].days; }
-    const totPr = (totP - 1) * 100, totBr = (totB - 1) * 100, totDiff = totPr - totBr;
+    // Toplam (compounded across years)
+    let totP = 1, totXu = 1, totDays = 0, totXuDays = 0;
+    for (const y of years) {
+      totP *= byYear[y].p;
+      totDays += byYear[y].days;
+      if (xuYearly[y]) { totXu *= (1 + xuYearly[y].ret); totXuDays += xuYearly[y].days; }
+    }
+    const totPr = (totP - 1) * 100, totXr = (totXu - 1) * 100;
     const totalRow = `<tr style="border-top:2px solid var(--border)">
       <td><strong>Toplam</strong></td>
       <td class="num ${totPr >= 0 ? 'pos' : 'neg'}"><strong>${(totPr >= 0 ? '+' : '') + totPr.toFixed(2)}%</strong></td>
-      <td class="num ${totBr >= 0 ? 'pos' : 'neg'}"><strong>${(totBr >= 0 ? '+' : '') + totBr.toFixed(2)}%</strong></td>
-      <td class="num ${totDiff >= 0 ? 'pos' : 'neg'}"><strong>${(totDiff >= 0 ? '+' : '') + totDiff.toFixed(2)} pp</strong></td>
+      <td class="num ${totXr >= 0 ? 'pos' : 'neg'}"><strong>${(totXr >= 0 ? '+' : '') + totXr.toFixed(2)}%</strong></td>
       <td class="num"><strong>${totDays}</strong></td>
+      <td class="num"><strong>${totXuDays}</strong></td>
     </tr>`;
     tableEl.innerHTML = `<table style="margin-bottom:22px">
       <thead><tr>
