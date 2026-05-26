@@ -166,9 +166,9 @@
   },
   "market": {
     "is_trading_day": false,
-    "reason_closed": "BIST resmi tatil (2026-05-26)",
+    "reason_closed": "BIST resmi tatil (2026-05-27)",
     "next_trading_day": "2026-06-01",
-    "today": "2026-05-26"
+    "today": "2026-05-27"
   },
-  "generated_at": "2026-05-26T15:45:59.087997"
+  "generated_at": "2026-05-27T00:49:20.748422"
 }
