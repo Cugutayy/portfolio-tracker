@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sentiment Trading with LLM — Quant Research Platform</title>
-<meta name="description" content="LLM-tabanlı sentiment trading sistemi — BIST 30 üzerine 5 yıllık walk-forward backtest, akademik metodoloji">
+<title>Sentiment Trading with LLM · Quant Research</title>
+<meta name="description" content="LLM-tabanlı sentiment trading sistemi · BIST 30 · 5 yıllık walk-forward backtest, akademik metodoloji">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Ctext x='4' y='24' font-family='Georgia' font-size='22' fill='%234ade80'%3Eλ%3C/text%3E%3C/svg%3E">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -34,7 +34,7 @@
   a:hover { text-decoration: underline; }
   code { font-family: 'DM Mono', monospace; background: var(--surface); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
 
-  /* Top banner — STATUS */
+  /* Top banner */
   .status-banner {
     background: linear-gradient(90deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
     border-bottom: 1px solid var(--gold);
@@ -178,7 +178,7 @@
 <body>
 
 <div class="status-banner">
-  <strong>● BACKTEST MODE</strong> — Live trading altyapısı aktif değil. Bu sayfa research + paper trade sonuçlarını gösterir.
+  <strong>● BACKTEST MODE</strong> · Live trading altyapısı aktif değil. Bu sayfa research + paper trade sonuçlarını gösterir.
 </div>
 
 <div class="layout">
@@ -222,8 +222,8 @@
 <script>
 // ── State ────────────────────────────────────────────────────────────
 const DATA = { backtest: null, trades: null, shortlist: null, paper: null };
-const FMT_PCT = (x, d=2) => x == null || isNaN(x) ? '—' : (x*100).toFixed(d) + '%';
-const FMT_PCT_S = (x, d=2) => x == null || isNaN(x) ? '—' : (x>=0 ? '+' : '') + (x*100).toFixed(d) + '%';
+const FMT_PCT = (x, d=2) => x == null || isNaN(x) ? '–' : (x*100).toFixed(d) + '%';
+const FMT_PCT_S = (x, d=2) => x == null || isNaN(x) ? '–' : (x>=0 ? '+' : '') + (x*100).toFixed(d) + '%';
 
 // Sidebar nav
 document.querySelectorAll('#nav button').forEach(btn => {
@@ -454,10 +454,10 @@ function renderTradesTable() {
         <td>${t.date}</td>
         <td><strong>${t.ticker}</strong></td>
         <td><span class="badge badge-${t.action.toLowerCase()}">${t.action}</span></td>
-        <td class="num">${t.size_pct != null ? (t.size_pct >= 0 ? '+' : '') + t.size_pct.toFixed(1) + '%' : '—'}</td>
-        <td class="num">${t.entry_price != null ? t.entry_price.toFixed(2) : '—'}</td>
-        <td class="num">${t.close_price != null ? t.close_price.toFixed(2) : '—'}</td>
-        <td class="num ${t.pnl_pct > 0 ? 'pos' : t.pnl_pct < 0 ? 'neg' : ''}">${t.pnl_pct != null ? FMT_PCT_S(t.pnl_pct, 2) : '—'}</td>
+        <td class="num">${t.size_pct != null ? (t.size_pct >= 0 ? '+' : '') + t.size_pct.toFixed(1) + '%' : '–'}</td>
+        <td class="num">${t.entry_price != null ? t.entry_price.toFixed(2) : '–'}</td>
+        <td class="num">${t.close_price != null ? t.close_price.toFixed(2) : '–'}</td>
+        <td class="num ${t.pnl_pct > 0 ? 'pos' : t.pnl_pct < 0 ? 'neg' : ''}">${t.pnl_pct != null ? FMT_PCT_S(t.pnl_pct, 2) : '–'}</td>
       </tr>`).join('')}
     </tbody>
   </table>
@@ -497,7 +497,7 @@ function renderPaper() {
   if (!DATA.paper || !DATA.paper.length) { el.innerHTML = `<h1>Paper trade yok</h1>`; return; }
   const scored = DATA.paper.filter(p => p.ret_5d != null);
   el.innerHTML = `
-    <h2 style="margin-top:0">Paper Trading <span style="font-style:normal;color:var(--muted);font-size:0.7em">— backtest ↔ live cross-check</span></h2>
+    <h2 style="margin-top:0">Paper Trading <span style="font-style:normal;color:var(--muted);font-size:0.7em">· backtest ↔ live cross-check</span></h2>
     <p class="caption">Live predict çıktıları zaman içinde gerçek getirilerle karşılaştırılır</p>
 
     ${kpiGrid([
@@ -516,9 +516,9 @@ function renderPaper() {
           <td><strong>${p.ticker}</strong></td>
           <td class="num">${p.rank}</td>
           <td class="num">${p.entry_price.toFixed(2)}</td>
-          <td class="num ${p.ret_5d > 0 ? 'pos' : p.ret_5d < 0 ? 'neg' : ''}">${p.ret_5d != null ? FMT_PCT_S(p.ret_5d) : '—'}</td>
-          <td class="num ${p.ret_10d > 0 ? 'pos' : p.ret_10d < 0 ? 'neg' : ''}">${p.ret_10d != null ? FMT_PCT_S(p.ret_10d) : '—'}</td>
-          <td class="num ${p.ret_20d > 0 ? 'pos' : p.ret_20d < 0 ? 'neg' : ''}">${p.ret_20d != null ? FMT_PCT_S(p.ret_20d) : '—'}</td>
+          <td class="num ${p.ret_5d > 0 ? 'pos' : p.ret_5d < 0 ? 'neg' : ''}">${p.ret_5d != null ? FMT_PCT_S(p.ret_5d) : '–'}</td>
+          <td class="num ${p.ret_10d > 0 ? 'pos' : p.ret_10d < 0 ? 'neg' : ''}">${p.ret_10d != null ? FMT_PCT_S(p.ret_10d) : '–'}</td>
+          <td class="num ${p.ret_20d > 0 ? 'pos' : p.ret_20d < 0 ? 'neg' : ''}">${p.ret_20d != null ? FMT_PCT_S(p.ret_20d) : '–'}</td>
         </tr>`).join('')}
       </tbody>
     </table>
@@ -534,7 +534,7 @@ function renderMethodology() {
 
     <h3>1. Pipeline Mimarisi</h3>
     <div class="method-grid">
-      <div class="method-card"><strong>Data Ingestion</strong><p>Yahoo Finance (price), 7 RSS feed (news), Claude Haiku (sentiment scoring) — content-hash cached, retry/backoff.</p></div>
+      <div class="method-card"><strong>Data Ingestion</strong><p>Yahoo Finance (price), 7 RSS feed (news), Claude Haiku (sentiment scoring) · content-hash cached, retry/backoff.</p></div>
       <div class="method-card"><strong>Feature Engineering</strong><p>14 fiyat feature (momentum, RSI, vol, cross-sectional z-score) + 8 sentiment feature (decay-weighted aggregation).</p></div>
       <div class="method-card"><strong>Model Training</strong><p>LightGBM classifier, triple barrier labeling (López de Prado), purged + embargoed walk-forward.</p></div>
       <div class="method-card"><strong>Strategy</strong><p>Top-N long, equal weight, max %10/ticker, haftalık rebalance, signal EMA smoothing.</p></div>

@@ -78,7 +78,7 @@ export function ProjectCards({ t }: Props) {
             <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
               <Stat label={t('pf')} value="İzmir" />
               <Stat label="Routes" value="3" />
-              <Stat label="Members" value="—" />
+              <Stat label="Members" value="n/a" />
             </div>
             <Tags items={['Next.js 16','Strava','Drizzle','Auth.js']} />
           </GlassCard>
@@ -234,7 +234,7 @@ function TrackMini() {
 }
 
 // ═══════════════════════════════════════════
-// IPO MINI (Thesis) — bar chart showing yearly IPO distribution
+// IPO MINI (Thesis) · bar chart showing yearly IPO distribution
 // ═══════════════════════════════════════════
 function IpoMini() {
   const bars = [
@@ -262,7 +262,7 @@ function IpoMini() {
 }
 
 // ═══════════════════════════════════════════
-// ARBITRAGE MINI (Albion) — buy/sell spread bars
+// ARBITRAGE MINI (Albion) · buy/sell spread bars
 // ═══════════════════════════════════════════
 function ArbitrageMini() {
   const items = [
@@ -291,7 +291,7 @@ function ArbitrageMini() {
 }
 
 // ═══════════════════════════════════════════
-// SENTIMENT MINI — backtest equity curve with sentiment "pulses"
+// SENTIMENT MINI · backtest equity curve with sentiment "pulses"
 // ═══════════════════════════════════════════
 function SentimentMini() {
   return (
@@ -302,7 +302,7 @@ function SentimentMini() {
           <stop offset="100%" stopColor="#4ade80" stopOpacity=".01"/>
         </linearGradient>
       </defs>
-      {/* Benchmark (XU100 BH) — flat dotted line */}
+      {/* Benchmark (XU100 BH) · flat dotted line */}
       <polyline points="0,30 50,29 100,28 150,28 200,27 250,27 300,26 350,25 400,25" fill="none" stroke="#f59e0b" strokeWidth="1" strokeDasharray="3,3" opacity=".5"/>
       {/* Portföy equity */}
       <path d="M0,32 L33,30 L66,33 L99,28 L132,29 L165,25 L198,22 L231,18 L264,21 L297,16 L330,12 L363,14 L400,10 L400,50 L0,50 Z" fill="url(#sf)"/>
@@ -316,7 +316,7 @@ function SentimentMini() {
 }
 
 // ═══════════════════════════════════════════
-// RUN ROUTE MINI (Alsancak Runners) — animated runner on route
+// RUN ROUTE MINI (Alsancak Runners) · animated runner on route
 // ═══════════════════════════════════════════
 const RUN_ROUTE = "M20,60 C20,30 60,15 100,20 C140,25 160,45 200,40 C240,35 270,15 310,25 C350,35 340,55 300,60 C260,65 220,55 180,60 C140,65 100,70 60,65 C30,62 20,60 20,60 Z"
 
