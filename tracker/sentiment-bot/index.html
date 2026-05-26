@@ -141,10 +141,21 @@
   }
 
   /* Filters */
-  .filters { display: flex; gap: 10px; margin: 14px 0 20px 0; flex-wrap: wrap; }
+  .filters { display: flex; gap: 10px; margin: 14px 0 20px 0; flex-wrap: wrap; align-items: center; }
   .filters select, .filters input {
     background: var(--surface); border: 1px solid var(--border); color: var(--text);
     padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 0.82rem;
+  }
+  .sort-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text2);
+    padding: 7px 11px; border-radius: 6px; font-family: 'DM Mono', monospace;
+    font-size: 0.74rem; cursor: pointer; transition: all .15s ease;
+    letter-spacing: .02em;
+  }
+  .sort-btn:hover { border-color: var(--accent); color: var(--text); }
+  .sort-btn.active {
+    background: rgba(74, 222, 128, .12); border-color: var(--accent);
+    color: var(--accent); font-weight: 500;
   }
 
   /* Slider */
@@ -177,10 +188,6 @@
 </head>
 <body>
 
-<div class="status-banner">
-  <strong>● BACKTEST MODE</strong> · Live trading altyapısı aktif değil. Bu sayfa research + paper trade sonuçlarını gösterir.
-</div>
-
 <div class="layout">
 <aside>
   <div class="brand">Sentiment Trading <em>with LLM</em></div>
@@ -193,14 +200,6 @@
     <button data-page="paper">Paper Trading</button>
     <button data-page="methodology">Metodoloji</button>
   </nav>
-  <div class="sidebar-section">
-    <div class="label">Powered by</div>
-    Anthropic Claude (sentiment) · LightGBM (signal) · BIST data feeds
-  </div>
-  <div class="sidebar-section">
-    <div class="label">Disclaimer</div>
-    <span class="gold">⚠</span> Bu sistem akademik araştırma ve prototip amaçlıdır. Yatırım tavsiyesi değildir.
-  </div>
 </aside>
 
 <main>
@@ -289,11 +288,8 @@ function renderOverview() {
       kpi('Backtest Period', `${DATA.backtest.n_days} gün`, `${DATA.backtest.n_folds} fold walk-forward`, 'neutral'),
       kpi('Toplam İşlem', String(DATA.trades?.length || 0), 'backtest sırasında', 'neutral'),
       kpi('Aktif Universe', '30', 'BIST 30 ticker', 'neutral'),
-      kpi('Live Status', 'Paper Trade', `${DATA.paper?.length || 0} kayıt`, 'neutral'),
+      kpi('Live Status', '● Active', `${DATA.paper?.length || 0} kayıt`, 'pos'),
     ])}
-
-    <h2>Mevcut Aşama</h2>
-    ${disclose("<strong>Şu an gerçek alım-satım YAPMIYORUZ.</strong> Sistem akademik validasyon ve paper trading aşamasında. Live execution için broker entegrasyonu Faz 6 roadmap'inde. Validate edilmiş Sharpe ve düşük drawdown sağlandıktan sonra kademeli capital allocation öngörülüyor.", 'info')}
 
     <h2>Akademik Temel</h2>
     <div class="method-grid">
@@ -387,6 +383,7 @@ function renderBacktest() {
 
 // ── TRADES (data-privacy uygulanmış) ────────────────────────────────
 let TRADES_FILTERED = [];
+let TRADES_SORT = { key: 'date', dir: 'desc' };  // varsayılan: en yeni üstte
 function renderTrades() {
   const el = document.getElementById('page-trades');
   if (!DATA.trades || !DATA.trades.length) { el.innerHTML = `<h1>İşlem yok</h1>`; return; }
@@ -411,7 +408,7 @@ function renderTrades() {
 
     ${disclose("<strong>Veri Gizliliği:</strong> Model skorları ve seçim kriterleri (proprietary IP) gösterilmez. Sadece zaman, boyut, fiyat ve P&amp;L public.", 'info')}
 
-    <h3>Filtre</h3>
+    <h3>Filtre & Sıralama</h3>
     <div class="filters">
       <select id="f-action">
         <option value="">Tüm Aksiyon</option>
@@ -422,22 +419,47 @@ function renderTrades() {
         <option value="">Tüm Ticker</option>
         ${tickers.map(t => `<option>${t}</option>`).join('')}
       </select>
+      <div class="sort-group" style="display:inline-flex;gap:4px;align-items:center;margin-left:8px;">
+        <span style="color:var(--muted);font-size:0.72rem;font-family:'DM Mono';text-transform:uppercase;letter-spacing:.08em;margin-right:4px;">Tarih:</span>
+        <button id="sort-date-desc" class="sort-btn active" type="button" title="En yeni üstte">↓ Yeni → Eski</button>
+        <button id="sort-date-asc" class="sort-btn" type="button" title="En eski üstte">↑ Eski → Yeni</button>
+      </div>
     </div>
 
     <h3>Trade Ledger <span style="color:var(--muted);font-style:normal;font-size:0.85rem;font-family:'DM Mono'">(<span id="trade-count">${DATA.trades.length}</span> kayıt)</span></h3>
     <div id="trades-table"></div>
   `;
 
+  const applySort = (arr) => {
+    const dir = TRADES_SORT.dir === 'asc' ? 1 : -1;
+    return arr.slice().sort((a, b) => {
+      if (a.date < b.date) return -1 * dir;
+      if (a.date > b.date) return 1 * dir;
+      return 0;
+    });
+  };
+
   const refresh = () => {
     const fa = document.getElementById('f-action').value;
     const ft = document.getElementById('f-ticker').value;
-    TRADES_FILTERED = DATA.trades.filter(t => (!fa || t.action === fa) && (!ft || t.ticker === ft));
+    const filtered = DATA.trades.filter(t => (!fa || t.action === fa) && (!ft || t.ticker === ft));
+    TRADES_FILTERED = applySort(filtered);
     document.getElementById('trade-count').textContent = TRADES_FILTERED.length;
     renderTradesTable();
   };
+
+  const setSort = (dir) => {
+    TRADES_SORT.dir = dir;
+    document.getElementById('sort-date-desc').classList.toggle('active', dir === 'desc');
+    document.getElementById('sort-date-asc').classList.toggle('active', dir === 'asc');
+    refresh();
+  };
+
   document.getElementById('f-action').addEventListener('change', refresh);
   document.getElementById('f-ticker').addEventListener('change', refresh);
-  TRADES_FILTERED = DATA.trades;
+  document.getElementById('sort-date-desc').addEventListener('click', () => setSort('desc'));
+  document.getElementById('sort-date-asc').addEventListener('click', () => setSort('asc'));
+  TRADES_FILTERED = applySort(DATA.trades);
   renderTradesTable();
 }
 function renderTradesTable() {
@@ -487,7 +509,6 @@ function renderShortlist() {
       </tbody>
     </table>
 
-    ${disclose("<strong>Önemli:</strong> Bu liste model çıktısıdır, yatırım tavsiyesi DEĞİLDİR. Live execution için broker entegrasyonu ve risk onay süreci gerekir.")}
   `;
 }
 
