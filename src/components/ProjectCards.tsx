@@ -87,14 +87,14 @@ export function ProjectCards({ t }: Props) {
         <ScrollReveal delay={480} style={{ height: '100%' }}>
           <GlassCard href="/tracker/sentiment-bot/" label="06" accent="#4ade80">
             <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>Sentiment Trading <em style={{ color:'#4ade80', fontStyle:'italic', fontWeight:300 }}>with LLM</em></h3>
-            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>BIST 30 üzerine cross-sectional alpha signal. 1004-gün continuous walk-forward backtest XU100'ü Sharpe ve CAGR'de geçer.</p>
+            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>BIST 30 + 40 akademik feature + 5-model bagging ensemble + vol-targeting. 1052-gün continuous walk-forward XU100'ü +39pp CAGR ile geçer.</p>
             <SentimentMini />
             <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
-              <Stat label="Sharpe" value="0.32" pos />
-              <Stat label="CAGR" value="+57%" pos />
-              <Stat label="vs XU100" value="+10pp" pos />
+              <Stat label="Sharpe" value="0.80" pos />
+              <Stat label="CAGR" value="+101%" pos />
+              <Stat label="vs XU100" value="+1086pp" pos />
             </div>
-            <Tags items={['LLM','Walk-Forward','Cross-Sectional','BIST 30']} />
+            <Tags items={['LLM','Vol-Target','Ensemble','40 Feat']} />
           </GlassCard>
         </ScrollReveal>
       </div>
