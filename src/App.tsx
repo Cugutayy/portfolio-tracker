@@ -72,7 +72,7 @@ export default function App() {
     const handleHash = () => {
       if (window.location.hash === '#/f1') setPage('f1')
       else if (window.location.hash === '#/albion') setPage('albion')
-      else if (window.location.hash === '#/x') setPage('x')
+      else if (window.location.hash.startsWith('#/x')) setPage('x')
       else setPage('hub')
     }
     handleHash()
