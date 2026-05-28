@@ -97,6 +97,20 @@ export function ProjectCards({ t }: Props) {
             <Tags items={['LLM','Vol-Target','Ensemble','40 Feat']} />
           </GlassCard>
         </ScrollReveal>
+
+        <ScrollReveal delay={560} style={{ height: '100%' }}>
+          <GlassCard href="#/x" label="07" accent="#4f8ff7">
+            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>{t('p7t')} <em style={{ color:'#4f8ff7', fontStyle:'italic', fontWeight:300 }}>×</em></h3>
+            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>{t('p7d')}</p>
+            <AtlasMini />
+            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
+              <Stat label="3D / 360°" value="Polycam" />
+              <Stat label="Mekân" value="∞" />
+              <LiveDot label="WIP" />
+            </div>
+            <Tags items={['3D Capture','Immersive','Cinematic','Archive']} />
+          </GlassCard>
+        </ScrollReveal>
       </div>
     </section>
   )
@@ -311,6 +325,38 @@ function SentimentMini() {
       <circle cx="99" cy="28" r="2" fill="#4ade80" opacity=".8"><animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite"/></circle>
       <circle cx="231" cy="18" r="2" fill="#4ade80" opacity=".8"><animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite" begin="0.6s"/></circle>
       <circle cx="363" cy="14" r="2" fill="#4ade80" opacity=".8"><animate attributeName="r" values="2;4;2" dur="2s" repeatCount="indefinite" begin="1.2s"/></circle>
+    </svg>
+  )
+}
+
+// ═══════════════════════════════════════════
+// ATLAS MINI (X) · orbiting 3D-capture nodes around a wireframe globe
+// ═══════════════════════════════════════════
+function AtlasMini() {
+  return (
+    <svg style={{width:'100%',height:50,display:'block'}} viewBox="0 0 360 80" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <radialGradient id="ax" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#4f8ff7" stopOpacity=".25"/>
+          <stop offset="100%" stopColor="#4f8ff7" stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="180" cy="40" r="30" fill="url(#ax)"/>
+      {/* wireframe globe */}
+      <circle cx="180" cy="40" r="22" fill="none" stroke="#4f8ff7" strokeWidth=".6" opacity=".5"/>
+      <ellipse cx="180" cy="40" rx="22" ry="8" fill="none" stroke="#4f8ff7" strokeWidth=".5" opacity=".4"/>
+      <ellipse cx="180" cy="40" rx="9" ry="22" fill="none" stroke="#4f8ff7" strokeWidth=".5" opacity=".3"/>
+      <line x1="158" y1="40" x2="202" y2="40" stroke="#4f8ff7" strokeWidth=".5" opacity=".3"/>
+      {/* orbit path */}
+      <ellipse cx="180" cy="40" rx="48" ry="16" fill="none" stroke="#4f8ff7" strokeWidth=".4" strokeDasharray="2,4" opacity=".35"/>
+      {/* orbiting capture nodes */}
+      {[{d:6,b:0},{d:6,b:2},{d:6,b:4}].map((n,i) => (
+        <g key={i} opacity={.9-i*.15}>
+          <animateMotion dur={`${n.d}s`} repeatCount="indefinite" begin={`${n.b}s`} path="M132,40 a48,16 0 1,0 96,0 a48,16 0 1,0 -96,0"/>
+          <rect x="-2.5" y="-2.5" width="5" height="5" rx="1" fill="#4f8ff7"/>
+          <rect x="-4" y="-4" width="8" height="8" rx="1.5" fill="none" stroke="#4f8ff7" strokeWidth=".5" opacity=".5"/>
+        </g>
+      ))}
     </svg>
   )
 }
