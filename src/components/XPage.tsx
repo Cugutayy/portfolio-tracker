@@ -188,13 +188,30 @@ const CSS = `
 /* ════ TRANSITIONS ════ */
 .x-trans{position:fixed;inset:0;z-index:9000;pointer-events:none;overflow:hidden}
 
-/* door */
+/* door — ornate coffered double doors */
 .x-trans-door{perspective:1900px}
 .x-trans-door .pn{position:absolute;top:0;height:100%;width:50.5%;backface-visibility:hidden;
-  background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(0,0,0,0) 16%,rgba(0,0,0,0) 84%,rgba(0,0,0,.55)),
-    linear-gradient(180deg,#1a1214,#0a0708);box-shadow:inset 0 0 140px rgba(0,0,0,.85)}
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='74' height='74'%3E%3Cg fill='none' stroke='%23d8b25a' stroke-opacity='0.16' stroke-width='1'%3E%3Cpath d='M37 2 L72 37 L37 72 L2 37 Z'/%3E%3Ccircle cx='37' cy='37' r='5'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(90deg,rgba(0,0,0,.5),rgba(0,0,0,0) 15%,rgba(0,0,0,0) 85%,rgba(0,0,0,.5)),
+    linear-gradient(180deg,#241a16,#120c0a);
+  background-size:74px 74px,auto,auto;
+  box-shadow:inset 0 0 140px rgba(0,0,0,.85)}
 .x-trans-door .pl{left:0;transform-origin:left center;border-right:1px solid rgba(216,178,90,.55)}
 .x-trans-door .pr{right:0;transform-origin:right center;border-left:1px solid rgba(216,178,90,.55)}
+/* recessed gold-trimmed panels */
+.x-trans-door .pn::before,.x-trans-door .pn::after{content:'';position:absolute;left:13%;right:13%;
+  border:1px solid rgba(216,178,90,.42);border-radius:3px;
+  box-shadow:inset 0 0 0 5px rgba(0,0,0,.22),inset 0 0 40px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.45);
+  background:radial-gradient(120% 90% at 50% 50%,rgba(216,178,90,.07),transparent 60%)}
+.x-trans-door .pn::before{top:6%;height:40.5%}
+.x-trans-door .pn::after{bottom:6%;height:40.5%}
+/* gold handles near the seam */
+.x-trans-door .kb{position:absolute;top:50%;width:7px;height:56px;border-radius:6px;transform:translateY(-50%);z-index:2;
+  background:linear-gradient(180deg,#f3da92,#9c7b32);
+  box-shadow:0 0 16px rgba(216,178,90,.5),inset 0 1px 3px rgba(255,255,255,.45),inset 0 -2px 4px rgba(0,0,0,.4)}
+.x-trans-door .pl .kb{right:9px}
+.x-trans-door .pr .kb{left:9px}
 .x-trans-door.cover .pl{animation:dClL .64s cubic-bezier(.7,0,.25,1) forwards}
 .x-trans-door.cover .pr{animation:dClR .64s cubic-bezier(.7,0,.25,1) forwards}
 .x-trans-door.reveal .pl{animation:dOpL .82s cubic-bezier(.16,1,.3,1) forwards}
@@ -250,7 +267,11 @@ const CSS = `
   .x-cue{display:none}
   .x-bottom{flex-direction:column;align-items:flex-start}
   .x-mono{display:none}
-  .x-switch{left:12px;right:12px;width:auto;bottom:12px}
+  .x-switch{top:12px;right:12px;bottom:auto;left:auto;width:178px;padding:10px 10px 8px}
+  .x-switch .x-shint{display:none}
+  /* show the full painting from edge to edge — no crop, no Ken Burns */
+  .x-bg{object-fit:contain;object-position:center;animation:none;transform:none;background:#0c0a0b}
+  .x-veil{background:linear-gradient(180deg,rgba(7,6,10,.45) 0%,rgba(7,6,10,0) 26%,rgba(7,6,10,0) 60%,rgba(12,10,11,.92) 100%)}
 }
 @media (prefers-reduced-motion:reduce){
   .x-bg{animation:none}
@@ -460,7 +481,7 @@ export function XPage() {
       {/* ════ TRANSITION OVERLAY ════ */}
       {anim && (
         <div className={`x-trans x-trans-${anim.type} ${anim.phase}`} aria-hidden="true">
-          {anim.type === 'door' && <><span className="pn pl" /><span className="pn pr" /></>}
+          {anim.type === 'door' && <><span className="pn pl"><i className="kb" /></span><span className="pn pr"><i className="kb" /></span></>}
           {anim.type === 'iris' && <span className="ir" />}
           {anim.type === 'zoom' && <span className="zm" />}
           {anim.type === 'corridor' && <span className="cr" />}
