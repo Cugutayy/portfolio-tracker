@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // ═══════════════════════════════════════════════════
 // X — cinematic digital-atlas hero
-// Featured opera: Botticelli · La Nascita di Venere (ASCII overlay)
+// Featured opera: Botticelli · La Nascita di Venere (4K gigapixel scan)
 // Aesthetic: museum wall / elite gallery · visuals first
 // ═══════════════════════════════════════════════════
 
@@ -15,10 +15,10 @@ const CSS = `
 .x-root{position:relative;width:100%;height:100vh;height:100svh;overflow:hidden;background:#07060a;
   color:#f3ead6;font-family:'Newsreader',Georgia,serif}
 
-/* ── cinematic background video ── */
+/* ── cinematic background image (4K painting) ── */
 .x-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;
-  z-index:0;opacity:0;transition:opacity 1.4s cubic-bezier(.16,1,.3,1);
-  animation:xKen 32s ease-in-out infinite alternate;will-change:transform,opacity}
+  z-index:0;opacity:0;transition:opacity 1.6s cubic-bezier(.16,1,.3,1);
+  animation:xKen 40s ease-in-out infinite alternate;will-change:transform,opacity}
 .x-bg.ready{opacity:1}
 
 /* ── legibility veils + vignette ── */
@@ -85,7 +85,6 @@ const CSS = `
 `
 
 export function XPage() {
-  const vidRef = useRef<HTMLVideoElement>(null)
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
@@ -98,15 +97,15 @@ export function XPage() {
     <div className="x-root">
       <style>{CSS}</style>
 
-      <video
-        ref={vidRef}
+      <img
         className={`x-bg${ready ? ' ready' : ''}`}
-        autoPlay muted loop playsInline
-        poster="/x/venus-poster.jpg"
-        onCanPlay={() => setReady(true)}
-      >
-        <source src="/x/venus-ascii.mp4" type="video/mp4" />
-      </video>
+        src="/x/venus-4k.jpg"
+        srcSet="/x/venus-2k.jpg 1920w, /x/venus-4k.jpg 3840w"
+        sizes="100vw"
+        alt="Sandro Botticelli — La Nascita di Venere (c. 1485), Galleria degli Uffizi"
+        decoding="async"
+        onLoad={() => setReady(true)}
+      />
 
       <div className="x-veil" />
       <div className="x-grain" />
