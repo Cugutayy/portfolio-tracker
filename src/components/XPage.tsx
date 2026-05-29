@@ -32,6 +32,12 @@ type MuseumItem = {
 type Item = ArtItem | MuseumItem
 type Cat = { n: string; slug: string; tr: string; it: string; d: string; img: string; objPos: string; items: Item[] }
 
+// A real Sketchfab scan has a 32-char hex UID; our own procedural salons use short slugs.
+const isSketchfab = (id: string) => /^[0-9a-f]{32}$/i.test(id)
+const sketchfabSrc = (id: string) =>
+  `https://sketchfab.com/models/${id}/embed?autostart=1&preload=1&ui_theme=dark` +
+  `&ui_infos=0&ui_controls=1&ui_stop=0&ui_hint=0&ui_ar=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=1&dnt=1`
+
 const GALLERY_THUMB = 'https://media.sketchfab.com/models/231fdb3e9e354c6faaa3c250f8c9988f/thumbnails/885b79c3b12e4b488e7908b1184e69a0/ede0e7da6a5a45529c38af5bca95b5ae.jpeg'
 
 // Verified Wikimedia Commons renditions — `full` is a true-4K (3840px) view loaded only when an
@@ -754,6 +760,14 @@ iframe.x-mv{display:block;background:#0c0a0b}
   border:1px solid rgba(216,178,90,.3);color:#ecc879}
 .x-ccount b{font-size:.66rem;font-weight:500;letter-spacing:.04em}
 .x-light .x-ccount{background:rgba(246,239,224,.82);border-color:rgba(156,117,34,.34);color:#7a5a14}
+/* "contains a walkable 3D museum" chip — top-left of the category thumbnail */
+.x-c3d{position:absolute;top:13px;left:13px;z-index:2;display:inline-flex;align-items:center;gap:5px;
+  padding:6px 10px;border-radius:999px;font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.16em;
+  text-transform:uppercase;background:rgba(216,178,90,.16);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(216,178,90,.45);color:#f0d79a}
+.x-c3d svg{width:12px;height:12px;display:block}
+.x-cat:hover .x-c3d{background:rgba(216,178,90,.28);border-color:rgba(216,178,90,.7)}
+.x-light .x-c3d{background:rgba(156,117,34,.14);border-color:rgba(156,117,34,.4);color:#7a5a14}
 
 /* ════ 3D NAVIGATION GUIDE ════ */
 .x-guide{position:absolute;left:18px;bottom:64px;z-index:6;width:min(296px,calc(100vw - 36px));
@@ -985,26 +999,31 @@ export function XPage() {
 
   const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-  // light navigation (no cinematic transition): hub ↔ collection index
+  // light navigation (instant): used for back/up movements
   const go = (hash: string) => { window.location.hash = hash; window.scrollTo(0, 0) }
 
-  // cinematic transition — used only when OPENING an entry (a painting / a 3D museum)
-  const openItem = (catSlug: string, it: Item) => {
-    const target = `#/x/${catSlug}/${it.id}`
-    const targetImg = it.kind === 'art' ? it.img : it.thumb
+  // cinematic scene transition — the door/corridor curtain that covers, navigates, then reveals
+  const runTransition = (target: string, img: string) => {
     if (reduce) { go(target); return }
     if (anim) return
     const type: TransType = Math.random() < 0.5 ? 'door' : 'corridor'
     const [coverMs, holdMs, revealMs] = DUR[type]
-    setAnim({ type, phase: 'cover', img: targetImg })
+    setAnim({ type, phase: 'cover', img })
     window.setTimeout(() => {
       window.setTimeout(() => {
         go(target)
-        setAnim({ type, phase: 'reveal', img: targetImg })
+        setAnim({ type, phase: 'reveal', img })
         window.setTimeout(() => setAnim(null), revealMs)
       }, holdMs)
     }, coverMs)
   }
+
+  // opening an entry (a painting / a 3D museum)
+  const openItem = (catSlug: string, it: Item) =>
+    runTransition(`#/x/${catSlug}/${it.id}`, it.kind === 'art' ? it.img : it.thumb)
+
+  // opening a collection from the atlas — gets the same cinematic transition
+  const openCat = (c: Cat) => runTransition(`#/x/${c.slug}`, c.img)
 
   const scrollToIntro = () => introRef.current?.scrollIntoView({ behavior: 'smooth' })
   const scrollToArtDoc = () => artDocRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -1029,6 +1048,15 @@ export function XPage() {
                   onArrive={() => setEntered3d(true)}
                 />
               </Suspense>
+            ) : isSketchfab(scan.scanId) ? (
+              <iframe
+                className="x-bg x-mv"
+                title={`${scan.title} — ${scan.author}`}
+                src={sketchfabSrc(scan.scanId)}
+                allow="autoplay; fullscreen; xr-spatial-tracking"
+                allowFullScreen
+                loading="lazy"
+              />
             ) : (
               <Suspense fallback={<div className="g3d-load"><span className="g3d-spin" />Salon hazırlanıyor…</div>}>
                 <Gallery3D items={galleryArt} variant={g3dVariant} />
@@ -1048,8 +1076,16 @@ export function XPage() {
           {!showIntro && <div className="x-grain" />}
           {is3d && !showIntro && (
             <div className="x-3dtag"><span className="x-dot" />
-              3D salon · kendi koleksiyonumuz
+              {scan && isSketchfab(scan.scanId)
+                ? '3D tarama · gez · sürükleyerek keşfet'
+                : '3D salon · kendi koleksiyonumuz'}
             </div>
+          )}
+          {scan && isSketchfab(scan.scanId) && !showIntro && (
+            <a className="x-credit" href={`https://sketchfab.com/3d-models/${scan.scanId}`}
+               target="_blank" rel="noopener noreferrer">
+              3D scan · {scan.author} · Sketchfab
+            </a>
           )}
           {!showIntro && (
           <div className="x-frame">
@@ -1255,13 +1291,21 @@ export function XPage() {
                     className="x-cat reveal"
                     key={c.slug}
                     style={{ ['--i' as string]: i }}
-                    onClick={() => go(`#/x/${c.slug}`)}
+                    onClick={() => openCat(c)}
                   >
                     <div className="x-cthumb">
                       <img src={c.img} alt="" loading="lazy" decoding="async"
                         style={{ objectPosition: c.objPos }}
                         onLoad={(e) => e.currentTarget.classList.add('ld')} />
                       <span className="x-ccount"><b>{c.items.length}</b> eser</span>
+                      {c.items.some((it) => it.kind === '3d') && (
+                        <span className="x-c3d">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 2 21 7v10l-9 5-9-5V7z" /><path d="M12 2v20" /><path d="M3 7l9 5 9-5" />
+                          </svg>
+                          3D Müze
+                        </span>
+                      )}
                     </div>
                     <div className="x-cbody">
                       <div className="x-cnum">{c.n}</div>
