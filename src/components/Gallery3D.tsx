@@ -32,14 +32,16 @@ const PALETTES: Record<GalleryVariant, {
   hemiSky: number; hemiGround: number; lamp: number; spot: number; decor: 'plant' | 'column'
 }> = {
   gallery: {
-    bg: 0x1c1512, wall: 0x4a3f38, floor: 0x2c241f, ceil: 0x1c1715, trim: 0x8a6f33,
-    carpet: 0x5a1d20, carpetEdge: 0x8a6f33, stone: 0x5a5048, frame: 0x9c7b32,
-    hemiSky: 0xfff2dc, hemiGround: 0x20140c, lamp: 0xffe6c0, spot: 0xfff3df, decor: 'plant',
+    // warm orientalist salon — deep claret damask walls, parquet, gilt + brighter air
+    bg: 0x2a1f18, wall: 0x7a3f3a, floor: 0x4a3a2c, ceil: 0x33271f, trim: 0xc6a049,
+    carpet: 0x6e2327, carpetEdge: 0xc6a049, stone: 0x6c6156, frame: 0xc99e3f,
+    hemiSky: 0xfff4e2, hemiGround: 0x2c1c10, lamp: 0xffeccb, spot: 0xfff6e6, decor: 'plant',
   },
   archaeo: {
-    bg: 0x15171b, wall: 0x736a5e, floor: 0x3b3c3e, ceil: 0x1a1c20, trim: 0x9aa0a8,
-    carpet: 0x4a4742, carpetEdge: 0x8f8a7e, stone: 0x837a6c, frame: 0x7c6a44,
-    hemiSky: 0xe6ecf6, hemiGround: 0x161410, lamp: 0xe9f0ff, spot: 0xf2f5ff, decor: 'column',
+    // sunlit limestone hall — pale dressed stone, brighter & airier
+    bg: 0x2b2e34, wall: 0x9b9285, floor: 0x55565a, ceil: 0x30333a, trim: 0xb7bcc4,
+    carpet: 0x595650, carpetEdge: 0xa39d90, stone: 0x9a9082, frame: 0x9a8458,
+    hemiSky: 0xf2f6ff, hemiGround: 0x20201c, lamp: 0xf4f8ff, spot: 0xfbfdff, decor: 'column',
   },
 }
 
@@ -77,7 +79,7 @@ export function Gallery3D({ items, variant = 'gallery' }: { items: GalleryArt[];
     // ── scene & camera ──
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(P.bg)
-    scene.fog = new THREE.Fog(P.bg, 16, 52)
+    scene.fog = new THREE.Fog(P.bg, 24, 78)
 
     const camera = new THREE.PerspectiveCamera(62, W() / H(), 0.1, 100)
     const EYE = 1.62
@@ -172,13 +174,29 @@ export function Gallery3D({ items, variant = 'gallery' }: { items: GalleryArt[];
           grain(c, s, 0.07)
         }, 4, 2)
       : makeTex(512, (c, s) => {
-          c.fillStyle = hx(P.wall); c.fillRect(0, 0, s, s)
-          // tall damask-ish panel framing
-          c.strokeStyle = 'rgba(138,111,51,.16)'; c.lineWidth = 4
-          c.strokeRect(s * 0.12, s * 0.08, s * 0.76, s * 0.84)
-          c.strokeStyle = 'rgba(138,111,51,.10)'; c.lineWidth = 2
-          c.strokeRect(s * 0.17, s * 0.13, s * 0.66, s * 0.74)
-          grain(c, s, 0.09)
+          // claret base with a soft vertical sheen so the wall reads like silk damask
+          const g = c.createLinearGradient(0, 0, s, 0)
+          g.addColorStop(0, hx(P.wall)); g.addColorStop(0.5, '#8a4a44'); g.addColorStop(1, hx(P.wall))
+          c.fillStyle = g; c.fillRect(0, 0, s, s)
+          // damask diamond lattice in faint gold — gives the wall real ornament, not a flat slab
+          c.strokeStyle = 'rgba(198,160,73,.18)'; c.lineWidth = 2
+          const cell = s / 4
+          for (let r = -1; r < 5; r++) for (let col = -1; col < 5; col++) {
+            const cx = col * cell + (r % 2 ? cell / 2 : 0), cy = r * cell
+            c.beginPath()
+            c.moveTo(cx, cy - cell * 0.5); c.lineTo(cx + cell * 0.5, cy)
+            c.lineTo(cx, cy + cell * 0.5); c.lineTo(cx - cell * 0.5, cy)
+            c.closePath(); c.stroke()
+            // little fleuron at each node
+            c.fillStyle = 'rgba(198,160,73,.16)'
+            c.beginPath(); c.arc(cx, cy, 3.2, 0, Math.PI * 2); c.fill()
+          }
+          // tall gilt panel framing on top
+          c.strokeStyle = 'rgba(201,158,63,.30)'; c.lineWidth = 5
+          c.strokeRect(s * 0.10, s * 0.06, s * 0.80, s * 0.88)
+          c.strokeStyle = 'rgba(201,158,63,.18)'; c.lineWidth = 2
+          c.strokeRect(s * 0.16, s * 0.12, s * 0.68, s * 0.76)
+          grain(c, s, 0.07)
         }, 3, 1)
 
     // CARPET — ornamental runner with medallion border
@@ -240,15 +258,19 @@ export function Gallery3D({ items, variant = 'gallery' }: { items: GalleryArt[];
     })
 
     // ── lighting (ambiance only; paintings are unlit so they stay true-colour) ──
-    scene.add(new THREE.HemisphereLight(P.hemiSky, P.hemiGround, variant === 'archaeo' ? 0.95 : 0.85))
-    scene.add(new THREE.AmbientLight(0xffffff, variant === 'archaeo' ? 0.5 : 0.42))
-    const ceilGlow = new THREE.PointLight(P.lamp, 0.7, 0, 1.4)
+    scene.add(new THREE.HemisphereLight(P.hemiSky, P.hemiGround, variant === 'archaeo' ? 1.35 : 1.2))
+    scene.add(new THREE.AmbientLight(0xffffff, variant === 'archaeo' ? 0.72 : 0.64))
+    const ceilGlow = new THREE.PointLight(P.lamp, 1.0, 0, 1.3)
     ceilGlow.position.set(0, WALL_H - 0.4, hallStartZ - 2)
     scene.add(ceilGlow)
     // a soft warm key from the entrance so the hall has depth & direction
-    const keyLight = new THREE.DirectionalLight(P.lamp, variant === 'archaeo' ? 0.35 : 0.45)
+    const keyLight = new THREE.DirectionalLight(P.lamp, variant === 'archaeo' ? 0.5 : 0.6)
     keyLight.position.set(2.5, WALL_H, hallStartZ)
     scene.add(keyLight)
+    // gentle fill from the far end so the depth of the hall never sinks into black
+    const fill = new THREE.DirectionalLight(P.hemiSky, 0.35)
+    fill.position.set(-2, WALL_H - 1, hallEndZ)
+    scene.add(fill)
 
     // ── paintings ──
     const loader = new THREE.TextureLoader()
@@ -353,7 +375,7 @@ export function Gallery3D({ items, variant = 'gallery' }: { items: GalleryArt[];
       const t = lampN === 1 ? 0.5 : i / (lampN - 1)
       const lz = hallStartZ - 1 - t * (hallLen - 2)
       addMesh(new THREE.CircleGeometry(0.3, 20), glowMat, 0, WALL_H - 0.04, lz).rotation.x = Math.PI / 2
-      const pl = new THREE.PointLight(P.lamp, 0.7, 14, 1.6)
+      const pl = new THREE.PointLight(P.lamp, 0.95, 16, 1.5)
       pl.position.set(0, WALL_H - 0.5, lz)
       scene.add(pl)
 
