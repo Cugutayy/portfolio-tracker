@@ -73,7 +73,7 @@ const CSS = `
 /* cinematic exit — black wipe that carries the visitor into the salon */
 .mi-fade{position:absolute;inset:0;z-index:8;pointer-events:none;opacity:0;
   background:radial-gradient(120% 90% at 50% 50%,rgba(6,8,13,.65) 0%,#06080d 75%);
-  transition:opacity .85s ease}
+  transition:opacity .8s ease}
 .mi-root.leaving .mi-fade{opacity:1;pointer-events:auto}
 .mi-root.leaving .mi-card,.mi-root.leaving .mi-skip,.mi-root.leaving .mi-eyebrow{
   opacity:0;transition:opacity .5s ease}
@@ -128,11 +128,13 @@ export default function MuseumIntro({
       arrivedRef.current = true
       onArrive()
     }
-    // cinematic exit — fade the whole scene out, then drop into the hall
-    const FADE = 850
+    // cinematic exit — dive the last bit *into* the building while the scene fades to black
+    const FADE = 800
     const startLeave = () => {
       if (arrivedRef.current) return
       setLeaving(true)
+      // final push-in: zoom past the rooftop so it reads as stepping inside the museum
+      if (!reduce) map.flyTo(target, finalZoom + 2, { duration: 0.8, easeLinearity: 0.3 })
       timers.push(window.setTimeout(arrive, FADE))
     }
     leaveRef.current = startLeave
@@ -144,15 +146,14 @@ export default function MuseumIntro({
       setCardIn(true)
       timers.push(window.setTimeout(arrive, 700))
     } else {
-      // open on the whole-world view, hold a beat so the tiles load & it reads as a map…
-      map.setView(target, 3, { animate: false })
-      // …then swoop all the way down to the museum like a satellite descent
+      // GTA-style cut: open above the planet, a brief beat for tiles, then a snappy
+      // ~3s descent straight onto the museum and a quick dive inside — ~4s end to end.
+      map.setView(target, 2.6, { animate: false })
       timers.push(window.setTimeout(() => {
-        map.flyTo(target, finalZoom, { duration: 3.6, easeLinearity: 0.12 })
-      }, 1200))
-      // …reveal the destination for a beat, then auto-fade into the salon
-      timers.push(window.setTimeout(() => setCardIn(true), 5000))
-      timers.push(window.setTimeout(startLeave, 6400))
+        map.flyTo(target, finalZoom, { duration: 2.8, easeLinearity: 0.18 })
+      }, 350))
+      timers.push(window.setTimeout(() => setCardIn(true), 2400))
+      timers.push(window.setTimeout(startLeave, 3400))
     }
 
     return () => {
