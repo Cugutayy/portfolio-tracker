@@ -53,9 +53,10 @@ const CATEGORIES: Cat[] = [
 type TransType = 'door' | 'corridor'
 type TransPref = TransType | 'random'
 type Theme = 'dark' | 'light'
-// [coverMs, revealMs] per transition — kept in sync with the CSS keyframe durations below
-const DUR: Record<TransType, [number, number]> = {
-  door: [640, 820], corridor: [560, 720],
+// [coverMs, holdMs, revealMs] per transition — kept in sync with the CSS keyframe durations below.
+// holdMs keeps the closed cover on screen so its detail (the 4 framed artworks) can be seen.
+const DUR: Record<TransType, [number, number, number]> = {
+  door: [640, 620, 820], corridor: [560, 0, 720],
 }
 
 function parseHash(): string | null {
@@ -201,10 +202,10 @@ const CSS = `
   box-shadow:inset 0 0 0 5px rgba(0,0,0,.32),inset 0 0 55px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.5)}
 .x-trans-door .pn::before{top:6%;height:40.5%}
 .x-trans-door .pn::after{bottom:6%;height:40.5%}
-.x-trans-door .pl::before{background-image:linear-gradient(rgba(8,6,7,.3),rgba(8,6,7,.4)),url(/x/rooms/sanat.jpg)}
-.x-trans-door .pl::after{background-image:linear-gradient(rgba(8,6,7,.3),rgba(8,6,7,.4)),url(/x/rooms/sahil.jpg)}
-.x-trans-door .pr::before{background-image:linear-gradient(rgba(8,6,7,.3),rgba(8,6,7,.4)),url(/x/rooms/sokak.jpg)}
-.x-trans-door .pr::after{background-image:linear-gradient(rgba(8,6,7,.3),rgba(8,6,7,.4)),url(/x/rooms/koleksiyon.jpg)}
+.x-trans-door .pl::before{background-image:linear-gradient(rgba(8,6,7,.16),rgba(8,6,7,.3)),url(/x/rooms/sanat.jpg)}
+.x-trans-door .pl::after{background-image:linear-gradient(rgba(8,6,7,.16),rgba(8,6,7,.3)),url(/x/rooms/sahil.jpg)}
+.x-trans-door .pr::before{background-image:linear-gradient(rgba(8,6,7,.16),rgba(8,6,7,.3)),url(/x/rooms/sokak.jpg)}
+.x-trans-door .pr::after{background-image:linear-gradient(rgba(8,6,7,.16),rgba(8,6,7,.3)),url(/x/rooms/koleksiyon.jpg)}
 /* gold handles near the seam */
 .x-trans-door .kb{position:absolute;top:50%;width:7px;height:56px;border-radius:6px;transform:translateY(-50%);z-index:2;
   background:linear-gradient(180deg,#f3da92,#9c7b32);
@@ -234,7 +235,17 @@ const CSS = `
   background:rgba(13,11,12,.84);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   border:1px solid rgba(216,178,90,.28);border-radius:14px;padding:13px;
   box-shadow:0 22px 60px rgba(0,0,0,.55);font-family:'DM Mono',monospace}
-.x-settings h4{margin:0 0 12px;font-size:.54rem;letter-spacing:.26em;text-transform:uppercase;color:#d8b25a;font-weight:500}
+.x-settings h4{margin:0 0 12px;font-size:.54rem;letter-spacing:.26em;text-transform:uppercase;color:#d8b25a;font-weight:500;
+  display:flex;align-items:center;justify-content:space-between}
+.x-sclose{appearance:none;background:none;border:none;cursor:pointer;color:rgba(243,234,214,.5);
+  font-size:1.05rem;line-height:1;padding:0 0 0 10px;margin:-4px -2px -4px 0;transition:color .3s}
+.x-sclose:hover{color:#ecc879}
+.x-sopen{position:fixed;right:16px;bottom:16px;z-index:9500;width:42px;height:42px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  background:rgba(13,11,12,.84);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border:1px solid rgba(216,178,90,.28);color:#d8b25a;box-shadow:0 22px 60px rgba(0,0,0,.55);transition:all .3s}
+.x-sopen:hover{border-color:#d8b25a;color:#ecc879;transform:rotate(45deg)}
+.x-sopen svg{width:19px;height:19px;display:block}
 .x-srow{margin-bottom:11px}
 .x-srow:last-child{margin-bottom:0}
 .x-slabel{display:block;font-size:.5rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(243,234,214,.5);margin-bottom:6px}
@@ -275,6 +286,10 @@ const CSS = `
 .x-light .x-foot .fnote{color:rgba(43,33,26,.45)}
 .x-light .x-settings{background:rgba(246,239,224,.88);border-color:rgba(156,117,34,.3)}
 .x-light .x-settings h4{color:#9c7522}
+.x-light .x-sclose{color:rgba(43,33,26,.5)}
+.x-light .x-sclose:hover{color:#9c7522}
+.x-light .x-sopen{background:rgba(246,239,224,.9);border-color:rgba(156,117,34,.3);color:#9c7522}
+.x-light .x-sopen:hover{border-color:#9c7522;color:#7a5a14}
 .x-light .x-slabel{color:rgba(43,33,26,.5)}
 .x-light .x-seg button{border-color:rgba(156,117,34,.22);background:rgba(0,0,0,.02);color:rgba(43,33,26,.72)}
 .x-light .x-seg button:hover{border-color:rgba(156,117,34,.55);color:#2b211a}
@@ -285,6 +300,7 @@ const CSS = `
   .x-bottom{flex-direction:column;align-items:flex-start}
   .x-mono{display:none}
   .x-settings{top:12px;right:12px;bottom:auto;left:auto;width:168px;padding:10px}
+  .x-sopen{top:12px;right:12px;bottom:auto;left:auto}
 }
 @media (prefers-reduced-motion:reduce){
   .x-bg{animation:none}
@@ -304,6 +320,7 @@ export function XPage() {
   const [view, setView] = useState<string | null>(parseHash())
   const [transPref, setTransPref] = useState<TransPref>('random')
   const [theme, setTheme] = useState<Theme>('dark')
+  const [settingsOpen, setSettingsOpen] = useState(true)
   const [anim, setAnim] = useState<{ type: TransType; phase: 'cover' | 'reveal' } | null>(null)
   const introRef = useRef<HTMLElement>(null)
 
@@ -342,13 +359,16 @@ export function XPage() {
     if (reduce) { window.location.hash = target; window.scrollTo(0, 0); return }
     if (anim) return
     const type: TransType = transPref === 'random' ? (Math.random() < 0.5 ? 'door' : 'corridor') : transPref
-    const [coverMs, revealMs] = DUR[type]
+    const [coverMs, holdMs, revealMs] = DUR[type]
     setAnim({ type, phase: 'cover' })
     window.setTimeout(() => {
-      window.location.hash = target
-      window.scrollTo(0, 0)
-      setAnim({ type, phase: 'reveal' })
-      window.setTimeout(() => setAnim(null), revealMs)
+      // cover is fully closed now — hold a beat so the framed artworks register, then swap + reveal
+      window.setTimeout(() => {
+        window.location.hash = target
+        window.scrollTo(0, 0)
+        setAnim({ type, phase: 'reveal' })
+        window.setTimeout(() => setAnim(null), revealMs)
+      }, holdMs)
     }, coverMs)
   }
 
@@ -502,24 +522,35 @@ export function XPage() {
       )}
 
       {/* ════ SETTINGS ════ */}
-      <div className="x-settings">
-        <h4>Settings</h4>
-        <div className="x-srow">
-          <span className="x-slabel">Appearance</span>
-          <div className="x-seg">
-            <button className={theme === 'light' ? 'on' : ''} onClick={() => setTheme('light')}>Light</button>
-            <button className={theme === 'dark' ? 'on' : ''} onClick={() => setTheme('dark')}>Dark</button>
+      {settingsOpen ? (
+        <div className="x-settings" lang="en">
+          <h4>Settings
+            <button className="x-sclose" onClick={() => setSettingsOpen(false)} aria-label="Close settings">×</button>
+          </h4>
+          <div className="x-srow">
+            <span className="x-slabel">Appearance</span>
+            <div className="x-seg">
+              <button className={theme === 'light' ? 'on' : ''} onClick={() => setTheme('light')}>Light</button>
+              <button className={theme === 'dark' ? 'on' : ''} onClick={() => setTheme('dark')}>Dark</button>
+            </div>
+          </div>
+          <div className="x-srow">
+            <span className="x-slabel">Transition</span>
+            <div className="x-seg">
+              <button className={transPref === 'door' ? 'on' : ''} onClick={() => setTransPref('door')}>Door</button>
+              <button className={transPref === 'corridor' ? 'on' : ''} onClick={() => setTransPref('corridor')}>Corridor</button>
+              <button className={transPref === 'random' ? 'on' : ''} onClick={() => setTransPref('random')}>Random</button>
+            </div>
           </div>
         </div>
-        <div className="x-srow">
-          <span className="x-slabel">Transition</span>
-          <div className="x-seg">
-            <button className={transPref === 'door' ? 'on' : ''} onClick={() => setTransPref('door')}>Door</button>
-            <button className={transPref === 'corridor' ? 'on' : ''} onClick={() => setTransPref('corridor')}>Corridor</button>
-            <button className={transPref === 'random' ? 'on' : ''} onClick={() => setTransPref('random')}>Random</button>
-          </div>
-        </div>
-      </div>
+      ) : (
+        <button className="x-sopen" onClick={() => setSettingsOpen(true)} aria-label="Open settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }
