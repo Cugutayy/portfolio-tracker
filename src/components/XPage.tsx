@@ -1,74 +1,94 @@
 import { useEffect, useRef, useState } from 'react'
-import '@google/model-viewer'
-
-// <model-viewer> is a custom element — declare it for JSX/TS
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      'model-viewer': { [key: string]: any; children?: React.ReactNode; style?: React.CSSProperties; className?: string }
-    }
-  }
-}
 
 // ═══════════════════════════════════════════════════
 // X — cinematic digital-atlas page
 // Hero: Botticelli · La Nascita di Venere (4K gigapixel scan)
 // Below: manifesto + collections grid (museum-catalog feel)
-// Rooms: #/x/<slug> — 4K masterpiece per category
-// Transitions: door / corridor (random by default) + settings panel
+// Routing (3 levels):
+//   #/x                  → atlas (hero + collections grid)
+//   #/x/<cat>            → collection index (named entries: paintings + 3D museums)
+//   #/x/<cat>/<itemId>   → an opened entry: a 4K painting OR a walkable 3D museum
+// 3D museums are walkable Sketchfab embeds, loaded ONLY when opened (light by default).
+// Transitions: door / corridor (random) + settings panel.
 // ═══════════════════════════════════════════════════
 
-type Art = { title: string; artist: string; year: string; museum: string; medium: string }
-type Cat = { n: string; slug: string; tr: string; it: string; d: string; img: string; objPos: string; art: Art; model?: string }
-
-// REALISTIC walkable 3D scans (Sketchfab photogrammetry embeds) — placeholders until the
-// user's own Scaniverse captures drop into /public/x/models/ (those use room.model + <model-viewer>).
-type Scan = { id: string; title: string; author: string }
-const SKETCHFAB: Record<string, Scan> = {
-  // A REAL walkable museum gallery with Dutch/Flemish Golden Age paintings on the walls.
-  sanat: { id: '231fdb3e9e354c6faaa3c250f8c9988f', title: 'The Picture Gallery', author: 'The Hallwyl Museum' },
+// An entry inside a collection: either a flat 4K painting or a walkable 3D museum.
+type ArtItem = {
+  kind: 'art'; id: string; title: string; artist: string; year: string; museum: string;
+  medium: string; img: string; objPos: string
 }
+type MuseumItem = {
+  kind: '3d'; id: string; title: string; scanId: string; author: string;
+  kindLabel: string; loc: string; note: string; thumb: string; objPos?: string
+}
+type Item = ArtItem | MuseumItem
+type Cat = { n: string; slug: string; tr: string; it: string; d: string; img: string; objPos: string; items: Item[] }
+
 const sketchfabSrc = (id: string) =>
   `https://sketchfab.com/models/${id}/embed?autostart=1&preload=1&ui_theme=dark` +
   `&ui_infos=0&ui_controls=1&ui_stop=0&ui_hint=0&ui_ar=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=1&dnt=1`
+
+// 3D is reserved for the Sanat & Müzeler collection for now (a walkable museum + its paintings).
+// Every other collection presents its 4K masterpiece. New entries are just appended to `items`.
+const GALLERY_THUMB = 'https://media.sketchfab.com/models/231fdb3e9e354c6faaa3c250f8c9988f/thumbnails/885b79c3b12e4b488e7908b1184e69a0/ede0e7da6a5a45529c38af5bca95b5ae.jpeg'
 
 const CATEGORIES: Cat[] = [
   {
     n: '01', slug: 'sanat', tr: 'Sanat & Müzeler', it: 'Arte & Musei',
     d: 'Galeriler, koleksiyonlar, fresk ve heykellerin sessiz salonları.',
     img: '/x/rooms/sanat.jpg', objPos: '50% 30%',
-    art: { title: 'Meisje met de parel', artist: 'Johannes Vermeer', year: 'c. 1665', museum: 'Mauritshuis · Den Haag', medium: 'Olio su tela' },
+    items: [
+      { kind: '3d', id: 'picture-gallery', title: 'The Picture Gallery', scanId: '231fdb3e9e354c6faaa3c250f8c9988f',
+        author: 'The Hallwyl Museum', kindLabel: 'Müze Galerisi', loc: 'Hallwyl Museum · Stockholm',
+        note: 'Hollanda & Flaman Altın Çağı tabloları', thumb: GALLERY_THUMB },
+      { kind: 'art', id: 'meisje-met-de-parel', title: 'Meisje met de parel', artist: 'Johannes Vermeer',
+        year: 'c. 1665', museum: 'Mauritshuis · Den Haag', medium: 'Olio su tela', img: '/x/rooms/sanat.jpg', objPos: '50% 30%' },
+    ],
   },
   {
     n: '02', slug: 'sarap', tr: 'Şarap Bağları', it: 'Vigneti',
     d: 'Tepelere yayılan asmalar, taş mahzenler ve hasat ışığı.',
     img: '/x/rooms/sarap.jpg', objPos: '50% 14%',
-    art: { title: 'Bacco', artist: 'Caravaggio', year: 'c. 1596', museum: 'Galleria degli Uffizi · Firenze', medium: 'Olio su tela' },
+    items: [
+      { kind: 'art', id: 'bacco', title: 'Bacco', artist: 'Caravaggio', year: 'c. 1596',
+        museum: 'Galleria degli Uffizi · Firenze', medium: 'Olio su tela', img: '/x/rooms/sarap.jpg', objPos: '50% 14%' },
+    ],
   },
   {
     n: '03', slug: 'sahil', tr: 'Sahil & Doğa', it: 'Costa & Natura',
     d: 'Kıyılar, koylar ve kesintisiz ufkun dingin genişliği.',
     img: '/x/rooms/sahil.jpg', objPos: '50% 50%',
-    art: { title: 'La Nona Onda', artist: 'Ivan Ajvazovskij', year: '1850', museum: 'Museo di Stato Russo · S. Pietroburgo', medium: 'Olio su tela' },
+    items: [
+      { kind: 'art', id: 'la-nona-onda', title: 'La Nona Onda', artist: 'Ivan Ajvazovskij', year: '1850',
+        museum: 'Museo di Stato Russo · S. Pietroburgo', medium: 'Olio su tela', img: '/x/rooms/sahil.jpg', objPos: '50% 50%' },
+    ],
   },
   {
     n: '04', slug: 'sokak', tr: 'Tarihi Sokaklar', it: 'Strade Storiche',
     d: 'Taş döşeli geçitler, eski cepheler, zamanın patinası.',
     img: '/x/rooms/sokak.jpg', objPos: '50% 55%',
-    art: { title: 'Il Canal Grande', artist: 'Canaletto', year: 'c. 1730', museum: 'Venezia', medium: 'Olio su tela' },
+    items: [
+      { kind: 'art', id: 'il-canal-grande', title: 'Il Canal Grande', artist: 'Canaletto', year: 'c. 1730',
+        museum: 'Venezia', medium: 'Olio su tela', img: '/x/rooms/sokak.jpg', objPos: '50% 55%' },
+    ],
   },
   {
     n: '05', slug: 'mekan', tr: 'Otantik Mekânlar', it: 'Luoghi Autentici',
     d: 'Kafeler, atölyeler, karakterini koruyan iç mekânlar.',
     img: '/x/rooms/mekan.jpg', objPos: '50% 38%',
-    art: { title: 'Cortile di una casa a Delft', artist: 'Pieter de Hooch', year: '1658', museum: 'National Gallery · London', medium: 'Olio su tela' },
+    items: [
+      { kind: 'art', id: 'cortile-delft', title: 'Cortile di una casa a Delft', artist: 'Pieter de Hooch', year: '1658',
+        museum: 'National Gallery · London', medium: 'Olio su tela', img: '/x/rooms/mekan.jpg', objPos: '50% 38%' },
+    ],
   },
   {
     n: '06', slug: 'koleksiyon', tr: 'Koleksiyonlar', it: 'Collezioni',
     d: 'Temayla kürate edilmiş seçkiler ve özel rotalar.',
     img: '/x/rooms/koleksiyon.jpg', objPos: '50% 45%',
-    art: { title: 'Galleria dell’Arciduca Leopoldo Guglielmo', artist: 'David Teniers il Giovane', year: 'c. 1650', museum: 'Kunsthistorisches Museum · Wien', medium: 'Olio su tela' },
+    items: [
+      { kind: 'art', id: 'galleria-arciduca', title: 'Galleria dell’Arciduca Leopoldo Guglielmo', artist: 'David Teniers il Giovane',
+        year: 'c. 1650', museum: 'Kunsthistorisches Museum · Wien', medium: 'Olio su tela', img: '/x/rooms/koleksiyon.jpg', objPos: '50% 45%' },
+    ],
   },
 ]
 
@@ -80,9 +100,10 @@ const DUR: Record<TransType, [number, number, number]> = {
   door: [640, 620, 820], corridor: [560, 560, 720],
 }
 
-function parseHash(): string | null {
-  const m = window.location.hash.match(/^#\/x\/([a-z]+)/)
-  return m ? m[1] : null
+type Route = { cat: string | null; item: string | null }
+function parseRoute(): Route {
+  const m = window.location.hash.match(/^#\/x\/([a-z]+)(?:\/([a-z0-9-]+))?/)
+  return { cat: m?.[1] ?? null, item: m?.[2] ?? null }
 }
 
 const CSS = `
@@ -349,6 +370,83 @@ iframe.x-mv{display:block;background:#0c0a0b}
 .x-light .x-seg button:hover{border-color:rgba(156,117,34,.55);color:#2b211a}
 .x-light .x-seg button.on{background:rgba(156,117,34,.15);border-color:#9c7522;color:#7a5a14}
 
+/* ════ COLLECTION INDEX (level 2 — named entries) ════ */
+.x-cidx{position:relative;min-height:100vh;min-height:100svh;
+  padding:clamp(70px,11vh,140px) clamp(22px,6vw,90px) clamp(60px,9vh,120px)}
+.x-cidx::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(80% 60% at 14% -5%,rgba(216,178,90,.10),transparent 60%),
+    radial-gradient(70% 60% at 92% 28%,rgba(120,150,140,.07),transparent 60%),
+    radial-gradient(95% 80% at 50% 112%,rgba(190,120,110,.06),transparent 60%)}
+.x-ihead{position:relative;z-index:1;max-width:1180px;margin:0 auto;
+  animation:xUp 1s cubic-bezier(.16,1,.3,1) both}
+.x-iback{display:inline-flex;align-items:center;gap:9px;background:none;border:none;cursor:pointer;padding:0;
+  font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(243,234,214,.6);transition:color .3s,gap .3s;margin-bottom:30px}
+.x-iback:hover{color:#ecc879;gap:14px}
+.x-ieyebrow{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.34em;text-transform:uppercase;color:#d8b25a;margin-bottom:14px}
+.x-ititle{font-size:clamp(2.1rem,5vw,3.8rem);font-weight:400;line-height:1.02;letter-spacing:-.01em;margin:0 0 14px}
+.x-ititle em{font-style:italic;color:#f6e9c9}
+.x-idesc{font-size:clamp(.98rem,1.4vw,1.12rem);font-weight:300;line-height:1.7;color:rgba(243,234,214,.66);max-width:54ch;margin:0}
+.x-icount{display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+  max-width:1180px;margin:clamp(44px,6vh,72px) auto 0;padding-top:22px;border-top:1px solid rgba(216,178,90,.2);position:relative;z-index:1}
+.x-icount h2{font-family:'DM Mono',monospace;font-size:.7rem;font-weight:500;letter-spacing:.26em;text-transform:uppercase;color:#f3ead6;margin:0}
+.x-icount span{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.2em;color:#d8b25a;opacity:.75}
+
+.x-igrid{position:relative;z-index:1;max-width:1180px;margin:26px auto 0;display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:1px;
+  background:rgba(216,178,90,.16);border:1px solid rgba(216,178,90,.16)}
+.x-item{position:relative;background:#0c0a0b;cursor:pointer;overflow:hidden;border:none;text-align:left;
+  color:inherit;font-family:inherit;display:block;width:100%}
+.x-ithumb{position:relative;height:230px;overflow:hidden}
+.x-ithumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;
+  filter:saturate(.88) brightness(.74);transform:scale(1.04);
+  transition:transform 1s cubic-bezier(.16,1,.3,1),filter .6s,opacity 1.2s;opacity:0}
+.x-ithumb img.ld{opacity:1}
+.x-ithumb::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,10,11,.08),rgba(12,10,11,.9))}
+.x-item:hover .x-ithumb img{transform:scale(1.12);filter:saturate(1.02) brightness(.88)}
+/* the symbol that marks a walkable 3D museum vs a flat painting */
+.x-ibadge{position:absolute;top:13px;left:13px;z-index:2;display:inline-flex;align-items:center;gap:7px;
+  padding:6px 11px 6px 9px;border-radius:999px;font-family:'DM Mono',monospace;font-size:.5rem;
+  letter-spacing:.2em;text-transform:uppercase;background:rgba(13,11,12,.72);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(216,178,90,.34);color:#ecc879}
+.x-ibadge svg{width:13px;height:13px;display:block}
+.x-ibadge.art{color:rgba(243,234,214,.72);border-color:rgba(216,178,90,.18)}
+.x-ibody{position:relative;padding:22px 26px 26px}
+.x-ibody::before{content:'';position:absolute;left:0;top:0;height:2px;width:0;background:#d8b25a;transition:width .55s cubic-bezier(.16,1,.3,1)}
+.x-item:hover .x-ibody::before{width:100%}
+.x-iname{font-size:1.28rem;font-weight:400;margin:0 0 8px;line-height:1.12}
+.x-iname em{font-style:italic;color:#f6e9c9}
+.x-imeta{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.04em;line-height:1.65;color:rgba(243,234,214,.6);margin:0}
+.x-iopen{margin-top:18px;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(243,234,214,.45);display:flex;align-items:center;gap:8px;transition:color .4s,gap .4s}
+.x-item:hover .x-iopen{color:#ecc879;gap:14px}
+
+.x-light .x-cidx::before{background:
+  radial-gradient(80% 60% at 14% -5%,rgba(176,138,60,.14),transparent 60%),
+  radial-gradient(70% 60% at 92% 28%,rgba(90,120,110,.08),transparent 60%),
+  radial-gradient(95% 80% at 50% 112%,rgba(160,90,80,.07),transparent 60%)}
+.x-light .x-iback{color:rgba(43,33,26,.6)}
+.x-light .x-iback:hover{color:#9c7522}
+.x-light .x-ieyebrow{color:#9c7522}
+.x-light .x-ititle{color:#2b211a}
+.x-light .x-ititle em{color:#9c7522}
+.x-light .x-idesc{color:rgba(43,33,26,.7)}
+.x-light .x-icount{border-top-color:rgba(156,117,34,.28)}
+.x-light .x-icount h2{color:#2b211a}
+.x-light .x-icount span{color:#9c7522}
+.x-light .x-igrid{background:rgba(156,117,34,.22);border-color:rgba(156,117,34,.22)}
+.x-light .x-item{background:#f6efe0}
+.x-light .x-ithumb img{filter:saturate(.94) brightness(.84)}
+.x-light .x-ithumb::after{background:linear-gradient(180deg,rgba(246,239,224,.04),rgba(246,239,224,.82))}
+.x-light .x-ibadge{background:rgba(246,239,224,.82);border-color:rgba(156,117,34,.34);color:#7a5a14}
+.x-light .x-ibadge.art{color:rgba(43,33,26,.66)}
+.x-light .x-iname{color:#2b211a}
+.x-light .x-iname em{color:#9c7522}
+.x-light .x-imeta{color:rgba(43,33,26,.6)}
+.x-light .x-iopen{color:rgba(43,33,26,.5)}
+.x-light .x-item:hover .x-iopen{color:#9c7522}
+
 @media (max-width:680px){
   .x-cue{display:none}
   .x-bottom{flex-direction:column;align-items:flex-start}
@@ -371,35 +469,35 @@ const fadeIn = (el: HTMLImageElement | null) => {
 }
 
 export function XPage() {
-  const [view, setView] = useState<string | null>(parseHash())
+  const [route, setRoute] = useState<Route>(parseRoute())
   const [theme, setTheme] = useState<Theme>('dark')
   const [settingsOpen, setSettingsOpen] = useState(true)
   const [anim, setAnim] = useState<{ type: TransType; phase: 'cover' | 'reveal'; img: string } | null>(null)
   const introRef = useRef<HTMLElement>(null)
 
-  const room = view ? CATEGORIES.find(c => c.slug === view) ?? null : null
-  // self-hosted Scaniverse GLB (model-viewer) takes priority; otherwise a realistic Sketchfab scan
-  const model = room?.model
-  const scan = room && !model ? SKETCHFAB[room.slug] : undefined
-  const is3d = Boolean(model || scan)
+  const cat = route.cat ? CATEGORIES.find(c => c.slug === route.cat) ?? null : null
+  const item = cat && route.item ? cat.items.find(it => it.id === route.item) ?? null : null
+  const scan = item?.kind === '3d' ? item : undefined
+  const art = item?.kind === 'art' ? item : undefined
+  const is3d = Boolean(scan)
 
   // title
   useEffect(() => {
     const prev = document.title
-    document.title = room ? `X — ${room.tr} · ${room.art.artist}` : 'X — Dijital Atlas · Botticelli'
+    document.title = item ? `X — ${item.title}` : cat ? `X — ${cat.tr}` : 'X — Dijital Atlas · Botticelli'
     return () => { document.title = prev }
-  }, [room])
+  }, [cat, item])
 
   // hash sync (browser back/forward + our own pushes)
   useEffect(() => {
-    const onHash = () => setView(parseHash())
+    const onHash = () => setRoute(parseRoute())
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
   // scroll-reveal on the atlas view
   useEffect(() => {
-    if (room) return
+    if (cat) return
     const els = Array.from(document.querySelectorAll<HTMLElement>('.x-intro .reveal'))
     if (!('IntersectionObserver' in window)) { els.forEach(e => e.classList.add('in')); return }
     const io = new IntersectionObserver((entries) => {
@@ -407,24 +505,25 @@ export function XPage() {
     }, { threshold: 0.18, rootMargin: '0px 0px -8% 0px' })
     els.forEach(e => io.observe(e))
     return () => io.disconnect()
-  }, [view, room])
+  }, [route, cat])
 
   const reduce = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-  const navigate = (slug: string | null) => {
-    const target = slug ? `#/x/${slug}` : '#/x'
-    // the place we're heading to — used as the corridor silhouette / door frame
-    const targetImg = (slug ? CATEGORIES.find(c => c.slug === slug)?.img : null) ?? '/x/venus-2k.jpg'
-    if (reduce) { window.location.hash = target; window.scrollTo(0, 0); return }
+  // light navigation (no cinematic transition): hub ↔ collection index
+  const go = (hash: string) => { window.location.hash = hash; window.scrollTo(0, 0) }
+
+  // cinematic transition — used only when OPENING an entry (a painting / a 3D museum)
+  const openItem = (catSlug: string, it: Item) => {
+    const target = `#/x/${catSlug}/${it.id}`
+    const targetImg = it.kind === 'art' ? it.img : it.thumb
+    if (reduce) { go(target); return }
     if (anim) return
     const type: TransType = Math.random() < 0.5 ? 'door' : 'corridor'
     const [coverMs, holdMs, revealMs] = DUR[type]
     setAnim({ type, phase: 'cover', img: targetImg })
     window.setTimeout(() => {
-      // cover is fully closed now — hold a beat so the framed artworks register, then swap + reveal
       window.setTimeout(() => {
-        window.location.hash = target
-        window.scrollTo(0, 0)
+        go(target)
         setAnim({ type, phase: 'reveal', img: targetImg })
         window.setTimeout(() => setAnim(null), revealMs)
       }, holdMs)
@@ -438,79 +537,140 @@ export function XPage() {
     <div className={`x-page${theme === 'light' ? ' x-light' : ''}`} lang="en">
       <style>{CSS}</style>
 
-      {room ? (
-        /* ════════ ROOM ════════ */
-        <section className={`x-hero${is3d ? ' x-hero-3d' : ''}`} key={room.slug}>
-          {model ? (
-            // user's own Scaniverse capture — class= (NOT className) so React 18 sets it on the custom element
-            <model-viewer
-              class="x-bg x-mv"
-              src={model}
-              alt={`${room.art.artist} — ${room.art.title}`}
-              camera-controls=""
-              auto-rotate=""
-              auto-rotate-delay="800"
-              rotation-per-second="16deg"
-              interaction-prompt="none"
-              shadow-intensity="1"
-              exposure="1.05"
-              ar=""
-            />
-          ) : scan ? (
+      {item && cat ? (
+        /* ════════ ITEM — an opened painting OR a walkable 3D museum ════════ */
+        <section className={`x-hero${is3d ? ' x-hero-3d' : ''}`} key={item.id}>
+          {scan ? (
             <iframe
               className="x-bg x-mv"
               title={`${scan.title} — ${scan.author}`}
-              src={sketchfabSrc(scan.id)}
+              src={sketchfabSrc(scan.scanId)}
               allow="autoplay; fullscreen; xr-spatial-tracking"
               allowFullScreen
               loading="lazy"
             />
-          ) : (
+          ) : art ? (
             <img
               className="x-bg"
               ref={fadeIn}
-              src={room.img}
-              alt={`${room.art.artist} — ${room.art.title}`}
+              src={art.img}
+              alt={`${art.artist} — ${art.title}`}
+              style={{ objectPosition: art.objPos }}
               decoding="async"
             />
-          )}
+          ) : null}
           <div className="x-veil" />
           <div className="x-grain" />
           {is3d && (
             <div className="x-3dtag"><span className="x-dot" />
-              3D · {model ? 'drag to rotate' : 'walk · drag to explore'}
+              3D · walk · drag to explore
             </div>
           )}
           {scan && (
-            <a className="x-credit" href={`https://sketchfab.com/3d-models/${scan.id}`}
+            <a className="x-credit" href={`https://sketchfab.com/3d-models/${scan.scanId}`}
                target="_blank" rel="noopener noreferrer">
               3D scan · {scan.author} · Sketchfab
             </a>
           )}
           <div className="x-frame">
             <header className="x-top">
-              <button className="x-brand" onClick={() => navigate(null)}>
+              <button className="x-brand" onClick={() => go(`#/x/${cat.slug}`)}>
                 <b>X<em>.</em></b>
-                <span>← Koleksiyonlar</span>
+                <span>← {cat.tr}</span>
               </button>
-              <div className="x-mono">{room.tr}<br />Opera N° {room.n}</div>
+              <div className="x-mono">{cat.tr}<br />Opera N° {cat.n}</div>
             </header>
 
             <div className="x-bottom">
               <div className="x-placard">
                 <span className="x-rule" />
                 <div>
-                  <div className="x-plabel">{room.art.museum}</div>
-                  <h1 className="x-ptitle"><em>{room.art.title}</em></h1>
-                  <p className="x-pmeta">
-                    {room.art.artist}<span className="sep">/</span>{room.art.year}
-                    <span className="sep">/</span>{room.art.medium}
-                  </p>
-                  <div className="x-rtag"><span className="x-dot" />Bu koleksiyon yakında · küratörlükte</div>
+                  {scan ? (
+                    <>
+                      <div className="x-plabel">{scan.kindLabel}</div>
+                      <h1 className="x-ptitle"><em>{scan.title}</em></h1>
+                      <p className="x-pmeta">
+                        {scan.loc}<span className="sep">/</span>{scan.note}
+                      </p>
+                      <div className="x-rtag"><span className="x-dot" />3D tarama · gezilebilir mekân</div>
+                    </>
+                  ) : art ? (
+                    <>
+                      <div className="x-plabel">{art.museum}</div>
+                      <h1 className="x-ptitle"><em>{art.title}</em></h1>
+                      <p className="x-pmeta">
+                        {art.artist}<span className="sep">/</span>{art.year}
+                        <span className="sep">/</span>{art.medium}
+                      </p>
+                    </>
+                  ) : null}
                 </div>
               </div>
             </div>
           </div>
+        </section>
+      ) : cat ? (
+        /* ════════ COLLECTION INDEX — named entries (paintings + 3D museums) ════════ */
+        <section className="x-cidx" key={cat.slug}>
+          <div className="x-ihead">
+            <button className="x-iback" onClick={() => go('#/x')}>← Koleksiyonlar</button>
+            <div className="x-ieyebrow">Collezione N° {cat.n}</div>
+            <h1 className="x-ititle">{cat.tr}</h1>
+            <p className="x-idesc">{cat.d}</p>
+          </div>
+
+          <div className="x-icount">
+            <h2>Eserler</h2>
+            <span>{cat.items.length} {cat.items.length === 1 ? 'eser' : 'eser'}</span>
+          </div>
+
+          <div className="x-igrid">
+            {cat.items.map((it) => (
+              <button className="x-item" key={it.id} onClick={() => openItem(cat.slug, it)}>
+                <div className="x-ithumb">
+                  <img
+                    src={it.kind === 'art' ? it.img : it.thumb}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    style={{ objectPosition: it.kind === 'art' ? it.objPos : (it.objPos ?? '50% 50%') }}
+                    onLoad={(e) => e.currentTarget.classList.add('ld')}
+                  />
+                  {it.kind === '3d' ? (
+                    <span className="x-ibadge">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2 21 7v10l-9 5-9-5V7z" /><path d="M12 2v20" /><path d="M3 7l9 5 9-5" />
+                      </svg>
+                      3D Müze
+                    </span>
+                  ) : (
+                    <span className="x-ibadge art">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="1" /><path d="M3 16l5-5 4 4 3-3 6 6" /><circle cx="8.5" cy="8.5" r="1.5" />
+                      </svg>
+                      Tablo
+                    </span>
+                  )}
+                </div>
+                <div className="x-ibody">
+                  <h3 className="x-iname"><em>{it.title}</em></h3>
+                  <p className="x-imeta">
+                    {it.kind === '3d'
+                      ? <>{it.kindLabel}<br />{it.loc}</>
+                      : <>{it.artist}<br />{it.museum} · {it.year}</>}
+                  </p>
+                  <div className="x-iopen">
+                    {it.kind === '3d' ? 'Mekânı gez' : 'Eseri aç'} <span>→</span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <footer className="x-foot" style={{ maxWidth: 1180, margin: 'clamp(56px,8vh,96px) auto 0' }}>
+            <a href="#/">← Hub'a dön</a>
+            <span className="fnote">Mavi Atlas · codename X · Geliştiriliyor</span>
+          </footer>
         </section>
       ) : (
         /* ════════ ATLAS (hero + intro) ════════ */
@@ -583,7 +743,7 @@ export function XPage() {
                     className="x-cat reveal"
                     key={c.slug}
                     style={{ ['--i' as string]: i }}
-                    onClick={() => navigate(c.slug)}
+                    onClick={() => go(`#/x/${c.slug}`)}
                   >
                     <div className="x-cthumb">
                       <img src={c.img} alt="" loading="lazy" decoding="async"
