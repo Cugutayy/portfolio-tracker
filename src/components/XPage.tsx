@@ -40,6 +40,18 @@ const sketchfabSrc = (id: string) =>
 
 const GALLERY_THUMB = 'https://media.sketchfab.com/models/231fdb3e9e354c6faaa3c250f8c9988f/thumbnails/885b79c3b12e4b488e7908b1184e69a0/ede0e7da6a5a45529c38af5bca95b5ae.jpeg'
 
+// A real, beautifully scanned museum hall (The Hallwyl Museum picture gallery) shown small under
+// every salon's dossier as a reference for what a true photogrammetry scan looks like.
+const SAMPLE_SCAN_ID = '231fdb3e9e354c6faaa3c250f8c9988f'
+const SAMPLE_SCAN_AUTHOR = 'The Hallwyl Museum'
+
+// An interactive OpenStreetMap embed (no API key) centred on the museum, with a marker on the spot.
+const osmEmbedSrc = (lat: number, lng: number, d = 0.006) =>
+  `https://www.openstreetmap.org/export/embed.html?bbox=${lng - d}%2C${lat - d}%2C${lng + d}%2C${lat + d}` +
+  `&layer=mapnik&marker=${lat}%2C${lng}`
+const osmLink = (lat: number, lng: number) =>
+  `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=16/${lat}/${lng}`
+
 // Verified Wikimedia Commons renditions — `full` is a true-4K (3840px) view loaded only when an
 // entry is opened; `thumb` is a light 960px crop for the collection grid. (Public domain / CC.)
 const IMG: Record<string, { full: string; thumb: string }> = {
@@ -801,9 +813,9 @@ iframe.x-mv{display:block;background:#0c0a0b}
 .x-ghelp svg{width:15px;height:15px}
 
 /* ════ ARTWORK STORY (opened painting, scroll down) ════ */
-.x-artdoc{position:relative;background:#0c0a0b;color:#f3ead6;
+.x-artdoc,.x-place{position:relative;background:#0c0a0b;color:#f3ead6;
   padding:clamp(64px,10vh,130px) clamp(22px,6vw,90px) clamp(80px,12vh,170px)}
-.x-artdoc::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+.x-artdoc::before,.x-place::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
   background:
     radial-gradient(80% 60% at 12% -5%,rgba(216,178,90,.10),transparent 60%),
     radial-gradient(70% 60% at 90% 24%,rgba(120,150,140,.06),transparent 60%),
@@ -824,8 +836,8 @@ iframe.x-mv{display:block;background:#0c0a0b}
 .x-adback{margin-top:clamp(40px,6vh,72px);display:inline-flex;align-items:center;gap:9px;background:none;border:none;cursor:pointer;padding:0;
   font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.24em;text-transform:uppercase;color:rgba(243,234,214,.6);transition:color .3s,gap .3s}
 .x-adback:hover{color:#ecc879;gap:14px}
-.x-light .x-artdoc{background:#efe7d6;color:#2b211a}
-.x-light .x-artdoc::before{background:
+.x-light .x-artdoc,.x-light .x-place{background:#efe7d6;color:#2b211a}
+.x-light .x-artdoc::before,.x-light .x-place::before{background:
   radial-gradient(80% 60% at 12% -5%,rgba(176,138,60,.14),transparent 60%),
   radial-gradient(70% 60% at 90% 24%,rgba(90,120,110,.08),transparent 60%),
   radial-gradient(95% 80% at 50% 112%,rgba(160,90,80,.07),transparent 60%)}
@@ -839,6 +851,30 @@ iframe.x-mv{display:block;background:#0c0a0b}
 .x-light .x-adv{color:rgba(43,33,26,.86)}
 .x-light .x-adback{color:rgba(43,33,26,.6)}
 .x-light .x-adback:hover{color:#9c7522}
+
+/* ── museum dossier: exact location map + real-scan example ── */
+.x-plmap{margin:8px 0 40px}
+.x-plmaphd,.x-plsamhd{display:flex;align-items:baseline;justify-content:space-between;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.x-plmaphd .x-adk,.x-plsamhd .x-adk{margin-bottom:0}
+.x-plmaplink{font-family:'DM Mono',monospace;font-size:.56rem;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(243,234,214,.62);text-decoration:none;transition:color .25s}
+.x-plmaplink:hover{color:#ecc879}
+.x-plmapbox{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(216,178,90,.28);
+  box-shadow:0 22px 60px rgba(0,0,0,.5);background:#0c0a0b}
+.x-plmapbox iframe{display:block;width:100%;height:clamp(240px,42vh,400px);border:0;filter:saturate(.9) contrast(1.02)}
+.x-plcoord{margin-top:10px;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.16em;color:rgba(243,234,214,.5)}
+.x-plsample{margin:44px 0 8px;border-top:1px solid rgba(216,178,90,.18);padding-top:30px}
+.x-plsambox{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(216,178,90,.28);
+  box-shadow:0 22px 60px rgba(0,0,0,.5);background:#0c0a0b}
+.x-plsambox iframe{display:block;width:100%;height:clamp(260px,46vh,440px);border:0}
+.x-plsamnote{margin:16px 0 0;font-size:.95rem;font-weight:300;line-height:1.7;color:rgba(243,234,214,.6);
+  max-width:560px}
+.x-light .x-plmaplink{color:rgba(43,33,26,.6)}
+.x-light .x-plmaplink:hover{color:#9c7522}
+.x-light .x-plmapbox,.x-light .x-plsambox{border-color:rgba(156,117,34,.3);box-shadow:0 18px 48px rgba(80,60,20,.18);background:#f6efe0}
+.x-light .x-plcoord{color:rgba(43,33,26,.5)}
+.x-light .x-plsample{border-top-color:rgba(156,117,34,.25)}
+.x-light .x-plsamnote{color:rgba(43,33,26,.6)}
 
 /* ════ OUR OWN 3D HALL (Gallery3D) ════ */
 .g3d-stage{position:absolute;inset:0;z-index:0;overflow:hidden}
@@ -987,7 +1023,7 @@ export function XPage() {
 
   // scroll-reveal on the atlas view + the opened-artwork story
   useEffect(() => {
-    const els = Array.from(document.querySelectorAll<HTMLElement>('.x-intro .reveal, .x-artdoc .reveal'))
+    const els = Array.from(document.querySelectorAll<HTMLElement>('.x-intro .reveal, .x-artdoc .reveal, .x-place .reveal'))
     if (els.length === 0) return
     if (!('IntersectionObserver' in window)) { els.forEach(e => e.classList.add('in')); return }
     const io = new IntersectionObserver((entries) => {
@@ -1130,6 +1166,13 @@ export function XPage() {
                   <span className="x-cuetxt">Kaydır</span>
                 </button>
               )}
+              {scan && (
+                <button className="x-cue" onClick={scrollToArtDoc} aria-label="Müze bilgisi ve konuma kaydır">
+                  <span className="x-status"><span className="x-dot" /><span className="x-stxt">Müze & Konum</span></span>
+                  <span className="x-mouse"><i /></span>
+                  <span className="x-cuetxt">Kaydır</span>
+                </button>
+              )}
             </div>
           </div>
           )}
@@ -1152,6 +1195,68 @@ export function XPage() {
                 <div className="x-adcell"><div className="x-adk">Teknik</div><div className="x-adv">{art.medium}</div></div>
                 <div className="x-adcell"><div className="x-adk">Bulunduğu Yer</div><div className="x-adv">{art.museum}</div></div>
               </div>
+              <button className="x-adback" onClick={() => go(`#/x/${cat.slug}`)}>← {cat.tr} koleksiyonuna dön</button>
+            </div>
+          </section>
+        )}
+
+        {scan && (
+          <section className="x-place" ref={artDocRef}>
+            <div className="x-adwrap">
+              <div className="x-adlabel reveal">{scan.kindLabel}</div>
+              <h2 className="x-adtitle reveal"><em>{scan.title}</em></h2>
+              <p className="x-admeta reveal">
+                {scan.loc}{scan.address && <><span className="sep">/</span>{scan.address}</>}
+              </p>
+              <p className="x-adstory reveal">{scan.note}</p>
+
+              {scan.geo && (
+                <div className="x-plmap reveal">
+                  <div className="x-plmaphd">
+                    <span className="x-adk">Tam Konum</span>
+                    <a className="x-plmaplink" href={osmLink(scan.geo.lat, scan.geo.lng)}
+                       target="_blank" rel="noopener noreferrer">Haritada aç ↗</a>
+                  </div>
+                  <div className="x-plmapbox">
+                    <iframe
+                      title={`${scan.title} — konum`}
+                      src={osmEmbedSrc(scan.geo.lat, scan.geo.lng)}
+                      loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+                  <div className="x-plcoord">{scan.geo.lat.toFixed(4)}° N · {scan.geo.lng.toFixed(4)}° E</div>
+                </div>
+              )}
+
+              <div className="x-adgrid reveal">
+                <div className="x-adcell"><div className="x-adk">Koleksiyon</div><div className="x-adv">{scan.author}</div></div>
+                <div className="x-adcell"><div className="x-adk">Tür</div><div className="x-adv">{scan.kindLabel}</div></div>
+                <div className="x-adcell"><div className="x-adk">Şehir</div><div className="x-adv">{scan.loc}</div></div>
+                {scan.address && <div className="x-adcell"><div className="x-adk">Adres</div><div className="x-adv">{scan.address}</div></div>}
+              </div>
+
+              {!isSketchfab(scan.scanId) && (
+                <div className="x-plsample reveal">
+                  <div className="x-plsamhd">
+                    <span className="x-adk">Gerçek bir 3B tarama örneği</span>
+                    <a className="x-plmaplink" href={`https://sketchfab.com/3d-models/${SAMPLE_SCAN_ID}`}
+                       target="_blank" rel="noopener noreferrer">{SAMPLE_SCAN_AUTHOR} · Sketchfab ↗</a>
+                  </div>
+                  <div className="x-plsambox">
+                    <iframe
+                      title="Gerçek müze taraması örneği — The Hallwyl Museum"
+                      src={sketchfabSrc(SAMPLE_SCAN_ID)}
+                      allow="autoplay; fullscreen; xr-spatial-tracking"
+                      allowFullScreen loading="lazy"
+                    />
+                  </div>
+                  <p className="x-plsamnote">
+                    Bizim salonlarımız henüz elde çizildi; ilerledikçe mekânlar bunun gibi gerçek
+                    fotogrametri taramalarıyla değişecek.
+                  </p>
+                </div>
+              )}
+
               <button className="x-adback" onClick={() => go(`#/x/${cat.slug}`)}>← {cat.tr} koleksiyonuna dön</button>
             </div>
           </section>
