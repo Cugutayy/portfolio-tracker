@@ -9,43 +9,43 @@ import { useEffect, useRef, useState } from 'react'
 // ═══════════════════════════════════════════════════
 
 type Art = { title: string; artist: string; year: string; museum: string; medium: string }
-type Cat = { n: string; slug: string; tr: string; it: string; d: string; img: string; art: Art }
+type Cat = { n: string; slug: string; tr: string; it: string; d: string; img: string; objPos: string; art: Art }
 
 const CATEGORIES: Cat[] = [
   {
     n: '01', slug: 'sanat', tr: 'Sanat & Müzeler', it: 'Arte & Musei',
     d: 'Galeriler, koleksiyonlar, fresk ve heykellerin sessiz salonları.',
-    img: '/x/rooms/sanat.jpg',
+    img: '/x/rooms/sanat.jpg', objPos: '50% 30%',
     art: { title: 'Meisje met de parel', artist: 'Johannes Vermeer', year: 'c. 1665', museum: 'Mauritshuis · Den Haag', medium: 'Olio su tela' },
   },
   {
     n: '02', slug: 'sarap', tr: 'Şarap Bağları', it: 'Vigneti',
     d: 'Tepelere yayılan asmalar, taş mahzenler ve hasat ışığı.',
-    img: '/x/rooms/sarap.jpg',
+    img: '/x/rooms/sarap.jpg', objPos: '50% 14%',
     art: { title: 'Bacco', artist: 'Caravaggio', year: 'c. 1596', museum: 'Galleria degli Uffizi · Firenze', medium: 'Olio su tela' },
   },
   {
     n: '03', slug: 'sahil', tr: 'Sahil & Doğa', it: 'Costa & Natura',
     d: 'Kıyılar, koylar ve kesintisiz ufkun dingin genişliği.',
-    img: '/x/rooms/sahil.jpg',
+    img: '/x/rooms/sahil.jpg', objPos: '50% 50%',
     art: { title: 'La Nona Onda', artist: 'Ivan Ajvazovskij', year: '1850', museum: 'Museo di Stato Russo · S. Pietroburgo', medium: 'Olio su tela' },
   },
   {
     n: '04', slug: 'sokak', tr: 'Tarihi Sokaklar', it: 'Strade Storiche',
     d: 'Taş döşeli geçitler, eski cepheler, zamanın patinası.',
-    img: '/x/rooms/sokak.jpg',
+    img: '/x/rooms/sokak.jpg', objPos: '50% 55%',
     art: { title: 'Il Canal Grande', artist: 'Canaletto', year: 'c. 1730', museum: 'Venezia', medium: 'Olio su tela' },
   },
   {
     n: '05', slug: 'mekan', tr: 'Otantik Mekânlar', it: 'Luoghi Autentici',
     d: 'Kafeler, atölyeler, karakterini koruyan iç mekânlar.',
-    img: '/x/rooms/mekan.jpg',
+    img: '/x/rooms/mekan.jpg', objPos: '50% 38%',
     art: { title: 'Cortile di una casa a Delft', artist: 'Pieter de Hooch', year: '1658', museum: 'National Gallery · London', medium: 'Olio su tela' },
   },
   {
     n: '06', slug: 'koleksiyon', tr: 'Koleksiyonlar', it: 'Collezioni',
     d: 'Temayla kürate edilmiş seçkiler ve özel rotalar.',
-    img: '/x/rooms/koleksiyon.jpg',
+    img: '/x/rooms/koleksiyon.jpg', objPos: '50% 45%',
     art: { title: 'Galleria dell’Arciduca Leopoldo Guglielmo', artist: 'David Teniers il Giovane', year: 'c. 1650', museum: 'Kunsthistorisches Museum · Wien', medium: 'Olio su tela' },
   },
 ]
@@ -147,8 +147,8 @@ const CSS = `
   gap:1px;background:rgba(216,178,90,.16);border:1px solid rgba(216,178,90,.16)}
 .x-cat{position:relative;background:#0c0a0b;cursor:pointer;overflow:hidden;border:none;text-align:left;
   color:inherit;font-family:inherit;display:block;width:100%}
-.x-cthumb{position:relative;height:170px;overflow:hidden}
-.x-cthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+.x-cthumb{position:relative;height:210px;overflow:hidden}
+.x-cthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;
   filter:saturate(.86) brightness(.7);transform:scale(1.04);
   transition:transform 1s cubic-bezier(.16,1,.3,1),filter .6s,opacity 1.2s;opacity:0}
 .x-cthumb img.ld{opacity:1}
@@ -470,6 +470,7 @@ export function XPage() {
                   >
                     <div className="x-cthumb">
                       <img src={c.img} alt="" loading="lazy" decoding="async"
+                        style={{ objectPosition: c.objPos }}
                         onLoad={(e) => e.currentTarget.classList.add('ld')} />
                     </div>
                     <div className="x-cbody">
