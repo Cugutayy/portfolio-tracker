@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 // Hero: Botticelli · La Nascita di Venere (4K gigapixel scan)
 // Below: manifesto + collections grid (museum-catalog feel)
 // Rooms: #/x/<slug> — 4K masterpiece per category
-// Gallery transitions (door / iris / zoom / corridor) + live switcher
+// Transitions: door / corridor (random by default) + settings panel
 // ═══════════════════════════════════════════════════
 
 type Art = { title: string; artist: string; year: string; museum: string; medium: string }
@@ -50,16 +50,12 @@ const CATEGORIES: Cat[] = [
   },
 ]
 
-type TransType = 'door' | 'iris' | 'zoom' | 'corridor'
-const TRANS: { id: TransType; tr: string; en: string }[] = [
-  { id: 'door', tr: 'Kapı', en: 'Door' },
-  { id: 'iris', tr: 'Perde', en: 'Iris' },
-  { id: 'zoom', tr: 'Yakınlaş', en: 'Zoom' },
-  { id: 'corridor', tr: 'Koridor', en: 'Pan' },
-]
+type TransType = 'door' | 'corridor'
+type TransPref = TransType | 'random'
+type Theme = 'dark' | 'light'
 // [coverMs, revealMs] per transition — kept in sync with the CSS keyframe durations below
 const DUR: Record<TransType, [number, number]> = {
-  door: [640, 820], iris: [600, 780], zoom: [600, 720], corridor: [560, 720],
+  door: [640, 820], corridor: [560, 720],
 }
 
 function parseHash(): string | null {
@@ -199,13 +195,16 @@ const CSS = `
   box-shadow:inset 0 0 140px rgba(0,0,0,.85)}
 .x-trans-door .pl{left:0;transform-origin:left center;border-right:1px solid rgba(216,178,90,.55)}
 .x-trans-door .pr{right:0;transform-origin:right center;border-left:1px solid rgba(216,178,90,.55)}
-/* recessed gold-trimmed panels */
+/* recessed panels — each frames a different collection artwork */
 .x-trans-door .pn::before,.x-trans-door .pn::after{content:'';position:absolute;left:13%;right:13%;
-  border:1px solid rgba(216,178,90,.42);border-radius:3px;
-  box-shadow:inset 0 0 0 5px rgba(0,0,0,.22),inset 0 0 40px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.45);
-  background:radial-gradient(120% 90% at 50% 50%,rgba(216,178,90,.07),transparent 60%)}
+  border:1px solid rgba(216,178,90,.5);border-radius:3px;background-size:cover;background-position:center;
+  box-shadow:inset 0 0 0 5px rgba(0,0,0,.32),inset 0 0 55px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.5)}
 .x-trans-door .pn::before{top:6%;height:40.5%}
 .x-trans-door .pn::after{bottom:6%;height:40.5%}
+.x-trans-door .pl::before{background-image:linear-gradient(rgba(8,6,7,.3),rgba(8,6,7,.4)),url(/x/rooms/sanat.jpg)}
+.x-trans-door .pl::after{background-image:linear-gradient(rgba(8,6,7,.3),rgba(8,6,7,.4)),url(/x/rooms/sahil.jpg)}
+.x-trans-door .pr::before{background-image:linear-gradient(rgba(8,6,7,.3),rgba(8,6,7,.4)),url(/x/rooms/sokak.jpg)}
+.x-trans-door .pr::after{background-image:linear-gradient(rgba(8,6,7,.3),rgba(8,6,7,.4)),url(/x/rooms/koleksiyon.jpg)}
 /* gold handles near the seam */
 .x-trans-door .kb{position:absolute;top:50%;width:7px;height:56px;border-radius:6px;transform:translateY(-50%);z-index:2;
   background:linear-gradient(180deg,#f3da92,#9c7b32);
@@ -221,22 +220,6 @@ const CSS = `
 @keyframes dOpL{from{transform:rotateY(0)}to{transform:rotateY(112deg)}}
 @keyframes dOpR{from{transform:rotateY(0)}to{transform:rotateY(-112deg)}}
 
-/* iris */
-.x-trans-iris .ir{position:absolute;inset:0;
-  background:radial-gradient(circle at 50% 50%,#16121a 0%,#0a0709 45%,#060406 100%)}
-.x-trans-iris.cover .ir{animation:irIn .6s cubic-bezier(.7,0,.25,1) forwards}
-.x-trans-iris.reveal .ir{animation:irOut .78s cubic-bezier(.16,1,.3,1) forwards}
-@keyframes irIn{from{clip-path:circle(0% at 50% 50%)}to{clip-path:circle(150% at 50% 50%)}}
-@keyframes irOut{from{clip-path:circle(150% at 50% 50%)}to{clip-path:circle(0% at 50% 50%)}}
-
-/* zoom */
-.x-trans-zoom .zm{position:absolute;inset:0;
-  background:radial-gradient(circle at 50% 50%,#120c0f,#060405 70%)}
-.x-trans-zoom.cover .zm{animation:zmIn .6s cubic-bezier(.6,0,.2,1) forwards}
-.x-trans-zoom.reveal .zm{animation:zmOut .72s cubic-bezier(.16,1,.3,1) forwards}
-@keyframes zmIn{from{opacity:0;transform:scale(1.28)}55%{opacity:1}to{opacity:1;transform:scale(1)}}
-@keyframes zmOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.9)}}
-
 /* corridor */
 .x-trans-corridor .cr{position:absolute;inset:0;
   background:linear-gradient(90deg,#0a0708,#1a1214 50%,#0a0708);
@@ -246,32 +229,62 @@ const CSS = `
 @keyframes crIn{from{transform:translateX(101%)}to{transform:translateX(0)}}
 @keyframes crOut{from{transform:translateX(0)}to{transform:translateX(-101%)}}
 
-/* ════ TRANSITION SWITCHER (evaluation only) ════ */
-.x-switch{position:fixed;right:16px;bottom:16px;z-index:9500;width:228px;
+/* ════ SETTINGS PANEL ════ */
+.x-settings{position:fixed;right:16px;bottom:16px;z-index:9500;width:214px;
   background:rgba(13,11,12,.84);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  border:1px solid rgba(216,178,90,.28);border-radius:14px;padding:13px 13px 11px;
+  border:1px solid rgba(216,178,90,.28);border-radius:14px;padding:13px;
   box-shadow:0 22px 60px rgba(0,0,0,.55);font-family:'DM Mono',monospace}
-.x-switch h4{margin:0 0 10px;font-size:.54rem;letter-spacing:.24em;text-transform:uppercase;color:#d8b25a;font-weight:500;
-  display:flex;align-items:center;justify-content:space-between}
-.x-switch h4 b{color:rgba(243,234,214,.4);font-weight:400}
-.x-sgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.x-sbtn{appearance:none;cursor:pointer;text-align:left;padding:8px 10px;border-radius:9px;
+.x-settings h4{margin:0 0 12px;font-size:.54rem;letter-spacing:.26em;text-transform:uppercase;color:#d8b25a;font-weight:500}
+.x-srow{margin-bottom:11px}
+.x-srow:last-child{margin-bottom:0}
+.x-slabel{display:block;font-size:.5rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(243,234,214,.5);margin-bottom:6px}
+.x-seg{display:flex;gap:4px}
+.x-seg button{flex:1;appearance:none;cursor:pointer;padding:7px 4px;border-radius:8px;
   border:1px solid rgba(216,178,90,.18);background:rgba(255,255,255,.02);color:rgba(243,234,214,.72);
-  font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.04em;transition:all .3s;line-height:1.2}
-.x-sbtn:hover{border-color:rgba(216,178,90,.5);color:#f3ead6}
-.x-sbtn.on{background:rgba(216,178,90,.16);border-color:#d8b25a;color:#ecc879}
-.x-sbtn small{display:block;font-size:.48rem;letter-spacing:.18em;text-transform:uppercase;opacity:.6;margin-top:3px}
-.x-shint{margin:10px 2px 0;font-size:.5rem;letter-spacing:.08em;color:rgba(243,234,214,.4);line-height:1.55}
+  font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.06em;transition:all .3s;line-height:1}
+.x-seg button:hover{border-color:rgba(216,178,90,.5);color:#f3ead6}
+.x-seg button.on{background:rgba(216,178,90,.16);border-color:#d8b25a;color:#ecc879}
+
+/* ════ LIGHT THEME ════ */
+.x-light{background:#efe7d6;color:#2b211a}
+.x-light .x-intro::before{background:
+  radial-gradient(80% 60% at 14% -5%,rgba(176,138,60,.14),transparent 60%),
+  radial-gradient(70% 60% at 92% 28%,rgba(90,120,110,.08),transparent 60%),
+  radial-gradient(95% 80% at 50% 112%,rgba(160,90,80,.07),transparent 60%)}
+.x-light .x-eyebrow{color:#9c7522}
+.x-light .x-lead{color:#2b211a}
+.x-light .x-lead em{color:#9c7522}
+.x-light .x-body{color:rgba(43,33,26,.74)}
+.x-light .x-chead{border-top-color:rgba(156,117,34,.28)}
+.x-light .x-chead h2{color:#2b211a}
+.x-light .x-chead span{color:#9c7522}
+.x-light .x-grid{background:rgba(156,117,34,.22);border-color:rgba(156,117,34,.22)}
+.x-light .x-cat{background:#f6efe0}
+.x-light .x-cthumb img{filter:saturate(.92) brightness(.82)}
+.x-light .x-cthumb::after{background:linear-gradient(180deg,rgba(246,239,224,.05),rgba(246,239,224,.85))}
+.x-light .x-cat:hover .x-cthumb img{filter:saturate(1.04) brightness(.94)}
+.x-light .x-cnum{color:#9c7522}
+.x-light .x-ctitle{color:#2b211a}
+.x-light .x-cit{color:rgba(140,100,28,.92)}
+.x-light .x-cdesc{color:rgba(43,33,26,.62)}
+.x-light .x-carw{color:rgba(43,33,26,.5)}
+.x-light .x-cat:hover .x-carw{color:#9c7522}
+.x-light .x-foot{border-top-color:rgba(156,117,34,.28)}
+.x-light .x-foot a,.x-light .x-foot button.lnk{color:rgba(43,33,26,.7)}
+.x-light .x-foot a:hover,.x-light .x-foot button.lnk:hover{color:#9c7522}
+.x-light .x-foot .fnote{color:rgba(43,33,26,.45)}
+.x-light .x-settings{background:rgba(246,239,224,.88);border-color:rgba(156,117,34,.3)}
+.x-light .x-settings h4{color:#9c7522}
+.x-light .x-slabel{color:rgba(43,33,26,.5)}
+.x-light .x-seg button{border-color:rgba(156,117,34,.22);background:rgba(0,0,0,.02);color:rgba(43,33,26,.72)}
+.x-light .x-seg button:hover{border-color:rgba(156,117,34,.55);color:#2b211a}
+.x-light .x-seg button.on{background:rgba(156,117,34,.15);border-color:#9c7522;color:#7a5a14}
 
 @media (max-width:680px){
   .x-cue{display:none}
   .x-bottom{flex-direction:column;align-items:flex-start}
   .x-mono{display:none}
-  .x-switch{top:12px;right:12px;bottom:auto;left:auto;width:178px;padding:10px 10px 8px}
-  .x-switch .x-shint{display:none}
-  /* show the full painting from edge to edge — no crop, no Ken Burns */
-  .x-bg{object-fit:contain;object-position:center;animation:none;transform:none;background:#0c0a0b}
-  .x-veil{background:linear-gradient(180deg,rgba(7,6,10,.45) 0%,rgba(7,6,10,0) 26%,rgba(7,6,10,0) 60%,rgba(12,10,11,.92) 100%)}
+  .x-settings{top:12px;right:12px;bottom:auto;left:auto;width:168px;padding:10px}
 }
 @media (prefers-reduced-motion:reduce){
   .x-bg{animation:none}
@@ -289,7 +302,8 @@ const fadeIn = (el: HTMLImageElement | null) => {
 
 export function XPage() {
   const [view, setView] = useState<string | null>(parseHash())
-  const [trans, setTrans] = useState<TransType>('door')
+  const [transPref, setTransPref] = useState<TransPref>('random')
+  const [theme, setTheme] = useState<Theme>('dark')
   const [anim, setAnim] = useState<{ type: TransType; phase: 'cover' | 'reveal' } | null>(null)
   const introRef = useRef<HTMLElement>(null)
 
@@ -327,7 +341,7 @@ export function XPage() {
     const target = slug ? `#/x/${slug}` : '#/x'
     if (reduce) { window.location.hash = target; window.scrollTo(0, 0); return }
     if (anim) return
-    const type = trans
+    const type: TransType = transPref === 'random' ? (Math.random() < 0.5 ? 'door' : 'corridor') : transPref
     const [coverMs, revealMs] = DUR[type]
     setAnim({ type, phase: 'cover' })
     window.setTimeout(() => {
@@ -341,7 +355,7 @@ export function XPage() {
   const scrollToIntro = () => introRef.current?.scrollIntoView({ behavior: 'smooth' })
 
   return (
-    <div className="x-page">
+    <div className={`x-page${theme === 'light' ? ' x-light' : ''}`}>
       <style>{CSS}</style>
 
       {room ? (
@@ -482,27 +496,28 @@ export function XPage() {
       {anim && (
         <div className={`x-trans x-trans-${anim.type} ${anim.phase}`} aria-hidden="true">
           {anim.type === 'door' && <><span className="pn pl"><i className="kb" /></span><span className="pn pr"><i className="kb" /></span></>}
-          {anim.type === 'iris' && <span className="ir" />}
-          {anim.type === 'zoom' && <span className="zm" />}
           {anim.type === 'corridor' && <span className="cr" />}
         </div>
       )}
 
-      {/* ════ TRANSITION SWITCHER (evaluation) ════ */}
-      <div className="x-switch">
-        <h4>Geçiş <b>seç &amp; dene</b></h4>
-        <div className="x-sgrid">
-          {TRANS.map(o => (
-            <button
-              key={o.id}
-              className={`x-sbtn${trans === o.id ? ' on' : ''}`}
-              onClick={() => setTrans(o.id)}
-            >
-              {o.tr}<small>{o.en}</small>
-            </button>
-          ))}
+      {/* ════ SETTINGS ════ */}
+      <div className="x-settings">
+        <h4>Settings</h4>
+        <div className="x-srow">
+          <span className="x-slabel">Appearance</span>
+          <div className="x-seg">
+            <button className={theme === 'light' ? 'on' : ''} onClick={() => setTheme('light')}>Light</button>
+            <button className={theme === 'dark' ? 'on' : ''} onClick={() => setTheme('dark')}>Dark</button>
+          </div>
         </div>
-        <p className="x-shint">Bir koleksiyona tıkla — seçili geçişle açılır.</p>
+        <div className="x-srow">
+          <span className="x-slabel">Transition</span>
+          <div className="x-seg">
+            <button className={transPref === 'door' ? 'on' : ''} onClick={() => setTransPref('door')}>Door</button>
+            <button className={transPref === 'corridor' ? 'on' : ''} onClick={() => setTransPref('corridor')}>Corridor</button>
+            <button className={transPref === 'random' ? 'on' : ''} onClick={() => setTransPref('random')}>Random</button>
+          </div>
+        </div>
       </div>
     </div>
   )
