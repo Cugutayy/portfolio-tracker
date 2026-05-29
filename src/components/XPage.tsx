@@ -51,12 +51,11 @@ const CATEGORIES: Cat[] = [
 ]
 
 type TransType = 'door' | 'corridor'
-type TransPref = TransType | 'random'
 type Theme = 'dark' | 'light'
 // [coverMs, holdMs, revealMs] per transition — kept in sync with the CSS keyframe durations below.
 // holdMs keeps the closed cover on screen so its detail (the 4 framed artworks) can be seen.
 const DUR: Record<TransType, [number, number, number]> = {
-  door: [640, 620, 820], corridor: [560, 0, 720],
+  door: [640, 620, 820], corridor: [560, 560, 720],
 }
 
 function parseHash(): string | null {
@@ -221,14 +220,25 @@ const CSS = `
 @keyframes dOpL{from{transform:rotateY(0)}to{transform:rotateY(112deg)}}
 @keyframes dOpR{from{transform:rotateY(0)}to{transform:rotateY(-112deg)}}
 
-/* corridor */
-.x-trans-corridor .cr{position:absolute;inset:0;
+/* corridor — sliding wall with a lit doorway revealing the destination as a silhouette */
+.x-trans-corridor .cr{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   background:linear-gradient(90deg,#0a0708,#1a1214 50%,#0a0708);
   box-shadow:inset 70px 0 130px rgba(0,0,0,.65),inset -70px 0 130px rgba(0,0,0,.65)}
+/* the destination, dimmed to a silhouette at the end of the corridor */
+.x-trans-corridor .crsil{position:relative;width:min(34vw,330px);height:min(64vh,560px);
+  background-size:cover;background-position:center;border-radius:4px 4px 0 0;
+  filter:brightness(.26) contrast(1.12) saturate(.72);
+  border:1px solid rgba(216,178,90,.22);
+  box-shadow:0 0 0 1px rgba(0,0,0,.6),0 0 130px 12px rgba(216,178,90,.16),inset 0 0 90px rgba(0,0,0,.9)}
+/* warm glow spilling from the doorway */
+.x-trans-corridor .crsil::after{content:'';position:absolute;inset:-2px;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(60% 75% at 50% 40%,rgba(236,200,121,.16),transparent 70%)}
 .x-trans-corridor.cover .cr{animation:crIn .56s cubic-bezier(.7,0,.25,1) forwards}
+.x-trans-corridor.cover .crsil{animation:crSil .56s cubic-bezier(.16,1,.3,1) both}
 .x-trans-corridor.reveal .cr{animation:crOut .72s cubic-bezier(.16,1,.3,1) forwards}
 @keyframes crIn{from{transform:translateX(101%)}to{transform:translateX(0)}}
 @keyframes crOut{from{transform:translateX(0)}to{transform:translateX(-101%)}}
+@keyframes crSil{0%{opacity:0;transform:scale(.82)}55%{opacity:1}100%{opacity:1;transform:scale(1)}}
 
 /* ════ SETTINGS PANEL ════ */
 .x-settings{position:fixed;right:16px;bottom:16px;z-index:9500;width:214px;
@@ -318,10 +328,9 @@ const fadeIn = (el: HTMLImageElement | null) => {
 
 export function XPage() {
   const [view, setView] = useState<string | null>(parseHash())
-  const [transPref, setTransPref] = useState<TransPref>('random')
   const [theme, setTheme] = useState<Theme>('dark')
   const [settingsOpen, setSettingsOpen] = useState(true)
-  const [anim, setAnim] = useState<{ type: TransType; phase: 'cover' | 'reveal' } | null>(null)
+  const [anim, setAnim] = useState<{ type: TransType; phase: 'cover' | 'reveal'; img: string } | null>(null)
   const introRef = useRef<HTMLElement>(null)
 
   const room = view ? CATEGORIES.find(c => c.slug === view) ?? null : null
@@ -356,17 +365,19 @@ export function XPage() {
 
   const navigate = (slug: string | null) => {
     const target = slug ? `#/x/${slug}` : '#/x'
+    // the place we're heading to — used as the corridor silhouette / door frame
+    const targetImg = (slug ? CATEGORIES.find(c => c.slug === slug)?.img : null) ?? '/x/venus-2k.jpg'
     if (reduce) { window.location.hash = target; window.scrollTo(0, 0); return }
     if (anim) return
-    const type: TransType = transPref === 'random' ? (Math.random() < 0.5 ? 'door' : 'corridor') : transPref
+    const type: TransType = Math.random() < 0.5 ? 'door' : 'corridor'
     const [coverMs, holdMs, revealMs] = DUR[type]
-    setAnim({ type, phase: 'cover' })
+    setAnim({ type, phase: 'cover', img: targetImg })
     window.setTimeout(() => {
       // cover is fully closed now — hold a beat so the framed artworks register, then swap + reveal
       window.setTimeout(() => {
         window.location.hash = target
         window.scrollTo(0, 0)
-        setAnim({ type, phase: 'reveal' })
+        setAnim({ type, phase: 'reveal', img: targetImg })
         window.setTimeout(() => setAnim(null), revealMs)
       }, holdMs)
     }, coverMs)
@@ -375,7 +386,8 @@ export function XPage() {
   const scrollToIntro = () => introRef.current?.scrollIntoView({ behavior: 'smooth' })
 
   return (
-    <div className={`x-page${theme === 'light' ? ' x-light' : ''}`}>
+    // lang="en" forces dotless-I casing for every uppercase label (no Turkish İ anywhere on this page)
+    <div className={`x-page${theme === 'light' ? ' x-light' : ''}`} lang="en">
       <style>{CSS}</style>
 
       {room ? (
@@ -517,13 +529,17 @@ export function XPage() {
       {anim && (
         <div className={`x-trans x-trans-${anim.type} ${anim.phase}`} aria-hidden="true">
           {anim.type === 'door' && <><span className="pn pl"><i className="kb" /></span><span className="pn pr"><i className="kb" /></span></>}
-          {anim.type === 'corridor' && <span className="cr" />}
+          {anim.type === 'corridor' && (
+            <span className="cr">
+              <span className="crsil" style={{ backgroundImage: `url(${anim.img})` }} />
+            </span>
+          )}
         </div>
       )}
 
       {/* ════ SETTINGS ════ */}
       {settingsOpen ? (
-        <div className="x-settings" lang="en">
+        <div className="x-settings">
           <h4>Settings
             <button className="x-sclose" onClick={() => setSettingsOpen(false)} aria-label="Close settings">×</button>
           </h4>
@@ -532,14 +548,6 @@ export function XPage() {
             <div className="x-seg">
               <button className={theme === 'light' ? 'on' : ''} onClick={() => setTheme('light')}>Light</button>
               <button className={theme === 'dark' ? 'on' : ''} onClick={() => setTheme('dark')}>Dark</button>
-            </div>
-          </div>
-          <div className="x-srow">
-            <span className="x-slabel">Transition</span>
-            <div className="x-seg">
-              <button className={transPref === 'door' ? 'on' : ''} onClick={() => setTransPref('door')}>Door</button>
-              <button className={transPref === 'corridor' ? 'on' : ''} onClick={() => setTransPref('corridor')}>Corridor</button>
-              <button className={transPref === 'random' ? 'on' : ''} onClick={() => setTransPref('random')}>Random</button>
             </div>
           </div>
         </div>
