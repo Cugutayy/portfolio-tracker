@@ -17,6 +17,7 @@
     "sniffer:install": "cd tools/albion-sniffer && npm install"
   },
   "dependencies": {
+    "@google/model-viewer": "^4.2.0",
     "@paper-design/shaders-react": "^0.0.71",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

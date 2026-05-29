@@ -1,4 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
+import '@google/model-viewer'
+
+// <model-viewer> is a custom element — declare it for JSX/TS
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      'model-viewer': { [key: string]: any; children?: React.ReactNode; style?: React.CSSProperties; className?: string }
+    }
+  }
+}
 
 // ═══════════════════════════════════════════════════
 // X — cinematic digital-atlas page
@@ -9,7 +20,18 @@ import { useEffect, useRef, useState } from 'react'
 // ═══════════════════════════════════════════════════
 
 type Art = { title: string; artist: string; year: string; museum: string; medium: string }
-type Cat = { n: string; slug: string; tr: string; it: string; d: string; img: string; objPos: string; art: Art }
+type Cat = { n: string; slug: string; tr: string; it: string; d: string; img: string; objPos: string; art: Art; model?: string }
+
+// REALISTIC walkable 3D scans (Sketchfab photogrammetry embeds) — placeholders until the
+// user's own Scaniverse captures drop into /public/x/models/ (those use room.model + <model-viewer>).
+type Scan = { id: string; title: string; author: string }
+const SKETCHFAB: Record<string, Scan> = {
+  // A REAL walkable museum gallery with Dutch/Flemish Golden Age paintings on the walls.
+  sanat: { id: '231fdb3e9e354c6faaa3c250f8c9988f', title: 'The Picture Gallery', author: 'The Hallwyl Museum' },
+}
+const sketchfabSrc = (id: string) =>
+  `https://sketchfab.com/models/${id}/embed?autostart=1&preload=1&ui_theme=dark` +
+  `&ui_infos=0&ui_controls=1&ui_stop=0&ui_hint=0&ui_ar=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=1&dnt=1`
 
 const CATEGORIES: Cat[] = [
   {
@@ -77,6 +99,28 @@ const CSS = `
   z-index:0;opacity:0;transition:opacity 1.6s cubic-bezier(.16,1,.3,1);
   animation:xKen 40s ease-in-out infinite alternate;will-change:transform,opacity}
 .x-bg.ready{opacity:1}
+/* ════ 3D MODEL VIEWER ════ */
+.x-mv{opacity:1;animation:none;border:0;background-color:transparent;--poster-color:transparent;
+  --progress-bar-color:#d8b25a;--progress-mask:transparent}
+iframe.x-mv{display:block;background:#0c0a0b}
+.x-credit{position:absolute;right:18px;bottom:64px;z-index:4;
+  font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(243,234,214,.5);text-decoration:none;padding:5px 10px;border-radius:999px;
+  background:rgba(13,11,12,.5);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(216,178,90,.16);transition:color .3s,border-color .3s}
+.x-credit:hover{color:rgba(243,234,214,.85);border-color:rgba(216,178,90,.4)}
+.x-hero-3d .x-veil{background:
+  linear-gradient(180deg,rgba(7,6,10,.35) 0%,rgba(7,6,10,0) 26%,rgba(7,6,10,0) 58%,rgba(12,10,11,.88) 100%),
+  radial-gradient(120% 90% at 50% 45%,rgba(0,0,0,0) 58%,rgba(0,0,0,.4) 100%)}
+/* let drags reach the model; keep buttons/links clickable */
+.x-hero-3d .x-frame{pointer-events:none}
+.x-hero-3d .x-frame button,.x-hero-3d .x-frame a{pointer-events:auto}
+.x-3dtag{position:absolute;top:18px;left:50%;transform:translateX(-50%);z-index:4;pointer-events:none;
+  display:inline-flex;align-items:center;gap:8px;padding:7px 15px;border-radius:999px;
+  background:rgba(13,11,12,.7);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(216,178,90,.3);font-family:'DM Mono',monospace;font-size:.56rem;
+  letter-spacing:.22em;text-transform:uppercase;color:rgba(243,234,214,.82)}
+.x-3dtag .x-dot{position:relative}
 .x-veil{position:absolute;inset:0;z-index:1;pointer-events:none;
   background:
     linear-gradient(180deg,rgba(7,6,10,.55) 0%,rgba(7,6,10,0) 22%,rgba(7,6,10,0) 52%,rgba(12,10,11,.9) 100%),
@@ -334,6 +378,10 @@ export function XPage() {
   const introRef = useRef<HTMLElement>(null)
 
   const room = view ? CATEGORIES.find(c => c.slug === view) ?? null : null
+  // self-hosted Scaniverse GLB (model-viewer) takes priority; otherwise a realistic Sketchfab scan
+  const model = room?.model
+  const scan = room && !model ? SKETCHFAB[room.slug] : undefined
+  const is3d = Boolean(model || scan)
 
   // title
   useEffect(() => {
@@ -392,16 +440,53 @@ export function XPage() {
 
       {room ? (
         /* ════════ ROOM ════════ */
-        <section className="x-hero" key={room.slug}>
-          <img
-            className="x-bg"
-            ref={fadeIn}
-            src={room.img}
-            alt={`${room.art.artist} — ${room.art.title}`}
-            decoding="async"
-          />
+        <section className={`x-hero${is3d ? ' x-hero-3d' : ''}`} key={room.slug}>
+          {model ? (
+            // user's own Scaniverse capture — class= (NOT className) so React 18 sets it on the custom element
+            <model-viewer
+              class="x-bg x-mv"
+              src={model}
+              alt={`${room.art.artist} — ${room.art.title}`}
+              camera-controls=""
+              auto-rotate=""
+              auto-rotate-delay="800"
+              rotation-per-second="16deg"
+              interaction-prompt="none"
+              shadow-intensity="1"
+              exposure="1.05"
+              ar=""
+            />
+          ) : scan ? (
+            <iframe
+              className="x-bg x-mv"
+              title={`${scan.title} — ${scan.author}`}
+              src={sketchfabSrc(scan.id)}
+              allow="autoplay; fullscreen; xr-spatial-tracking"
+              allowFullScreen
+              loading="lazy"
+            />
+          ) : (
+            <img
+              className="x-bg"
+              ref={fadeIn}
+              src={room.img}
+              alt={`${room.art.artist} — ${room.art.title}`}
+              decoding="async"
+            />
+          )}
           <div className="x-veil" />
           <div className="x-grain" />
+          {is3d && (
+            <div className="x-3dtag"><span className="x-dot" />
+              3D · {model ? 'drag to rotate' : 'walk · drag to explore'}
+            </div>
+          )}
+          {scan && (
+            <a className="x-credit" href={`https://sketchfab.com/3d-models/${scan.id}`}
+               target="_blank" rel="noopener noreferrer">
+              3D scan · {scan.author} · Sketchfab
+            </a>
+          )}
           <div className="x-frame">
             <header className="x-top">
               <button className="x-brand" onClick={() => navigate(null)}>
