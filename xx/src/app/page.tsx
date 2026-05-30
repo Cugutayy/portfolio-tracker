@@ -97,19 +97,6 @@ export default function Home() {
             ──────────────────────────────────────────
           </div>
 
-          <p
-            style={{
-              color: "var(--ink-soft)",
-              fontSize: "1.04rem",
-              lineHeight: 1.62,
-              maxWidth: 470,
-            }}
-          >
-            Herkes 1 milyon TL sanal bakiyeyle başlar. En fazla 5 varlık seç —
-            kripto, emtia, S&amp;P 500, NASDAQ 100, BIST 100. Fiyatlar gerçek
-            piyasadan akar. En iyi getiri zirveye çıkar.
-          </p>
-
           <div style={{ display: "flex", gap: 12, marginTop: 30, flexWrap: "wrap" }}>
             <Link
               href="/join"
