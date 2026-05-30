@@ -112,6 +112,9 @@ export function PortfolioClient({
 
   const [selected, setSelected] = useState<string>("BTC");
   const [amount, setAmount] = useState<string>("");
+  const [mode, setMode] = useState<"buy" | "sell">("buy");
+  /** When the user picked "Tümü", sell the exact held quantity (no ₺ dust). */
+  const [sellExact, setSellExact] = useState(false);
   const [marketTab, setMarketTab] = useState<AssetType>("crypto");
   const [marketQuery, setMarketQuery] = useState("");
 
@@ -200,11 +203,27 @@ export function PortfolioClient({
     );
   }, [marketTab, marketQuery]);
 
-  function pickAsset(ticker: string) {
+  function pickAsset(ticker: string, asMode: "buy" | "sell" = "buy") {
+    const held = pf?.holdings.some((h) => h.ticker === ticker) ?? false;
     setSelected(ticker);
     setAmount("");
+    setSellExact(false);
+    setMode(asMode === "sell" && held ? "sell" : "buy");
     setMsg(null);
     tradeRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  /** Sell a fraction (0–1) of the held position. 1 = exact full quantity. */
+  function setSellFraction(frac: number) {
+    if (!heldSelected) return;
+    setMode("sell");
+    if (frac >= 1) {
+      setSellExact(true);
+      setAmount(String(Math.floor(heldSelected.valueTry)));
+    } else {
+      setSellExact(false);
+      setAmount(String(Math.floor(heldSelected.valueTry * frac)));
+    }
   }
 
   async function doTrade(side: "buy" | "sell") {
@@ -216,10 +235,16 @@ export function PortfolioClient({
     }
     setBusy(true);
     try {
+      // Sell: prefer the exact held quantity when "Tümü" was chosen so no
+      // dust remains; otherwise derive quantity from the ₺ amount.
+      const sellQty =
+        sellExact && heldSelected
+          ? heldSelected.quantity
+          : amt / (livePrice ?? 1);
       const body =
         side === "buy"
           ? { ticker: selected, side, amountTry: amt }
-          : { ticker: selected, side, quantity: amt / (livePrice ?? 1) };
+          : { ticker: selected, side, quantity: sellQty };
       const r = await fetch("/api/trade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -231,6 +256,8 @@ export function PortfolioClient({
       } else {
         setPf(j.portfolio);
         setAmount("");
+        setSellExact(false);
+        if (side === "sell") setMode("buy");
         setMsg({
           kind: "ok",
           text: `${side === "buy" ? "Alındı" : "Satıldı"}: ${num(j.trade.quantity, 4)} ${selected} · ${fmtTry(j.trade.amountTry)}`,
@@ -242,11 +269,6 @@ export function PortfolioClient({
     } finally {
       setBusy(false);
     }
-  }
-
-  function sellAll() {
-    if (!heldSelected) return;
-    setAmount(String(Math.floor(heldSelected.valueTry)));
   }
 
   function openEditor() {
@@ -309,6 +331,22 @@ export function PortfolioClient({
     );
 
   const up = (pf?.totalReturnPct ?? 0) >= 0;
+
+  // ── trade-panel derived display ──
+  const sp = prices[selected];
+  const amtNum = Number((amount || "").replace(",", ".")) || 0;
+  // Quantity implied by the current input (or exact held qty when "Tümü").
+  const tradeQty =
+    mode === "sell" && sellExact && heldSelected
+      ? heldSelected.quantity
+      : livePrice
+        ? amtNum / livePrice
+        : 0;
+  const tradeValueTry = tradeQty * (livePrice ?? 0);
+  const tradeValueNative =
+    sp && livePrice ? tradeValueTry * (sp.nativePrice / livePrice) : 0;
+  const canSell = !!heldSelected && (pf?.tradesLeft ?? 0) > 0;
+  const noTradesLeft = (pf?.tradesLeft ?? 0) <= 0;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -472,7 +510,7 @@ export function PortfolioClient({
         <div className="glass" style={{ padding: 24 }}>
           <div className="eyebrow" style={{ marginBottom: 12 }}>Dağılım</div>
           {slices.length > 0 ? (
-            <div style={{ display: "flex", justifyContent: "center", padding: "8px 40px 16px" }}>
+            <div className="pw-wrap" style={{ display: "flex", justifyContent: "center", padding: "8px 40px 16px" }}>
               <PortfolioWheel slices={slices} initials={initials} gradient={gradFor(handle)} image={image} size={240} />
             </div>
           ) : (
@@ -503,7 +541,7 @@ export function PortfolioClient({
                     <button
                       className="btn"
                       style={{ padding: ".35rem .7rem", fontSize: ".72rem" }}
-                      onClick={() => { pickAsset(h.ticker); setAmount(String(Math.floor(h.valueTry))); }}
+                      onClick={() => { pickAsset(h.ticker, "sell"); }}
                     >
                       Sat
                     </button>
@@ -537,33 +575,107 @@ export function PortfolioClient({
             </div>
           </div>
 
-          <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>Tutar (₺)</label>
-          <input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            inputMode="decimal"
-            placeholder="örn. 100000"
-            className="mono"
-            style={{ width: "100%", padding: "11px 12px", borderRadius: 10, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: "1rem", marginBottom: 10 }}
-          />
-
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 6 }}>
-            {[0.25, 0.5, 1].map((f) => (
-              <button key={f} className="btn" style={{ padding: ".3rem .6rem", fontSize: ".7rem" }}
-                onClick={() => pf && setAmount(String(Math.floor(pf.cashTry * f)))}>
-                Nakit %{f * 100}
-              </button>
-            ))}
-            {heldSelected && (
-              <button className="btn" style={{ padding: ".3rem .6rem", fontSize: ".7rem" }} onClick={sellAll}>
-                Tümünü sat
-              </button>
-            )}
+          {/* AL / SAT mode toggle */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 14, padding: 4, borderRadius: 12, background: "var(--fill)", border: "1px solid var(--card-border)" }}>
+            <button
+              onClick={() => { setMode("buy"); setAmount(""); setSellExact(false); setMsg(null); }}
+              style={{
+                flex: 1, padding: ".5rem", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: ".85rem",
+                border: "none", transition: "all .15s",
+                background: mode === "buy" ? "var(--green-t)" : "transparent",
+                color: mode === "buy" ? "#fff" : "var(--muted)",
+              }}
+            >
+              Al
+            </button>
+            <button
+              onClick={() => { if (canSell) { setMode("sell"); setAmount(""); setSellExact(false); setMsg(null); } }}
+              disabled={!canSell}
+              style={{
+                flex: 1, padding: ".5rem", borderRadius: 9, cursor: canSell ? "pointer" : "not-allowed", fontWeight: 600, fontSize: ".85rem",
+                border: "none", transition: "all .15s", opacity: canSell ? 1 : 0.4,
+                background: mode === "sell" ? "var(--red-t)" : "transparent",
+                color: mode === "sell" ? "#fff" : "var(--muted)",
+              }}
+            >
+              Sat
+            </button>
           </div>
 
-          {amount && livePrice != null && (
-            <div className="mono" style={{ fontSize: ".68rem", color: "var(--muted)", marginBottom: 12 }}>
-              ≈ {num(Number(amount.replace(",", ".")) / livePrice, 6)} {selected}
+          {/* position summary (only relevant when selling / holding) */}
+          {heldSelected && (
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 12, fontSize: ".72rem" }}>
+              <span style={{ color: "var(--muted)" }}>Elinde</span>
+              <span className="mono" style={{ color: "var(--ink)" }}>
+                {num(heldSelected.quantity, 4)} {selected} · {fmtTry(heldSelected.valueTry)}
+                <span style={{ color: heldSelected.pnlTry >= 0 ? "var(--green-t)" : "var(--red-t)", marginLeft: 8 }}>
+                  {heldSelected.pnlTry >= 0 ? "+" : ""}{num(heldSelected.pnlPct)}%
+                </span>
+              </span>
+            </div>
+          )}
+
+          {mode === "buy" ? (
+            <>
+              <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>Ne kadar alacaksın? (₺)</label>
+              <input
+                value={amount}
+                onChange={(e) => { setAmount(e.target.value); setSellExact(false); }}
+                inputMode="decimal"
+                placeholder="örn. 100000"
+                className="mono"
+                style={{ width: "100%", padding: "11px 12px", borderRadius: 10, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: "1rem", marginBottom: 10 }}
+              />
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                {[0.25, 0.5, 1].map((f) => (
+                  <button key={f} className="btn" style={{ padding: ".3rem .6rem", fontSize: ".7rem" }}
+                    onClick={() => pf && setAmount(String(Math.floor(pf.cashTry * f)))}>
+                    {f === 1 ? "Tüm nakit" : `Nakit %${f * 100}`}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>Pozisyonun ne kadarını satacaksın?</label>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+                {[0.25, 0.5, 0.75, 1].map((f) => {
+                  const active = sellExact ? f === 1 : amount !== "" && heldSelected != null && Math.floor(heldSelected.valueTry * f) === amtNum;
+                  return (
+                    <button key={f} onClick={() => setSellFraction(f)}
+                      style={{
+                        flex: 1, minWidth: 56, padding: ".5rem", borderRadius: 9, cursor: "pointer", fontSize: ".76rem", fontWeight: 600,
+                        border: active ? "1px solid var(--red-t)" : "1px solid var(--card-border)",
+                        background: active ? "rgba(255,122,133,0.12)" : "var(--fill)",
+                        color: active ? "var(--red-t)" : "var(--ink)", transition: "all .15s",
+                      }}>
+                      {f === 1 ? "Tümü" : `%${f * 100}`}
+                    </button>
+                  );
+                })}
+              </div>
+              <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>veya tutar gir (₺)</label>
+              <input
+                value={amount}
+                onChange={(e) => { setAmount(e.target.value); setSellExact(false); }}
+                inputMode="decimal"
+                placeholder="örn. 50000"
+                className="mono"
+                style={{ width: "100%", padding: "11px 12px", borderRadius: 10, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: "1rem", marginBottom: 10 }}
+              />
+            </>
+          )}
+
+          {/* live preview of what this trade does */}
+          {amtNum > 0 && livePrice != null && (
+            <div className="mono" style={{ fontSize: ".72rem", color: "var(--ink)", marginBottom: 12, padding: "8px 10px", borderRadius: 9, background: "var(--fill)", border: "1px solid var(--card-border)" }}>
+              {mode === "buy" ? "Alınacak" : "Satılacak"}: <strong>{num(tradeQty, 6)} {selected}</strong>
+              <span style={{ color: "var(--muted)" }}>
+                {" "}≈ {fmtTry(tradeValueTry)}
+                {sp && sp.nativeCcy !== "TRY" && selectedAsset?.type !== "index" && (
+                  <> · {fmtAssetPrice(tradeValueNative, sp.nativeCcy)}</>
+                )}
+              </span>
             </div>
           )}
 
@@ -573,18 +685,19 @@ export function PortfolioClient({
             </div>
           )}
 
-          <div style={{ display: "flex", gap: 10 }}>
-            <button className="btn btn-accent" style={{ flex: 1, padding: ".8rem", opacity: busy ? 0.6 : 1 }}
-              disabled={busy || (pf?.tradesLeft ?? 0) <= 0} onClick={() => doTrade("buy")}>
-              Al
+          {mode === "buy" ? (
+            <button className="btn btn-accent" style={{ width: "100%", padding: ".85rem", fontSize: ".95rem", opacity: busy || noTradesLeft ? 0.55 : 1 }}
+              disabled={busy || noTradesLeft || amtNum <= 0} onClick={() => doTrade("buy")}>
+              {busy ? "İşleniyor…" : `${selected} Al`}
             </button>
-            <button className="btn" style={{ flex: 1, padding: ".8rem", opacity: busy || !heldSelected ? 0.5 : 1 }}
-              disabled={busy || !heldSelected || (pf?.tradesLeft ?? 0) <= 0} onClick={() => doTrade("sell")}>
-              Sat
+          ) : (
+            <button className="btn" style={{ width: "100%", padding: ".85rem", fontSize: ".95rem", fontWeight: 600, background: "var(--red-t)", color: "#fff", border: "none", opacity: busy || !canSell || amtNum <= 0 ? 0.55 : 1 }}
+              disabled={busy || !canSell || amtNum <= 0} onClick={() => doTrade("sell")}>
+              {busy ? "İşleniyor…" : `${selected} Sat`}
             </button>
-          </div>
-          <div className="eyebrow" style={{ marginTop: 10, textAlign: "center", color: (pf?.tradesLeft ?? 0) > 0 ? "var(--muted)" : "var(--red-t)" }}>
-            {(pf?.tradesLeft ?? 0) > 0 ? `Bugün ${pf?.tradesLeft} işlem hakkın kaldı` : "Günlük işlem hakkın doldu"}
+          )}
+          <div className="eyebrow" style={{ marginTop: 10, textAlign: "center", color: noTradesLeft ? "var(--red-t)" : "var(--muted)" }}>
+            {!noTradesLeft ? `Bugün ${pf?.tradesLeft} işlem hakkın kaldı` : "Günlük işlem hakkın doldu"}
           </div>
         </div>
       </div>
