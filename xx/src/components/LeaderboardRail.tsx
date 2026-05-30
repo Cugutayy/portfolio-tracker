@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { PortfolioRing, type RingSlice } from "./PortfolioRing";
 
@@ -12,7 +14,17 @@ interface Leader {
   slices: RingSlice[];
 }
 
-// Demo veriler — gerçek API bağlanınca /api/leaderboard'dan beslenecek.
+interface LeaderApiRow {
+  name: string;
+  handle: string;
+  image: string | null;
+  returnPct: number;
+  totalTry: number;
+  cashTry: number;
+  slices: { ticker: string; color: string; weight: number; valueTry: number }[];
+}
+
+// Fallback teaser — only shown before any real trader exists.
 const DEMO: Leader[] = [
   {
     rank: 1,
@@ -61,7 +73,63 @@ const DEMO: Leader[] = [
   },
 ];
 
+function toLeaders(rows: LeaderApiRow[]): Leader[] {
+  return rows.slice(0, 4).map((r, i) => {
+    const slices: RingSlice[] = r.slices
+      .slice(0, 4)
+      .map((s) => ({ label: s.ticker, weight: s.weight, color: s.color }));
+    if (r.cashTry > 0 && r.totalTry > 0) {
+      slices.push({
+        label: "NAKİT",
+        weight: r.cashTry / r.totalTry,
+        color: "rgba(26,24,19,0.16)",
+      });
+    }
+    return {
+      rank: i + 1,
+      name: r.name,
+      handle: r.handle,
+      image: r.image,
+      returnPct: r.returnPct,
+      slices,
+    };
+  });
+}
+
 export function LeaderboardRail() {
+  const [leaders, setLeaders] = useState<Leader[] | null>(null);
+  const [isReal, setIsReal] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const r = await fetch("/api/leaderboard", { cache: "no-store" });
+        const j = await r.json();
+        const rows: LeaderApiRow[] = j?.leaderboard ?? [];
+        if (!alive) return;
+        if (Array.isArray(rows) && rows.length > 0) {
+          setLeaders(toLeaders(rows));
+          setIsReal(true);
+        } else {
+          setLeaders(DEMO);
+          setIsReal(false);
+        }
+      } catch {
+        if (alive) {
+          setLeaders(DEMO);
+          setIsReal(false);
+        }
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const list = leaders ?? DEMO;
+  const loading = leaders === null;
+
   return (
     <div className="glass" style={{ padding: 22, width: "100%", maxWidth: 420 }}>
       <div
@@ -70,7 +138,7 @@ export function LeaderboardRail() {
           alignItems: "center",
           justifyContent: "space-between",
           paddingBottom: 14,
-          borderBottom: "1px solid var(--rule, rgba(255,255,255,0.08))",
+          borderBottom: "1px solid var(--rule)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -78,16 +146,15 @@ export function LeaderboardRail() {
           <span className="eyebrow">Canlı liderlik</span>
         </div>
         <span className="mono" style={{ fontSize: ".58rem", color: "var(--muted)" }}>
-          tüm zamanlar
+          en değerli
         </span>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        {DEMO.map((l, i) => {
+      <div style={{ display: "flex", flexDirection: "column", opacity: loading ? 0.55 : 1, transition: "opacity .3s" }}>
+        {list.map((l, i) => {
           const up = l.returnPct >= 0;
-          return (
+          const row = (
             <motion.div
-              key={l.handle}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.15 + i * 0.1, ease: [0.16, 1, 0.3, 1] }}
@@ -96,10 +163,7 @@ export function LeaderboardRail() {
                 alignItems: "center",
                 gap: 14,
                 padding: "14px 0",
-                borderBottom:
-                  i < DEMO.length - 1
-                    ? "1px solid var(--rule, rgba(255,255,255,0.05))"
-                    : "none",
+                borderBottom: i < list.length - 1 ? "1px solid var(--rule)" : "none",
               }}
             >
               <span
@@ -138,7 +202,7 @@ export function LeaderboardRail() {
                 style={{
                   fontSize: ".92rem",
                   fontWeight: 600,
-                  color: up ? "var(--green-t, #4ade80)" : "var(--red-t, #f87171)",
+                  color: up ? "var(--green-t)" : "var(--red-t)",
                 }}
               >
                 {up ? "+" : ""}
@@ -146,12 +210,23 @@ export function LeaderboardRail() {
               </div>
             </motion.div>
           );
+
+          // Real traders link to their public profile; demo rows are inert.
+          return isReal ? (
+            <Link key={l.handle} href={`/u/${l.handle}`} style={{ textDecoration: "none", color: "inherit" }}>
+              {row}
+            </Link>
+          ) : (
+            <div key={l.handle}>{row}</div>
+          );
         })}
       </div>
 
       <div style={{ paddingTop: 12 }}>
         <span className="mono" style={{ fontSize: ".55rem", color: "var(--muted)", opacity: 0.6 }}>
-          Örnek veri — yarışma açılınca gerçek portföyler listelenir.
+          {isReal
+            ? "Canlı portföyler — gerçek piyasa fiyatlarıyla değerlenir."
+            : "Örnek veri — yarışma açılınca gerçek portföyler listelenir."}
         </span>
       </div>
     </div>
