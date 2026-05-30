@@ -357,6 +357,10 @@ export function PortfolioClient({
   const atHoldingLimit =
     !heldSelected && (pf?.holdings.length ?? 0) >= 5;
   const insufficientCash = mode === "buy" && amtNum > cashTry + 1e-6;
+  // Selling more ₺ than the position is worth: the trade clamps to the full
+  // holding, so tell the user that's what will happen.
+  const sellOverflow =
+    mode === "sell" && !!heldSelected && !sellExact && amtNum > heldSelected.valueTry + 1e-6;
   // Reason the primary action is blocked (shown as an inline hint).
   const buyBlock = noTradesLeft
     ? "Günlük işlem hakkın doldu."
@@ -707,6 +711,13 @@ export function PortfolioClient({
           {mode === "buy" && buyBlock && (
             <div style={{ fontSize: ".75rem", marginBottom: 12, padding: "8px 10px", borderRadius: 9, background: "rgba(194,59,43,0.08)", border: "1px solid rgba(194,59,43,0.22)", color: "var(--red-t)" }}>
               {buyBlock}
+            </div>
+          )}
+
+          {/* sell overflow hint */}
+          {sellOverflow && heldSelected && (
+            <div style={{ fontSize: ".75rem", marginBottom: 12, padding: "8px 10px", borderRadius: 9, background: "var(--fill)", border: "1px solid var(--card-border)", color: "var(--muted)" }}>
+              Pozisyonundan fazla girdin — tümü ({fmtTry(heldSelected.valueTry)}) satılacak.
             </div>
           )}
 
