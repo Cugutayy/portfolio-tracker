@@ -73,9 +73,6 @@ export default function Home() {
             <span className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", letterSpacing: ".16em" }}>
               SAYI No. 1 · {DATELINE.toLocaleUpperCase("tr")}
             </span>
-            <span className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", letterSpacing: ".16em" }}>
-              FİYATLAR CANLI · COINGECKO + YAHOO FINANCE
-            </span>
           </div>
         </div>
 
