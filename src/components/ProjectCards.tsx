@@ -111,6 +111,20 @@ export function ProjectCards({ t }: Props) {
             <Tags items={['3D Capture','Immersive','Cinematic','Archive']} />
           </GlassCard>
         </ScrollReveal>
+
+        <ScrollReveal delay={640} style={{ height: '100%' }}>
+          <GlassCard href="https://xx-arena.vercel.app" label="08" accent="#a78bfa">
+            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>{t('p8t')} <em style={{ color:'#a78bfa', fontStyle:'italic', fontWeight:300 }}>×</em></h3>
+            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>{t('p8d')}</p>
+            <PortfolioMini />
+            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
+              <Stat label="Başlangıç" value="1M ₺" />
+              <Stat label="Maks" value="5" />
+              <LiveDot label="WIP" />
+            </div>
+            <Tags items={['Next.js 16','Auth','Drizzle','Live API']} />
+          </GlassCard>
+        </ScrollReveal>
       </div>
     </section>
   )
@@ -355,6 +369,60 @@ function AtlasMini() {
           <animateMotion dur={`${n.d}s`} repeatCount="indefinite" begin={`${n.b}s`} path="M132,40 a48,16 0 1,0 96,0 a48,16 0 1,0 -96,0"/>
           <rect x="-2.5" y="-2.5" width="5" height="5" rx="1" fill="#4f8ff7"/>
           <rect x="-4" y="-4" width="8" height="8" rx="1.5" fill="none" stroke="#4f8ff7" strokeWidth=".5" opacity=".5"/>
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+// ═══════════════════════════════════════════
+// PORTFOLIO MINI (XX) · allocation donut + ranked portfolios
+// ═══════════════════════════════════════════
+function PortfolioMini() {
+  // weighted allocation slices (sum=1) → arc lengths on a 22r ring (C≈138.2)
+  const C = 2 * Math.PI * 22
+  const segs = [
+    { w:.34, c:'#f7931a' }, // BTC
+    { w:.26, c:'#a78bfa' }, // NVDA-ish accent
+    { w:.20, c:'#c8a064' }, // gold
+    { w:.12, c:'#e0556b' }, // red
+    { w:.08, c:'#4f8ff7' }, // ETH
+  ]
+  let acc = 0
+  return (
+    <svg style={{width:'100%',height:50,display:'block'}} viewBox="0 0 360 80" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <radialGradient id="px" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#a78bfa" stopOpacity=".22"/>
+          <stop offset="100%" stopColor="#a78bfa" stopOpacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="180" cy="40" r="32" fill="url(#px)"/>
+      {/* allocation ring */}
+      <g transform="rotate(-90 180 40)">
+        <circle cx="180" cy="40" r="22" fill="none" stroke="var(--rule)" strokeWidth="5" opacity=".25"/>
+        {segs.map((s,i) => {
+          const len = s.w * C
+          const off = acc * C
+          acc += s.w
+          return (
+            <circle key={i} cx="180" cy="40" r="22" fill="none" stroke={s.c} strokeWidth="5"
+              strokeDasharray={`${len-1.5} ${C-len+1.5}`} strokeDashoffset={-off} strokeLinecap="round" opacity=".85">
+              <animate attributeName="opacity" values=".55;.95;.55" dur="3.5s" begin={`${i*.4}s`} repeatCount="indefinite"/>
+            </circle>
+          )
+        })}
+      </g>
+      {/* center avatar */}
+      <circle cx="180" cy="40" r="13" fill="var(--bg-2,#0e0f14)" stroke="#a78bfa" strokeWidth=".8" opacity=".9"/>
+      <circle cx="180" cy="36" r="4" fill="#a78bfa" opacity=".7"/>
+      <path d="M172,48 a8,6 0 0,1 16,0" fill="#a78bfa" opacity=".7"/>
+      {/* flanking ranked portfolio chips */}
+      {[{x:70,r:1,o:.5},{x:110,r:2,o:.7},{x:250,r:3,o:.7},{x:290,r:4,o:.5}].map((p,i) => (
+        <g key={i} opacity={p.o}>
+          <circle cx={p.x} cy="40" r="9" fill="none" stroke="#a78bfa" strokeWidth="1" opacity=".5"/>
+          <circle cx={p.x} cy="40" r="4" fill="#a78bfa" opacity=".4"/>
+          <animate attributeName="opacity" values={`${p.o};${p.o-.25};${p.o}`} dur="4s" begin={`${i*.5}s`} repeatCount="indefinite"/>
         </g>
       ))}
     </svg>
