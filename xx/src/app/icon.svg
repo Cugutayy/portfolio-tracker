@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="14" fill="#1a1813"/>
-  <text x="32" y="34" font-family="Georgia, 'Times New Roman', serif" font-weight="400" font-size="40" fill="#f1ede3" text-anchor="middle" dominant-baseline="central" letter-spacing="-2">XX</text>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#f1ede3" stroke-width="1.6"/>
+  <text x="32" y="30" font-family="Georgia, 'Times New Roman', serif" font-weight="400" font-size="26" fill="#f1ede3" text-anchor="middle" dominant-baseline="central" letter-spacing="-2">XX</text>
+  <polyline points="21,44 27,41 33,43 39,37 43,39" fill="none" stroke="#f1ede3" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
 </svg>
