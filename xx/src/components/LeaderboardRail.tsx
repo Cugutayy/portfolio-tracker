@@ -37,55 +37,6 @@ const gradFor = (s: string) => {
 const RING_PALETTE = ["#1f3d5c", "#b0763a", "#7a8450", "#9c4f3a", "#c8a064"];
 const CASH_COLOR = "rgba(26,24,19,0.16)";
 
-// Fallback teaser — only shown before any real trader exists.
-const DEMO: Leader[] = [
-  {
-    rank: 1,
-    name: "Mert A.",
-    handle: "mertcap",
-    returnPct: 24.7,
-    slices: [
-      { label: "NVDA", weight: 0.4, color: RING_PALETTE[0] },
-      { label: "BTC", weight: 0.3, color: RING_PALETTE[1] },
-      { label: "Altın", weight: 0.2, color: RING_PALETTE[2] },
-      { label: "ETH", weight: 0.1, color: RING_PALETTE[3] },
-    ],
-  },
-  {
-    rank: 2,
-    name: "Defne K.",
-    handle: "defnetrades",
-    returnPct: 18.3,
-    slices: [
-      { label: "S&P", weight: 0.45, color: RING_PALETTE[0] },
-      { label: "Altın", weight: 0.3, color: RING_PALETTE[1] },
-      { label: "ASELS", weight: 0.25, color: RING_PALETTE[2] },
-    ],
-  },
-  {
-    rank: 3,
-    name: "Can Y.",
-    handle: "canmacro",
-    returnPct: 11.6,
-    slices: [
-      { label: "BTC", weight: 0.5, color: RING_PALETTE[0] },
-      { label: "NASDAQ", weight: 0.3, color: RING_PALETTE[1] },
-      { label: "Gümüş", weight: 0.2, color: RING_PALETTE[2] },
-    ],
-  },
-  {
-    rank: 4,
-    name: "Elif S.",
-    handle: "elifvalue",
-    returnPct: -3.2,
-    slices: [
-      { label: "THYAO", weight: 0.4, color: RING_PALETTE[0] },
-      { label: "S&P", weight: 0.35, color: RING_PALETTE[1] },
-      { label: "Altın", weight: 0.25, color: RING_PALETTE[2] },
-    ],
-  },
-];
-
 function toLeaders(rows: LeaderApiRow[]): Leader[] {
   return rows.slice(0, 4).map((r, i) => {
     const slices: RingSlice[] = r.slices
@@ -115,7 +66,6 @@ function toLeaders(rows: LeaderApiRow[]): Leader[] {
 
 export function LeaderboardRail() {
   const [leaders, setLeaders] = useState<Leader[] | null>(null);
-  const [isReal, setIsReal] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -125,18 +75,9 @@ export function LeaderboardRail() {
         const j = await r.json();
         const rows: LeaderApiRow[] = j?.leaderboard ?? [];
         if (!alive) return;
-        if (Array.isArray(rows) && rows.length > 0) {
-          setLeaders(toLeaders(rows));
-          setIsReal(true);
-        } else {
-          setLeaders(DEMO);
-          setIsReal(false);
-        }
+        setLeaders(Array.isArray(rows) ? toLeaders(rows) : []);
       } catch {
-        if (alive) {
-          setLeaders(DEMO);
-          setIsReal(false);
-        }
+        if (alive) setLeaders([]);
       }
     })();
     return () => {
@@ -144,8 +85,9 @@ export function LeaderboardRail() {
     };
   }, []);
 
-  const list = leaders ?? DEMO;
+  const list = leaders ?? [];
   const loading = leaders === null;
+  const empty = !loading && list.length === 0;
 
   return (
     <div className="glass" style={{ padding: 22, width: "100%", maxWidth: 420 }}>
@@ -167,6 +109,19 @@ export function LeaderboardRail() {
         </span>
       </div>
 
+      {empty ? (
+        <div style={{ padding: "34px 8px 30px", textAlign: "center" }}>
+          <div className="display" style={{ fontSize: "1.15rem", marginBottom: 6 }}>
+            Arena henüz boş.
+          </div>
+          <div style={{ color: "var(--muted)", fontSize: ".82rem", lineHeight: 1.55, marginBottom: 16 }}>
+            İlk portföyü sen kur — zirvenin ilk ismi ol.
+          </div>
+          <Link href="/join" className="btn btn-accent" style={{ textDecoration: "none", padding: ".6rem 1.2rem", fontSize: ".82rem" }}>
+            Hemen başla →
+          </Link>
+        </div>
+      ) : (
       <div style={{ display: "flex", flexDirection: "column", opacity: loading ? 0.55 : 1, transition: "opacity .3s" }}>
         {list.map((l, i) => {
           const up = l.returnPct >= 0;
@@ -235,24 +190,22 @@ export function LeaderboardRail() {
             </motion.div>
           );
 
-          // Real traders link to their public profile; demo rows are inert.
-          return isReal ? (
+          return (
             <Link key={l.handle} href={`/u/${l.handle}`} style={{ textDecoration: "none", color: "inherit" }}>
               {row}
             </Link>
-          ) : (
-            <div key={l.handle}>{row}</div>
           );
         })}
       </div>
+      )}
 
-      <div style={{ paddingTop: 12 }}>
-        <span className="mono" style={{ fontSize: ".55rem", color: "var(--muted)", opacity: 0.6 }}>
-          {isReal
-            ? "Canlı portföyler — gerçek piyasa fiyatlarıyla değerlenir."
-            : "Örnek veri — yarışma açılınca gerçek portföyler listelenir."}
-        </span>
-      </div>
+      {!empty && (
+        <div style={{ paddingTop: 12 }}>
+          <span className="mono" style={{ fontSize: ".55rem", color: "var(--muted)", opacity: 0.6 }}>
+            Canlı portföyler — gerçek piyasa fiyatlarıyla değerlenir.
+          </span>
+        </div>
+      )}
     </div>
   );
 }
