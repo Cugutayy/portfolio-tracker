@@ -24,6 +24,13 @@ interface LeaderApiRow {
   slices: { ticker: string; color: string; weight: number; valueTry: number }[];
 }
 
+const gradFor = (s: string) => {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  const a = h % 360;
+  return `linear-gradient(135deg, hsl(${a} 55% 45%), hsl(${(a + 60) % 360} 55% 30%))`;
+};
+
 // Fallback teaser — only shown before any real trader exists.
 const DEMO: Leader[] = [
   {
@@ -178,7 +185,14 @@ export function LeaderboardRail() {
                 {l.rank}
               </span>
 
-              <PortfolioRing slices={l.slices} image={l.image} size={48} strokeWidth={6} />
+              <PortfolioRing
+                slices={l.slices}
+                image={l.image}
+                initials={l.name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase()}
+                gradient={gradFor(l.handle)}
+                size={48}
+                strokeWidth={6}
+              />
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div

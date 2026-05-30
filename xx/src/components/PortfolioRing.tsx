@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Avatar } from "./Avatar";
 
 export interface RingSlice {
   label: string;
@@ -11,6 +12,10 @@ export interface RingSlice {
 interface Props {
   slices: RingSlice[];
   image?: string | null;
+  /** Center portrait initials (shown when no photo). */
+  initials?: string;
+  /** Center portrait gradient (shown when no photo). */
+  gradient?: string;
   size?: number;
   strokeWidth?: number;
   /** Center label under/over the photo, optional */
@@ -25,6 +30,8 @@ interface Props {
 export function PortfolioRing({
   slices,
   image,
+  initials,
+  gradient,
   size = 220,
   strokeWidth = 16,
   centerTop,
@@ -97,37 +104,12 @@ export function PortfolioRing({
           gap: 2,
         }}
       >
-        <div
-          style={{
-            width: photoR * 2,
-            height: photoR * 2,
-            borderRadius: "50%",
-            overflow: "hidden",
-            border: "1px solid rgba(255,255,255,0.55)",
-            boxShadow: "0 6px 24px rgba(26,24,19,0.18)",
-            background:
-              "radial-gradient(circle at 30% 25%, #2a2e38, #11131a)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={image}
-              alt=""
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            <span
-              className="display"
-              style={{ fontSize: photoR * 0.7, color: "var(--muted)" }}
-            >
-              ◴
-            </span>
-          )}
-        </div>
+        <Avatar
+          initials={initials ?? "?"}
+          gradient={gradient ?? "linear-gradient(135deg, #3a362d, #1a1813)"}
+          image={image}
+          size={photoR * 2}
+        />
         {(centerTop || centerBottom) && (
           <div style={{ textAlign: "center", marginTop: 6 }}>
             {centerTop && (
