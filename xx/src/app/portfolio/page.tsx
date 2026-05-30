@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import { PortfolioClient } from "@/components/PortfolioClient";
+import { Logo } from "@/components/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -28,10 +29,10 @@ export default async function PortfolioPage() {
       >
         <Link
           href="/"
-          className="display"
-          style={{ fontSize: "1.5rem", textDecoration: "none", color: "var(--ink)" }}
+          style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--ink)" }}
         >
-          XX
+          <Logo size={36} />
+          <span className="display" style={{ fontSize: "1.5rem" }}>XX</span>
         </Link>
         <nav style={{ display: "flex", gap: 10 }}>
           <Link href="/arena" className="btn" style={{ textDecoration: "none" }}>
