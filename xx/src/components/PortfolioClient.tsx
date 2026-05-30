@@ -336,17 +336,35 @@ export function PortfolioClient({
   const sp = prices[selected];
   const amtNum = Number((amount || "").replace(",", ".")) || 0;
   // Quantity implied by the current input (or exact held qty when "Tümü").
-  const tradeQty =
+  const rawQty =
     mode === "sell" && sellExact && heldSelected
       ? heldSelected.quantity
       : livePrice
         ? amtNum / livePrice
         : 0;
+  // In sell mode, never preview more than what's actually held.
+  const tradeQty =
+    mode === "sell" && heldSelected
+      ? Math.min(rawQty, heldSelected.quantity)
+      : rawQty;
   const tradeValueTry = tradeQty * (livePrice ?? 0);
   const tradeValueNative =
     sp && livePrice ? tradeValueTry * (sp.nativePrice / livePrice) : 0;
+  const cashTry = pf?.cashTry ?? 0;
   const canSell = !!heldSelected && (pf?.tradesLeft ?? 0) > 0;
   const noTradesLeft = (pf?.tradesLeft ?? 0) <= 0;
+  // Buying a brand-new asset while already holding the max is blocked.
+  const atHoldingLimit =
+    !heldSelected && (pf?.holdings.length ?? 0) >= 5;
+  const insufficientCash = mode === "buy" && amtNum > cashTry + 1e-6;
+  // Reason the primary action is blocked (shown as an inline hint).
+  const buyBlock = noTradesLeft
+    ? "Günlük işlem hakkın doldu."
+    : atHoldingLimit
+      ? "5 varlık sınırına ulaştın — yeni varlık için önce birini sat."
+      : insufficientCash
+        ? `Nakitin yetersiz (${fmtTry(cashTry)}).`
+        : null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -685,9 +703,16 @@ export function PortfolioClient({
             </div>
           )}
 
+          {/* proactive guardrail hint (buy mode) */}
+          {mode === "buy" && buyBlock && (
+            <div style={{ fontSize: ".75rem", marginBottom: 12, padding: "8px 10px", borderRadius: 9, background: "rgba(194,59,43,0.08)", border: "1px solid rgba(194,59,43,0.22)", color: "var(--red-t)" }}>
+              {buyBlock}
+            </div>
+          )}
+
           {mode === "buy" ? (
-            <button className="btn btn-accent" style={{ width: "100%", padding: ".85rem", fontSize: ".95rem", opacity: busy || noTradesLeft ? 0.55 : 1 }}
-              disabled={busy || noTradesLeft || amtNum <= 0} onClick={() => doTrade("buy")}>
+            <button className="btn btn-accent" style={{ width: "100%", padding: ".85rem", fontSize: ".95rem", opacity: busy || amtNum <= 0 || !!buyBlock ? 0.55 : 1 }}
+              disabled={busy || amtNum <= 0 || !!buyBlock} onClick={() => doTrade("buy")}>
               {busy ? "İşleniyor…" : `${selected} Al`}
             </button>
           ) : (
