@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LeaderboardRail } from "@/components/LeaderboardRail";
 import { TickerTape } from "@/components/TickerTape";
 import { Logo } from "@/components/Logo";
+import { CountUp } from "@/components/CountUp";
 
 const DATELINE = new Date().toLocaleDateString("tr-TR", {
   day: "2-digit",
@@ -96,14 +97,14 @@ export default function Home() {
         >
           <div
             className="eyebrow fade-up"
-            style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 22 }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 22, animationDelay: ".05s" }}
           >
             <span className="live-dot" />
             1.000.000 ₺ · gerçek piyasa fiyatları · canlı yarışma
           </div>
           <h1
             className="display fade-up"
-            style={{ fontSize: "clamp(3rem, 8.5vw, 7rem)", lineHeight: 0.97, margin: 0 }}
+            style={{ fontSize: "clamp(3rem, 8.5vw, 7rem)", lineHeight: 0.97, margin: 0, animationDelay: ".16s" }}
           >
             Portföyünü kur,
             <br />
@@ -117,6 +118,7 @@ export default function Home() {
               maxWidth: 560,
               marginTop: 26,
               lineHeight: 1.55,
+              animationDelay: ".3s",
             }}
           >
             Sanal 1.000.000 ₺ ile başla, en fazla 5 varlık seç, gerçek piyasa
@@ -124,7 +126,7 @@ export default function Home() {
           </p>
           <div
             className="fade-up"
-            style={{ display: "flex", gap: 12, marginTop: 34, flexWrap: "wrap", justifyContent: "center" }}
+            style={{ display: "flex", gap: 12, marginTop: 34, flexWrap: "wrap", justifyContent: "center", animationDelay: ".44s" }}
           >
             <Link
               href="#edisyon"
@@ -218,9 +220,9 @@ export default function Home() {
           </ol>
 
           <div style={{ display: "flex", gap: 0, flexWrap: "wrap", marginTop: 26, borderTop: "1px solid var(--rule)" }}>
-            <Stat k="Başlangıç" v="1.000.000 ₺" />
-            <Stat k="Maks. varlık" v="5" />
-            <Stat k="Günlük işlem" v="5" />
+            <Stat k="Başlangıç" n={1000000} suffix=" ₺" />
+            <Stat k="Maks. varlık" n={5} />
+            <Stat k="Günlük işlem" n={5} />
             <Stat k="Veri" v="Canlı" live />
           </div>
 
@@ -250,7 +252,19 @@ const RULES = [
   "En yüksek getiriyi yapan, canlı liderlik tablosunun zirvesine çıkar.",
 ];
 
-function Stat({ k, v, live }: { k: string; v: string; live?: boolean }) {
+function Stat({
+  k,
+  v,
+  n,
+  suffix,
+  live,
+}: {
+  k: string;
+  v?: string;
+  n?: number;
+  suffix?: string;
+  live?: boolean;
+}) {
   return (
     <div
       style={{
@@ -272,7 +286,7 @@ function Stat({ k, v, live }: { k: string; v: string; live?: boolean }) {
         }}
       >
         {live && <span className="live-dot" />}
-        {v}
+        {n != null ? <CountUp value={n} suffix={suffix} /> : v}
       </div>
     </div>
   );
