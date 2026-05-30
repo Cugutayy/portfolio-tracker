@@ -30,7 +30,7 @@ function gradFor(s: string) {
 const initialsOf = (n: string) => n.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 const slicesWithCash = (r: LeaderRow): DemoSlice[] => [
   ...r.slices.map((s) => ({ ticker: s.ticker, name: s.name, color: s.color, weight: s.weight, valueTry: s.valueTry })),
-  ...(r.cashTry > 0 ? [{ ticker: "NAKİT", name: "Nakit", color: "rgba(255,255,255,0.22)", weight: r.totalTry > 0 ? r.cashTry / r.totalTry : 0, valueTry: r.cashTry }] : []),
+  ...(r.cashTry > 0 ? [{ ticker: "NAKİT", name: "Nakit", color: "rgba(26,24,19,0.16)", weight: r.totalTry > 0 ? r.cashTry / r.totalTry : 0, valueTry: r.cashTry }] : []),
 ];
 
 export default function ArenaPage() {

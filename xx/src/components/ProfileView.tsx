@@ -41,7 +41,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
   const initials = p.name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   const slices: DemoSlice[] = [
     ...p.holdings.map((h) => ({ ticker: h.ticker, name: h.name, color: h.color, weight: h.weight, valueTry: h.valueTry })),
-    ...(p.cashTry > 0 ? [{ ticker: "NAKİT", name: "Nakit", color: "rgba(255,255,255,0.22)", weight: p.totalTry > 0 ? p.cashTry / p.totalTry : 0, valueTry: p.cashTry }] : []),
+    ...(p.cashTry > 0 ? [{ ticker: "NAKİT", name: "Nakit", color: "rgba(26,24,19,0.16)", weight: p.totalTry > 0 ? p.cashTry / p.totalTry : 0, valueTry: p.cashTry }] : []),
   ];
   const up = p.returnPct >= 0;
 
