@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import { Logo } from "@/components/Logo";
 
 type Mode = "login" | "register";
 
@@ -62,14 +63,16 @@ export default function JoinPage() {
       >
         <Link
           href="/"
-          className="display"
           style={{
-            fontSize: "1.6rem",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 10,
             textDecoration: "none",
             color: "var(--ink)",
           }}
         >
-          XX
+          <Logo size={38} />
+          <span className="display" style={{ fontSize: "1.6rem" }}>XX</span>
         </Link>
         <p
           style={{
