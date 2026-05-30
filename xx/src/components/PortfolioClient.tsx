@@ -541,6 +541,17 @@ export function PortfolioClient({
             </div>
           )}
 
+          {pf && pf.holdings.length === 0 && (
+            <div style={{ marginTop: 12, padding: "16px 18px", borderRadius: 12, background: "var(--fill)", border: "1px dashed var(--card-border)", textAlign: "center" }}>
+              <div style={{ fontWeight: 600, fontSize: ".92rem", marginBottom: 4 }}>
+                {fmtTry(pf.cashTry)} nakitin hazır.
+              </div>
+              <div style={{ color: "var(--muted)", fontSize: ".82rem", lineHeight: 1.5 }}>
+                Yukarıdaki <strong>Piyasalar</strong>’dan bir varlık seç, ilk alımını yap — yarış senin için başlasın.
+              </div>
+            </div>
+          )}
+
           {pf && pf.holdings.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
               {pf.holdings.map((h) => {
