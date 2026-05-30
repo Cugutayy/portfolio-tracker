@@ -237,4 +237,9 @@ body {
   .pw-label { display: none !important; }
   .pw-legend { display: flex !important; }
   .portfolio-grid { grid-template-columns: 1fr !important; }
+  /* let grid/flex children shrink below their content size */
+  .portfolio-grid > * { min-width: 0; }
+  /* radial labels are hidden on mobile — reclaim their side padding so the
+     fixed-size wheel never forces horizontal overflow */
+  .pw-wrap { padding-left: 8px !important; padding-right: 8px !important; }
 }
