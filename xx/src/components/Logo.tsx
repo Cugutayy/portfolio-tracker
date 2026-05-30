@@ -1,6 +1,6 @@
 /**
- * XX seal monogram — a serif "XX" set inside an engraved circular stamp with
- * a small rising-chart motif. Uses currentColor so it inherits ink/paper.
+ * XX leaf mark — a single editorial green leaf with a cream midrib, tuned to
+ * the paper theme. Pairs with the serif "XX" wordmark in headers.
  */
 export function Logo({
   size = 40,
@@ -16,56 +16,37 @@ export function Logo({
       viewBox="0 0 100 100"
       role="img"
       aria-label={title}
-      style={{ display: "block", color: "var(--ink)" }}
+      style={{ display: "block" }}
     >
-      {/* outer engraved ring */}
-      <circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" strokeWidth="2" />
-      {/* fine dotted inner ring — stamp/seal feel */}
-      <circle
-        cx="50"
-        cy="50"
-        r="41.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1"
-        strokeDasharray="0.5 3.2"
-        strokeLinecap="round"
-        opacity="0.75"
-      />
-      {/* serif monogram */}
-      <text
-        x="50"
-        y="47"
-        fontFamily="Georgia, 'Times New Roman', serif"
-        fontWeight="400"
-        fontSize="40"
-        fill="currentColor"
-        textAnchor="middle"
-        dominantBaseline="central"
-        letterSpacing="-3"
-      >
-        XX
-      </text>
-      {/* rising-chart accent under the monogram */}
-      <polyline
-        points="33,66 42,61 51,64 60,55 67,58"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2.4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.55"
-      />
-      {/* arrow tip */}
+      {/* stem */}
       <path
-        d="M67 58 l1.5 -5 M67 58 l-5 -1"
+        d="M50 84 C 50 90, 49 94, 45 98"
         fill="none"
-        stroke="currentColor"
+        stroke="var(--green-t)"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      {/* leaf body */}
+      <path
+        d="M50 10 C 26 30, 22 60, 50 88 C 78 60, 74 30, 50 10 Z"
+        fill="var(--green-t)"
+      />
+      {/* midrib + side veins */}
+      <g
+        fill="none"
+        stroke="var(--bg)"
         strokeWidth="2.4"
         strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.55"
-      />
+        opacity="0.92"
+      >
+        <path d="M50 20 L50 84" />
+        <path d="M50 38 L36 31" />
+        <path d="M50 38 L64 31" />
+        <path d="M50 54 L34 47" />
+        <path d="M50 54 L66 47" />
+        <path d="M50 69 L39 64" />
+        <path d="M50 69 L61 64" />
+      </g>
     </svg>
   );
 }
