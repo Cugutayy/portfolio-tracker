@@ -3,6 +3,7 @@ import { LeaderboardRail } from "@/components/LeaderboardRail";
 import { TickerTape } from "@/components/TickerTape";
 import { Logo } from "@/components/Logo";
 import { CountUp } from "@/components/CountUp";
+import { ArenaPulse } from "@/components/ArenaPulse";
 
 const DATELINE = new Date().toLocaleDateString("tr-TR", {
   day: "2-digit",
@@ -79,6 +80,9 @@ export default function Home() {
 
         {/* live ASCII price tape */}
         <TickerTape />
+
+        {/* live social-proof ribbon */}
+        <ArenaPulse />
 
         {/* front-page splash */}
         <div
