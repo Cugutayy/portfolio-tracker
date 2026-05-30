@@ -31,6 +31,12 @@ const gradFor = (s: string) => {
   return `linear-gradient(135deg, hsl(${a} 55% 45%), hsl(${(a + 60) % 360} 55% 30%))`;
 };
 
+// Warm editorial palette so the landing rings sit with the paper theme.
+// In-app wheels keep real per-asset brand colors; here the rings are small
+// and decorative, so a cohesive earth-tone set reads cleaner.
+const RING_PALETTE = ["#1f3d5c", "#b0763a", "#7a8450", "#9c4f3a", "#c8a064"];
+const CASH_COLOR = "rgba(26,24,19,0.16)";
+
 // Fallback teaser — only shown before any real trader exists.
 const DEMO: Leader[] = [
   {
@@ -39,10 +45,10 @@ const DEMO: Leader[] = [
     handle: "mertcap",
     returnPct: 24.7,
     slices: [
-      { label: "NVDA", weight: 0.4, color: "#76b900" },
-      { label: "BTC", weight: 0.3, color: "#f7931a" },
-      { label: "Altın", weight: 0.2, color: "#c8a064" },
-      { label: "ETH", weight: 0.1, color: "#627eea" },
+      { label: "NVDA", weight: 0.4, color: RING_PALETTE[0] },
+      { label: "BTC", weight: 0.3, color: RING_PALETTE[1] },
+      { label: "Altın", weight: 0.2, color: RING_PALETTE[2] },
+      { label: "ETH", weight: 0.1, color: RING_PALETTE[3] },
     ],
   },
   {
@@ -51,9 +57,9 @@ const DEMO: Leader[] = [
     handle: "defnetrades",
     returnPct: 18.3,
     slices: [
-      { label: "S&P", weight: 0.45, color: "#4f8ff7" },
-      { label: "Altın", weight: 0.3, color: "#c8a064" },
-      { label: "ASELS", weight: 0.25, color: "#e30613" },
+      { label: "S&P", weight: 0.45, color: RING_PALETTE[0] },
+      { label: "Altın", weight: 0.3, color: RING_PALETTE[1] },
+      { label: "ASELS", weight: 0.25, color: RING_PALETTE[2] },
     ],
   },
   {
@@ -62,9 +68,9 @@ const DEMO: Leader[] = [
     handle: "canmacro",
     returnPct: 11.6,
     slices: [
-      { label: "BTC", weight: 0.5, color: "#f7931a" },
-      { label: "NASDAQ", weight: 0.3, color: "#a78bfa" },
-      { label: "Gümüş", weight: 0.2, color: "#9ca3af" },
+      { label: "BTC", weight: 0.5, color: RING_PALETTE[0] },
+      { label: "NASDAQ", weight: 0.3, color: RING_PALETTE[1] },
+      { label: "Gümüş", weight: 0.2, color: RING_PALETTE[2] },
     ],
   },
   {
@@ -73,9 +79,9 @@ const DEMO: Leader[] = [
     handle: "elifvalue",
     returnPct: -3.2,
     slices: [
-      { label: "THYAO", weight: 0.4, color: "#e30613" },
-      { label: "S&P", weight: 0.35, color: "#4f8ff7" },
-      { label: "Altın", weight: 0.25, color: "#c8a064" },
+      { label: "THYAO", weight: 0.4, color: RING_PALETTE[0] },
+      { label: "S&P", weight: 0.35, color: RING_PALETTE[1] },
+      { label: "Altın", weight: 0.25, color: RING_PALETTE[2] },
     ],
   },
 ];
@@ -84,12 +90,16 @@ function toLeaders(rows: LeaderApiRow[]): Leader[] {
   return rows.slice(0, 4).map((r, i) => {
     const slices: RingSlice[] = r.slices
       .slice(0, 4)
-      .map((s) => ({ label: s.ticker, weight: s.weight, color: s.color }));
+      .map((s, idx) => ({
+        label: s.ticker,
+        weight: s.weight,
+        color: RING_PALETTE[idx % RING_PALETTE.length],
+      }));
     if (r.cashTry > 0 && r.totalTry > 0) {
       slices.push({
         label: "NAKİT",
         weight: r.cashTry / r.totalTry,
-        color: "rgba(26,24,19,0.16)",
+        color: CASH_COLOR,
       });
     }
     return {

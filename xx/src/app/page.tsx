@@ -83,21 +83,7 @@ export default function Home() {
             <span className="italic-accent">traderlarla yarış.</span>
           </h1>
 
-          <div
-            className="mono"
-            style={{
-              color: "var(--muted)",
-              fontSize: ".62rem",
-              letterSpacing: ".12em",
-              margin: "20px 0 18px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-            }}
-          >
-            ──────────────────────────────────────────
-          </div>
-
-          <div style={{ display: "flex", gap: 12, marginTop: 30, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 12, marginTop: 36, flexWrap: "wrap" }}>
             <Link
               href="/join"
               className="btn btn-accent"
