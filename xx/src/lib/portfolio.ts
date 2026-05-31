@@ -30,6 +30,12 @@ export interface HoldingView {
   quantity: number;
   avgBuyPriceTry: number;
   priceTry: number;
+  /** Current price in the asset's native currency (USD / TRY / points). */
+  priceNative: number;
+  /** Average buy price in the asset's native currency. */
+  avgBuyPriceNative: number;
+  /** "USD" | "TRY" | index ccy — drives display formatting. */
+  nativeCcy: string;
   valueTry: number;
   costTry: number;
   pnlTry: number;
@@ -87,9 +93,20 @@ export async function getPortfolio(userId: string): Promise<PortfolioView> {
   const valued = rows.map((h) => {
     const ticker = h.assetId;
     const meta = ASSET_BY_TICKER[ticker];
+    const lp = snap.prices[ticker];
     const quantity = Number(h.quantity);
     const avgBuyPriceTry = Number(h.avgBuyPriceTry);
-    const priceTry = snap.prices[ticker]?.priceTry ?? avgBuyPriceTry;
+    const priceTry = lp?.priceTry ?? avgBuyPriceTry;
+    // native currency + prices for natural display (USD/TRY/points)
+    const nativeCcy =
+      lp?.nativeCcy ?? (h.assetType === "bist100" ? "TRY" : "USD");
+    // TRY→native ratio implied by this asset right now (1/usdTry for USD assets)
+    const ratio = lp && lp.priceTry > 0 ? lp.nativePrice / lp.priceTry : 0;
+    const priceNative = lp?.nativePrice ?? avgBuyPriceTry * (ratio || 1);
+    const avgBuyPriceNative =
+      h.avgBuyPriceNative != null
+        ? Number(h.avgBuyPriceNative)
+        : avgBuyPriceTry * (ratio || (snap.usdTry > 0 ? 1 / snap.usdTry : 1));
     const valueTry = quantity * priceTry;
     const costTry = quantity * avgBuyPriceTry;
     const pnlTry = valueTry - costTry;
@@ -100,6 +117,9 @@ export async function getPortfolio(userId: string): Promise<PortfolioView> {
       quantity,
       avgBuyPriceTry,
       priceTry,
+      priceNative,
+      avgBuyPriceNative,
+      nativeCcy,
       valueTry,
       costTry,
       pnlTry,
@@ -368,6 +388,9 @@ export async function executeTrade(
   if (!live || !(live.priceTry > 0))
     return { ok: false, error: "Bu varlık için anlık fiyat alınamadı, tekrar dene." };
   const priceTry = live.priceTry;
+  // native cost basis (USD for crypto/US/commodity, TRY for BIST, points for index)
+  const priceNative =
+    live.nativePrice > 0 ? live.nativePrice : priceTry / (snap.usdTry || 1);
 
   return db.transaction(async (tx) => {
     const [user] = await tx
@@ -419,13 +442,19 @@ export async function executeTrade(
       if (existing) {
         const oldQty = Number(existing.quantity);
         const oldAvg = Number(existing.avgBuyPriceTry);
+        const oldAvgNative =
+          existing.avgBuyPriceNative != null
+            ? Number(existing.avgBuyPriceNative)
+            : oldAvg / (snap.usdTry || 1); // legacy fallback
         const newQty = oldQty + qty;
         const newAvg = (oldQty * oldAvg + qty * priceTry) / newQty;
+        const newAvgNative = (oldQty * oldAvgNative + qty * priceNative) / newQty;
         await tx
           .update(holdings)
           .set({
             quantity: String(newQty),
             avgBuyPriceTry: String(newAvg),
+            avgBuyPriceNative: String(newAvgNative),
             updatedAt: new Date(),
           })
           .where(eq(holdings.id, existing.id));
@@ -438,6 +467,7 @@ export async function executeTrade(
           name: meta.name,
           quantity: String(qty),
           avgBuyPriceTry: String(priceTry),
+          avgBuyPriceNative: String(priceNative),
         });
       }
 
