@@ -4,6 +4,9 @@ import { TickerTape } from "@/components/TickerTape";
 import { Logo } from "@/components/Logo";
 import { CountUp } from "@/components/CountUp";
 import { ArenaPulse } from "@/components/ArenaPulse";
+import { getCurrentUser } from "@/lib/session";
+
+export const dynamic = "force-dynamic";
 
 const DATELINE = new Date().toLocaleDateString("tr-TR", {
   day: "2-digit",
@@ -11,7 +14,13 @@ const DATELINE = new Date().toLocaleDateString("tr-TR", {
   year: "numeric",
 });
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+  const loggedIn = !!user;
+  // when already signed in, every "start" CTA points to the portfolio instead
+  const startHref = loggedIn ? "/portfolio" : "/join";
+  const startLabel = loggedIn ? "Portföyüm" : "Hemen başla";
+
   return (
     <main style={{ display: "flex", flexDirection: "column" }}>
       {/* ═══════════ ACT 1 — broadsheet cover ═══════════ */}
@@ -52,9 +61,15 @@ export default function Home() {
               <Link href="/arena" className="btn" style={{ textDecoration: "none" }}>
                 Arena
               </Link>
-              <Link href="/join" className="btn btn-accent" style={{ textDecoration: "none" }}>
-                Giriş yap
-              </Link>
+              {loggedIn ? (
+                <Link href="/portfolio" className="btn btn-accent" style={{ textDecoration: "none" }}>
+                  Portföyüm
+                </Link>
+              ) : (
+                <Link href="/join" className="btn btn-accent" style={{ textDecoration: "none" }}>
+                  Giriş yap
+                </Link>
+              )}
             </nav>
           </header>
         </div>
@@ -140,11 +155,11 @@ export default function Home() {
               Edisyona gir →
             </Link>
             <Link
-              href="/join"
+              href={startHref}
               className="btn"
               style={{ textDecoration: "none", padding: ".95rem 1.9rem", fontSize: "1rem" }}
             >
-              Hemen başla
+              {startLabel}
             </Link>
           </div>
         </div>
@@ -232,11 +247,11 @@ export default function Home() {
 
           <div style={{ marginTop: 30 }}>
             <Link
-              href="/join"
+              href={startHref}
               className="btn btn-accent"
               style={{ textDecoration: "none", padding: ".9rem 1.7rem", fontSize: ".98rem" }}
             >
-              Hemen başla →
+              {loggedIn ? "Portföyüm →" : "Hemen başla →"}
             </Link>
           </div>
         </div>
