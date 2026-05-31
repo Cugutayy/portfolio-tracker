@@ -381,9 +381,9 @@ export function PortfolioClient({
   const cashTry = pf?.cashTry ?? 0;
   const canSell = !!heldSelected && (pf?.tradesLeft ?? 0) > 0;
   const noTradesLeft = (pf?.tradesLeft ?? 0) <= 0;
-  // Buying a brand-new asset while already holding the max is blocked.
+  // Buying a brand-new asset while already holding the max (10) is blocked.
   const atHoldingLimit =
-    !heldSelected && (pf?.holdings.length ?? 0) >= 5;
+    !heldSelected && (pf?.holdings.length ?? 0) >= 10;
   const insufficientCash = mode === "buy" && amtNum > cashTry + 1e-6;
   // Selling more ₺ than the position is worth: the trade clamps to the full
   // holding, so tell the user that's what will happen.
