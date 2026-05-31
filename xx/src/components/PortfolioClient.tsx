@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { PortfolioWheel } from "@/components/PortfolioWheel";
 import { Avatar } from "@/components/Avatar";
-import { ASSETS, ASSET_BY_TICKER, TYPE_LABEL, type AssetType } from "@/lib/assets";
+import { TRADEABLE_ASSETS, ASSET_BY_TICKER, TYPE_LABEL, type AssetType } from "@/lib/assets";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtAssetPrice } from "@/lib/format";
 
@@ -198,7 +198,7 @@ export function PortfolioClient({
 
   const marketRows = useMemo(() => {
     const q = marketQuery.trim().toLocaleLowerCase("tr");
-    return ASSETS.filter((a) => a.type === marketTab).filter(
+    return TRADEABLE_ASSETS.filter((a) => a.type === marketTab).filter(
       (a) =>
         !q ||
         a.ticker.toLocaleLowerCase("tr").includes(q) ||
@@ -464,7 +464,7 @@ export function PortfolioClient({
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div style={{ display: "inline-flex", gap: 6, flexWrap: "wrap" }}>
-            {TYPE_ORDER.filter((t) => ASSETS.some((a) => a.type === t)).map((t) => (
+            {TYPE_ORDER.filter((t) => TRADEABLE_ASSETS.some((a) => a.type === t)).map((t) => (
               <button
                 key={t}
                 onClick={() => setMarketTab(t)}

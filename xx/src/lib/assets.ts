@@ -23,6 +23,11 @@ export interface Asset {
   type: AssetType;
   /** CoinGecko id (crypto) or Yahoo Finance symbol (everything else). */
   symbol?: string;
+  /**
+   * Delisted from the buy catalog but kept priceable so existing holders can
+   * still value and SELL their position. Hidden from the markets browser.
+   */
+  archived?: boolean;
 }
 
 /** Deterministic, pleasant slice color when no brand color is given. */
@@ -34,13 +39,14 @@ function hashColor(s: string): string {
 
 type Row = [ticker: string, name: string, symbol: string, color?: string];
 
-function mk(type: AssetType, rows: Row[]): Asset[] {
+function mk(type: AssetType, rows: Row[], archived = false): Asset[] {
   return rows.map(([ticker, name, symbol, color]) => ({
     ticker,
     name,
     symbol,
     type,
     color: color ?? hashColor(ticker),
+    ...(archived ? { archived: true } : {}),
   }));
 }
 
@@ -76,6 +82,18 @@ const CRYPTO: Row[] = [
   ["ETC", "Ethereum Classic", "ethereum-classic", "#328332"],
   ["PEPE", "Pepe", "pepe", "#4caf50"],
   ["ATOM", "Cosmos", "cosmos", "#2e3148"],
+];
+
+// ── Archived crypto — dropped from the top-30 buy list, but still priceable
+//    so anyone who already holds them can value and sell their position. ──
+const CRYPTO_ARCHIVED: Row[] = [
+  ["ICP", "Internet Computer", "internet-computer", "#29abe2"],
+  ["FIL", "Filecoin", "filecoin", "#0090ff"],
+  ["ARB", "Arbitrum", "arbitrum", "#28a0f0"],
+  ["VET", "VeChain", "vechain", "#15bdff"],
+  ["OP", "Optimism", "optimism", "#ff0420"],
+  ["GRT", "The Graph", "the-graph", "#6f4cff"],
+  ["INJ", "Injective", "injective-protocol", "#00d2ff"],
 ];
 
 // ── Commodities (Yahoo futures, USD) ──
@@ -294,11 +312,15 @@ const BIST100: Row[] = [
 
 export const ASSETS: Asset[] = [
   ...mk("crypto", CRYPTO),
+  ...mk("crypto", CRYPTO_ARCHIVED, true),
   ...mk("commodity", COMMODITY),
   ...mk("index", INDEX),
   ...mk("nasdaq100", NASDAQ100),
   ...mk("bist100", BIST100),
 ];
+
+/** Only the assets buyable in the markets browser (archived ones excluded). */
+export const TRADEABLE_ASSETS: Asset[] = ASSETS.filter((a) => !a.archived);
 
 export const ASSET_BY_TICKER: Record<string, Asset> = Object.fromEntries(
   ASSETS.map((a) => [a.ticker, a]),

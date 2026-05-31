@@ -382,6 +382,9 @@ export async function executeTrade(
   if (!meta) return { ok: false, error: "Geçersiz varlık." };
   if (input.side !== "buy" && input.side !== "sell")
     return { ok: false, error: "Geçersiz işlem yönü." };
+  // delisted assets can still be sold by existing holders, but not bought
+  if (meta.archived && input.side === "buy")
+    return { ok: false, error: "Bu varlık artık listede değil; yalnızca satabilirsin." };
 
   const snap = await getLivePrices();
   const live = snap.prices[input.ticker];
