@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { PortfolioRing, type RingSlice } from "./PortfolioRing";
@@ -65,7 +65,8 @@ function toLeaders(rows: LeaderApiRow[]): Leader[] {
 }
 
 export function LeaderboardRail() {
-  const [leaders, setLeaders] = useState<Leader[] | null>(null);
+  const [rows, setRows] = useState<LeaderApiRow[] | null>(null);
+  const [sort, setSort] = useState<"value" | "gainers">("value");
 
   useEffect(() => {
     let alive = true;
@@ -73,17 +74,25 @@ export function LeaderboardRail() {
       try {
         const r = await fetch("/api/leaderboard", { cache: "no-store" });
         const j = await r.json();
-        const rows: LeaderApiRow[] = j?.leaderboard ?? [];
+        const data: LeaderApiRow[] = j?.leaderboard ?? [];
         if (!alive) return;
-        setLeaders(Array.isArray(rows) ? toLeaders(rows) : []);
+        setRows(Array.isArray(data) ? data : []);
       } catch {
-        if (alive) setLeaders([]);
+        if (alive) setRows([]);
       }
     })();
     return () => {
       alive = false;
     };
   }, []);
+
+  const leaders = useMemo(() => {
+    if (rows == null) return null;
+    const sorted = [...rows].sort((a, b) =>
+      sort === "value" ? b.totalTry - a.totalTry : b.returnPct - a.returnPct,
+    );
+    return toLeaders(sorted);
+  }, [rows, sort]);
 
   const list = leaders ?? [];
   const loading = leaders === null;
@@ -104,9 +113,29 @@ export function LeaderboardRail() {
           <span className="live-dot" />
           <span className="eyebrow">Canlı liderlik</span>
         </div>
-        <span className="mono" style={{ fontSize: ".58rem", color: "var(--muted)" }}>
-          en değerli
-        </span>
+        {!empty && (
+          <div style={{ display: "flex", gap: 4 }}>
+            {(["value", "gainers"] as const).map((k) => (
+              <button
+                key={k}
+                onClick={() => setSort(k)}
+                className="mono"
+                style={{
+                  fontSize: ".56rem",
+                  letterSpacing: ".04em",
+                  padding: "3px 8px",
+                  borderRadius: 6,
+                  border: "none",
+                  cursor: "pointer",
+                  background: sort === k ? "var(--fill-2)" : "transparent",
+                  color: sort === k ? "var(--ink)" : "var(--muted)",
+                }}
+              >
+                {k === "value" ? "Değer" : "Getiri"}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {empty ? (
