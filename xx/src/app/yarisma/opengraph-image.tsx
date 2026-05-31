@@ -1,12 +1,14 @@
 import { ImageResponse } from "next/og";
 import { OG, OG_SIZE, loadOgFonts } from "@/lib/og";
+import { getLeaderboard } from "@/lib/portfolio";
 
 export const runtime = "nodejs";
 export const alt = "XX Arena — Büyük Yarış Başladı";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 
-const { BG, PAPER, INK, MUTED, GREEN, RULE } = OG;
+const { BG, PAPER, INK, MUTED, GREEN, RED, RULE } = OG;
+const SITE = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://xx-arena.vercel.app").replace(/^https?:\/\//, "");
 
 const DATELINE = new Date()
   .toLocaleDateString("tr-TR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })
@@ -53,9 +55,38 @@ function column(title: string, lead: string, widths: number[], displayFont: stri
   );
 }
 
+// live top-3 standings column (top gainers); falls back to the greeked
+// "Canlı piyasa" column when nobody has joined yet.
+function standings(
+  top: { handle: string; returnPct: number }[],
+  displayFont: string,
+) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "0 0 0 18px", borderLeft: `1px solid ${RULE}` }}>
+      <div style={{ display: "flex", fontFamily: displayFont, fontSize: 26, color: INK, lineHeight: 1.05, paddingBottom: 8, marginBottom: 12, borderBottom: `2px solid ${INK}` }}>
+        Canlı ilk 3
+      </div>
+      {top.map((r, i) => {
+        const up = r.returnPct >= 0;
+        return (
+          <div key={r.handle} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 11 }}>
+            <span style={{ display: "flex", fontFamily: displayFont, fontSize: 26, color: GREEN, width: 20 }}>{i + 1}</span>
+            <span style={{ display: "flex", flex: 1, fontSize: 18, color: INK, overflow: "hidden" }}>{`@${r.handle}`}</span>
+            <span style={{ display: "flex", fontSize: 19, fontWeight: 700, color: up ? GREEN : RED }}>
+              {`${up ? "+" : ""}${r.returnPct.toFixed(1)}%`}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // Shareable competition poster — a full broadsheet front page.
 export default async function Image() {
   const { fonts, display } = await loadOgFonts();
+  const board = await getLeaderboard().catch(() => []);
+  const top3 = [...board].sort((a, b) => b.returnPct - a.returnPct).slice(0, 3);
 
   const sideBox = (a: string, b: string) => (
     <div
@@ -138,7 +169,7 @@ export default async function Image() {
           <div style={{ display: "flex", flex: 1, paddingTop: 16 }}>
             {column(
               "Nasıl oynanır?",
-              "1.000.000 ₺ sanal parayla başla; en fazla 5 varlık, günde 10 işlem.",
+              "1.000.000 ₺ sanal parayla başla; en fazla 10 varlık, günde 10 işlem.",
               [100, 100, 96, 100, 92, 100, 70],
               display,
               false,
@@ -150,13 +181,15 @@ export default async function Image() {
               display,
               true,
             )}
-            {column(
-              "Canlı piyasa",
-              "Kripto, BIST, NASDAQ ve emtia — her fiyat CoinGecko ve Yahoo’dan canlı akar.",
-              [100, 100, 90, 100, 96, 100, 78],
-              display,
-              true,
-            )}
+            {top3.length > 0
+              ? standings(top3, display)
+              : column(
+                  "Canlı piyasa",
+                  "Kripto, BIST, NASDAQ ve emtia — her fiyat CoinGecko ve Yahoo’dan canlı akar.",
+                  [100, 100, 90, 100, 96, 100, 78],
+                  display,
+                  true,
+                )}
           </div>
 
           {/* ── breaking footer ── */}
@@ -174,9 +207,9 @@ export default async function Image() {
             }}
           >
             <span style={{ display: "flex", fontWeight: 700, textTransform: "uppercase", letterSpacing: 2 }}>
-              Son Dakika
+              Katıl
             </span>
-            <span style={{ display: "flex" }}>Herkes katılabilir — hemen kaydol, yarışa gir.</span>
+            <span style={{ display: "flex", fontWeight: 600 }}>{`${SITE}/yarisma`}</span>
             <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ display: "flex", width: 10, height: 10, borderRadius: 5, background: GREEN }} />
               CANLI

@@ -7,13 +7,12 @@ interface PulseRow {
   name: string;
   handle: string;
   returnPct: number;
-  tradesCount: number;
 }
 
 /**
- * Slim broadsheet "pulse" ribbon under the ticker — live social proof:
- * how many traders are competing, today's leader, total trades. Falls back
- * to a graceful "arena just opened" line while the board is still empty.
+ * Slim live standings ticker under the price tape — scrolls the ranked
+ * traders (top gainers first), slower than the price marquee. Falls back to
+ * an "arena just opened" CTA while the board is empty.
  */
 export function ArenaPulse() {
   const [rows, setRows] = useState<PulseRow[] | null>(null);
@@ -31,28 +30,12 @@ export function ArenaPulse() {
     };
   }, []);
 
-  if (rows === null) return null; // stay quiet until we know the real state
+  if (rows === null) return null;
 
-  const count = rows.length;
-  const trades = rows.reduce((s, r) => s + (r.tradesCount || 0), 0);
-  const leader = count
-    ? [...rows].sort((a, b) => b.returnPct - a.returnPct)[0]
-    : null;
-
-  return (
-    <div style={{ borderBottom: "1px solid var(--rule)", background: "var(--paper)" }}>
-      <div
-        style={{
-          maxWidth: 1180,
-          margin: "0 auto",
-          padding: "8px 24px",
-          display: "flex",
-          alignItems: "center",
-          gap: 18,
-          flexWrap: "wrap",
-        }}
-      >
-        {count === 0 ? (
+  if (rows.length === 0) {
+    return (
+      <div style={{ borderBottom: "1px solid var(--rule)", background: "var(--paper)" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "8px 24px", display: "flex", justifyContent: "center" }}>
           <Link
             href="/join"
             className="mono"
@@ -69,57 +52,39 @@ export function ArenaPulse() {
             <span className="live-dot" />
             ARENA BUGÜN AÇILDI · İLK PORTFÖYÜ SEN KUR →
           </Link>
-        ) : (
-          <>
-            <Item>
-              <span className="live-dot" />
-              <strong style={{ color: "var(--ink)", fontWeight: 600 }}>{count}</strong>
-              &nbsp;TRADER YARIŞIYOR
-            </Item>
-            {leader && (
-              <Item>
-                GÜNÜN LİDERİ&nbsp;
-                <Link
-                  href={`/u/${leader.handle}`}
-                  style={{ color: "var(--ink)", textDecoration: "none", fontWeight: 600 }}
-                >
-                  @{leader.handle}
-                </Link>
-                &nbsp;
-                <span
-                  className={leader.returnPct >= 0 ? "pos" : "neg"}
-                  style={{ fontWeight: 600 }}
-                >
-                  {leader.returnPct >= 0 ? "▲" : "▼"}
-                  {Math.abs(leader.returnPct).toFixed(1)}%
-                </span>
-              </Item>
-            )}
-            <Item>
-              <strong style={{ color: "var(--ink)", fontWeight: 600 }}>{trades}</strong>
-              &nbsp;İŞLEM
-            </Item>
-          </>
-        )}
+        </div>
+      </div>
+    );
+  }
+
+  const ranked = [...rows]
+    .sort((a, b) => b.returnPct - a.returnPct)
+    .map((r, i) => ({ ...r, rank: i + 1 }));
+  // duplicate so the -50% marquee loops seamlessly
+  const run = [...ranked, ...ranked];
+
+  return (
+    <div className="ticker" aria-label="Canlı sıralama">
+      <div className="ticker-track" style={{ animation: "marquee 80s linear infinite" }}>
+        {run.map((r, i) => {
+          const up = r.returnPct >= 0;
+          return (
+            <Link
+              key={`${r.handle}-${i}`}
+              href={`/u/${r.handle}`}
+              className="ticker-item"
+              style={{ textDecoration: "none" }}
+            >
+              <span style={{ color: "var(--muted)" }}>{r.rank}.</span>{" "}
+              <span style={{ fontWeight: 500, color: "var(--ink)" }}>@{r.handle}</span>{" "}
+              <span className={up ? "pos" : "neg"}>
+                {up ? "▲" : "▼"}
+                {Math.abs(r.returnPct).toFixed(1)}%
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </div>
-  );
-}
-
-function Item({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      className="mono"
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        fontSize: ".62rem",
-        letterSpacing: ".1em",
-        color: "var(--muted)",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {children}
-    </span>
   );
 }
