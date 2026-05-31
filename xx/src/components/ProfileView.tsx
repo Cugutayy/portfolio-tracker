@@ -37,6 +37,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [draft, setDraft] = useState("");
   const [posting, setPosting] = useState(false);
+  const [shared, setShared] = useState(false);
 
   const initials = p.name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   const slices: DemoSlice[] = [
@@ -66,6 +67,25 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
     const r = await fetch("/api/social/like", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ handle: p.handle }) });
     const j = await r.json();
     if (j.ok) setP((s) => ({ ...s, isLiked: j.liked, likes: j.likes }));
+  }
+  async function shareProfile() {
+    const url = `${window.location.origin}/u/${p.handle}`;
+    const text = `${p.name} — XX Arena'da #${p.rank} sırada, ${up ? "+" : ""}${num(p.returnPct)}% getiri`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "XX Arena", text, url });
+        return;
+      }
+    } catch {
+      /* user dismissed the share sheet — fall through to copy */
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setShared(true);
+      setTimeout(() => setShared(false), 1800);
+    } catch {
+      /* clipboard blocked — nothing more we can do */
+    }
   }
   async function postComment() {
     const text = draft.trim();
@@ -97,21 +117,26 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
           <div className="mono" style={{ fontSize: ".72rem", color: "var(--muted)" }}>@{p.handle}</div>
           {p.bio && <p style={{ color: "var(--muted)", marginTop: 8, maxWidth: 460, fontSize: ".9rem" }}>{p.bio}</p>}
         </div>
-        {!p.isSelf && (
-          <div style={{ display: "flex", gap: 10 }}>
-            <button className={p.isFollowing ? "btn" : "btn btn-accent"} style={{ padding: ".7rem 1.2rem" }} onClick={toggleFollow}>
-              {p.isFollowing ? "Takiptesin ✓" : "Takip et"}
-            </button>
-            <button className="btn" style={{ padding: ".7rem 1.2rem", color: p.isLiked ? "var(--accent)" : undefined }} onClick={toggleLike}>
-              {p.isLiked ? "♥" : "♡"} {p.likes}
-            </button>
-          </div>
-        )}
-        {p.isSelf && (
-          <Link href="/portfolio" className="btn btn-accent" style={{ padding: ".7rem 1.2rem", textDecoration: "none" }}>
-            Portföyünü yönet
-          </Link>
-        )}
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          {!p.isSelf && (
+            <>
+              <button className={p.isFollowing ? "btn" : "btn btn-accent"} style={{ padding: ".7rem 1.2rem" }} onClick={toggleFollow}>
+                {p.isFollowing ? "Takiptesin ✓" : "Takip et"}
+              </button>
+              <button className="btn" style={{ padding: ".7rem 1.2rem", color: p.isLiked ? "var(--accent)" : undefined }} onClick={toggleLike}>
+                {p.isLiked ? "♥" : "♡"} {p.likes}
+              </button>
+            </>
+          )}
+          {p.isSelf && (
+            <Link href="/portfolio" className="btn btn-accent" style={{ padding: ".7rem 1.2rem", textDecoration: "none" }}>
+              Portföyünü yönet
+            </Link>
+          )}
+          <button className="btn" style={{ padding: ".7rem 1.2rem" }} onClick={shareProfile}>
+            {shared ? "Kopyalandı ✓" : "Paylaş ↗"}
+          </button>
+        </div>
       </div>
 
       {/* stats */}

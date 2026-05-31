@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
@@ -6,6 +7,25 @@ import { ProfileView } from "@/components/ProfileView";
 import { Logo } from "@/components/Logo";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ handle: string }>;
+}): Promise<Metadata> {
+  const { handle } = await params;
+  const p = await getPublicProfile(handle, null).catch(() => null);
+  if (!p) return { title: "Profil — XX Arena" };
+  const sign = p.returnPct >= 0 ? "+" : "";
+  const title = `${p.name} (@${p.handle}) — XX Arena`;
+  const description = `Sıra #${p.rank} · ${sign}${p.returnPct.toFixed(1)}% getiri · sanal trader arenası`;
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "profile" },
+    twitter: { card: "summary_large_image", title, description },
+  };
+}
 
 export default async function ProfilePage({
   params,
