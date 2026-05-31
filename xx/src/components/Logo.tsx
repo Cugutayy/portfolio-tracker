@@ -18,6 +18,7 @@ export function Logo({
       viewBox="0 0 100 100"
       role="img"
       aria-label={title}
+      className="leaf-mark"
       style={{ display: "block" }}
     >
       {/* horizontal, tip left; vertical mirror lifts the stem to the top */}
