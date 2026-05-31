@@ -20,8 +20,8 @@ export function Logo({
       aria-label={title}
       style={{ display: "block" }}
     >
-      {/* rotated 90° so the leaf lies horizontally — tip right, stem left */}
-      <g transform="rotate(90 50 50)">
+      {/* rotated -90° so the leaf lies horizontally — tip left, stem right */}
+      <g transform="rotate(-90 50 50)">
         {/* stem — flows off the leaf base with a gentle sway */}
         <path
           d="M46 82 C 44 88, 40 92, 33 95"
