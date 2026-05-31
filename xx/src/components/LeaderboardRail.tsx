@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { PortfolioRing, type RingSlice } from "./PortfolioRing";
+import { getDict, type Locale } from "@/lib/i18n";
 
 interface Leader {
   rank: number;
@@ -64,7 +65,8 @@ function toLeaders(rows: LeaderApiRow[]): Leader[] {
   });
 }
 
-export function LeaderboardRail() {
+export function LeaderboardRail({ locale = "tr" }: { locale?: Locale }) {
+  const t = getDict(locale);
   const [rows, setRows] = useState<LeaderApiRow[] | null>(null);
 
   useEffect(() => {
@@ -109,23 +111,23 @@ export function LeaderboardRail() {
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span className="live-dot" />
-          <span className="eyebrow">Canlı liderlik</span>
+          <span className="eyebrow">{t.rail_title}</span>
         </div>
         <span className="mono" style={{ fontSize: ".58rem", color: "var(--muted)" }}>
-          en çok kazanan
+          {t.rail_sub}
         </span>
       </div>
 
       {empty ? (
         <div style={{ padding: "34px 8px 30px", textAlign: "center" }}>
           <div className="display" style={{ fontSize: "1.15rem", marginBottom: 6 }}>
-            Arena henüz boş.
+            {t.rail_empty_h}
           </div>
           <div style={{ color: "var(--muted)", fontSize: ".82rem", lineHeight: 1.55, marginBottom: 16 }}>
-            İlk portföyü sen kur — zirvenin ilk ismi ol.
+            {t.rail_empty_p}
           </div>
           <Link href="/join" className="btn btn-accent" style={{ textDecoration: "none", padding: ".6rem 1.2rem", fontSize: ".82rem" }}>
-            Hemen başla →
+            {t.rail_empty_cta}
           </Link>
         </div>
       ) : (
@@ -209,7 +211,7 @@ export function LeaderboardRail() {
       {!empty && (
         <div style={{ paddingTop: 12 }}>
           <span className="mono" style={{ fontSize: ".55rem", color: "var(--muted)", opacity: 0.6 }}>
-            Canlı portföyler — gerçek piyasa fiyatlarıyla değerlenir.
+            {t.rail_footer}
           </span>
         </div>
       )}

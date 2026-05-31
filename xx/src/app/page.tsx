@@ -4,22 +4,25 @@ import { TickerTape } from "@/components/TickerTape";
 import { CountUp } from "@/components/CountUp";
 import { ArenaPulse } from "@/components/ArenaPulse";
 import { AsciiBackdrop } from "@/components/AsciiBackdrop";
+import { LanguageToggle } from "@/components/LanguageToggle";
 import { getCurrentUser } from "@/lib/session";
+import { getLocale } from "@/lib/locale";
+import { getDict } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
-const DATELINE = new Date().toLocaleDateString("tr-TR", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
-
 export default async function Home() {
-  const user = await getCurrentUser();
+  const [user, locale] = await Promise.all([getCurrentUser(), getLocale()]);
+  const t = getDict(locale);
   const loggedIn = !!user;
-  // when already signed in, every "start" CTA points to the portfolio instead
   const startHref = loggedIn ? "/portfolio" : "/join";
-  const startLabel = loggedIn ? "Portföyüm" : "Hemen başla";
+  const startLabel = loggedIn ? t.nav_portfolio : t.hero_cta_start;
+
+  const dateline = new Date()
+    .toLocaleDateString(locale === "en" ? "en-US" : "tr-TR", { day: "2-digit", month: "long", year: "numeric" })
+    .toLocaleUpperCase(locale === "en" ? "en-US" : "tr-TR");
+
+  const RULES = [t.rule_1, t.rule_2, t.rule_3, t.rule_4];
 
   return (
     <main style={{ display: "flex", flexDirection: "column" }}>
@@ -55,17 +58,18 @@ export default async function Home() {
                 Arena
               </div>
             </div>
-            <nav style={{ display: "flex", gap: 10 }}>
+            <nav style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <LanguageToggle locale={locale} />
               <Link href="/arena" className="btn" style={{ textDecoration: "none" }}>
-                Arena
+                {t.nav_arena}
               </Link>
               {loggedIn ? (
                 <Link href="/portfolio" className="btn btn-accent" style={{ textDecoration: "none" }}>
-                  Portföyüm
+                  {t.nav_portfolio}
                 </Link>
               ) : (
                 <Link href="/join" className="btn btn-accent" style={{ textDecoration: "none" }}>
-                  Giriş yap
+                  {t.nav_login}
                 </Link>
               )}
             </nav>
@@ -86,7 +90,7 @@ export default async function Home() {
             }}
           >
             <span className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", letterSpacing: ".16em" }}>
-              SAYI No. 1 · {DATELINE.toLocaleUpperCase("tr")}
+              {t.edition_issue} · {dateline}
             </span>
           </div>
         </div>
@@ -119,10 +123,10 @@ export default async function Home() {
               XX // ARENA
             </span>
             <span className="mono" style={{ fontSize: ".72rem", letterSpacing: ".06em", fontWeight: 500 }}>
-              3 AYLIK BÜYÜK YARIŞ BAŞLADI — İLK 3’E SÜRPRİZ PARA ÖDÜLÜ
+              {t.announce_band}
             </span>
             <span className="mono" style={{ fontSize: ".66rem", letterSpacing: ".12em", textDecoration: "underline", textUnderlineOffset: 3 }}>
-              DETAY →
+              {t.announce_detail}
             </span>
           </div>
         </Link>
@@ -146,54 +150,53 @@ export default async function Home() {
         >
           <AsciiBackdrop />
           <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
-          <div
-            className="eyebrow fade-up"
-            style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 22, animationDelay: ".05s" }}
-          >
-            <span className="live-dot" />
-            1.000.000 ₺ · gerçek piyasa fiyatları · canlı yarışma
-          </div>
-          <h1
-            className="display fade-up"
-            style={{ fontSize: "clamp(3rem, 8.5vw, 7rem)", lineHeight: 0.97, margin: 0, animationDelay: ".16s" }}
-          >
-            Portföyünü kur,
-            <br />
-            <span className="italic-accent">traderlarla yarış.</span>
-          </h1>
-          <p
-            className="fade-up"
-            style={{
-              color: "var(--ink-soft)",
-              fontSize: "clamp(1rem, 1.8vw, 1.18rem)",
-              maxWidth: 560,
-              marginTop: 26,
-              lineHeight: 1.55,
-              animationDelay: ".3s",
-            }}
-          >
-            Sanal 1.000.000 ₺ ile başla, en fazla 10 varlık seç, gerçek piyasa
-            fiyatlarıyla yarış. En iyi getiri zirveye çıkar.
-          </p>
-          <div
-            className="fade-up"
-            style={{ display: "flex", gap: 12, marginTop: 34, flexWrap: "wrap", justifyContent: "center", animationDelay: ".44s" }}
-          >
-            <Link
-              href="#edisyon"
-              className="btn btn-accent"
-              style={{ textDecoration: "none", padding: ".95rem 1.9rem", fontSize: "1rem" }}
+            <div
+              className="eyebrow fade-up"
+              style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 22, animationDelay: ".05s" }}
             >
-              Canlı liderlik ↓
-            </Link>
-            <Link
-              href={startHref}
-              className="btn"
-              style={{ textDecoration: "none", padding: ".95rem 1.9rem", fontSize: "1rem" }}
+              <span className="live-dot" />
+              {t.hero_eyebrow}
+            </div>
+            <h1
+              className="display fade-up"
+              style={{ fontSize: "clamp(3rem, 8.5vw, 7rem)", lineHeight: 0.97, margin: 0, animationDelay: ".16s" }}
             >
-              {startLabel}
-            </Link>
-          </div>
+              {t.hero_h1_a}
+              <br />
+              <span className="italic-accent">{t.hero_h1_b}</span>
+            </h1>
+            <p
+              className="fade-up"
+              style={{
+                color: "var(--ink-soft)",
+                fontSize: "clamp(1rem, 1.8vw, 1.18rem)",
+                maxWidth: 560,
+                marginTop: 26,
+                lineHeight: 1.55,
+                animationDelay: ".3s",
+              }}
+            >
+              {t.hero_sub}
+            </p>
+            <div
+              className="fade-up"
+              style={{ display: "flex", gap: 12, marginTop: 34, flexWrap: "wrap", justifyContent: "center", animationDelay: ".44s" }}
+            >
+              <Link
+                href="#edisyon"
+                className="btn btn-accent"
+                style={{ textDecoration: "none", padding: ".95rem 1.9rem", fontSize: "1rem" }}
+              >
+                {t.hero_cta_board}
+              </Link>
+              <Link
+                href={startHref}
+                className="btn"
+                style={{ textDecoration: "none", padding: ".95rem 1.9rem", fontSize: "1rem" }}
+              >
+                {startLabel}
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -211,14 +214,14 @@ export default async function Home() {
             }}
           >
             <span className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", letterSpacing: ".14em" }}>
-              Eğitim amaçlı · gerçek para yok
+              {t.cover_edu}
             </span>
             <Link
               href="#edisyon"
               className="mono"
               style={{ fontSize: ".62rem", color: "var(--muted)", textDecoration: "none", letterSpacing: ".16em" }}
             >
-              CANLI LİDERLİK ↓
+              {t.cover_board}
             </Link>
           </div>
         </div>
@@ -241,15 +244,15 @@ export default async function Home() {
       >
         <div className="fade-up">
           <div className="eyebrow" style={{ marginBottom: 14 }}>
-            Canlı edisyon
+            {t.edition_live}
           </div>
           <h2
             className="display"
             style={{ fontSize: "clamp(2rem, 4.5vw, 3.2rem)", margin: "0 0 18px", lineHeight: 1.04 }}
           >
-            Kurallar basit,
+            {t.rules_h2_a}
             <br />
-            <span className="italic-accent">rekabet gerçek.</span>
+            <span className="italic-accent">{t.rules_h2_b}</span>
           </h2>
 
           <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column" }}>
@@ -272,10 +275,10 @@ export default async function Home() {
           </ol>
 
           <div style={{ display: "flex", gap: 0, flexWrap: "wrap", marginTop: 26, borderTop: "1px solid var(--rule)" }}>
-            <Stat k="Başlangıç" n={1000000} suffix=" ₺" />
-            <Stat k="Maks. varlık" n={10} />
-            <Stat k="Günlük işlem" n={10} />
-            <Stat k="Veri" v="Canlı" live />
+            <Stat k={t.stat_start} n={1000000} suffix=" ₺" />
+            <Stat k={t.stat_max} n={10} />
+            <Stat k={t.stat_daily} n={10} />
+            <Stat k={t.stat_data} v={t.stat_live} live />
           </div>
 
           <div style={{ marginTop: 30 }}>
@@ -284,25 +287,18 @@ export default async function Home() {
               className="btn btn-accent"
               style={{ textDecoration: "none", padding: ".9rem 1.7rem", fontSize: ".98rem" }}
             >
-              {loggedIn ? "Portföyüm →" : "Hemen başla →"}
+              {loggedIn ? `${t.nav_portfolio} →` : t.cta_start_arrow}
             </Link>
           </div>
         </div>
 
         <div className="fade-up" style={{ display: "flex", justifyContent: "center" }}>
-          <LeaderboardRail />
+          <LeaderboardRail locale={locale} />
         </div>
       </section>
     </main>
   );
 }
-
-const RULES = [
-  "1.000.000 ₺ sanal sermaye ile başlarsın — gerçek para yok, gerçek fiyatlar var.",
-  "Kripto, emtia, S&P 500, NASDAQ 100 ve BIST 100’den en fazla 10 varlık seçersin.",
-  "Günde en fazla 10 işlem; her fiyat CoinGecko ve Yahoo Finance’ten canlı akar.",
-  "En yüksek getiriyi yapan, canlı liderlik tablosunun zirvesine çıkar.",
-];
 
 function Stat({
   k,
