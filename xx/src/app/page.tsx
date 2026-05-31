@@ -39,6 +39,7 @@ export default async function Home() {
               alignItems: "center",
               justifyContent: "space-between",
               gap: 16,
+              flexWrap: "wrap",
               padding: "16px 24px",
               maxWidth: 1180,
               margin: "0 auto",
@@ -114,7 +115,7 @@ export default async function Home() {
             }}
           >
             <span className="mono" style={{ fontSize: ".62rem", letterSpacing: ".24em", opacity: 0.85 }}>
-              [ XX // ARENA ]
+              XX // ARENA
             </span>
             <span className="mono" style={{ fontSize: ".72rem", letterSpacing: ".06em", fontWeight: 500 }}>
               3 AYLIK BÜYÜK YARIŞ BAŞLADI — İLK 3’E SÜRPRİZ PARA ÖDÜLÜ

@@ -24,6 +24,8 @@ export default async function PortfolioPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
+          gap: 12,
+          flexWrap: "wrap",
           marginBottom: 24,
         }}
       >
@@ -34,12 +36,12 @@ export default async function PortfolioPage() {
           <span className="display" style={{ fontSize: "1.5rem" }}>XX</span>
           <span className="eyebrow" style={{ letterSpacing: ".28em" }}>Arena</span>
         </Link>
-        <nav style={{ display: "flex", gap: 10 }}>
+        <nav style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Link href="/arena" className="btn" style={{ textDecoration: "none" }}>
             Arena
           </Link>
           <Link href={`/u/${user.handle}`} className="btn" style={{ textDecoration: "none" }}>
-            Herkese açık profil
+            Profilim
           </Link>
           <LogoutButton />
         </nav>
