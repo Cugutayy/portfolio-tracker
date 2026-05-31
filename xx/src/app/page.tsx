@@ -3,6 +3,7 @@ import { LeaderboardRail } from "@/components/LeaderboardRail";
 import { TickerTape } from "@/components/TickerTape";
 import { CountUp } from "@/components/CountUp";
 import { ArenaPulse } from "@/components/ArenaPulse";
+import { AsciiBackdrop } from "@/components/AsciiBackdrop";
 import { getCurrentUser } from "@/lib/session";
 
 export const dynamic = "force-dynamic";
@@ -129,6 +130,8 @@ export default async function Home() {
         {/* front-page splash */}
         <div
           style={{
+            position: "relative",
+            overflow: "hidden",
             flex: 1,
             display: "flex",
             flexDirection: "column",
@@ -141,6 +144,8 @@ export default async function Home() {
             width: "100%",
           }}
         >
+          <AsciiBackdrop />
+          <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
           <div
             className="eyebrow fade-up"
             style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 22, animationDelay: ".05s" }}
@@ -188,6 +193,7 @@ export default async function Home() {
             >
               {startLabel}
             </Link>
+          </div>
           </div>
         </div>
 
