@@ -2,9 +2,9 @@
 
 import type { Locale } from "@/lib/i18n";
 
-const OPTS: { l: Locale; flag: string; label: string }[] = [
-  { l: "tr", flag: "🇹🇷", label: "TR" },
-  { l: "en", flag: "🇬🇧", label: "EN" },
+const OPTS: { l: Locale; label: string }[] = [
+  { l: "tr", label: "TR" },
+  { l: "en", label: "EN" },
 ];
 
 /** Flag language switcher. Persists the choice in a cookie and reloads so
@@ -46,19 +46,18 @@ export function LanguageToggle({ locale }: { locale: Locale }) {
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 4,
-              padding: "3px 7px",
+              padding: "4px 9px",
               borderRadius: 6,
               border: "none",
               cursor: "pointer",
-              fontSize: ".62rem",
-              letterSpacing: ".04em",
+              fontSize: ".66rem",
+              letterSpacing: ".06em",
+              fontWeight: active ? 600 : 400,
               background: active ? "var(--fill-2)" : "transparent",
               color: active ? "var(--ink)" : "var(--muted)",
               opacity: active ? 1 : 0.7,
             }}
           >
-            <span style={{ fontSize: ".95rem", lineHeight: 1 }}>{o.flag}</span>
             {o.label}
           </button>
         );
