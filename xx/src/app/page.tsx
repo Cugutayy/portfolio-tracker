@@ -95,6 +95,36 @@ export default async function Home() {
         {/* live social-proof ribbon */}
         <ArenaPulse />
 
+        {/* competition announcement — breaking bar */}
+        <Link
+          href="/yarisma"
+          style={{ textDecoration: "none", display: "block", background: "var(--ink)", color: "var(--paper)" }}
+        >
+          <div
+            style={{
+              maxWidth: 1180,
+              margin: "0 auto",
+              padding: "11px 24px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 16,
+              flexWrap: "wrap",
+              textAlign: "center",
+            }}
+          >
+            <span className="mono" style={{ fontSize: ".62rem", letterSpacing: ".24em", opacity: 0.85 }}>
+              [ XX // ARENA ]
+            </span>
+            <span className="mono" style={{ fontSize: ".72rem", letterSpacing: ".06em", fontWeight: 500 }}>
+              3 AYLIK BÜYÜK YARIŞ BAŞLADI — İLK 3’E SÜRPRİZ PARA ÖDÜLÜ
+            </span>
+            <span className="mono" style={{ fontSize: ".66rem", letterSpacing: ".12em", textDecoration: "underline", textUnderlineOffset: 3 }}>
+              DETAY →
+            </span>
+          </div>
+        </Link>
+
         {/* front-page splash */}
         <div
           style={{
