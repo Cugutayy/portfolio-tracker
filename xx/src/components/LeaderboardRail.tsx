@@ -66,7 +66,6 @@ function toLeaders(rows: LeaderApiRow[]): Leader[] {
 
 export function LeaderboardRail() {
   const [rows, setRows] = useState<LeaderApiRow[] | null>(null);
-  const [sort, setSort] = useState<"value" | "gainers">("value");
 
   useEffect(() => {
     let alive = true;
@@ -88,11 +87,10 @@ export function LeaderboardRail() {
 
   const leaders = useMemo(() => {
     if (rows == null) return null;
-    const sorted = [...rows].sort((a, b) =>
-      sort === "value" ? b.totalTry - a.totalTry : b.returnPct - a.returnPct,
-    );
+    // value rank == return rank (everyone starts at 1M), so a single order
+    const sorted = [...rows].sort((a, b) => b.totalTry - a.totalTry);
     return toLeaders(sorted);
-  }, [rows, sort]);
+  }, [rows]);
 
   const list = leaders ?? [];
   const loading = leaders === null;
@@ -113,29 +111,9 @@ export function LeaderboardRail() {
           <span className="live-dot" />
           <span className="eyebrow">Canlı liderlik</span>
         </div>
-        {!empty && (
-          <div style={{ display: "flex", gap: 4 }}>
-            {(["value", "gainers"] as const).map((k) => (
-              <button
-                key={k}
-                onClick={() => setSort(k)}
-                className="mono"
-                style={{
-                  fontSize: ".56rem",
-                  letterSpacing: ".04em",
-                  padding: "3px 8px",
-                  borderRadius: 6,
-                  border: "none",
-                  cursor: "pointer",
-                  background: sort === k ? "var(--fill-2)" : "transparent",
-                  color: sort === k ? "var(--ink)" : "var(--muted)",
-                }}
-              >
-                {k === "value" ? "Değer" : "Getiri"}
-              </button>
-            ))}
-          </div>
-        )}
+        <span className="mono" style={{ fontSize: ".58rem", color: "var(--muted)" }}>
+          en çok kazanan
+        </span>
       </div>
 
       {empty ? (

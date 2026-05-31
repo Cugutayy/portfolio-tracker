@@ -393,7 +393,7 @@ export function PortfolioClient({
   const buyBlock = noTradesLeft
     ? "Günlük işlem hakkın doldu."
     : atHoldingLimit
-      ? "5 varlık sınırına ulaştın — yeni varlık için önce birini sat."
+      ? "10 varlık sınırına ulaştın — yeni varlık için önce birini sat."
       : insufficientCash
         ? `Nakitin yetersiz (${fmtTry(cashTry)}).`
         : null;

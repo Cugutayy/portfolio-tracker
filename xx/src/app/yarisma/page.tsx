@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 const RULES = [
   "1.000.000 ₺ sanal sermaye ile başlarsın — gerçek para yok, gerçek fiyatlar var.",
-  "Kripto, emtia, S&P 500, NASDAQ 100 ve BIST 100’den en fazla 5 varlık tutarsın.",
+  "Kripto, emtia, S&P 500, NASDAQ 100 ve BIST 100’den en fazla 10 varlık tutarsın.",
   "Günde en fazla 10 işlem; her fiyat CoinGecko ve Yahoo Finance’ten canlı akar.",
   "Yarış 3 ay sürer. En yüksek getiriyi yapan ilk 3, sürpriz para ödüllerini kazanır.",
 ];
