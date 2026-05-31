@@ -19,7 +19,7 @@ export const OG = {
 
 // Horizontal green leaf mark (tip left), self-contained for the card.
 export const OG_LEAF = `data:image/svg+xml;utf8,${encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g transform="rotate(-90 50 50)"><path d="M46 82 C 44 88, 40 92, 33 95" fill="none" stroke="${OG.GREEN}" stroke-width="3.6" stroke-linecap="round"/><path d="M46 82 C 27 60, 30 30, 59 11 C 73 31, 65 63, 46 82 Z" fill="${OG.GREEN}"/><g fill="none" stroke="${OG.BG}" stroke-width="2.2" stroke-linecap="round" opacity="0.92"><path d="M46 82 C 49 58, 53 32, 58 14"/><path d="M48 66 Q 42 62, 36 56"/><path d="M48 66 Q 55 64, 60 57"/><path d="M51 50 Q 46 47, 41 41"/><path d="M51 50 Q 57 49, 62 43"/><path d="M54 35 Q 51 32, 47 27"/><path d="M54 35 Q 59 33, 62 29"/></g></g></svg>`,
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><g transform="translate(0 100) scale(1 -1) rotate(-90 50 50)"><path d="M46 82 C 44 88, 40 92, 33 95" fill="none" stroke="${OG.GREEN}" stroke-width="3.6" stroke-linecap="round"/><path d="M46 82 C 27 60, 30 30, 59 11 C 73 31, 65 63, 46 82 Z" fill="${OG.GREEN}"/><g fill="none" stroke="${OG.BG}" stroke-width="2.2" stroke-linecap="round" opacity="0.92"><path d="M46 82 C 49 58, 53 32, 58 14"/><path d="M48 66 Q 42 62, 36 56"/><path d="M48 66 Q 55 64, 60 57"/><path d="M51 50 Q 46 47, 41 41"/><path d="M51 50 Q 57 49, 62 43"/><path d="M54 35 Q 51 32, 47 27"/><path d="M54 35 Q 59 33, 62 29"/></g></g></svg>`,
 )}`;
 
 export const tryFmt = (n: number) =>
