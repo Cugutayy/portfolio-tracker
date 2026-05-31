@@ -13,9 +13,8 @@ interface LeaderRow {
   slices: LeaderSlice[]; followers: number; likes: number; tradesCount: number;
 }
 
-type Sort = "value" | "gainers" | "losers" | "liked";
+type Sort = "gainers" | "losers" | "liked";
 const SORTS: { key: Sort; label: string }[] = [
-  { key: "value", label: "En değerli" },
   { key: "gainers", label: "En çok kazanan" },
   { key: "losers", label: "En çok kaybeden" },
   { key: "liked", label: "En çok beğenilen" },
@@ -36,7 +35,7 @@ const slicesWithCash = (r: LeaderRow): DemoSlice[] => [
 export default function ArenaPage() {
   const [rows, setRows] = useState<LeaderRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sort, setSort] = useState<Sort>("value");
+  const [sort, setSort] = useState<Sort>("gainers");
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -50,8 +49,7 @@ export default function ArenaPage() {
 
   const ranked = useMemo(() => {
     const list = [...rows];
-    if (sort === "value") list.sort((a, b) => b.totalTry - a.totalTry);
-    else if (sort === "gainers") list.sort((a, b) => b.returnPct - a.returnPct);
+    if (sort === "gainers") list.sort((a, b) => b.returnPct - a.returnPct);
     else if (sort === "losers") list.sort((a, b) => a.returnPct - b.returnPct);
     else list.sort((a, b) => b.likes - a.likes);
     return list;

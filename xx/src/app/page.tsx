@@ -167,7 +167,7 @@ export default async function Home() {
               animationDelay: ".3s",
             }}
           >
-            Sanal 1.000.000 ₺ ile başla, en fazla 5 varlık seç, gerçek piyasa
+            Sanal 1.000.000 ₺ ile başla, en fazla 10 varlık seç, gerçek piyasa
             fiyatlarıyla yarış. En iyi getiri zirveye çıkar.
           </p>
           <div
@@ -267,7 +267,7 @@ export default async function Home() {
 
           <div style={{ display: "flex", gap: 0, flexWrap: "wrap", marginTop: 26, borderTop: "1px solid var(--rule)" }}>
             <Stat k="Başlangıç" n={1000000} suffix=" ₺" />
-            <Stat k="Maks. varlık" n={5} />
+            <Stat k="Maks. varlık" n={10} />
             <Stat k="Günlük işlem" n={10} />
             <Stat k="Veri" v="Canlı" live />
           </div>
@@ -293,7 +293,7 @@ export default async function Home() {
 
 const RULES = [
   "1.000.000 ₺ sanal sermaye ile başlarsın — gerçek para yok, gerçek fiyatlar var.",
-  "Kripto, emtia, S&P 500, NASDAQ 100 ve BIST 100’den en fazla 5 varlık seçersin.",
+  "Kripto, emtia, S&P 500, NASDAQ 100 ve BIST 100’den en fazla 10 varlık seçersin.",
   "Günde en fazla 10 işlem; her fiyat CoinGecko ve Yahoo Finance’ten canlı akar.",
   "En yüksek getiriyi yapan, canlı liderlik tablosunun zirvesine çıkar.",
 ];
