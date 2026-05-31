@@ -22,34 +22,36 @@ export function Logo({
     >
       {/* horizontal, tip left; vertical mirror lifts the stem to the top */}
       <g transform="translate(0 100) scale(1 -1) rotate(-90 50 50)">
-        {/* stem — flows off the leaf base with a gentle sway */}
+        {/* stem */}
         <path
-          d="M46 82 C 44 88, 40 92, 33 95"
+          d="M50 90 C 50 94, 49 97, 47 99"
           fill="none"
           stroke="var(--green-t)"
-          strokeWidth="3.6"
+          strokeWidth="3.4"
           strokeLinecap="round"
         />
-        {/* leaf blade — bends to one side, tapering to a fine tip (wind) */}
+        {/* leaf blade — lanceolate, fine drip tip, soft shoulders */}
         <path
-          d="M46 82 C 27 60, 30 30, 59 11 C 73 31, 65 63, 46 82 Z"
+          d="M50 6 C 33 28, 30 60, 50 92 C 70 60, 67 28, 50 6 Z"
           fill="var(--green-t)"
         />
-        {/* midrib + side veins, following the curve of the blade */}
+        {/* midrib + arcing side veins (curve up toward the tip) */}
         <g
           fill="none"
           stroke="var(--bg)"
-          strokeWidth="2.2"
           strokeLinecap="round"
-          opacity="0.92"
+          strokeLinejoin="round"
+          opacity="0.9"
         >
-          <path d="M46 82 C 49 58, 53 32, 58 14" />
-          <path d="M48 66 Q 42 62, 36 56" />
-          <path d="M48 66 Q 55 64, 60 57" />
-          <path d="M51 50 Q 46 47, 41 41" />
-          <path d="M51 50 Q 57 49, 62 43" />
-          <path d="M54 35 Q 51 32, 47 27" />
-          <path d="M54 35 Q 59 33, 62 29" />
+          <path d="M50 90 C 51 62, 51 34, 50 12" strokeWidth="2.4" />
+          <g strokeWidth="2">
+            <path d="M50 74 Q 40 72, 33 63" />
+            <path d="M50 74 Q 60 72, 67 63" />
+            <path d="M50 56 Q 40 54, 33 45" />
+            <path d="M50 56 Q 60 54, 67 45" />
+            <path d="M50 40 Q 42 38, 36 30" />
+            <path d="M50 40 Q 58 38, 64 30" />
+          </g>
         </g>
       </g>
     </svg>
