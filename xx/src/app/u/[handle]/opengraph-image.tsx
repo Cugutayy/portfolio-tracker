@@ -95,7 +95,7 @@ export default async function Image({
   }
 
   const up = profile.returnPct >= 0;
-  const tickers = profile.holdings.slice(0, 5).map((h) => h.ticker);
+  const holdings = profile.holdings.slice(0, 6);
   const initials = profile.name
     .split(/\s+/)
     .map((w) => w[0])
@@ -110,55 +110,87 @@ export default async function Image({
         <div style={page}>
           {nameplate(`Sıra #${profile.rank}`, display)}
 
-          {/* featured-trader story */}
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", fontSize: 19, letterSpacing: 4, color: GREEN, textTransform: "uppercase", marginBottom: 10 }}>
-              Canlı Liderlik · Portföy Raporu
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
-              {profile.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.image} width={104} height={104} alt="" style={{ borderRadius: 52, objectFit: "cover", border: `2px solid ${INK}` }} />
-              ) : (
-                <div style={{ display: "flex", width: 104, height: 104, borderRadius: 52, background: GREEN, border: `2px solid ${INK}`, alignItems: "center", justifyContent: "center", color: PAPER, fontFamily: display, fontSize: 44 }}>
-                  {initials}
-                </div>
-              )}
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <div style={{ display: "flex", fontFamily: display, fontSize: 76, color: INK, lineHeight: 1 }}>
-                  {`@${profile.handle}`}
-                </div>
-                <div style={{ display: "flex", fontSize: 22, color: MUTED, marginTop: 4 }}>
-                  {nameDiffers ? `${profile.name} · ` : ""}Sanal 1.000.000 ₺ portföy
+          {/* two-column trader report */}
+          <div style={{ display: "flex", flex: 1, paddingTop: 18 }}>
+            {/* left — identity + stats */}
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, paddingRight: 30 }}>
+              <div style={{ display: "flex", fontSize: 18, letterSpacing: 4, color: GREEN, textTransform: "uppercase", marginBottom: 14 }}>
+                Portföy Raporu
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 20 }}>
+                {profile.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={profile.image} width={92} height={92} alt="" style={{ borderRadius: 46, objectFit: "cover", border: `2px solid ${INK}` }} />
+                ) : (
+                  <div style={{ display: "flex", width: 92, height: 92, borderRadius: 46, background: GREEN, border: `2px solid ${INK}`, alignItems: "center", justifyContent: "center", color: PAPER, fontFamily: display, fontSize: 40 }}>
+                    {initials}
+                  </div>
+                )}
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", fontFamily: display, fontSize: 56, color: INK, lineHeight: 1 }}>
+                    {`@${profile.handle}`}
+                  </div>
+                  <div style={{ display: "flex", fontSize: 18, color: MUTED, marginTop: 4 }}>
+                    {nameDiffers ? `${profile.name} · ` : ""}sanal 1.000.000 ₺
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* stats — clean row, no divider lines */}
-          <div style={{ display: "flex", borderTop: `1px solid ${RULE}`, paddingTop: 18, gap: 64 }}>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", fontSize: 17, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Getiri</div>
-              <div style={{ display: "flex", fontSize: 52, fontWeight: 700, color: up ? GREEN : RED, marginTop: 4 }}>
-                {`${up ? "+" : ""}${profile.returnPct.toFixed(1)}%`}
+              <div style={{ display: "flex", gap: 44, borderTop: `1px solid ${RULE}`, paddingTop: 16 }}>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", fontSize: 16, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Getiri</div>
+                  <div style={{ display: "flex", fontSize: 52, fontWeight: 700, color: up ? GREEN : RED, marginTop: 2 }}>
+                    {`${up ? "+" : ""}${profile.returnPct.toFixed(1)}%`}
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", fontSize: 16, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Toplam değer</div>
+                  <div style={{ display: "flex", fontSize: 52, fontWeight: 700, color: INK, marginTop: 2 }}>{tryFmt(profile.totalTry)}</div>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 44, marginTop: 16 }}>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", fontSize: 16, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>İşlem</div>
+                  <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: INK, marginTop: 2 }}>{String(profile.tradesCount)}</div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <div style={{ display: "flex", fontSize: 16, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Takipçi</div>
+                  <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: INK, marginTop: 2 }}>{String(profile.followers)}</div>
+                </div>
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", fontSize: 17, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Toplam değer</div>
-              <div style={{ display: "flex", fontSize: 52, fontWeight: 700, color: INK, marginTop: 4 }}>{tryFmt(profile.totalTry)}</div>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <div style={{ display: "flex", fontSize: 17, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>İşlem</div>
-              <div style={{ display: "flex", fontSize: 52, fontWeight: 700, color: INK, marginTop: 4 }}>{String(profile.tradesCount)}</div>
+
+            {/* right — holdings table */}
+            <div style={{ display: "flex", flexDirection: "column", flex: 1, paddingLeft: 30, borderLeft: `1px solid ${RULE}` }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", paddingBottom: 8, marginBottom: 14, borderBottom: `2px solid ${INK}` }}>
+                <span style={{ display: "flex", fontFamily: display, fontSize: 26, color: INK }}>Portföy</span>
+                <span style={{ display: "flex", fontSize: 14, color: MUTED, letterSpacing: 1.5, textTransform: "uppercase" }}>Ağırlık · K/Z</span>
+              </div>
+              {holdings.length > 0 ? (
+                holdings.map((h) => {
+                  const hUp = h.pnlPct >= 0;
+                  return (
+                    <div key={h.ticker} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 13 }}>
+                      <span style={{ display: "flex", width: 12, height: 12, borderRadius: 3, background: h.color }} />
+                      <span style={{ display: "flex", flex: 1, fontSize: 22, fontWeight: 600, color: INK }}>{h.ticker}</span>
+                      <span style={{ display: "flex", width: 64, fontSize: 18, color: MUTED, justifyContent: "flex-end" }}>{Math.round(h.weight * 100)}%</span>
+                      <span style={{ display: "flex", width: 92, fontSize: 19, fontWeight: 700, color: hUp ? GREEN : RED, justifyContent: "flex-end" }}>
+                        {`${hUp ? "+" : ""}${h.pnlPct.toFixed(1)}%`}
+                      </span>
+                    </div>
+                  );
+                })
+              ) : (
+                <div style={{ display: "flex", fontSize: 20, color: MUTED }}>Henüz pozisyon yok — nakitte bekliyor.</div>
+              )}
             </div>
           </div>
 
           {/* footer */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 21, color: MUTED }}>
-            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-              <span style={{ textTransform: "uppercase", letterSpacing: 2, fontSize: 17 }}>Portföy</span>
-              <span style={{ color: INK }}>{tickers.length ? tickers.join(" · ") : "nakit"}</span>
-            </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `2px solid ${INK}`, paddingTop: 14, fontSize: 19, color: MUTED }}>
+            <span style={{ display: "flex", textTransform: "uppercase", letterSpacing: 2, fontSize: 16 }}>
+              XX Arena · sanal trader turnuvası
+            </span>
             <span style={{ display: "flex", alignItems: "center", gap: 9 }}>
               <span style={{ width: 11, height: 11, borderRadius: 6, background: GREEN, display: "flex" }} />
               CANLI
