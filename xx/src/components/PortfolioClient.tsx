@@ -62,6 +62,22 @@ const num = (n: number, d = 2) =>
 
 const TYPE_ORDER: AssetType[] = ["crypto", "commodity", "index", "nasdaq100", "bist100", "sp500"];
 
+const fmtUsd = (n: number) =>
+  "$" + new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 0 }).format(Math.max(0, n));
+
+/** Milliseconds until the next Istanbul midnight (UTC+3, when trade limits reset). */
+function msToReset() {
+  const ist = new Date(Date.now() + 3 * 3600_000);
+  const next = new Date(ist);
+  next.setUTCHours(24, 0, 0, 0);
+  return next.getTime() - ist.getTime();
+}
+function fmtReset(ms: number) {
+  const h = Math.floor(ms / 3600_000);
+  const m = Math.floor((ms % 3600_000) / 60_000);
+  return h > 0 ? `${h}sa ${m}dk` : `${m}dk`;
+}
+
 function gradFor(s: string) {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
@@ -120,6 +136,15 @@ export function PortfolioClient({
   const [sellExact, setSellExact] = useState(false);
   const [marketTab, setMarketTab] = useState<AssetType>("crypto");
   const [marketQuery, setMarketQuery] = useState("");
+
+  // countdown to the daily trade-limit reset (Istanbul midnight)
+  const [resetIn, setResetIn] = useState("");
+  useEffect(() => {
+    const tick = () => setResetIn(fmtReset(msToReset()));
+    tick();
+    const id = setInterval(tick, 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   // editable profile
   const [name, setName] = useState(initialName);
@@ -390,16 +415,30 @@ export function PortfolioClient({
         </div>
 
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap", marginTop: 20 }}>
-          <Stat label="Toplam değer" value={fmtTry(pf?.totalTry ?? 0)} big />
+          <Stat
+            label="Toplam değer"
+            value={fmtTry(pf?.totalTry ?? 0)}
+            big
+            sub={
+              pf && pf.usdTry > 0
+                ? `≈ ${fmtUsd(pf.totalTry / pf.usdTry)} · ${up ? "+" : ""}${num(pf.totalReturnPct)}%`
+                : undefined
+            }
+          />
           <Stat
             label="Toplam getiri"
             value={`${up ? "+" : ""}${num(pf?.totalReturnPct ?? 0)}%`}
             color={up ? "var(--green-t)" : "var(--red-t)"}
             big
+            sub={pf ? `${up ? "+" : ""}${fmtTry(pf.totalPnlTry)}` : undefined}
           />
           <Stat label="Nakit" value={fmtTry(pf?.cashTry ?? 0)} />
           <Stat label="Yatırımda" value={fmtTry(pf?.investedTry ?? 0)} />
-          <Stat label="Bugünkü işlem" value={`${pf?.tradesToday ?? 0} / 5`} />
+          <Stat
+            label="Bugünkü işlem"
+            value={`${pf?.tradesToday ?? 0} / ${(pf?.tradesToday ?? 0) + (pf?.tradesLeft ?? 0)}`}
+            sub={resetIn ? `yenilenme: ${resetIn}` : undefined}
+          />
         </div>
       </div>
 
@@ -747,7 +786,9 @@ export function PortfolioClient({
             </button>
           )}
           <div className="eyebrow" style={{ marginTop: 10, textAlign: "center", color: noTradesLeft ? "var(--red-t)" : "var(--muted)" }}>
-            {!noTradesLeft ? `Bugün ${pf?.tradesLeft} işlem hakkın kaldı` : "Günlük işlem hakkın doldu"}
+            {!noTradesLeft
+              ? `Bugün ${pf?.tradesLeft} işlem hakkın kaldı${resetIn ? ` · ${resetIn} sonra yenilenir` : ""}`
+              : `Günlük işlem hakkın doldu${resetIn ? ` · ${resetIn} sonra yenilenir` : ""}`}
           </div>
         </div>
       </div>
@@ -800,13 +841,18 @@ export function PortfolioClient({
   );
 }
 
-function Stat({ label, value, color, big }: { label: string; value: string; color?: string; big?: boolean }) {
+function Stat({ label, value, color, big, sub }: { label: string; value: string; color?: string; big?: boolean; sub?: string }) {
   return (
     <div>
       <div className="eyebrow">{label}</div>
       <div className="mono" style={{ fontSize: big ? "1.5rem" : "1.05rem", fontWeight: 600, marginTop: 2, color: color ?? "var(--ink)" }}>
         {value}
       </div>
+      {sub && (
+        <div className="mono" style={{ fontSize: ".68rem", color: "var(--muted)", marginTop: 3 }}>
+          {sub}
+        </div>
+      )}
     </div>
   );
 }
