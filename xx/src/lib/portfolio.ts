@@ -21,7 +21,7 @@ import { getLivePrices } from "@/lib/prices";
 import { ASSET_BY_TICKER } from "@/lib/assets";
 
 export const MAX_HOLDINGS = 5;
-export const MAX_TRADES_PER_DAY = 5;
+export const MAX_TRADES_PER_DAY = 10;
 
 export interface HoldingView {
   ticker: string;

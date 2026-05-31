@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
 
 type Mode = "login" | "register";
 
 export default function JoinPage() {
+  // already signed in? skip the form, go straight to the portfolio
+  const { status } = useSession();
+  useEffect(() => {
+    if (status === "authenticated") window.location.replace("/portfolio");
+  }, [status]);
+
   const [mode, setMode] = useState<Mode>("login");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -71,8 +76,8 @@ export default function JoinPage() {
             color: "var(--ink)",
           }}
         >
-          <Logo size={38} />
           <span className="display" style={{ fontSize: "1.6rem" }}>XX</span>
+          <span className="eyebrow" style={{ letterSpacing: ".28em" }}>Arena</span>
         </Link>
         <p
           style={{

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Logo } from "@/components/Logo";
 
 export default function NotFound() {
   return (
@@ -15,7 +14,7 @@ export default function NotFound() {
         gap: 4,
       }}
     >
-      <Logo size={56} />
+      <div className="display" style={{ fontSize: "1.8rem" }}>XX Arena</div>
 
       <div className="eyebrow" style={{ marginTop: 22 }}>
         Sayı No. 404
