@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import { PortfolioClient } from "@/components/PortfolioClient";
-import { Logo } from "@/components/Logo";
+import { LogoutButton } from "@/components/LogoutButton";
 
 export const dynamic = "force-dynamic";
 
@@ -31,8 +31,8 @@ export default async function PortfolioPage() {
           href="/"
           style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--ink)" }}
         >
-          <Logo size={36} />
           <span className="display" style={{ fontSize: "1.5rem" }}>XX</span>
+          <span className="eyebrow" style={{ letterSpacing: ".28em" }}>Arena</span>
         </Link>
         <nav style={{ display: "flex", gap: 10 }}>
           <Link href="/arena" className="btn" style={{ textDecoration: "none" }}>
@@ -41,6 +41,7 @@ export default async function PortfolioPage() {
           <Link href={`/u/${user.handle}`} className="btn" style={{ textDecoration: "none" }}>
             Herkese açık profil
           </Link>
+          <LogoutButton />
         </nav>
       </div>
 

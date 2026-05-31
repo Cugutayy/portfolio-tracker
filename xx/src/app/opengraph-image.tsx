@@ -1,5 +1,5 @@
 import { ImageResponse } from "next/og";
-import { OG, OG_LEAF, OG_SIZE, loadOgFonts } from "@/lib/og";
+import { OG, OG_SIZE, loadOgFonts } from "@/lib/og";
 
 export const runtime = "nodejs";
 export const alt = "XX Arena";
@@ -42,10 +42,8 @@ export default async function Image() {
         >
           {/* nameplate */}
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, paddingBottom: 12 }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={OG_LEAF} width={46} height={46} alt="" />
-              <div style={{ fontFamily: display, fontSize: 68, color: INK, lineHeight: 1 }}>XX Arena</div>
+            <div style={{ display: "flex", justifyContent: "center", paddingBottom: 12 }}>
+              <div style={{ display: "flex", fontFamily: display, fontSize: 68, color: INK, lineHeight: 1 }}>XX Arena</div>
             </div>
             <div
               style={{

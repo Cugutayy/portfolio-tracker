@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getPublicProfile } from "@/lib/portfolio";
-import { OG, OG_LEAF, OG_SIZE, tryFmt, loadOgFonts } from "@/lib/og";
+import { OG, OG_SIZE, tryFmt, loadOgFonts } from "@/lib/og";
 
 export const runtime = "nodejs";
 export const alt = "XX Arena";
@@ -16,9 +16,7 @@ const DATELINE = new Date()
 function nameplate(right: string, displayFont: string) {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, paddingBottom: 12 }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={OG_LEAF} width={46} height={46} alt="" />
+      <div style={{ display: "flex", justifyContent: "center", paddingBottom: 12 }}>
         <div style={{ display: "flex", fontFamily: displayFont, fontSize: 66, color: INK, lineHeight: 1 }}>
           XX Arena
         </div>
@@ -104,6 +102,7 @@ export default async function Image({
     .join("")
     .slice(0, 2)
     .toLocaleUpperCase("tr");
+  const nameDiffers = profile.name.toLowerCase() !== profile.handle.toLowerCase();
 
   return new ImageResponse(
     (
@@ -113,49 +112,48 @@ export default async function Image({
 
           {/* featured-trader story */}
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", fontSize: 19, letterSpacing: 4, color: GREEN, textTransform: "uppercase", marginBottom: 8 }}>
+            <div style={{ display: "flex", fontSize: 19, letterSpacing: 4, color: GREEN, textTransform: "uppercase", marginBottom: 10 }}>
               Canlı Liderlik · Portföy Raporu
             </div>
-            <div style={{ display: "flex", fontFamily: display, fontSize: 72, color: INK, lineHeight: 1 }}>
-              {profile.name}
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 22 }}>
               {profile.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={profile.image} width={92} height={92} alt="" style={{ borderRadius: 46, objectFit: "cover", border: `2px solid ${INK}` }} />
+                <img src={profile.image} width={104} height={104} alt="" style={{ borderRadius: 52, objectFit: "cover", border: `2px solid ${INK}` }} />
               ) : (
-                <div style={{ display: "flex", width: 92, height: 92, borderRadius: 46, background: GREEN, border: `2px solid ${INK}`, alignItems: "center", justifyContent: "center", color: PAPER, fontFamily: display, fontSize: 40 }}>
+                <div style={{ display: "flex", width: 104, height: 104, borderRadius: 52, background: GREEN, border: `2px solid ${INK}`, alignItems: "center", justifyContent: "center", color: PAPER, fontFamily: display, fontSize: 44 }}>
                   {initials}
                 </div>
               )}
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <div style={{ display: "flex", fontSize: 30, color: INK }}>{`@${profile.handle}`}</div>
-                <div style={{ display: "flex", fontSize: 18, color: MUTED, letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>
-                  Sanal 1.000.000 ₺ portföy
+                <div style={{ display: "flex", fontFamily: display, fontSize: 76, color: INK, lineHeight: 1 }}>
+                  {`@${profile.handle}`}
+                </div>
+                <div style={{ display: "flex", fontSize: 22, color: MUTED, marginTop: 4 }}>
+                  {nameDiffers ? `${profile.name} · ` : ""}Sanal 1.000.000 ₺ portföy
                 </div>
               </div>
             </div>
           </div>
 
-          {/* data box */}
-          <div style={{ display: "flex", borderTop: `2px solid ${INK}`, borderBottom: `1px solid ${RULE}` }}>
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "14px 0 14px 0" }}>
+          {/* stats — clean row, no divider lines */}
+          <div style={{ display: "flex", borderTop: `1px solid ${RULE}`, paddingTop: 18, gap: 64 }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
               <div style={{ display: "flex", fontSize: 17, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Getiri</div>
-              <div style={{ display: "flex", fontSize: 50, fontWeight: 700, color: up ? GREEN : RED, marginTop: 4 }}>
+              <div style={{ display: "flex", fontSize: 52, fontWeight: 700, color: up ? GREEN : RED, marginTop: 4 }}>
                 {`${up ? "+" : ""}${profile.returnPct.toFixed(1)}%`}
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "14px 0 14px 22px", borderLeft: `1px solid ${RULE}` }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
               <div style={{ display: "flex", fontSize: 17, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Toplam değer</div>
-              <div style={{ display: "flex", fontSize: 50, fontWeight: 700, color: INK, marginTop: 4 }}>{tryFmt(profile.totalTry)}</div>
+              <div style={{ display: "flex", fontSize: 52, fontWeight: 700, color: INK, marginTop: 4 }}>{tryFmt(profile.totalTry)}</div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", flex: 1, padding: "14px 0 14px 22px", borderLeft: `1px solid ${RULE}` }}>
+            <div style={{ display: "flex", flexDirection: "column" }}>
               <div style={{ display: "flex", fontSize: 17, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>İşlem</div>
-              <div style={{ display: "flex", fontSize: 50, fontWeight: 700, color: INK, marginTop: 4 }}>{String(profile.tradesCount)}</div>
+              <div style={{ display: "flex", fontSize: 52, fontWeight: 700, color: INK, marginTop: 4 }}>{String(profile.tradesCount)}</div>
             </div>
           </div>
 
-          {/* footer: holdings */}
+          {/* footer */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 21, color: MUTED }}>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <span style={{ textTransform: "uppercase", letterSpacing: 2, fontSize: 17 }}>Portföy</span>

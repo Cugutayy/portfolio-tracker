@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { LeaderboardRail } from "@/components/LeaderboardRail";
 import { TickerTape } from "@/components/TickerTape";
-import { Logo } from "@/components/Logo";
 import { CountUp } from "@/components/CountUp";
 import { ArenaPulse } from "@/components/ArenaPulse";
 import { getCurrentUser } from "@/lib/session";
@@ -46,15 +45,12 @@ export default async function Home() {
               width: "100%",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <Logo size={48} />
-              <div>
-                <div className="display" style={{ fontSize: "2rem", lineHeight: 1 }}>
-                  XX
-                </div>
-                <div className="eyebrow" style={{ marginTop: 3, letterSpacing: ".34em" }}>
-                  Arena
-                </div>
+            <div>
+              <div className="display" style={{ fontSize: "2rem", lineHeight: 1 }}>
+                XX
+              </div>
+              <div className="eyebrow" style={{ marginTop: 3, letterSpacing: ".34em" }}>
+                Arena
               </div>
             </div>
             <nav style={{ display: "flex", gap: 10 }}>
@@ -241,7 +237,7 @@ export default async function Home() {
           <div style={{ display: "flex", gap: 0, flexWrap: "wrap", marginTop: 26, borderTop: "1px solid var(--rule)" }}>
             <Stat k="Başlangıç" n={1000000} suffix=" ₺" />
             <Stat k="Maks. varlık" n={5} />
-            <Stat k="Günlük işlem" n={5} />
+            <Stat k="Günlük işlem" n={10} />
             <Stat k="Veri" v="Canlı" live />
           </div>
 
@@ -267,7 +263,7 @@ export default async function Home() {
 const RULES = [
   "1.000.000 ₺ sanal sermaye ile başlarsın — gerçek para yok, gerçek fiyatlar var.",
   "Kripto, emtia, S&P 500, NASDAQ 100 ve BIST 100’den en fazla 5 varlık seçersin.",
-  "Günde en fazla 5 işlem; her fiyat CoinGecko ve Yahoo Finance’ten canlı akar.",
+  "Günde en fazla 10 işlem; her fiyat CoinGecko ve Yahoo Finance’ten canlı akar.",
   "En yüksek getiriyi yapan, canlı liderlik tablosunun zirvesine çıkar.",
 ];
 
