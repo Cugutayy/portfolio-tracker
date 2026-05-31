@@ -4,7 +4,7 @@ import { AmbientOrbs } from "@/components/AmbientOrbs";
 import { Providers } from "@/components/Providers";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
-const TITLE = "XX — Sanal Trader Arenası";
+const TITLE = "XX Arena";
 const DESCRIPTION =
   "Traderların 1.000.000 ₺ sanal portföyle yarıştığı premium sosyal yatırım platformu. Gerçek piyasa fiyatları.";
 

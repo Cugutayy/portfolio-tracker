@@ -21,8 +21,8 @@ export function Logo({
       className="leaf-mark"
       style={{ display: "block" }}
     >
-      {/* horizontal, tip left; vertical mirror lifts the stem to the top */}
-      <g transform="translate(0 100) scale(1 -1) rotate(-90 50 50)">
+      {/* upright leaf with a gentle natural lean; stem at the bottom */}
+      <g transform="rotate(-8 50 52)">
         {/* stem */}
         <path
           d="M50 90 C 50 94, 49 97, 47 99"
