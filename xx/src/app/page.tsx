@@ -52,8 +52,8 @@ export default async function Home() {
                 <div className="display" style={{ fontSize: "2rem", lineHeight: 1 }}>
                   XX
                 </div>
-                <div className="eyebrow" style={{ marginTop: 3 }}>
-                  Sanal Trader Arenası
+                <div className="eyebrow" style={{ marginTop: 3, letterSpacing: ".34em" }}>
+                  Arena
                 </div>
               </div>
             </div>
