@@ -759,7 +759,16 @@ export function PortfolioClient({
           <div style={{ color: "var(--muted)" }}>Henüz işlem yok.</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {trades.map((t) => (
+            {trades.map((t) => {
+              // show the unit price in the asset's native currency (USD for
+              // crypto/US, ₺ for BIST) — the total amount stays in ₺ since
+              // that's the real cash moved from the 1M TL balance.
+              const lp = prices[t.ticker];
+              const aType = ASSET_BY_TICKER[t.ticker]?.type as AssetType | undefined;
+              const ccy = lp?.nativeCcy ?? (aType === "bist100" ? "TRY" : "USD");
+              const ratio = lp && lp.priceTry > 0 ? lp.nativePrice / lp.priceTry : (pf?.usdTry ? 1 / pf.usdTry : 1);
+              const unitNative = t.priceTry * ratio;
+              return (
               <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--rule)" }}>
                 <span className="mono" style={{ fontSize: ".68rem", padding: ".15rem .5rem", borderRadius: 6, background: t.side === "buy" ? "rgba(74,222,128,0.12)" : "rgba(255,122,133,0.12)", color: t.side === "buy" ? "var(--green-t)" : "var(--red-t)" }}>
                   {t.side === "buy" ? "AL" : "SAT"}
@@ -767,7 +776,7 @@ export function PortfolioClient({
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ fontWeight: 600 }}>{t.ticker}</span>
                   <span className="mono" style={{ fontSize: ".68rem", color: "var(--muted)", marginLeft: 8 }}>
-                    {num(t.quantity, 4)} @ {fmtTry(t.priceTry)}
+                    {num(t.quantity, 4)} @ {fmtAssetPrice(unitNative, ccy, aType)}
                   </span>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -782,7 +791,8 @@ export function PortfolioClient({
                   {new Date(t.tradedAt).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
