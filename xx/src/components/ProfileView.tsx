@@ -6,11 +6,17 @@ import { PortfolioWheel } from "@/components/PortfolioWheel";
 import { Sparkline } from "@/components/Sparkline";
 import { Avatar } from "@/components/Avatar";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
+import { fmtAssetPrice } from "@/lib/format";
+import type { AssetType } from "@/lib/assets";
 
 interface HoldingView {
   ticker: string; name: string; type: string; quantity: number;
   avgBuyPriceTry: number; priceTry: number; valueTry: number;
   pnlTry: number; pnlPct: number; weight: number; color: string;
+}
+interface PublicTrade {
+  ticker: string; side: "buy" | "sell"; quantity: number;
+  priceNative: number; nativeCcy: string; amountTry: number; tradedAt: string;
 }
 export interface ProfileData {
   id: string; name: string; handle: string; image: string | null; bio: string | null;
@@ -18,6 +24,7 @@ export interface ProfileData {
   holdings: HoldingView[]; equity: number[];
   followers: number; likes: number; commentsCount: number; tradesCount: number;
   isFollowing: boolean; isLiked: boolean; isSelf: boolean;
+  recentTrades: PublicTrade[];
 }
 interface CommentRow {
   id: string; body: string; createdAt: string;
@@ -223,6 +230,32 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
         </div>
       </div>
 
+      {/* trade history (public) */}
+      {p.recentTrades.length > 0 && (
+        <div className="glass" style={{ padding: 24 }}>
+          <div className="eyebrow" style={{ marginBottom: 14 }}>İşlem geçmişi</div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {p.recentTrades.map((t, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < p.recentTrades.length - 1 ? "1px solid var(--rule)" : "none" }}>
+                <span className="mono" style={{ fontSize: ".68rem", padding: ".15rem .5rem", borderRadius: 6, background: t.side === "buy" ? "rgba(74,222,128,0.12)" : "rgba(255,122,133,0.12)", color: t.side === "buy" ? "var(--green-t)" : "var(--red-t)" }}>
+                  {t.side === "buy" ? "AL" : "SAT"}
+                </span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontWeight: 600 }}>{t.ticker}</span>
+                  <span className="mono" style={{ fontSize: ".68rem", color: "var(--muted)", marginLeft: 8 }}>
+                    {num(t.quantity, 4)} @ {fmtAssetPrice(t.priceNative, t.nativeCcy)}
+                  </span>
+                </div>
+                <div className="mono" style={{ fontSize: ".82rem" }}>{fmtTry(t.amountTry)}</div>
+                <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", width: 84, textAlign: "right" }}>
+                  {new Date(t.tradedAt).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* comments */}
       <div className="glass" style={{ padding: 24 }}>
         <div className="eyebrow" style={{ marginBottom: 14 }}>Yorumlar ({comments.length})</div>
@@ -246,10 +279,22 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {comments.map((c) => (
               <div key={c.id} style={{ display: "flex", gap: 12 }}>
-                <Avatar initials={(c.authorName[0] ?? "?").toUpperCase()} gradient={gradFor(c.authorHandle || c.authorName)} image={c.authorImage} size={34} ring={false} />
+                {c.authorHandle ? (
+                  <Link href={`/u/${c.authorHandle}`} style={{ textDecoration: "none" }}>
+                    <Avatar initials={(c.authorName[0] ?? "?").toUpperCase()} gradient={gradFor(c.authorHandle || c.authorName)} image={c.authorImage} size={34} ring={false} />
+                  </Link>
+                ) : (
+                  <Avatar initials={(c.authorName[0] ?? "?").toUpperCase()} gradient={gradFor(c.authorHandle || c.authorName)} image={c.authorImage} size={34} ring={false} />
+                )}
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
-                    <span style={{ fontWeight: 600, fontSize: ".85rem" }}>{c.authorName}</span>
+                    {c.authorHandle ? (
+                      <Link href={`/u/${c.authorHandle}`} style={{ fontWeight: 600, fontSize: ".85rem", color: "var(--ink)", textDecoration: "none" }}>
+                        {c.authorName}
+                      </Link>
+                    ) : (
+                      <span style={{ fontWeight: 600, fontSize: ".85rem" }}>{c.authorName}</span>
+                    )}
                     {c.authorHandle && <span className="mono" style={{ fontSize: ".6rem", color: "var(--muted)" }}>@{c.authorHandle}</span>}
                     <span className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", marginLeft: "auto" }}>
                       {new Date(c.createdAt).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}

@@ -299,6 +299,17 @@ export interface PublicProfile {
   isFollowing: boolean;
   isLiked: boolean;
   isSelf: boolean;
+  recentTrades: PublicTrade[];
+}
+
+export interface PublicTrade {
+  ticker: string;
+  side: "buy" | "sell";
+  quantity: number;
+  priceNative: number;
+  nativeCcy: string;
+  amountTry: number;
+  tradedAt: string;
 }
 
 export async function getPublicProfile(
@@ -308,7 +319,7 @@ export async function getPublicProfile(
   const [user] = await db.select().from(users).where(eq(users.handle, handle)).limit(1);
   if (!user) return null;
 
-  const [view, equity, board, fc, lc, cc, tc, vf, vl] = await Promise.all([
+  const [view, equity, board, fc, lc, cc, tc, vf, vl, tradeRows, snap] = await Promise.all([
     getPortfolio(user.id),
     getEquityCurve(user.id),
     getLeaderboard(),
@@ -322,9 +333,27 @@ export async function getPublicProfile(
     viewerId
       ? db.select().from(likes).where(and(eq(likes.userId, viewerId), eq(likes.portfolioUserId, user.id))).limit(1)
       : Promise.resolve([]),
+    db.select().from(trades).where(eq(trades.userId, user.id)).orderBy(desc(trades.tradedAt)).limit(15),
+    getLivePrices(),
   ]);
 
   const rank = board.findIndex((r) => r.id === user.id) + 1;
+
+  const recentTrades: PublicTrade[] = tradeRows.map((t) => {
+    const lp = snap.prices[t.assetId];
+    const priceTry = Number(t.priceTry);
+    const nativeCcy = lp?.nativeCcy ?? (t.assetType === "bist100" ? "TRY" : "USD");
+    const ratio = lp && lp.priceTry > 0 ? lp.nativePrice / lp.priceTry : snap.usdTry > 0 ? 1 / snap.usdTry : 1;
+    return {
+      ticker: t.assetId,
+      side: t.side as "buy" | "sell",
+      quantity: Number(t.quantity),
+      priceNative: priceTry * ratio,
+      nativeCcy,
+      amountTry: Number(t.amountTry),
+      tradedAt: (t.tradedAt as Date).toISOString(),
+    };
+  });
 
   return {
     id: user.id,
@@ -346,6 +375,7 @@ export async function getPublicProfile(
     isFollowing: vf.length > 0,
     isLiked: vl.length > 0,
     isSelf: viewerId === user.id,
+    recentTrades,
   };
 }
 
