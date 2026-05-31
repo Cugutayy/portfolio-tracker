@@ -152,7 +152,7 @@ export default async function Home() {
               className="btn btn-accent"
               style={{ textDecoration: "none", padding: ".95rem 1.9rem", fontSize: "1rem" }}
             >
-              Edisyona gir →
+              Canlı liderlik ↓
             </Link>
             <Link
               href={startHref}
