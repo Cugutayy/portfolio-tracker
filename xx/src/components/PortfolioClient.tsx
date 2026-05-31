@@ -15,6 +15,9 @@ interface HoldingView {
   quantity: number;
   avgBuyPriceTry: number;
   priceTry: number;
+  priceNative: number;
+  avgBuyPriceNative: number;
+  nativeCcy: string;
   valueTry: number;
   costTry: number;
   pnlTry: number;
@@ -562,7 +565,7 @@ export function PortfolioClient({
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontWeight: 600, fontSize: ".88rem" }}>{h.ticker}</div>
                       <div className="mono" style={{ fontSize: ".62rem", color: "var(--muted)" }}>
-                        {num(h.quantity, 4)} · ort. {fmtTry(h.avgBuyPriceTry)}
+                        {num(h.quantity, 4)} · ort. {fmtAssetPrice(h.avgBuyPriceNative, h.nativeCcy, h.type as AssetType)}
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>

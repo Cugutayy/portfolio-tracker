@@ -76,6 +76,13 @@ export const holdings = pgTable(
       precision: 24,
       scale: 6,
     }).notNull(),
+    // Cost basis in the asset's native currency (USD for crypto/US/commodity,
+    // TRY for BIST). Nullable for legacy rows; populated on every buy so the
+    // UI can show the average in native units instead of converted TRY.
+    avgBuyPriceNative: numeric("avg_buy_price_native", {
+      precision: 24,
+      scale: 8,
+    }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
