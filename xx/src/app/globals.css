@@ -151,6 +151,24 @@ body {
   box-shadow: 0 6px 20px rgba(26, 24, 19, 0.22);
 }
 
+/* ── Leaf mark — gentle wind sway, pivoting near the stem ── */
+.leaf-mark {
+  transform-box: fill-box;
+  transform-origin: 64% 28%;
+  animation: leafSway 5.2s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes leafSway {
+  0%   { transform: rotate(-2.6deg); }
+  28%  { transform: rotate(1.6deg); }
+  52%  { transform: rotate(2.8deg); }
+  76%  { transform: rotate(0.4deg); }
+  100% { transform: rotate(-2.6deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .leaf-mark { animation: none; }
+}
+
 /* ── Live dot ── */
 .live-dot {
   width: 6px;
