@@ -43,6 +43,9 @@ export default async function PortfolioPage() {
           <Link href={`/u/${user.handle}`} className="btn" style={{ textDecoration: "none" }}>
             Profilim
           </Link>
+          <Link href="/settings" className="btn" style={{ textDecoration: "none" }}>
+            Ayarlar
+          </Link>
           <LogoutButton />
         </nav>
       </div>
