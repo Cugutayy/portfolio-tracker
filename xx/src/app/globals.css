@@ -51,6 +51,48 @@
   --red-t: #c23b2b;
 }
 
+/* ── Warm dark theme (opt-in via data-theme="dark") ── */
+[data-theme="dark"] {
+  --bg: #15130e;
+  --bg-soft: #100e0a;
+  --paper: #1e1b15;
+  --paper-2: #232019;
+
+  --ink: #ece6d6;
+  --ink-soft: #c9c0ac;
+  --muted: #948e7d;
+
+  --rule: rgba(236, 230, 214, 0.16);
+  --hairline: rgba(236, 230, 214, 0.10);
+  --fill: rgba(236, 230, 214, 0.05);
+  --fill-2: rgba(236, 230, 214, 0.09);
+  --shadow: rgba(0, 0, 0, 0.45);
+
+  --card-bg: #1e1b15;
+  --card-border: rgba(236, 230, 214, 0.16);
+  --input-bg: #14120d;
+
+  --accent: #ece6d6;
+  --accent-soft: rgba(236, 230, 214, 0.10);
+  --accent-2: #7da3c8;
+  --cash: rgba(236, 230, 214, 0.18);
+
+  --green: #46c483;
+  --green-t: #46c483;
+  --red: #e06a5a;
+  --red-t: #e06a5a;
+}
+[data-theme="dark"] body {
+  background-image: radial-gradient(rgba(236, 230, 214, 0.025) 1px, transparent 1px);
+}
+[data-theme="dark"] ::selection {
+  background: rgba(236, 230, 214, 0.22);
+}
+[data-theme="dark"] .btn-accent:hover {
+  background: #fff;
+  border-color: #fff;
+}
+
 * {
   box-sizing: border-box;
 }
