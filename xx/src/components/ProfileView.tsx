@@ -38,6 +38,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
   const [draft, setDraft] = useState("");
   const [posting, setPosting] = useState(false);
   const [shared, setShared] = useState(false);
+  const [sharing, setSharing] = useState(false);
 
   const initials = p.name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   const slices: DemoSlice[] = [
@@ -68,23 +69,51 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
     const j = await r.json();
     if (j.ok) setP((s) => ({ ...s, isLiked: j.liked, likes: j.likes }));
   }
+  // Share the newspaper portfolio card as an actual image (photo), not a link.
   async function shareProfile() {
-    const url = `${window.location.origin}/u/${p.handle}`;
-    const text = `${p.name} — XX Arena'da #${p.rank} sırada, ${up ? "+" : ""}${num(p.returnPct)}% getiri`;
+    if (sharing) return;
+    setSharing(true);
     try {
-      if (navigator.share) {
-        await navigator.share({ title: "XX Arena", text, url });
+      const text = `${p.name} — XX Arena'da #${p.rank} sırada, ${up ? "+" : ""}${num(p.returnPct)}% getiri`;
+      let blob: Blob | null = null;
+      try {
+        const res = await fetch(`/u/${p.handle}/opengraph-image`, { cache: "no-store" });
+        if (res.ok) blob = await res.blob();
+      } catch {
+        /* fall back to link share below */
+      }
+
+      if (blob) {
+        const file = new File([blob], `${p.handle}-xx-arena.png`, { type: "image/png" });
+        // native share sheet with the image file (mobile)
+        if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: "XX Arena", text });
+            return;
+          } catch {
+            /* user cancelled — fall through to download */
+          }
+        }
+        // desktop / unsupported → download the PNG
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = file.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(href);
+        setShared(true);
+        setTimeout(() => setShared(false), 1800);
         return;
       }
-    } catch {
-      /* user dismissed the share sheet — fall through to copy */
-    }
-    try {
-      await navigator.clipboard.writeText(url);
+
+      // last resort: copy the profile link
+      await navigator.clipboard.writeText(`${window.location.origin}/u/${p.handle}`);
       setShared(true);
       setTimeout(() => setShared(false), 1800);
-    } catch {
-      /* clipboard blocked — nothing more we can do */
+    } finally {
+      setSharing(false);
     }
   }
   async function postComment() {
@@ -133,8 +162,8 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
               Portföyünü yönet
             </Link>
           )}
-          <button className="btn" style={{ padding: ".7rem 1.2rem" }} onClick={shareProfile}>
-            {shared ? "Kopyalandı ✓" : "Paylaş ↗"}
+          <button className="btn" style={{ padding: ".7rem 1.2rem", opacity: sharing ? 0.6 : 1 }} disabled={sharing} onClick={shareProfile}>
+            {sharing ? "Hazırlanıyor…" : shared ? "İndirildi ✓" : "Kartı paylaş ↗"}
           </button>
         </div>
       </div>
