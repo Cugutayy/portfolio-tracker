@@ -20,7 +20,7 @@ export async function generateMetadata({
   const title = `${p.name} (@${p.handle}) — XX Arena`;
   const description = `Sıra #${p.rank} · ${sign}${p.returnPct.toFixed(1)}% getiri · sanal trader arenası`;
   return {
-    title,
+    title: { absolute: title },
     description,
     openGraph: { title, description, type: "profile" },
     twitter: { card: "summary_large_image", title, description },

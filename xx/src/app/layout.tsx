@@ -3,10 +3,24 @@ import "./globals.css";
 import { AmbientOrbs } from "@/components/AmbientOrbs";
 import { Providers } from "@/components/Providers";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+const TITLE = "XX — Sanal Trader Arenası";
+const DESCRIPTION =
+  "Traderların 1.000.000 ₺ sanal portföyle yarıştığı premium sosyal yatırım platformu. Gerçek piyasa fiyatları.";
+
 export const metadata: Metadata = {
-  title: "XX — Trader Arena",
-  description:
-    "Traderların 1.000.000 ₺ sanal portföyle yarıştığı premium sosyal yatırım platformu. Gerçek piyasa fiyatları.",
+  ...(SITE_URL ? { metadataBase: new URL(SITE_URL) } : {}),
+  title: { default: TITLE, template: "%s · XX" },
+  description: DESCRIPTION,
+  applicationName: "XX",
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    siteName: "XX",
+    locale: "tr_TR",
+    type: "website",
+  },
+  twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 
 export default function RootLayout({
