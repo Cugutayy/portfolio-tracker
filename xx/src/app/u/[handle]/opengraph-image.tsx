@@ -117,12 +117,12 @@ export default async function Image({
               <div style={{ display: "flex", fontSize: 18, letterSpacing: 4, color: GREEN, textTransform: "uppercase", marginBottom: 14 }}>
                 Portföy Raporu
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 18, marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
                 {profile.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profile.image} width={92} height={92} alt="" style={{ borderRadius: 46, objectFit: "cover", border: `2px solid ${INK}` }} />
+                  <img src={profile.image} width={80} height={80} alt="" style={{ borderRadius: 40, objectFit: "cover", border: `2px solid ${INK}` }} />
                 ) : (
-                  <div style={{ display: "flex", width: 92, height: 92, borderRadius: 46, background: GREEN, border: `2px solid ${INK}`, alignItems: "center", justifyContent: "center", color: PAPER, fontFamily: display, fontSize: 40 }}>
+                  <div style={{ display: "flex", width: 80, height: 80, borderRadius: 40, background: GREEN, border: `2px solid ${INK}`, alignItems: "center", justifyContent: "center", color: PAPER, fontFamily: display, fontSize: 36 }}>
                     {initials}
                   </div>
                 )}
@@ -136,26 +136,26 @@ export default async function Image({
                 </div>
               </div>
 
-              <div style={{ display: "flex", gap: 44, borderTop: `1px solid ${RULE}`, paddingTop: 16 }}>
+              <div style={{ display: "flex", gap: 44, borderTop: `1px solid ${RULE}`, paddingTop: 14 }}>
                 <div style={{ display: "flex", flexDirection: "column" }}>
-                  <div style={{ display: "flex", fontSize: 16, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Getiri</div>
-                  <div style={{ display: "flex", fontSize: 52, fontWeight: 700, color: up ? GREEN : RED, marginTop: 2 }}>
+                  <div style={{ display: "flex", fontSize: 15, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Getiri</div>
+                  <div style={{ display: "flex", fontSize: 46, fontWeight: 700, color: up ? GREEN : RED, marginTop: 2 }}>
                     {`${up ? "+" : ""}${profile.returnPct.toFixed(1)}%`}
                   </div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>
-                  <div style={{ display: "flex", fontSize: 16, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Toplam değer</div>
-                  <div style={{ display: "flex", fontSize: 52, fontWeight: 700, color: INK, marginTop: 2 }}>{tryFmt(profile.totalTry)}</div>
+                  <div style={{ display: "flex", fontSize: 15, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Toplam değer</div>
+                  <div style={{ display: "flex", fontSize: 46, fontWeight: 700, color: INK, marginTop: 2 }}>{tryFmt(profile.totalTry)}</div>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 44, marginTop: 16 }}>
+              <div style={{ display: "flex", gap: 44, marginTop: 12 }}>
                 <div style={{ display: "flex", flexDirection: "column" }}>
-                  <div style={{ display: "flex", fontSize: 16, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>İşlem</div>
-                  <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: INK, marginTop: 2 }}>{String(profile.tradesCount)}</div>
+                  <div style={{ display: "flex", fontSize: 15, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>İşlem</div>
+                  <div style={{ display: "flex", fontSize: 26, fontWeight: 700, color: INK, marginTop: 2 }}>{String(profile.tradesCount)}</div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>
-                  <div style={{ display: "flex", fontSize: 16, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Takipçi</div>
-                  <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: INK, marginTop: 2 }}>{String(profile.followers)}</div>
+                  <div style={{ display: "flex", fontSize: 15, letterSpacing: 2, color: MUTED, textTransform: "uppercase" }}>Takipçi</div>
+                  <div style={{ display: "flex", fontSize: 26, fontWeight: 700, color: INK, marginTop: 2 }}>{String(profile.followers)}</div>
                 </div>
               </div>
             </div>
