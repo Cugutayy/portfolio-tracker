@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useT } from "./Providers";
 
 interface PulseRow {
   name: string;
@@ -15,6 +16,7 @@ interface PulseRow {
  * an "arena just opened" CTA while the board is empty.
  */
 export function ArenaPulse() {
+  const t = useT();
   const [rows, setRows] = useState<PulseRow[] | null>(null);
 
   useEffect(() => {
@@ -50,7 +52,7 @@ export function ArenaPulse() {
             }}
           >
             <span className="live-dot" />
-            ARENA BUGÜN AÇILDI · İLK PORTFÖYÜ SEN KUR →
+            {t.pulse_opened}
           </Link>
         </div>
       </div>

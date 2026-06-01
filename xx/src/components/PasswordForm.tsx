@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "./Providers";
 
 export function PasswordForm() {
+  const t = useT();
   const [cur, setCur] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -13,11 +15,11 @@ export function PasswordForm() {
     e.preventDefault();
     setMsg(null);
     if (next.length < 6) {
-      setMsg({ kind: "err", text: "Yeni şifre en az 6 karakter olmalı." });
+      setMsg({ kind: "err", text: t.pf_min });
       return;
     }
     if (next !== confirm) {
-      setMsg({ kind: "err", text: "Yeni şifreler eşleşmiyor." });
+      setMsg({ kind: "err", text: t.pf_mismatch });
       return;
     }
     setBusy(true);
@@ -29,15 +31,15 @@ export function PasswordForm() {
       });
       const j = await r.json().catch(() => ({}));
       if (r.ok && j.ok) {
-        setMsg({ kind: "ok", text: "Şifren güncellendi." });
+        setMsg({ kind: "ok", text: t.pf_ok });
         setCur("");
         setNext("");
         setConfirm("");
       } else {
-        setMsg({ kind: "err", text: j.error || "Bir hata oluştu." });
+        setMsg({ kind: "err", text: j.error || t.pf_err });
       }
     } catch {
-      setMsg({ kind: "err", text: "Bağlantı hatası." });
+      setMsg({ kind: "err", text: t.pf_conn });
     } finally {
       setBusy(false);
     }
@@ -45,9 +47,9 @@ export function PasswordForm() {
 
   return (
     <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 360 }}>
-      <Field label="Mevcut şifre" value={cur} onChange={setCur} autoComplete="current-password" />
-      <Field label="Yeni şifre" value={next} onChange={setNext} autoComplete="new-password" />
-      <Field label="Yeni şifre (tekrar)" value={confirm} onChange={setConfirm} autoComplete="new-password" />
+      <Field label={t.pf_current} value={cur} onChange={setCur} autoComplete="current-password" />
+      <Field label={t.pf_new} value={next} onChange={setNext} autoComplete="new-password" />
+      <Field label={t.pf_confirm} value={confirm} onChange={setConfirm} autoComplete="new-password" />
 
       {msg && (
         <div
@@ -59,7 +61,7 @@ export function PasswordForm() {
       )}
 
       <button type="submit" disabled={busy} className="btn btn-accent" style={{ padding: ".75rem", opacity: busy ? 0.6 : 1 }}>
-        {busy ? "Güncelleniyor…" : "Şifreyi değiştir"}
+        {busy ? t.pf_submitting : t.pf_submit}
       </button>
     </form>
   );

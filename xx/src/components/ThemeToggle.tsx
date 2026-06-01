@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useT } from "./Providers";
 
 /** Toggles the warm dark theme and remembers the choice in localStorage. */
 export function ThemeToggle({ className }: { className?: string }) {
+  const t = useT();
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   return (
     <button type="button" className={className ?? "btn"} onClick={toggle}>
-      {dark ? "☀ Aydınlığa geç" : "☾ Karanlığa geç"}
+      {dark ? t.theme_light : t.theme_dark}
     </button>
   );
 }

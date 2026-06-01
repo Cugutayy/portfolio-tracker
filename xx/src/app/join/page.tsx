@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
+import { useT } from "@/components/Providers";
 
 type Mode = "login" | "register";
 
 export default function JoinPage() {
+  const t = useT();
   // already signed in? skip the form, go straight to the portfolio
   const { status } = useSession();
   useEffect(() => {
@@ -33,7 +35,7 @@ export default function JoinPage() {
         });
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || "Kayıt başarısız");
+          throw new Error(data.error || t.join_err_fail);
         }
       }
       const result = await signIn("credentials", {
@@ -42,11 +44,11 @@ export default function JoinPage() {
         redirect: false,
       });
       if (result?.error) {
-        throw new Error("E-posta veya şifre hatalı");
+        throw new Error(t.join_err_creds);
       }
       window.location.href = "/portfolio";
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+      setError(err instanceof Error ? err.message : t.join_err_generic);
     } finally {
       setBusy(false);
     }
@@ -87,9 +89,7 @@ export default function JoinPage() {
             marginBottom: 24,
           }}
         >
-          {mode === "login"
-            ? "Arena'ya tekrar hoş geldin."
-            : "1.000.000 ₺ ile yarışa katıl."}
+          {mode === "login" ? t.join_welcome_back : t.join_welcome_new}
         </p>
 
         {/* Tabs */}
@@ -124,7 +124,7 @@ export default function JoinPage() {
                 transition: "all .2s",
               }}
             >
-              {m === "login" ? "Giriş" : "Kayıt"}
+              {m === "login" ? t.join_tab_login : t.join_tab_register}
             </button>
           ))}
         </div>
@@ -135,22 +135,22 @@ export default function JoinPage() {
         >
           {mode === "register" && (
             <Field
-              label="İsim"
+              label={t.join_name}
               value={name}
               onChange={setName}
               type="text"
-              placeholder="Adın"
+              placeholder={t.join_name_ph}
             />
           )}
           <Field
-            label="E-posta"
+            label={t.join_email}
             value={email}
             onChange={setEmail}
             type="email"
             placeholder="sen@ornek.com"
           />
           <Field
-            label="Şifre"
+            label={t.join_pass}
             value={password}
             onChange={setPassword}
             type="password"
@@ -180,8 +180,8 @@ export default function JoinPage() {
             {busy
               ? "..."
               : mode === "login"
-                ? "Giriş yap"
-                : "Hesap oluştur"}
+                ? t.join_submit_login
+                : t.join_submit_register}
           </button>
         </form>
       </div>

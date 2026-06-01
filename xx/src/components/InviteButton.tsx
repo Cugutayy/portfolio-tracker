@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useT } from "./Providers";
 
 /** Shares/copies the competition invite link (/yarisma — which previews the
  *  newspaper poster). Web Share on mobile, clipboard copy on desktop. */
@@ -11,6 +12,7 @@ export function InviteButton({
   className?: string;
   label?: string;
 }) {
+  const t = useT();
   const [done, setDone] = useState(false);
 
   async function go() {
@@ -36,7 +38,7 @@ export function InviteButton({
 
   return (
     <button type="button" className={className ?? "btn"} onClick={go}>
-      {done ? "Kopyalandı ✓" : label ?? "Davet linkini paylaş ↗"}
+      {done ? t.copied : label ?? t.invite_friend}
     </button>
   );
 }
