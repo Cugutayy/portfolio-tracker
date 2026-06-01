@@ -71,7 +71,7 @@ export function LeaderboardRail({ locale = "tr" }: { locale?: Locale }) {
 
   useEffect(() => {
     let alive = true;
-    (async () => {
+    const load = async () => {
       try {
         const r = await fetch("/api/leaderboard", { cache: "no-store" });
         const j = await r.json();
@@ -79,11 +79,14 @@ export function LeaderboardRail({ locale = "tr" }: { locale?: Locale }) {
         if (!alive) return;
         setRows(Array.isArray(data) ? data : []);
       } catch {
-        if (alive) setRows([]);
+        if (alive) setRows((prev) => prev ?? []);
       }
-    })();
+    };
+    load();
+    const id = setInterval(load, 60_000); // live: refresh every 60s
     return () => {
       alive = false;
+      clearInterval(id);
     };
   }, []);
 

@@ -16,10 +16,11 @@ export const metadata: Metadata = {
 };
 
 const RULES = [
-  "1.000.000 ₺ sanal sermaye ile başlarsın, gerçek para yok, gerçek fiyatlar var.",
-  "Kripto, emtia, S&P 500, NASDAQ 100 ve BIST 100’den en fazla 10 varlık tutarsın.",
-  "Günde en fazla 10 işlem; her fiyat CoinGecko ve Yahoo Finance’ten canlı akar.",
-  "Yarış 3 ay sürer. En yüksek getiriyi yapan ilk 3, sürpriz para ödüllerini kazanır.",
+  "Herkes 1.000.000 ₺ ile aynı çizgiden başlar. Gerçek para yok, gerçek fiyatlar var; farkı senin stratejin yaratır.",
+  "Kripto, emtia, S&P 500, NASDAQ 100 ve BIST 100’den 10 varlığa kadar pozisyon aç. Tüm dünya piyasası avucunun içinde.",
+  "Fiyatlar CoinGecko ve Yahoo Finance’ten canlı akar; portföyün ve liderlik tablosu gerçek zamanlı değerlenir. Tek bir hamle seni zirveye taşıyabilir.",
+  "Günde 10 işlem hakkın var; her gece sıfırlanır. Acele etme, doğru anı bekle.",
+  "Yarış 3 ay sürer. Dönemi en yüksek getiriyle kapatan ilk 3 trader sürpriz para ödüllerini kazanır.",
 ];
 
 export default function YarismaPage() {
@@ -79,10 +80,11 @@ export default function YarismaPage() {
         </h1>
 
         <p className="fade-up" style={{ color: "var(--ink-soft)", fontSize: "clamp(1.05rem, 2vw, 1.3rem)", maxWidth: 640, marginTop: 24, lineHeight: 1.55 }}>
-          Herkese <strong>1.000.000 ₺</strong> sanal sermaye, gerçek piyasa
-          fiyatları ve 3 ay. Stratejine güveniyorsan arenadaki yerini al,
-          dönemi en yüksek getiriyle kapatan <strong>ilk 3 trader sürpriz para
-          ödüllerini</strong> kazanır.
+          Sıfırdan zirveye, herkes aynı çizgide. <strong>1.000.000 ₺</strong>{" "}
+          sanal sermaye, gerçek piyasa fiyatları ve 3 aylık tek bir hedef: en
+          yüksek getiri. Kripto, hisse, emtia, BIST — hepsi sahada. Stratejine
+          güveniyorsan arenadaki yerini al; dönemi zirvede kapatan{" "}
+          <strong>ilk 3 trader sürpriz para ödüllerini</strong> kazanır.
         </p>
 
         {/* rules */}
