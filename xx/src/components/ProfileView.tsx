@@ -7,8 +7,9 @@ import { Sparkline } from "@/components/Sparkline";
 import { Avatar } from "@/components/Avatar";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtAssetPrice } from "@/lib/format";
+import { fmtMoney } from "@/lib/currency";
 import type { AssetType } from "@/lib/assets";
-import { useT } from "@/components/Providers";
+import { useT, useCurrency } from "@/components/Providers";
 
 interface HoldingView {
   ticker: string; name: string; type: string; quantity: number;
@@ -26,6 +27,7 @@ export interface ProfileData {
   followers: number; likes: number; commentsCount: number; tradesCount: number;
   isFollowing: boolean; isLiked: boolean; isSelf: boolean;
   recentTrades: PublicTrade[];
+  usdTry: number;
 }
 interface CommentRow {
   id: string; body: string; createdAt: string;
@@ -42,6 +44,7 @@ const gradFor = (s: string) => {
 
 export function ProfileView({ initial, loggedIn }: { initial: ProfileData; loggedIn: boolean }) {
   const t = useT();
+  const cur = useCurrency();
   const [p, setP] = useState<ProfileData>(initial);
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [draft, setDraft] = useState("");
@@ -55,6 +58,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
     ...(p.cashTry > 0 ? [{ ticker: "NAKİT", name: "Nakit", color: "rgba(26,24,19,0.16)", weight: p.totalTry > 0 ? p.cashTry / p.totalTry : 0, valueTry: p.cashTry }] : []),
   ];
   const up = p.returnPct >= 0;
+  const money = (n: number) => fmtMoney(n, cur, p.usdTry);
 
   const loadComments = useCallback(async () => {
     const r = await fetch(`/api/social/comment?handle=${encodeURIComponent(p.handle)}`, { cache: "no-store" });
@@ -179,7 +183,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
 
       {/* stats */}
       <div className="glass" style={{ padding: "20px 28px", display: "flex", gap: 30, flexWrap: "wrap", alignItems: "center" }}>
-        <Stat label={t.pv_total} value={fmtTry(p.totalTry)} big />
+        <Stat label={t.pv_total} value={money(p.totalTry)} big />
         <Stat label={t.pv_return} value={`${up ? "+" : ""}${num(p.returnPct)}%`} color={up ? "var(--green-t)" : "var(--red-t)"} big />
         <Stat label={t.pv_followers} value={String(p.followers)} />
         <Stat label={t.pv_likes} value={String(p.likes)} />
@@ -198,7 +202,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
           <div className="eyebrow" style={{ marginBottom: 12 }}>{t.pv_alloc}</div>
           {slices.length > 0 ? (
             <div style={{ display: "flex", justifyContent: "center", padding: "8px 40px 8px" }}>
-              <PortfolioWheel slices={slices} initials={initials} gradient={gradFor(p.handle)} image={p.image} size={240} />
+              <PortfolioWheel slices={slices} initials={initials} gradient={gradFor(p.handle)} image={p.image} size={240} format={money} />
             </div>
           ) : (
             <div style={{ color: "var(--muted)", padding: "30px 0", textAlign: "center" }}>{t.pv_no_pos}</div>
@@ -219,7 +223,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
                     <span style={{ width: 10, height: 10, borderRadius: 3, background: h.color }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: ".88rem" }}>{h.ticker}</div>
-                      <div className="mono" style={{ fontSize: ".62rem", color: "var(--muted)" }}>{(h.weight * 100).toFixed(1)}% · {fmtTry(h.valueTry)}</div>
+                      <div className="mono" style={{ fontSize: ".62rem", color: "var(--muted)" }}>{(h.weight * 100).toFixed(1)}% · {money(h.valueTry)}</div>
                     </div>
                     <div className="mono" style={{ fontSize: ".78rem", color: hUp ? "var(--green-t)" : "var(--red-t)" }}>
                       {hUp ? "+" : ""}{num(h.pnlPct)}%
@@ -248,7 +252,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
                     {num(t.quantity, 4)} @ {fmtAssetPrice(t.priceNative, t.nativeCcy)}
                   </span>
                 </div>
-                <div className="mono" style={{ fontSize: ".82rem" }}>{fmtTry(t.amountTry)}</div>
+                <div className="mono" style={{ fontSize: ".82rem" }}>{money(t.amountTry)}</div>
                 <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", width: 84, textAlign: "right" }}>
                   {new Date(t.tradedAt).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                 </div>

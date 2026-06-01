@@ -4,6 +4,7 @@ import { getLocale } from "@/lib/locale";
 import { getDict } from "@/lib/i18n";
 import { PasswordForm } from "@/components/PasswordForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { CurrencyToggle } from "@/components/CurrencyToggle";
 import { AppHeader } from "@/components/AppHeader";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +44,10 @@ export default async function SettingsPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <span style={{ fontSize: ".9rem", color: "var(--ink-soft)" }}>{t.set_theme_label}</span>
           <ThemeToggle />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginTop: 16 }}>
+          <span style={{ fontSize: ".9rem", color: "var(--ink-soft)" }}>{t.set_currency_label}</span>
+          <CurrencyToggle />
         </div>
       </section>
 

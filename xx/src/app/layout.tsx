@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AmbientOrbs } from "@/components/AmbientOrbs";
 import { Providers } from "@/components/Providers";
-import { getLocale } from "@/lib/locale";
+import { getLocale, getCurrency } from "@/lib/locale";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 const TITLE = "XX Arena";
@@ -29,7 +29,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const locale = await getLocale();
+  const [locale, currency] = await Promise.all([getLocale(), getCurrency()]);
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
@@ -52,7 +52,7 @@ export default async function RootLayout({
         />
       </head>
       <body>
-        <Providers locale={locale}>
+        <Providers locale={locale} currency={currency}>
           <AmbientOrbs />
           <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
         </Providers>
