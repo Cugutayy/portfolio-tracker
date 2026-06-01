@@ -12,6 +12,10 @@ export const dict = {
     nav_login: "Giriş yap",
     nav_portfolio: "Portföyüm",
     nav_join: "Yarışa katıl",
+    nav_home: "Ana sayfa",
+    nav_settings: "Ayarlar",
+    nav_logout: "Çıkış",
+    nav_profile: "Profil",
 
     edition_issue: "SAYI No. 1",
     announce_band: "3 AYLIK BÜYÜK YARIŞ BAŞLADI — İLK 3’E SÜRPRİZ PARA ÖDÜLÜ",
@@ -54,6 +58,10 @@ export const dict = {
     nav_login: "Log in",
     nav_portfolio: "My portfolio",
     nav_join: "Join the race",
+    nav_home: "Home",
+    nav_settings: "Settings",
+    nav_logout: "Log out",
+    nav_profile: "Profile",
 
     edition_issue: "ISSUE No. 1",
     announce_band: "THE 3-MONTH TOURNAMENT IS LIVE — SURPRISE CASH PRIZES FOR THE TOP 3",

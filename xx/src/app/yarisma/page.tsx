@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { InviteButton } from "@/components/InviteButton";
 
 export const dynamic = "force-dynamic";
 
@@ -77,10 +78,11 @@ export default function YarismaPage() {
           <span className="italic-accent">başladı.</span>
         </h1>
 
-        <p className="fade-up" style={{ color: "var(--ink-soft)", fontSize: "clamp(1.05rem, 2vw, 1.3rem)", maxWidth: 620, marginTop: 24, lineHeight: 1.55 }}>
-          3 ay sürecek trader turnuvası başladı. <strong>1.000.000 ₺</strong> sanal
-          sermaye ile en iyi getiriyi yakala — <strong>ilk 3’e sürpriz para
-          ödülleri.</strong>
+        <p className="fade-up" style={{ color: "var(--ink-soft)", fontSize: "clamp(1.05rem, 2vw, 1.3rem)", maxWidth: 640, marginTop: 24, lineHeight: 1.55 }}>
+          Herkese <strong>1.000.000 ₺</strong> sanal sermaye, gerçek piyasa
+          fiyatları ve 3 ay. Stratejine güveniyorsan arenadaki yerini al —
+          dönemi en yüksek getiriyle kapatan <strong>ilk 3 trader sürpriz para
+          ödüllerini</strong> kazanır.
         </p>
 
         {/* rules */}
@@ -107,14 +109,15 @@ export default function YarismaPage() {
           <Link href="/join" className="btn btn-accent" style={{ textDecoration: "none", padding: "1rem 2rem", fontSize: "1.05rem" }}>
             Hemen katıl →
           </Link>
+          <InviteButton className="btn" label="Arkadaşını davet et ↗" />
           <Link href="/arena" className="btn" style={{ textDecoration: "none", padding: "1rem 2rem", fontSize: "1.05rem" }}>
             Canlı liderlik
           </Link>
         </div>
 
         <p className="mono" style={{ marginTop: 28, fontSize: ".62rem", color: "var(--muted)", letterSpacing: ".08em", maxWidth: 520, lineHeight: 1.6 }}>
-          Bu sayfayı arkadaşlarına gönder — link paylaşınca yarışma afişi otomatik
-          görünür. Eğitim amaçlı · gerçek para yatırılmaz.
+          “Arkadaşını davet et” bu sayfanın linkini kopyalar — paylaşınca yarışma
+          afişi (gazete) otomatik görünür. Eğitim amaçlı · gerçek para yatırılmaz.
         </p>
       </section>
     </main>

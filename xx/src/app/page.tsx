@@ -5,6 +5,7 @@ import { CountUp } from "@/components/CountUp";
 import { ArenaPulse } from "@/components/ArenaPulse";
 import { AsciiBackdrop } from "@/components/AsciiBackdrop";
 import { LanguageToggle } from "@/components/LanguageToggle";
+import { InviteButton } from "@/components/InviteButton";
 import { getCurrentUser } from "@/lib/session";
 import { getLocale } from "@/lib/locale";
 import { getDict } from "@/lib/i18n";
@@ -196,6 +197,7 @@ export default async function Home() {
               >
                 {startLabel}
               </Link>
+              <InviteButton className="btn" label="Davet et ↗" />
             </div>
           </div>
         </div>
