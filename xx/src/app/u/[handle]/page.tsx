@@ -15,9 +15,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { handle } = await params;
   const p = await getPublicProfile(handle, null).catch(() => null);
-  if (!p) return { title: "Profil — XX Arena" };
+  if (!p) return { title: "Profil · XX Arena" };
   const sign = p.returnPct >= 0 ? "+" : "";
-  const title = `${p.name} (@${p.handle}) — XX Arena`;
+  const title = `${p.name} (@${p.handle}) · XX Arena`;
   const description = `Sıra #${p.rank} · ${sign}${p.returnPct.toFixed(1)}% getiri · sanal trader arenası`;
   return {
     title: { absolute: title },

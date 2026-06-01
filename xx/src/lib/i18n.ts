@@ -18,7 +18,7 @@ export const dict = {
     nav_profile: "Profil",
 
     edition_issue: "SAYI No. 1",
-    announce_band: "3 AYLIK BÜYÜK YARIŞ BAŞLADI — İLK 3’E SÜRPRİZ PARA ÖDÜLÜ",
+    announce_band: "3 AYLIK BÜYÜK YARIŞ BAŞLADI · İLK 3’E SÜRPRİZ PARA ÖDÜLÜ",
     announce_detail: "DETAY →",
 
     hero_eyebrow: "1.000.000 ₺ · gerçek piyasa fiyatları · canlı yarışma",
@@ -35,7 +35,7 @@ export const dict = {
     edition_live: "Canlı edisyon",
     rules_h2_a: "Kurallar basit,",
     rules_h2_b: "rekabet gerçek.",
-    rule_1: "1.000.000 ₺ sanal sermaye ile başlarsın — gerçek para yok, gerçek fiyatlar var.",
+    rule_1: "1.000.000 ₺ sanal sermaye ile başlarsın, gerçek para yok, gerçek fiyatlar var.",
     rule_2: "Kripto, emtia, S&P 500, NASDAQ 100 ve BIST 100’den en fazla 10 varlık seçersin.",
     rule_3: "Günde en fazla 10 işlem; her fiyat CoinGecko ve Yahoo Finance’ten canlı akar.",
     rule_4: "En yüksek getiriyi yapan, canlı liderlik tablosunun zirvesine çıkar.",
@@ -49,9 +49,9 @@ export const dict = {
     rail_title: "Canlı liderlik",
     rail_sub: "en çok kazanan",
     rail_empty_h: "Arena henüz boş.",
-    rail_empty_p: "İlk portföyü sen kur — zirvenin ilk ismi ol.",
+    rail_empty_p: "İlk portföyü sen kur, zirvenin ilk ismi ol.",
     rail_empty_cta: "Hemen başla →",
-    rail_footer: "Canlı portföyler — gerçek piyasa fiyatlarıyla değerlenir.",
+    rail_footer: "Canlı portföyler, gerçek piyasa fiyatlarıyla değerlenir.",
   },
   en: {
     nav_arena: "Arena",
@@ -64,7 +64,7 @@ export const dict = {
     nav_profile: "Profile",
 
     edition_issue: "ISSUE No. 1",
-    announce_band: "THE 3-MONTH TOURNAMENT IS LIVE — SURPRISE CASH PRIZES FOR THE TOP 3",
+    announce_band: "THE 3-MONTH TOURNAMENT IS LIVE · SURPRISE CASH PRIZES FOR THE TOP 3",
     announce_detail: "DETAILS →",
 
     hero_eyebrow: "1,000,000 ₺ · real market prices · live tournament",
@@ -81,7 +81,7 @@ export const dict = {
     edition_live: "Live edition",
     rules_h2_a: "Simple rules,",
     rules_h2_b: "real competition.",
-    rule_1: "You start with a virtual 1,000,000 ₺ — no real money, real prices.",
+    rule_1: "You start with a virtual 1,000,000 ₺, no real money, real prices.",
     rule_2: "Hold up to 10 assets from crypto, commodities, the S&P 500, NASDAQ 100 and BIST 100.",
     rule_3: "Up to 10 trades a day; every price streams live from CoinGecko and Yahoo Finance.",
     rule_4: "Whoever posts the highest return climbs to the top of the live leaderboard.",
@@ -95,9 +95,9 @@ export const dict = {
     rail_title: "Live leaderboard",
     rail_sub: "top gainers",
     rail_empty_h: "The arena is empty.",
-    rail_empty_p: "Build the first portfolio — be the first name at the top.",
+    rail_empty_p: "Build the first portfolio, be the first name at the top.",
     rail_empty_cta: "Get started →",
-    rail_footer: "Live portfolios — valued at real market prices.",
+    rail_footer: "Live portfolios, valued at real market prices.",
   },
 } as const;
 

@@ -104,7 +104,7 @@ export function TickerTape() {
                 {fmtAssetPrice(p.nativePrice, p.nativeCcy, p.type)}
               </span>{" "}
               {c == null ? (
-                <span style={{ color: "var(--muted)" }}>—</span>
+                <span style={{ color: "var(--muted)" }}>·</span>
               ) : (
                 <span className={up ? "pos" : "neg"}>
                   {up ? "▲" : "▼"}

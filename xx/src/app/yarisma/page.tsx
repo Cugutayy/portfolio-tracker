@@ -4,7 +4,7 @@ import { InviteButton } from "@/components/InviteButton";
 
 export const dynamic = "force-dynamic";
 
-const TITLE = "Büyük yarış başladı — XX Arena";
+const TITLE = "Büyük yarış başladı · XX Arena";
 const DESCRIPTION =
   "3 aylık trader turnuvası başladı. 1.000.000 ₺ sanal sermaye, gerçek piyasa fiyatları, ilk 3'e sürpriz para ödülü. Katıl, yarış.";
 
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 const RULES = [
-  "1.000.000 ₺ sanal sermaye ile başlarsın — gerçek para yok, gerçek fiyatlar var.",
+  "1.000.000 ₺ sanal sermaye ile başlarsın, gerçek para yok, gerçek fiyatlar var.",
   "Kripto, emtia, S&P 500, NASDAQ 100 ve BIST 100’den en fazla 10 varlık tutarsın.",
   "Günde en fazla 10 işlem; her fiyat CoinGecko ve Yahoo Finance’ten canlı akar.",
   "Yarış 3 ay sürer. En yüksek getiriyi yapan ilk 3, sürpriz para ödüllerini kazanır.",
@@ -80,7 +80,7 @@ export default function YarismaPage() {
 
         <p className="fade-up" style={{ color: "var(--ink-soft)", fontSize: "clamp(1.05rem, 2vw, 1.3rem)", maxWidth: 640, marginTop: 24, lineHeight: 1.55 }}>
           Herkese <strong>1.000.000 ₺</strong> sanal sermaye, gerçek piyasa
-          fiyatları ve 3 ay. Stratejine güveniyorsan arenadaki yerini al —
+          fiyatları ve 3 ay. Stratejine güveniyorsan arenadaki yerini al,
           dönemi en yüksek getiriyle kapatan <strong>ilk 3 trader sürpriz para
           ödüllerini</strong> kazanır.
         </p>
@@ -116,7 +116,7 @@ export default function YarismaPage() {
         </div>
 
         <p className="mono" style={{ marginTop: 28, fontSize: ".62rem", color: "var(--muted)", letterSpacing: ".08em", maxWidth: 520, lineHeight: 1.6 }}>
-          “Arkadaşını davet et” bu sayfanın linkini kopyalar — paylaşınca yarışma
+          “Arkadaşını davet et” bu sayfanın linkini kopyalar; paylaşınca yarışma
           afişi (gazete) otomatik görünür. Eğitim amaçlı · gerçek para yatırılmaz.
         </p>
       </section>
