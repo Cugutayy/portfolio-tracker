@@ -7,6 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { TRADEABLE_ASSETS, ASSET_BY_TICKER, TYPE_LABEL, type AssetType } from "@/lib/assets";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtAssetPrice } from "@/lib/format";
+import { useT } from "@/components/Providers";
 
 interface HoldingView {
   ticker: string;
@@ -122,6 +123,7 @@ export function PortfolioClient({
   image: string | null;
   bio: string | null;
 }) {
+  const tx = useT();
   const [pf, setPf] = useState<PortfolioView | null>(null);
   const [trades, setTrades] = useState<TradeRow[]>([]);
   const [prices, setPrices] = useState<Record<string, LivePrice>>({});
@@ -258,7 +260,7 @@ export function PortfolioClient({
     setMsg(null);
     const amt = Number(amount.replace(",", "."));
     if (!(amt > 0)) {
-      setMsg({ kind: "err", text: "Geçerli bir tutar gir." });
+      setMsg({ kind: "err", text: tx.pc_msg_amount });
       return;
     }
     setBusy(true);
@@ -280,7 +282,7 @@ export function PortfolioClient({
       });
       const j = await r.json();
       if (!j.ok) {
-        setMsg({ kind: "err", text: j.error ?? "İşlem başarısız." });
+        setMsg({ kind: "err", text: j.error ?? tx.pc_msg_fail });
       } else {
         setPf(j.portfolio);
         setAmount("");
@@ -288,12 +290,12 @@ export function PortfolioClient({
         if (side === "sell") setMode("buy");
         setMsg({
           kind: "ok",
-          text: `${side === "buy" ? "Alındı" : "Satıldı"}: ${num(j.trade.quantity, 4)} ${selected} · ${fmtTry(j.trade.amountTry)}`,
+          text: `${side === "buy" ? tx.pc_msg_bought : tx.pc_msg_sold}: ${num(j.trade.quantity, 4)} ${selected} · ${fmtTry(j.trade.amountTry)}`,
         });
         loadPortfolio();
       }
     } catch {
-      setMsg({ kind: "err", text: "Ağ hatası, tekrar dene." });
+      setMsg({ kind: "err", text: tx.pc_msg_net });
     } finally {
       setBusy(false);
     }
@@ -310,14 +312,14 @@ export function PortfolioClient({
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setMsg({ kind: "err", text: "Lütfen bir görsel seç." });
+      setMsg({ kind: "err", text: tx.pc_msg_pick_img });
       return;
     }
     try {
       const data = await resizeImage(file);
       setDraftImage(data);
     } catch {
-      setMsg({ kind: "err", text: "Görsel okunamadı." });
+      setMsg({ kind: "err", text: tx.pc_msg_img_fail });
     }
   }
 
@@ -336,16 +338,16 @@ export function PortfolioClient({
       });
       const j = await r.json();
       if (!j.ok) {
-        setMsg({ kind: "err", text: j.error ?? "Profil kaydedilemedi." });
+        setMsg({ kind: "err", text: j.error ?? tx.pc_msg_profile_fail });
       } else {
         setName(j.user.name);
         setBio(j.user.bio ?? "");
         setImage(j.user.image ?? null);
         setEditing(false);
-        setMsg({ kind: "ok", text: "Profil güncellendi." });
+        setMsg({ kind: "ok", text: tx.pc_msg_profile_ok });
       }
     } catch {
-      setMsg({ kind: "err", text: "Ağ hatası, tekrar dene." });
+      setMsg({ kind: "err", text: tx.pc_msg_net });
     } finally {
       setSavingProfile(false);
     }
@@ -391,9 +393,9 @@ export function PortfolioClient({
     mode === "sell" && !!heldSelected && !sellExact && amtNum > heldSelected.valueTry + 1e-6;
   // Reason the primary action is blocked (shown as an inline hint).
   const buyBlock = noTradesLeft
-    ? "Günlük işlem hakkın doldu."
+    ? tx.pc_trades_done + "."
     : atHoldingLimit
-      ? "10 varlık sınırına ulaştın, yeni varlık için önce birini sat."
+      ? tx.pc_msg_max_assets
       : insufficientCash
         ? `Nakitin yetersiz (${fmtTry(cashTry)}).`
         : null;
@@ -416,7 +418,7 @@ export function PortfolioClient({
 
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap", marginTop: 20 }}>
           <Stat
-            label="Toplam değer"
+            label={tx.pc_total}
             value={fmtTry(pf?.totalTry ?? 0)}
             big
             sub={
@@ -426,18 +428,18 @@ export function PortfolioClient({
             }
           />
           <Stat
-            label="Toplam getiri"
+            label={tx.pc_total_return}
             value={`${up ? "+" : ""}${num(pf?.totalReturnPct ?? 0)}%`}
             color={up ? "var(--green-t)" : "var(--red-t)"}
             big
             sub={pf ? `${up ? "+" : ""}${fmtTry(pf.totalPnlTry)}` : undefined}
           />
-          <Stat label="Nakit" value={fmtTry(pf?.cashTry ?? 0)} />
-          <Stat label="Yatırımda" value={fmtTry(pf?.investedTry ?? 0)} />
+          <Stat label={tx.pc_cash} value={fmtTry(pf?.cashTry ?? 0)} />
+          <Stat label={tx.pc_invested} value={fmtTry(pf?.investedTry ?? 0)} />
           <Stat
-            label="Bugünkü işlem"
+            label={tx.pc_today}
             value={`${pf?.tradesToday ?? 0} / ${(pf?.tradesToday ?? 0) + (pf?.tradesLeft ?? 0)}`}
-            sub={resetIn ? `yenilenme: ${resetIn}` : undefined}
+            sub={resetIn ? `${tx.pc_renew_label} ${resetIn}` : undefined}
           />
         </div>
       </div>
@@ -445,25 +447,25 @@ export function PortfolioClient({
       {/* profile editor */}
       {editing && (
         <div className="glass" style={{ padding: 24 }}>
-          <div className="eyebrow" style={{ marginBottom: 14 }}>Profili düzenle</div>
+          <div className="eyebrow" style={{ marginBottom: 14 }}>{tx.pc_edit}</div>
           <div style={{ display: "flex", gap: 20, flexWrap: "wrap", alignItems: "flex-start" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
               <Avatar initials={initials} gradient={gradFor(handle)} image={draftImage} size={96} />
               <input ref={fileRef} type="file" accept="image/*" onChange={onPickFile} style={{ display: "none" }} />
               <div style={{ display: "flex", gap: 8 }}>
                 <button className="btn" style={{ padding: ".35rem .7rem", fontSize: ".72rem" }} onClick={() => fileRef.current?.click()}>
-                  Fotoğraf seç
+                  {tx.pc_photo}
                 </button>
                 {draftImage && (
                   <button className="btn" style={{ padding: ".35rem .7rem", fontSize: ".72rem" }} onClick={() => setDraftImage(null)}>
-                    Kaldır
+                    {tx.pc_remove}
                   </button>
                 )}
               </div>
             </div>
             <div style={{ flex: 1, minWidth: 240, display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
-                <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>İsim</label>
+                <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>{tx.pc_name}</label>
                 <input
                   value={draftName}
                   onChange={(e) => setDraftName(e.target.value)}
@@ -472,21 +474,21 @@ export function PortfolioClient({
                 />
               </div>
               <div>
-                <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>Hakkında ({draftBio.length}/160)</label>
+                <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>{tx.pc_about} ({draftBio.length}/160)</label>
                 <textarea
                   value={draftBio}
                   onChange={(e) => setDraftBio(e.target.value.slice(0, 160))}
                   rows={3}
-                  placeholder="Kendini kısaca tanıt: strateji, tarz, hedef…"
+                  placeholder={tx.pc_bio_ph}
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 10, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: ".9rem", resize: "vertical", fontFamily: "inherit" }}
                 />
               </div>
               <div style={{ display: "flex", gap: 10 }}>
                 <button className="btn btn-accent" style={{ padding: ".55rem 1.1rem", opacity: savingProfile ? 0.6 : 1 }} disabled={savingProfile} onClick={saveProfile}>
-                  {savingProfile ? "Kaydediliyor…" : "Kaydet"}
+                  {savingProfile ? tx.pc_saving : tx.pc_save}
                 </button>
                 <button className="btn" style={{ padding: ".55rem 1.1rem" }} onClick={() => setEditing(false)}>
-                  Vazgeç
+                  {tx.pc_cancel}
                 </button>
               </div>
             </div>
@@ -497,8 +499,8 @@ export function PortfolioClient({
       {/* markets browser */}
       <div className="glass" style={{ padding: 24 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
-          <div className="eyebrow">Piyasalar</div>
-          <span className="mono" style={{ fontSize: ".6rem", color: "var(--muted)" }}>canlı · 60sn’de bir güncellenir</span>
+          <div className="eyebrow">{tx.pc_markets}</div>
+          <span className="mono" style={{ fontSize: ".6rem", color: "var(--muted)" }}>{tx.pc_live60}</span>
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
@@ -522,7 +524,7 @@ export function PortfolioClient({
           <input
             value={marketQuery}
             onChange={(e) => setMarketQuery(e.target.value)}
-            placeholder="Varlık ara…"
+            placeholder={tx.pc_search_asset}
             style={{ width: 200, padding: ".5rem .8rem", borderRadius: 9, border: "1px solid var(--card-border)", background: "var(--fill)", color: "var(--ink)", fontSize: ".8rem", outline: "none" }}
           />
         </div>
@@ -547,7 +549,7 @@ export function PortfolioClient({
                   <span style={{ width: 9, height: 9, borderRadius: 3, background: a.color, flexShrink: 0 }} />
                   <span style={{ fontWeight: 600, fontSize: ".86rem" }}>{a.ticker}</span>
                   {heldTickers.has(a.ticker) && (
-                    <span className="mono" style={{ fontSize: ".52rem", color: "var(--accent)", marginLeft: "auto" }}>● portföyde</span>
+                    <span className="mono" style={{ fontSize: ".52rem", color: "var(--accent)", marginLeft: "auto" }}>{tx.pc_in_portfolio}</span>
                   )}
                 </div>
                 <div className="mono" style={{ fontSize: ".58rem", color: "var(--muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
@@ -572,24 +574,24 @@ export function PortfolioClient({
       <div className="portfolio-grid" style={{ display: "grid", gridTemplateColumns: "minmax(280px,1fr) minmax(320px,1.2fr)", gap: 20 }}>
         {/* wheel + holdings */}
         <div className="glass" style={{ padding: 24 }}>
-          <div className="eyebrow" style={{ marginBottom: 12 }}>Dağılım</div>
+          <div className="eyebrow" style={{ marginBottom: 12 }}>{tx.pc_alloc}</div>
           {slices.length > 0 ? (
             <div className="pw-wrap" style={{ display: "flex", justifyContent: "center", padding: "8px 40px 16px" }}>
               <PortfolioWheel slices={slices} initials={initials} gradient={gradFor(handle)} image={image} size={240} />
             </div>
           ) : (
             <div style={{ color: "var(--muted)", padding: "30px 0", textAlign: "center" }}>
-              Henüz varlığın yok. Yukarıdan bir varlık seç, ilk alımını yap.
+              {tx.pc_no_asset}
             </div>
           )}
 
           {pf && pf.holdings.length === 0 && (
             <div style={{ marginTop: 12, padding: "16px 18px", borderRadius: 12, background: "var(--fill)", border: "1px dashed var(--card-border)", textAlign: "center" }}>
               <div style={{ fontWeight: 600, fontSize: ".92rem", marginBottom: 4 }}>
-                {fmtTry(pf.cashTry)} nakitin hazır.
+                {fmtTry(pf.cashTry)} {tx.pc_cash_ready}
               </div>
               <div style={{ color: "var(--muted)", fontSize: ".82rem", lineHeight: 1.5 }}>
-                Yukarıdaki <strong>Piyasalar</strong>’dan bir varlık seç, ilk alımını yap, yarış senin için başlasın.
+                {tx.pc_nudge}
               </div>
             </div>
           )}
@@ -604,7 +606,7 @@ export function PortfolioClient({
                     <div style={{ minWidth: 0, flex: 1 }}>
                       <div style={{ fontWeight: 600, fontSize: ".88rem" }}>{h.ticker}</div>
                       <div className="mono" style={{ fontSize: ".62rem", color: "var(--muted)" }}>
-                        {num(h.quantity, 4)} · ort. {fmtAssetPrice(h.avgBuyPriceNative, h.nativeCcy, h.type as AssetType)}
+                        {num(h.quantity, 4)} · {tx.pc_avg} {fmtAssetPrice(h.avgBuyPriceNative, h.nativeCcy, h.type as AssetType)}
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
@@ -618,7 +620,7 @@ export function PortfolioClient({
                       style={{ padding: ".35rem .7rem", fontSize: ".72rem" }}
                       onClick={() => { pickAsset(h.ticker, "sell"); }}
                     >
-                      Sat
+                      {tx.pc_sell}
                     </button>
                   </div>
                 );
@@ -629,7 +631,7 @@ export function PortfolioClient({
 
         {/* trade panel */}
         <div className="glass" style={{ padding: 24 }} ref={tradeRef}>
-          <div className="eyebrow" style={{ marginBottom: 12 }}>İşlem</div>
+          <div className="eyebrow" style={{ marginBottom: 12 }}>{tx.pc_trade}</div>
 
           {/* selected asset header */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, padding: "12px 14px", borderRadius: 12, background: "var(--fill)", border: "1px solid var(--card-border)" }}>
@@ -637,7 +639,7 @@ export function PortfolioClient({
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontWeight: 700, fontSize: "1rem" }}>{selected}</div>
               <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)" }}>
-                {selectedAsset ? `${selectedAsset.name} · ${TYPE_LABEL[selectedAsset.type]}` : "Piyasalar’dan seç"}
+                {selectedAsset ? `${selectedAsset.name} · ${TYPE_LABEL[selectedAsset.type]}` : tx.pc_pick_market}
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
@@ -661,7 +663,7 @@ export function PortfolioClient({
                 color: mode === "buy" ? "#fff" : "var(--muted)",
               }}
             >
-              Al
+              {tx.pc_buy}
             </button>
             <button
               onClick={() => { if (canSell) { setMode("sell"); setAmount(""); setSellExact(false); setMsg(null); } }}
@@ -673,14 +675,14 @@ export function PortfolioClient({
                 color: mode === "sell" ? "#fff" : "var(--muted)",
               }}
             >
-              Sat
+              {tx.pc_sell}
             </button>
           </div>
 
           {/* position summary (only relevant when selling / holding) */}
           {heldSelected && (
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 12, fontSize: ".72rem" }}>
-              <span style={{ color: "var(--muted)" }}>Elinde</span>
+              <span style={{ color: "var(--muted)" }}>{tx.pc_holding}</span>
               <span className="mono" style={{ color: "var(--ink)" }}>
                 {num(heldSelected.quantity, 4)} {selected} · {fmtTry(heldSelected.valueTry)}
                 <span style={{ color: heldSelected.pnlTry >= 0 ? "var(--green-t)" : "var(--red-t)", marginLeft: 8 }}>
@@ -692,12 +694,12 @@ export function PortfolioClient({
 
           {mode === "buy" ? (
             <>
-              <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>Ne kadar alacaksın? (₺)</label>
+              <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>{tx.pc_buy_amount}</label>
               <input
                 value={amount}
                 onChange={(e) => { setAmount(e.target.value); setSellExact(false); }}
                 inputMode="decimal"
-                placeholder="örn. 100000"
+                placeholder={tx.pc_eg_100k}
                 className="mono"
                 style={{ width: "100%", padding: "11px 12px", borderRadius: 10, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: "1rem", marginBottom: 10 }}
               />
@@ -705,14 +707,14 @@ export function PortfolioClient({
                 {[0.25, 0.5, 1].map((f) => (
                   <button key={f} className="btn" style={{ padding: ".3rem .6rem", fontSize: ".7rem" }}
                     onClick={() => pf && setAmount(String(Math.floor(pf.cashTry * f)))}>
-                    {f === 1 ? "Tüm nakit" : `Nakit %${f * 100}`}
+                    {f === 1 ? tx.pc_all_cash : `${tx.pc_cash} %${f * 100}`}
                   </button>
                 ))}
               </div>
             </>
           ) : (
             <>
-              <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>Pozisyonun ne kadarını satacaksın?</label>
+              <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>{tx.pc_sell_howmuch}</label>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
                 {[0.25, 0.5, 0.75, 1].map((f) => {
                   const active = sellExact ? f === 1 : amount !== "" && heldSelected != null && Math.floor(heldSelected.valueTry * f) === amtNum;
@@ -724,17 +726,17 @@ export function PortfolioClient({
                         background: active ? "rgba(255,122,133,0.12)" : "var(--fill)",
                         color: active ? "var(--red-t)" : "var(--ink)", transition: "all .15s",
                       }}>
-                      {f === 1 ? "Tümü" : `%${f * 100}`}
+                      {f === 1 ? tx.pc_all : `%${f * 100}`}
                     </button>
                   );
                 })}
               </div>
-              <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>veya tutar gir (₺)</label>
+              <label className="eyebrow" style={{ display: "block", marginBottom: 6 }}>{tx.pc_or_amount}</label>
               <input
                 value={amount}
                 onChange={(e) => { setAmount(e.target.value); setSellExact(false); }}
                 inputMode="decimal"
-                placeholder="örn. 50000"
+                placeholder={tx.pc_eg_50k}
                 className="mono"
                 style={{ width: "100%", padding: "11px 12px", borderRadius: 10, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: "1rem", marginBottom: 10 }}
               />
@@ -744,7 +746,7 @@ export function PortfolioClient({
           {/* live preview of what this trade does */}
           {amtNum > 0 && livePrice != null && (
             <div className="mono" style={{ fontSize: ".72rem", color: "var(--ink)", marginBottom: 12, padding: "8px 10px", borderRadius: 9, background: "var(--fill)", border: "1px solid var(--card-border)" }}>
-              {mode === "buy" ? "Alınacak" : "Satılacak"}: <strong>{num(tradeQty, 6)} {selected}</strong>
+              {mode === "buy" ? tx.pc_buying : tx.pc_selling}: <strong>{num(tradeQty, 6)} {selected}</strong>
               <span style={{ color: "var(--muted)" }}>
                 {" "}≈ {fmtTry(tradeValueTry)}
                 {sp && sp.nativeCcy !== "TRY" && selectedAsset?.type !== "index" && (
@@ -770,34 +772,34 @@ export function PortfolioClient({
           {/* sell overflow hint */}
           {sellOverflow && heldSelected && (
             <div style={{ fontSize: ".75rem", marginBottom: 12, padding: "8px 10px", borderRadius: 9, background: "var(--fill)", border: "1px solid var(--card-border)", color: "var(--muted)" }}>
-              Pozisyonundan fazla girdin, tümü ({fmtTry(heldSelected.valueTry)}) satılacak.
+              {tx.pc_sell_over_a}{fmtTry(heldSelected.valueTry)}{tx.pc_sell_over_b}
             </div>
           )}
 
           {mode === "buy" ? (
             <button className="btn btn-accent" style={{ width: "100%", padding: ".85rem", fontSize: ".95rem", opacity: busy || amtNum <= 0 || !!buyBlock ? 0.55 : 1 }}
               disabled={busy || amtNum <= 0 || !!buyBlock} onClick={() => doTrade("buy")}>
-              {busy ? "İşleniyor…" : `${selected} Al`}
+              {busy ? tx.pc_processing : `${selected} ${tx.pc_buy}`}
             </button>
           ) : (
             <button className="btn" style={{ width: "100%", padding: ".85rem", fontSize: ".95rem", fontWeight: 600, background: "var(--red-t)", color: "#fff", border: "none", opacity: busy || !canSell || amtNum <= 0 ? 0.55 : 1 }}
               disabled={busy || !canSell || amtNum <= 0} onClick={() => doTrade("sell")}>
-              {busy ? "İşleniyor…" : `${selected} Sat`}
+              {busy ? tx.pc_processing : `${selected} ${tx.pc_sell}`}
             </button>
           )}
           <div className="eyebrow" style={{ marginTop: 10, textAlign: "center", color: noTradesLeft ? "var(--red-t)" : "var(--muted)" }}>
             {!noTradesLeft
-              ? `Bugün ${pf?.tradesLeft} işlem hakkın kaldı${resetIn ? ` · ${resetIn} sonra yenilenir` : ""}`
-              : `Günlük işlem hakkın doldu${resetIn ? ` · ${resetIn} sonra yenilenir` : ""}`}
+              ? `${tx.pc_trades_left_a}${pf?.tradesLeft}${tx.pc_trades_left_b}${resetIn ? ` · ${resetIn} ${tx.pc_renew}` : ""}`
+              : `${tx.pc_trades_done}${resetIn ? ` · ${resetIn} ${tx.pc_renew}` : ""}`}
           </div>
         </div>
       </div>
 
       {/* trade history */}
       <div className="glass" style={{ padding: 24 }}>
-        <div className="eyebrow" style={{ marginBottom: 14 }}>İşlem geçmişi</div>
+        <div className="eyebrow" style={{ marginBottom: 14 }}>{tx.pc_history}</div>
         {trades.length === 0 ? (
-          <div style={{ color: "var(--muted)" }}>Henüz işlem yok.</div>
+          <div style={{ color: "var(--muted)" }}>{tx.pc_no_trades}</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
             {trades.map((t) => {
@@ -812,7 +814,7 @@ export function PortfolioClient({
               return (
               <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--rule)" }}>
                 <span className="mono" style={{ fontSize: ".68rem", padding: ".15rem .5rem", borderRadius: 6, background: t.side === "buy" ? "rgba(74,222,128,0.12)" : "rgba(255,122,133,0.12)", color: t.side === "buy" ? "var(--green-t)" : "var(--red-t)" }}>
-                  {t.side === "buy" ? "AL" : "SAT"}
+                  {t.side === "buy" ? tx.pc_badge_buy : tx.pc_badge_sell}
                 </span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ fontWeight: 600 }}>{t.ticker}</span>
