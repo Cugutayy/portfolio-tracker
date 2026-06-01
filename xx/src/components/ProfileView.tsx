@@ -8,6 +8,7 @@ import { Avatar } from "@/components/Avatar";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtAssetPrice } from "@/lib/format";
 import type { AssetType } from "@/lib/assets";
+import { useT } from "@/components/Providers";
 
 interface HoldingView {
   ticker: string; name: string; type: string; quantity: number;
@@ -40,6 +41,7 @@ const gradFor = (s: string) => {
 };
 
 export function ProfileView({ initial, loggedIn }: { initial: ProfileData; loggedIn: boolean }) {
+  const t = useT();
   const [p, setP] = useState<ProfileData>(initial);
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [draft, setDraft] = useState("");
@@ -129,7 +131,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
     if (!loggedIn) { window.location.href = "/join"; return; }
     setPosting(true);
     // optimistic — appears immediately
-    const temp: CommentRow = { id: "tmp-" + Date.now(), body: text, createdAt: new Date().toISOString(), authorName: "Sen", authorHandle: "", authorImage: null };
+    const temp: CommentRow = { id: "tmp-" + Date.now(), body: text, createdAt: new Date().toISOString(), authorName: t.pv_you, authorHandle: "", authorImage: null };
     setComments((c) => [...c, temp]);
     setDraft("");
     try {
@@ -147,7 +149,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
         <Avatar initials={initials} gradient={gradFor(p.handle)} image={p.image} size={84} />
         <div style={{ flex: 1, minWidth: 200 }}>
           <div className="mono" style={{ fontSize: ".7rem", color: "var(--accent)", letterSpacing: ".08em" }}>
-            {`RANK #${p.rank}`}
+            {`${t.pv_rank} #${p.rank}`}
           </div>
           <h1 className="display" style={{ fontSize: "2rem", margin: "2px 0" }}>{p.name}</h1>
           <div className="mono" style={{ fontSize: ".72rem", color: "var(--muted)" }}>@{p.handle}</div>
@@ -157,7 +159,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
           {!p.isSelf && (
             <>
               <button className={p.isFollowing ? "btn" : "btn btn-accent"} style={{ padding: ".7rem 1.2rem" }} onClick={toggleFollow}>
-                {p.isFollowing ? "Takiptesin ✓" : "Takip et"}
+                {p.isFollowing ? t.pv_following : t.pv_follow}
               </button>
               <button className="btn" style={{ padding: ".7rem 1.2rem", color: p.isLiked ? "var(--accent)" : undefined }} onClick={toggleLike}>
                 {p.isLiked ? "♥" : "♡"} {p.likes}
@@ -166,25 +168,25 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
           )}
           {p.isSelf && (
             <Link href="/portfolio" className="btn btn-accent" style={{ padding: ".7rem 1.2rem", textDecoration: "none" }}>
-              Portföyünü yönet
+              {t.pv_manage}
             </Link>
           )}
           <button className="btn" style={{ padding: ".7rem 1.2rem", opacity: sharing ? 0.6 : 1 }} disabled={sharing} onClick={shareProfile}>
-            {sharing ? "Hazırlanıyor…" : shared ? "İndirildi ✓" : "Kartı paylaş ↗"}
+            {sharing ? t.pv_sharing : shared ? t.pv_shared : t.pv_share}
           </button>
         </div>
       </div>
 
       {/* stats */}
       <div className="glass" style={{ padding: "20px 28px", display: "flex", gap: 30, flexWrap: "wrap", alignItems: "center" }}>
-        <Stat label="Toplam değer" value={fmtTry(p.totalTry)} big />
-        <Stat label="Getiri" value={`${up ? "+" : ""}${num(p.returnPct)}%`} color={up ? "var(--green-t)" : "var(--red-t)"} big />
-        <Stat label="Takipçi" value={String(p.followers)} />
-        <Stat label="Beğeni" value={String(p.likes)} />
-        <Stat label="İşlem" value={String(p.tradesCount)} />
+        <Stat label={t.pv_total} value={fmtTry(p.totalTry)} big />
+        <Stat label={t.pv_return} value={`${up ? "+" : ""}${num(p.returnPct)}%`} color={up ? "var(--green-t)" : "var(--red-t)"} big />
+        <Stat label={t.pv_followers} value={String(p.followers)} />
+        <Stat label={t.pv_likes} value={String(p.likes)} />
+        <Stat label={t.pv_trades} value={String(p.tradesCount)} />
         {p.equity.length >= 2 && (
           <div style={{ marginLeft: "auto" }}>
-            <div className="eyebrow" style={{ marginBottom: 4 }}>Değer eğrisi</div>
+            <div className="eyebrow" style={{ marginBottom: 4 }}>{t.pv_curve}</div>
             <Sparkline data={p.equity} positive={up} width={180} height={48} />
           </div>
         )}
@@ -193,21 +195,21 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
       <div className="portfolio-grid" style={{ display: "grid", gridTemplateColumns: "minmax(280px,1fr) minmax(320px,1.1fr)", gap: 18 }}>
         {/* allocation */}
         <div className="glass" style={{ padding: 24 }}>
-          <div className="eyebrow" style={{ marginBottom: 12 }}>Dağılım</div>
+          <div className="eyebrow" style={{ marginBottom: 12 }}>{t.pv_alloc}</div>
           {slices.length > 0 ? (
             <div style={{ display: "flex", justifyContent: "center", padding: "8px 40px 8px" }}>
               <PortfolioWheel slices={slices} initials={initials} gradient={gradFor(p.handle)} image={p.image} size={240} />
             </div>
           ) : (
-            <div style={{ color: "var(--muted)", padding: "30px 0", textAlign: "center" }}>Henüz pozisyon yok.</div>
+            <div style={{ color: "var(--muted)", padding: "30px 0", textAlign: "center" }}>{t.pv_no_pos}</div>
           )}
         </div>
 
         {/* holdings */}
         <div className="glass" style={{ padding: 24 }}>
-          <div className="eyebrow" style={{ marginBottom: 12 }}>Pozisyonlar</div>
+          <div className="eyebrow" style={{ marginBottom: 12 }}>{t.pv_positions}</div>
           {p.holdings.length === 0 ? (
-            <div style={{ color: "var(--muted)" }}>Bu trader henüz alım yapmadı.</div>
+            <div style={{ color: "var(--muted)" }}>{t.pv_no_buys}</div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {p.holdings.map((h) => {
@@ -233,7 +235,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
       {/* trade history (public) */}
       {p.recentTrades.length > 0 && (
         <div className="glass" style={{ padding: 24 }}>
-          <div className="eyebrow" style={{ marginBottom: 14 }}>İşlem geçmişi</div>
+          <div className="eyebrow" style={{ marginBottom: 14 }}>{t.pv_history}</div>
           <div style={{ display: "flex", flexDirection: "column" }}>
             {p.recentTrades.map((t, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < p.recentTrades.length - 1 ? "1px solid var(--rule)" : "none" }}>
@@ -258,23 +260,23 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
 
       {/* comments */}
       <div className="glass" style={{ padding: 24 }}>
-        <div className="eyebrow" style={{ marginBottom: 14 }}>Yorumlar ({comments.length})</div>
+        <div className="eyebrow" style={{ marginBottom: 14 }}>{t.pv_comments} ({comments.length})</div>
 
         <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
           <input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") postComment(); }}
-            placeholder={loggedIn ? "Yorum yaz…" : "Yorum yapmak için giriş yap"}
+            placeholder={loggedIn ? t.pv_comment_ph : t.pv_comment_login}
             style={{ flex: 1, padding: "11px 14px", borderRadius: 10, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: ".9rem", outline: "none" }}
           />
           <button className="btn btn-accent" style={{ padding: ".6rem 1.2rem", opacity: posting ? 0.6 : 1 }} disabled={posting} onClick={postComment}>
-            Gönder
+            {t.pv_send}
           </button>
         </div>
 
         {comments.length === 0 ? (
-          <div style={{ color: "var(--muted)" }}>İlk yorumu sen yap.</div>
+          <div style={{ color: "var(--muted)" }}>{t.pv_first_comment}</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {comments.map((c) => (
