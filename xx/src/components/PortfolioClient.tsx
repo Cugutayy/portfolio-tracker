@@ -7,7 +7,7 @@ import { Avatar } from "@/components/Avatar";
 import { TRADEABLE_ASSETS, ASSET_BY_TICKER, TYPE_LABEL, type AssetType } from "@/lib/assets";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtAssetPrice } from "@/lib/format";
-import { fmtMoney } from "@/lib/currency";
+import { fmtMoney, fmtMoneyFull } from "@/lib/currency";
 import { useT, useCurrency } from "@/components/Providers";
 
 interface HoldingView {
@@ -195,6 +195,7 @@ export function PortfolioClient({
   // money in the user's chosen display currency (values are stored in ₺)
   const ud = pf?.usdTry ?? 0;
   const money = (n: number) => fmtMoney(n, cur, ud);
+  const moneyFull = (n: number) => fmtMoneyFull(n, cur, ud);
   const altMoney = (n: number) => (cur === "usd" ? fmtTry(n) : fmtMoney(n, "usd", ud));
 
   const slices: DemoSlice[] = useMemo(() => {
@@ -424,7 +425,7 @@ export function PortfolioClient({
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap", marginTop: 20 }}>
           <Stat
             label={tx.pc_total}
-            value={money(pf?.totalTry ?? 0)}
+            value={moneyFull(pf?.totalTry ?? 0)}
             big
             sub={
               pf && pf.usdTry > 0
@@ -437,10 +438,10 @@ export function PortfolioClient({
             value={`${up ? "+" : ""}${num(pf?.totalReturnPct ?? 0)}%`}
             color={up ? "var(--green-t)" : "var(--red-t)"}
             big
-            sub={pf ? `${up ? "+" : ""}${money(pf.totalPnlTry)}` : undefined}
+            sub={pf ? `${up ? "+" : ""}${moneyFull(pf.totalPnlTry)}` : undefined}
           />
-          <Stat label={tx.pc_cash} value={money(pf?.cashTry ?? 0)} />
-          <Stat label={tx.pc_invested} value={money(pf?.investedTry ?? 0)} />
+          <Stat label={tx.pc_cash} value={moneyFull(pf?.cashTry ?? 0)} />
+          <Stat label={tx.pc_invested} value={moneyFull(pf?.investedTry ?? 0)} />
           <Stat
             label={tx.pc_today}
             value={`${pf?.tradesToday ?? 0} / ${(pf?.tradesToday ?? 0) + (pf?.tradesLeft ?? 0)}`}
@@ -582,7 +583,7 @@ export function PortfolioClient({
           <div className="eyebrow" style={{ marginBottom: 12 }}>{tx.pc_alloc}</div>
           {slices.length > 0 ? (
             <div className="pw-wrap" style={{ display: "flex", justifyContent: "center", padding: "8px 40px 16px" }}>
-              <PortfolioWheel slices={slices} initials={initials} gradient={gradFor(handle)} image={image} size={240} format={money} />
+              <PortfolioWheel slices={slices} initials={initials} gradient={gradFor(handle)} image={image} size={240} format={money} formatAlt={altMoney} />
             </div>
           ) : (
             <div style={{ color: "var(--muted)", padding: "30px 0", textAlign: "center" }}>

@@ -7,7 +7,7 @@ import { Sparkline } from "@/components/Sparkline";
 import { Avatar } from "@/components/Avatar";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtAssetPrice } from "@/lib/format";
-import { fmtMoney } from "@/lib/currency";
+import { fmtMoney, fmtMoneyFull } from "@/lib/currency";
 import type { AssetType } from "@/lib/assets";
 import { useT, useCurrency } from "@/components/Providers";
 
@@ -59,6 +59,8 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
   ];
   const up = p.returnPct >= 0;
   const money = (n: number) => fmtMoney(n, cur, p.usdTry);
+  const moneyFull = (n: number) => fmtMoneyFull(n, cur, p.usdTry);
+  const altMoney = (n: number) => (cur === "usd" ? fmtTry(n) : fmtMoney(n, "usd", p.usdTry));
 
   const loadComments = useCallback(async () => {
     const r = await fetch(`/api/social/comment?handle=${encodeURIComponent(p.handle)}`, { cache: "no-store" });
@@ -183,7 +185,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
 
       {/* stats */}
       <div className="glass" style={{ padding: "20px 28px", display: "flex", gap: 30, flexWrap: "wrap", alignItems: "center" }}>
-        <Stat label={t.pv_total} value={money(p.totalTry)} big />
+        <Stat label={t.pv_total} value={moneyFull(p.totalTry)} big />
         <Stat label={t.pv_return} value={`${up ? "+" : ""}${num(p.returnPct)}%`} color={up ? "var(--green-t)" : "var(--red-t)"} big />
         <Stat label={t.pv_followers} value={String(p.followers)} />
         <Stat label={t.pv_likes} value={String(p.likes)} />
@@ -202,7 +204,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
           <div className="eyebrow" style={{ marginBottom: 12 }}>{t.pv_alloc}</div>
           {slices.length > 0 ? (
             <div style={{ display: "flex", justifyContent: "center", padding: "8px 40px 8px" }}>
-              <PortfolioWheel slices={slices} initials={initials} gradient={gradFor(p.handle)} image={p.image} size={240} format={money} />
+              <PortfolioWheel slices={slices} initials={initials} gradient={gradFor(p.handle)} image={p.image} size={240} format={money} formatAlt={altMoney} />
             </div>
           ) : (
             <div style={{ color: "var(--muted)", padding: "30px 0", textAlign: "center" }}>{t.pv_no_pos}</div>

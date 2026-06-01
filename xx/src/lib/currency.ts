@@ -15,3 +15,13 @@ export function fmtMoney(amountTry: number, currency: Currency, usdTry: number):
   }
   return fmtTry(amountTry);
 }
+
+/** Full amount with thousands separators + 2 decimals (no K/M abbreviation),
+ *  so exact totals/profit are visible — e.g. "1.008.267,42 ₺" / "$21.984,10". */
+export function fmtMoneyFull(amountTry: number, currency: Currency, usdTry: number): string {
+  const dec = { minimumFractionDigits: 2, maximumFractionDigits: 2 } as const;
+  if (currency === "usd" && usdTry > 0) {
+    return "$" + (amountTry / usdTry).toLocaleString("tr-TR", dec);
+  }
+  return amountTry.toLocaleString("tr-TR", dec) + " ₺";
+}
