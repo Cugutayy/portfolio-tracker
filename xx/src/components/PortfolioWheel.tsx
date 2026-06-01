@@ -17,6 +17,8 @@ interface Props {
   size?: number;
   /** money formatter (defaults to ₺); pass a currency-aware one to show $. */
   format?: (n: number) => string;
+  /** optional second formatter — shows the value in the other currency too. */
+  formatAlt?: (n: number) => string;
 }
 
 // polar point on a unit-100 viewBox, angle measured from top, clockwise
@@ -35,6 +37,7 @@ export function PortfolioWheel({
   centerPositive = true,
   size = 300,
   format = fmtTry,
+  formatAlt,
 }: Props) {
   const [hover, setHover] = useState<number | null>(null);
   const cx = 50;
@@ -163,6 +166,9 @@ export function PortfolioWheel({
               style={{ fontSize: size * 0.044, color: "var(--muted)", marginTop: 2 }}
             >
               {format(arcs[hover].valueTry)}
+              {formatAlt && (
+                <span style={{ opacity: 0.7 }}> · {formatAlt(arcs[hover].valueTry)}</span>
+              )}
             </div>
           </motion.div>
         ) : (
@@ -225,6 +231,7 @@ export function PortfolioWheel({
             </div>
             <div className="mono" style={{ fontSize: ".58rem", color: "var(--muted)", marginTop: 1 }}>
               {format(a.valueTry)}
+              {formatAlt && <span style={{ opacity: 0.7 }}> · {formatAlt(a.valueTry)}</span>}
             </div>
           </motion.div>
         );
