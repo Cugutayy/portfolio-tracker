@@ -300,6 +300,7 @@ export interface PublicProfile {
   isLiked: boolean;
   isSelf: boolean;
   recentTrades: PublicTrade[];
+  usdTry: number;
 }
 
 export interface PublicTrade {
@@ -376,6 +377,7 @@ export async function getPublicProfile(
     isLiked: vl.length > 0,
     isSelf: viewerId === user.id,
     recentTrades,
+    usdTry: snap.usdTry,
   };
 }
 

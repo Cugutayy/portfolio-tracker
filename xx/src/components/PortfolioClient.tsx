@@ -7,7 +7,8 @@ import { Avatar } from "@/components/Avatar";
 import { TRADEABLE_ASSETS, ASSET_BY_TICKER, TYPE_LABEL, type AssetType } from "@/lib/assets";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtAssetPrice } from "@/lib/format";
-import { useT } from "@/components/Providers";
+import { fmtMoney } from "@/lib/currency";
+import { useT, useCurrency } from "@/components/Providers";
 
 interface HoldingView {
   ticker: string;
@@ -63,8 +64,6 @@ const num = (n: number, d = 2) =>
 
 const TYPE_ORDER: AssetType[] = ["crypto", "commodity", "index", "nasdaq100", "bist100", "sp500"];
 
-const fmtUsd = (n: number) =>
-  "$" + new Intl.NumberFormat("tr-TR", { maximumFractionDigits: 0 }).format(Math.max(0, n));
 
 /** Milliseconds until the next Istanbul midnight (UTC+3, when trade limits reset). */
 function msToReset() {
@@ -124,6 +123,7 @@ export function PortfolioClient({
   bio: string | null;
 }) {
   const tx = useT();
+  const cur = useCurrency();
   const [pf, setPf] = useState<PortfolioView | null>(null);
   const [trades, setTrades] = useState<TradeRow[]>([]);
   const [prices, setPrices] = useState<Record<string, LivePrice>>({});
@@ -191,6 +191,11 @@ export function PortfolioClient({
   const livePrice = prices[selected]?.priceTry ?? null;
   const heldSelected = pf?.holdings.find((h) => h.ticker === selected) ?? null;
   const selectedAsset = ASSET_BY_TICKER[selected];
+
+  // money in the user's chosen display currency (values are stored in ₺)
+  const ud = pf?.usdTry ?? 0;
+  const money = (n: number) => fmtMoney(n, cur, ud);
+  const altMoney = (n: number) => (cur === "usd" ? fmtTry(n) : fmtMoney(n, "usd", ud));
 
   const slices: DemoSlice[] = useMemo(() => {
     if (!pf) return [];
@@ -290,7 +295,7 @@ export function PortfolioClient({
         if (side === "sell") setMode("buy");
         setMsg({
           kind: "ok",
-          text: `${side === "buy" ? tx.pc_msg_bought : tx.pc_msg_sold}: ${num(j.trade.quantity, 4)} ${selected} · ${fmtTry(j.trade.amountTry)}`,
+          text: `${side === "buy" ? tx.pc_msg_bought : tx.pc_msg_sold}: ${num(j.trade.quantity, 4)} ${selected} · ${money(j.trade.amountTry)}`,
         });
         loadPortfolio();
       }
@@ -419,11 +424,11 @@ export function PortfolioClient({
         <div style={{ display: "flex", gap: 32, flexWrap: "wrap", marginTop: 20 }}>
           <Stat
             label={tx.pc_total}
-            value={fmtTry(pf?.totalTry ?? 0)}
+            value={money(pf?.totalTry ?? 0)}
             big
             sub={
               pf && pf.usdTry > 0
-                ? `≈ ${fmtUsd(pf.totalTry / pf.usdTry)} · ${up ? "+" : ""}${num(pf.totalReturnPct)}%`
+                ? `≈ ${altMoney(pf.totalTry)} · ${up ? "+" : ""}${num(pf.totalReturnPct)}%`
                 : undefined
             }
           />
@@ -432,10 +437,10 @@ export function PortfolioClient({
             value={`${up ? "+" : ""}${num(pf?.totalReturnPct ?? 0)}%`}
             color={up ? "var(--green-t)" : "var(--red-t)"}
             big
-            sub={pf ? `${up ? "+" : ""}${fmtTry(pf.totalPnlTry)}` : undefined}
+            sub={pf ? `${up ? "+" : ""}${money(pf.totalPnlTry)}` : undefined}
           />
-          <Stat label={tx.pc_cash} value={fmtTry(pf?.cashTry ?? 0)} />
-          <Stat label={tx.pc_invested} value={fmtTry(pf?.investedTry ?? 0)} />
+          <Stat label={tx.pc_cash} value={money(pf?.cashTry ?? 0)} />
+          <Stat label={tx.pc_invested} value={money(pf?.investedTry ?? 0)} />
           <Stat
             label={tx.pc_today}
             value={`${pf?.tradesToday ?? 0} / ${(pf?.tradesToday ?? 0) + (pf?.tradesLeft ?? 0)}`}
@@ -577,7 +582,7 @@ export function PortfolioClient({
           <div className="eyebrow" style={{ marginBottom: 12 }}>{tx.pc_alloc}</div>
           {slices.length > 0 ? (
             <div className="pw-wrap" style={{ display: "flex", justifyContent: "center", padding: "8px 40px 16px" }}>
-              <PortfolioWheel slices={slices} initials={initials} gradient={gradFor(handle)} image={image} size={240} />
+              <PortfolioWheel slices={slices} initials={initials} gradient={gradFor(handle)} image={image} size={240} format={money} />
             </div>
           ) : (
             <div style={{ color: "var(--muted)", padding: "30px 0", textAlign: "center" }}>
@@ -588,7 +593,7 @@ export function PortfolioClient({
           {pf && pf.holdings.length === 0 && (
             <div style={{ marginTop: 12, padding: "16px 18px", borderRadius: 12, background: "var(--fill)", border: "1px dashed var(--card-border)", textAlign: "center" }}>
               <div style={{ fontWeight: 600, fontSize: ".92rem", marginBottom: 4 }}>
-                {fmtTry(pf.cashTry)} {tx.pc_cash_ready}
+                {money(pf.cashTry)} {tx.pc_cash_ready}
               </div>
               <div style={{ color: "var(--muted)", fontSize: ".82rem", lineHeight: 1.5 }}>
                 {tx.pc_nudge}
@@ -610,7 +615,7 @@ export function PortfolioClient({
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <div className="mono" style={{ fontSize: ".82rem" }}>{fmtTry(h.valueTry)}</div>
+                      <div className="mono" style={{ fontSize: ".82rem" }}>{money(h.valueTry)}</div>
                       <div className="mono" style={{ fontSize: ".62rem", color: hUp ? "var(--green-t)" : "var(--red-t)" }}>
                         {hUp ? "+" : ""}{num(h.pnlPct)}%
                       </div>
@@ -684,7 +689,7 @@ export function PortfolioClient({
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 12, fontSize: ".72rem" }}>
               <span style={{ color: "var(--muted)" }}>{tx.pc_holding}</span>
               <span className="mono" style={{ color: "var(--ink)" }}>
-                {num(heldSelected.quantity, 4)} {selected} · {fmtTry(heldSelected.valueTry)}
+                {num(heldSelected.quantity, 4)} {selected} · {money(heldSelected.valueTry)}
                 <span style={{ color: heldSelected.pnlTry >= 0 ? "var(--green-t)" : "var(--red-t)", marginLeft: 8 }}>
                   {heldSelected.pnlTry >= 0 ? "+" : ""}{num(heldSelected.pnlPct)}%
                 </span>
@@ -748,7 +753,7 @@ export function PortfolioClient({
             <div className="mono" style={{ fontSize: ".72rem", color: "var(--ink)", marginBottom: 12, padding: "8px 10px", borderRadius: 9, background: "var(--fill)", border: "1px solid var(--card-border)" }}>
               {mode === "buy" ? tx.pc_buying : tx.pc_selling}: <strong>{num(tradeQty, 6)} {selected}</strong>
               <span style={{ color: "var(--muted)" }}>
-                {" "}≈ {fmtTry(tradeValueTry)}
+                {" "}≈ {money(tradeValueTry)}
                 {sp && sp.nativeCcy !== "TRY" && selectedAsset?.type !== "index" && (
                   <> · {fmtAssetPrice(tradeValueNative, sp.nativeCcy)}</>
                 )}
@@ -772,7 +777,7 @@ export function PortfolioClient({
           {/* sell overflow hint */}
           {sellOverflow && heldSelected && (
             <div style={{ fontSize: ".75rem", marginBottom: 12, padding: "8px 10px", borderRadius: 9, background: "var(--fill)", border: "1px solid var(--card-border)", color: "var(--muted)" }}>
-              {tx.pc_sell_over_a}{fmtTry(heldSelected.valueTry)}{tx.pc_sell_over_b}
+              {tx.pc_sell_over_a}{money(heldSelected.valueTry)}{tx.pc_sell_over_b}
             </div>
           )}
 
@@ -823,10 +828,10 @@ export function PortfolioClient({
                   </span>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div className="mono" style={{ fontSize: ".82rem" }}>{fmtTry(t.amountTry)}</div>
+                  <div className="mono" style={{ fontSize: ".82rem" }}>{money(t.amountTry)}</div>
                   {t.realizedPnlTry != null && (
                     <div className="mono" style={{ fontSize: ".62rem", color: t.realizedPnlTry >= 0 ? "var(--green-t)" : "var(--red-t)" }}>
-                      {t.realizedPnlTry >= 0 ? "+" : ""}{fmtTry(t.realizedPnlTry)}
+                      {t.realizedPnlTry >= 0 ? "+" : ""}{money(t.realizedPnlTry)}
                     </div>
                   )}
                 </div>
