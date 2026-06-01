@@ -2,8 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { PortfolioWheel } from "@/components/PortfolioWheel";
 import { MiniWheel } from "@/components/MiniWheel";
+import { AppHeader } from "@/components/AppHeader";
+import { useLocale } from "@/components/Providers";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 
 interface LeaderSlice { ticker: string; name: string; color: string; weight: number; valueTry: number }
@@ -33,6 +36,8 @@ const slicesWithCash = (r: LeaderRow): DemoSlice[] => [
 ];
 
 export default function ArenaPage() {
+  const { status } = useSession();
+  const locale = useLocale();
   const [rows, setRows] = useState<LeaderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<Sort>("gainers");
@@ -71,16 +76,9 @@ export default function ArenaPage() {
 
   return (
     <main style={{ minHeight: "100dvh" }}>
-      <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", maxWidth: 1240, margin: "0 auto", width: "100%" }}>
-        <Link href="/" style={{ textDecoration: "none", color: "var(--ink)" }}>
-          <span className="mono" style={{ fontSize: ".68rem", color: "var(--accent)", letterSpacing: ".18em" }}>[ XX // ARENA ]</span>
-        </Link>
-        <nav style={{ display: "flex", gap: 10 }}>
-          <Link href="/" className="btn" style={{ textDecoration: "none" }}>Ana sayfa</Link>
-          <Link href="/portfolio" className="btn" style={{ textDecoration: "none" }}>Portföyüm</Link>
-          <Link href="/join" className="btn btn-accent" style={{ textDecoration: "none" }}>Yarışa katıl</Link>
-        </nav>
-      </header>
+      <div style={{ maxWidth: 1240, margin: "0 auto", padding: "20px 24px 0", width: "100%" }}>
+        <AppHeader loggedIn={status === "authenticated"} locale={locale} />
+      </div>
 
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "12px 24px 80px", width: "100%" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>

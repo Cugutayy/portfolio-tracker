@@ -1,30 +1,21 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
+import { getLocale } from "@/lib/locale";
 import { PasswordForm } from "@/components/PasswordForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { LogoutButton } from "@/components/LogoutButton";
+import { AppHeader } from "@/components/AppHeader";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = { title: "Ayarlar" };
 
 export default async function SettingsPage() {
-  const user = await getCurrentUser();
+  const [user, locale] = await Promise.all([getCurrentUser(), getLocale()]);
   if (!user) redirect("/join");
 
   return (
     <main style={{ maxWidth: 720, margin: "0 auto", padding: "32px 24px 72px", minHeight: "100dvh" }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 24 }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--ink)" }}>
-          <span className="display" style={{ fontSize: "1.5rem" }}>XX</span>
-          <span className="eyebrow" style={{ letterSpacing: ".28em" }}>Arena</span>
-        </Link>
-        <nav style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link href="/portfolio" className="btn" style={{ textDecoration: "none" }}>Portföyüm</Link>
-          <LogoutButton />
-        </nav>
-      </div>
+      <AppHeader loggedIn locale={locale} handle={user.handle} />
 
       <h1 className="display" style={{ fontSize: "clamp(2rem,5vw,2.8rem)", margin: "0 0 24px" }}>Ayarlar</h1>
 

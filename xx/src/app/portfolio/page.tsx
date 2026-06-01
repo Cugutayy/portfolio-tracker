@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
+import { getLocale } from "@/lib/locale";
 import { PortfolioClient } from "@/components/PortfolioClient";
-import { LogoutButton } from "@/components/LogoutButton";
+import { AppHeader } from "@/components/AppHeader";
 
 export const dynamic = "force-dynamic";
 
 export default async function PortfolioPage() {
-  const user = await getCurrentUser();
+  const [user, locale] = await Promise.all([getCurrentUser(), getLocale()]);
   if (!user) redirect("/join");
 
   return (
@@ -19,36 +19,7 @@ export default async function PortfolioPage() {
         minHeight: "100dvh",
       }}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          flexWrap: "wrap",
-          marginBottom: 24,
-        }}
-      >
-        <Link
-          href="/"
-          style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--ink)" }}
-        >
-          <span className="display" style={{ fontSize: "1.5rem" }}>XX</span>
-          <span className="eyebrow" style={{ letterSpacing: ".28em" }}>Arena</span>
-        </Link>
-        <nav style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Link href="/arena" className="btn" style={{ textDecoration: "none" }}>
-            Arena
-          </Link>
-          <Link href={`/u/${user.handle}`} className="btn" style={{ textDecoration: "none" }}>
-            Profilim
-          </Link>
-          <Link href="/settings" className="btn" style={{ textDecoration: "none" }}>
-            Ayarlar
-          </Link>
-          <LogoutButton />
-        </nav>
-      </div>
+      <AppHeader loggedIn locale={locale} handle={user.handle} />
 
       <PortfolioClient
         name={user.name}
