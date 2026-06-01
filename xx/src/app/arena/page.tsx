@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { PortfolioWheel } from "@/components/PortfolioWheel";
 import { MiniWheel } from "@/components/MiniWheel";
 import { AppHeader } from "@/components/AppHeader";
-import { useLocale } from "@/components/Providers";
+import { useLocale, useT } from "@/components/Providers";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 
 interface LeaderSlice { ticker: string; name: string; color: string; weight: number; valueTry: number }
@@ -17,10 +17,10 @@ interface LeaderRow {
 }
 
 type Sort = "gainers" | "losers" | "liked";
-const SORTS: { key: Sort; label: string }[] = [
-  { key: "gainers", label: "En çok kazanan" },
-  { key: "losers", label: "En çok kaybeden" },
-  { key: "liked", label: "En çok beğenilen" },
+const SORTS: { key: Sort; labelKey: "sort_gainers" | "sort_losers" | "sort_liked" }[] = [
+  { key: "gainers", labelKey: "sort_gainers" },
+  { key: "losers", labelKey: "sort_losers" },
+  { key: "liked", labelKey: "sort_liked" },
 ];
 
 const num = (n: number, d = 2) =>
@@ -38,6 +38,7 @@ const slicesWithCash = (r: LeaderRow): DemoSlice[] => [
 export default function ArenaPage() {
   const { status } = useSession();
   const locale = useLocale();
+  const t = useT();
   const [rows, setRows] = useState<LeaderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<Sort>("gainers");
@@ -93,11 +94,11 @@ export default function ArenaPage() {
       <div style={{ maxWidth: 1240, margin: "0 auto", padding: "12px 24px 80px", width: "100%" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
           <span className="live-dot" />
-          <span className="eyebrow">canlı liderlik · gerçek piyasa fiyatları</span>
+          <span className="eyebrow">{t.ar_eyebrow}</span>
         </div>
-        <h1 className="display" style={{ fontSize: "clamp(2rem,5vw,3.2rem)", margin: 0 }}>Arena</h1>
+        <h1 className="display" style={{ fontSize: "clamp(2rem,5vw,3.2rem)", margin: 0 }}>{t.ar_title}</h1>
         <p style={{ color: "var(--muted)", marginTop: 6 }}>
-          {loading ? "Yükleniyor…" : `${rows.length} trader · her biri 1.000.000 ₺ ile başladı`}
+          {loading ? t.ar_loading : `${rows.length} ${t.ar_subtitle}`}
         </p>
 
         {/* controls — centered, aligned */}
@@ -111,16 +112,16 @@ export default function ArenaPage() {
                   background: sort === s.key ? "var(--accent-soft)" : "transparent",
                   color: sort === s.key ? "var(--accent)" : "var(--muted)", transition: "all .15s",
                 }}>
-                {s.label}
+                {t[s.labelKey]}
               </button>
             ))}
           </div>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Trader ara…"
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t.ar_search}
             style={{ width: 220, padding: ".55rem .8rem", borderRadius: 9, border: "1px solid var(--card-border)", background: "var(--fill)", color: "var(--ink)", fontSize: ".82rem", outline: "none" }} />
         </div>
 
         {loading ? (
-          <div className="glass" style={{ padding: 60, textAlign: "center", color: "var(--muted)" }}>Liderlik yükleniyor…</div>
+          <div className="glass" style={{ padding: 60, textAlign: "center", color: "var(--muted)" }}>{t.ar_board_loading}</div>
         ) : rows.length === 0 ? (
           <EmptyState />
         ) : (
@@ -128,7 +129,7 @@ export default function ArenaPage() {
             {spotlight && <Spotlight r={spotlight} rank={valueRank.get(spotlight.id) ?? 1} />}
 
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", margin: "40px 0 16px" }}>
-              <h2 className="display" style={{ fontSize: "1.5rem", margin: 0 }}>Tüm yarışmacılar</h2>
+              <h2 className="display" style={{ fontSize: "1.5rem", margin: 0 }}>{t.ar_all}</h2>
               <span className="mono" style={{ fontSize: ".7rem", color: "var(--muted)" }}>{filtered.length} / {rows.length}</span>
             </div>
 
@@ -147,6 +148,7 @@ export default function ArenaPage() {
 }
 
 function Spotlight({ r, rank }: { r: LeaderRow; rank: number }) {
+  const t = useT();
   const up = r.returnPct >= 0;
   return (
     <div className="glass spotlight-grid" style={{ padding: "36px 40px" }}>
@@ -170,13 +172,13 @@ function Spotlight({ r, rank }: { r: LeaderRow; rank: number }) {
         <div className="mono" style={{ fontSize: ".72rem", color: "var(--muted)" }}>@{r.handle}</div>
 
         <div style={{ display: "flex", gap: 28, flexWrap: "wrap", margin: "20px 0" }}>
-          <div><div className="eyebrow">Portföy değeri</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2 }}>{fmtTry(r.totalTry)}</div></div>
-          <div><div className="eyebrow">Getiri</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2, color: up ? "var(--green-t)" : "var(--red-t)" }}>{up ? "+" : ""}{num(r.returnPct)}%</div></div>
-          <div><div className="eyebrow">Beğeni</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2 }}>{r.likes}</div></div>
+          <div><div className="eyebrow">{t.sp_value}</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2 }}>{fmtTry(r.totalTry)}</div></div>
+          <div><div className="eyebrow">{t.sp_return}</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2, color: up ? "var(--green-t)" : "var(--red-t)" }}>{up ? "+" : ""}{num(r.returnPct)}%</div></div>
+          <div><div className="eyebrow">{t.sp_likes}</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2 }}>{r.likes}</div></div>
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <Link href={`/u/${r.handle}`} className="btn btn-accent" style={{ padding: ".7rem 1.3rem", textDecoration: "none" }}>Portföyü incele</Link>
+          <Link href={`/u/${r.handle}`} className="btn btn-accent" style={{ padding: ".7rem 1.3rem", textDecoration: "none" }}>{t.sp_inspect}</Link>
         </div>
       </div>
     </div>
@@ -184,6 +186,7 @@ function Spotlight({ r, rank }: { r: LeaderRow; rank: number }) {
 }
 
 function ArenaCard({ p, rank }: { p: LeaderRow; rank: number }) {
+  const t = useT();
   const up = p.returnPct >= 0;
   return (
     <Link href={`/u/${p.handle}`} className="glass glass-hover" style={{ textDecoration: "none", color: "inherit", padding: 16, display: "flex", flexDirection: "column", gap: 12, border: "1px solid var(--card-border)" }}>
@@ -201,7 +204,7 @@ function ArenaCard({ p, rank }: { p: LeaderRow; rank: number }) {
           <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)" }}>{fmtTry(p.totalTry)}</div>
         </div>
         <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", textAlign: "right" }}>
-          {p.holdingsCount} varlık<br />♥ {p.likes}
+          {p.holdingsCount} {t.ar_assets}<br />♥ {p.likes}
         </div>
       </div>
     </Link>
@@ -209,20 +212,22 @@ function ArenaCard({ p, rank }: { p: LeaderRow; rank: number }) {
 }
 
 function EmptyState() {
+  const t = useT();
   return (
     <div className="glass" style={{ padding: "48px 32px", textAlign: "center" }}>
       <pre className="mono" style={{ color: "var(--accent)", fontSize: ".7rem", lineHeight: 1.3, margin: "0 0 18px" }}>{`   ___ ___ ___ ___\n  | _ \\ __| _ \\ _ \\\n  |   / _||   /   /\n  |_|_\\___|_|_\\_|_\\`}</pre>
-      <h3 className="display" style={{ fontSize: "1.4rem", margin: "0 0 8px" }}>Arena seni bekliyor</h3>
-      <p style={{ color: "var(--muted)", maxWidth: 420, margin: "0 auto 20px" }}>Henüz kimse katılmadı. İlk 1.000.000 ₺’lik portföyü sen kur, arkadaşlarını davet et.</p>
-      <Link href="/join" className="btn btn-accent" style={{ textDecoration: "none", padding: ".7rem 1.4rem" }}>Yarışa katıl</Link>
+      <h3 className="display" style={{ fontSize: "1.4rem", margin: "0 0 8px" }}>{t.ar_empty_h}</h3>
+      <p style={{ color: "var(--muted)", maxWidth: 420, margin: "0 auto 20px" }}>{t.ar_empty_p}</p>
+      <Link href="/join" className="btn btn-accent" style={{ textDecoration: "none", padding: ".7rem 1.4rem" }}>{t.ar_empty_cta}</Link>
     </div>
   );
 }
 
 function ExamplesNote() {
+  const t = useT();
   return (
     <p className="mono" style={{ marginTop: 40, textAlign: "center", fontSize: ".62rem", color: "var(--muted)", opacity: 0.7 }}>
-      ━━━  gerçek arkadaşlarınla, gerçek fiyatlarla, sanal 1M ₺  ━━━
+      ━━━  {t.ar_examples}  ━━━
     </p>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { fmtAssetPrice } from "@/lib/format";
 import type { AssetType } from "@/lib/assets";
+import { useT } from "./Providers";
 
 interface LivePrice {
   ticker: string;
@@ -16,6 +17,7 @@ interface LivePrice {
 
 /** Live ASCII price tape — broadsheet marquee fed by /api/prices. */
 export function TickerTape() {
+  const t = useT();
   const [rows, setRows] = useState<LivePrice[]>([]);
   // brief green/red flash on each ticker whose price moved since last refresh
   const [flash, setFlash] = useState<Record<string, "up" | "down">>({});
@@ -66,7 +68,7 @@ export function TickerTape() {
       <div className="ticker">
         <div className="ticker-track" style={{ animation: "none" }}>
           <span className="ticker-item" style={{ color: "var(--muted)" }}>
-            canlı fiyatlar yükleniyor…
+            {t.ticker_loading}
           </span>
         </div>
       </div>

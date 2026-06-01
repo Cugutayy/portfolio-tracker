@@ -197,7 +197,7 @@ export default async function Home() {
               >
                 {startLabel}
               </Link>
-              <InviteButton className="btn" label="Davet et ↗" />
+              <InviteButton className="btn" label={t.invite_short} />
             </div>
           </div>
         </div>
