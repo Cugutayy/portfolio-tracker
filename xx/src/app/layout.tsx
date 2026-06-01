@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AmbientOrbs } from "@/components/AmbientOrbs";
 import { Providers } from "@/components/Providers";
+import { getLocale } from "@/lib/locale";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 const TITLE = "XX Arena";
@@ -23,13 +24,14 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
   return (
-    <html lang="tr" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         {/* apply saved theme before paint to avoid a flash */}
         <script
@@ -50,7 +52,7 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Providers>
+        <Providers locale={locale}>
           <AmbientOrbs />
           <div style={{ position: "relative", zIndex: 1 }}>{children}</div>
         </Providers>
