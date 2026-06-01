@@ -181,7 +181,7 @@ export default async function Image({
                   );
                 })
               ) : (
-                <div style={{ display: "flex", fontSize: 20, color: MUTED }}>Henüz pozisyon yok — nakitte bekliyor.</div>
+                <div style={{ display: "flex", fontSize: 20, color: MUTED }}>Henüz pozisyon yok, nakitte bekliyor.</div>
               )}
             </div>
           </div>

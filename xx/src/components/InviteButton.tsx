@@ -16,7 +16,7 @@ export function InviteButton({
   async function go() {
     const url = `${window.location.origin}/yarisma`;
     const text =
-      "XX Arena’da 3 aylık trader turnuvası başladı — 1.000.000 ₺ sanal portföyle yarış, ilk 3’e sürpriz para ödülü. Katıl:";
+      "XX Arena’da 3 aylık trader turnuvası başladı. 1.000.000 ₺ sanal portföyle yarış, ilk 3’e sürpriz para ödülü. Katıl:";
     try {
       if (navigator.share) {
         await navigator.share({ title: "XX Arena", text, url });

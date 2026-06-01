@@ -3,7 +3,7 @@ import { OG, OG_SIZE, loadOgFonts } from "@/lib/og";
 import { getLeaderboard } from "@/lib/portfolio";
 
 export const runtime = "nodejs";
-export const alt = "XX Arena — Büyük Yarış Başladı";
+export const alt = "XX Arena · Büyük Yarış Başladı";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 
@@ -185,7 +185,7 @@ export default async function Image() {
               ? standings(top3, display)
               : column(
                   "Canlı piyasa",
-                  "Kripto, BIST, NASDAQ ve emtia — her fiyat CoinGecko ve Yahoo’dan canlı akar.",
+                  "Kripto, BIST, NASDAQ ve emtia, her fiyat CoinGecko ve Yahoo’dan canlı akar.",
                   [100, 100, 90, 100, 96, 100, 78],
                   display,
                   true,

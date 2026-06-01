@@ -81,7 +81,7 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
     if (sharing) return;
     setSharing(true);
     try {
-      const text = `${p.name} — XX Arena'da #${p.rank} sırada, ${up ? "+" : ""}${num(p.returnPct)}% getiri`;
+      const text = `${p.name} · XX Arena'da #${p.rank} sırada, ${up ? "+" : ""}${num(p.returnPct)}% getiri`;
       let blob: Blob | null = null;
       try {
         const res = await fetch(`/u/${p.handle}/opengraph-image`, { cache: "no-store" });

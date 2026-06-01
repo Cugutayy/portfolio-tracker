@@ -393,7 +393,7 @@ export function PortfolioClient({
   const buyBlock = noTradesLeft
     ? "Günlük işlem hakkın doldu."
     : atHoldingLimit
-      ? "10 varlık sınırına ulaştın — yeni varlık için önce birini sat."
+      ? "10 varlık sınırına ulaştın, yeni varlık için önce birini sat."
       : insufficientCash
         ? `Nakitin yetersiz (${fmtTry(cashTry)}).`
         : null;
@@ -477,7 +477,7 @@ export function PortfolioClient({
                   value={draftBio}
                   onChange={(e) => setDraftBio(e.target.value.slice(0, 160))}
                   rows={3}
-                  placeholder="Kendini kısaca tanıt — strateji, tarz, hedef…"
+                  placeholder="Kendini kısaca tanıt: strateji, tarz, hedef…"
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 10, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: ".9rem", resize: "vertical", fontFamily: "inherit" }}
                 />
               </div>
@@ -555,7 +555,7 @@ export function PortfolioClient({
                 </div>
                 <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 6 }}>
                   <span className="mono" style={{ fontSize: ".82rem", fontWeight: 600 }}>
-                    {p ? fmtAssetPrice(p.nativePrice, p.nativeCcy, a.type) : "—"}
+                    {p ? fmtAssetPrice(p.nativePrice, p.nativeCcy, a.type) : "·"}
                   </span>
                   {chg != null && (
                     <span className="mono" style={{ fontSize: ".66rem", color: chg >= 0 ? "var(--green-t)" : "var(--red-t)" }}>
@@ -589,7 +589,7 @@ export function PortfolioClient({
                 {fmtTry(pf.cashTry)} nakitin hazır.
               </div>
               <div style={{ color: "var(--muted)", fontSize: ".82rem", lineHeight: 1.5 }}>
-                Yukarıdaki <strong>Piyasalar</strong>’dan bir varlık seç, ilk alımını yap — yarış senin için başlasın.
+                Yukarıdaki <strong>Piyasalar</strong>’dan bir varlık seç, ilk alımını yap, yarış senin için başlasın.
               </div>
             </div>
           )}
@@ -641,7 +641,7 @@ export function PortfolioClient({
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div className="mono" style={{ fontSize: "1rem", fontWeight: 600 }}>{prices[selected] ? fmtAssetPrice(prices[selected]!.nativePrice, prices[selected]!.nativeCcy, selectedAsset?.type) : "—"}</div>
+              <div className="mono" style={{ fontSize: "1rem", fontWeight: 600 }}>{prices[selected] ? fmtAssetPrice(prices[selected]!.nativePrice, prices[selected]!.nativeCcy, selectedAsset?.type) : "·"}</div>
               {prices[selected]?.changePct != null && (
                 <div className="mono" style={{ fontSize: ".64rem", color: (prices[selected]!.changePct ?? 0) >= 0 ? "var(--green-t)" : "var(--red-t)" }}>
                   {(prices[selected]!.changePct ?? 0) >= 0 ? "+" : ""}{num(prices[selected]!.changePct ?? 0)}%
@@ -770,7 +770,7 @@ export function PortfolioClient({
           {/* sell overflow hint */}
           {sellOverflow && heldSelected && (
             <div style={{ fontSize: ".75rem", marginBottom: 12, padding: "8px 10px", borderRadius: 9, background: "var(--fill)", border: "1px solid var(--card-border)", color: "var(--muted)" }}>
-              Pozisyonundan fazla girdin — tümü ({fmtTry(heldSelected.valueTry)}) satılacak.
+              Pozisyonundan fazla girdin, tümü ({fmtTry(heldSelected.valueTry)}) satılacak.
             </div>
           )}
 
