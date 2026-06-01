@@ -44,12 +44,22 @@ export default function ArenaPage() {
   const [query, setQuery] = useState("");
 
   useEffect(() => {
-    (async () => {
-      const r = await fetch("/api/leaderboard", { cache: "no-store" });
-      const j = await r.json();
-      if (j.ok) setRows(j.leaderboard);
-      setLoading(false);
-    })();
+    let alive = true;
+    const load = async () => {
+      try {
+        const r = await fetch("/api/leaderboard", { cache: "no-store" });
+        const j = await r.json();
+        if (alive && j.ok) setRows(j.leaderboard);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    };
+    load();
+    const id = setInterval(load, 60_000); // live: refresh every 60s
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
   }, []);
 
   const ranked = useMemo(() => {
