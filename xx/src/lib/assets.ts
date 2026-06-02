@@ -115,6 +115,7 @@ const INDEX: Row[] = [
   ["DOW", "Dow Jones", "^DJI", "#1f3d5c"],
   ["BIST100", "BIST 100", "XU100.IS", "#16a34a"],
   ["BIST30", "BIST 30", "XU030.IS", "#15803d"],
+  ["VIOP30", "VIOP-30 (BIST 30 Vadeli)", "XU030.IS", "#0e7a4a"],
   ["DAX", "DAX (Almanya)", "^GDAXI", "#d4a017"],
   ["FTSE", "FTSE 100", "^FTSE", "#5b21b6"],
   ["NIKKEI", "Nikkei 225", "^N225", "#c23b2b"],
@@ -321,6 +322,16 @@ export const ASSETS: Asset[] = [
 
 /** Only the assets buyable in the markets browser (archived ones excluded). */
 export const TRADEABLE_ASSETS: Asset[] = ASSETS.filter((a) => !a.archived);
+
+/** Asset types that support leveraged long/short (futures): crypto + indices/VIOP. */
+export const LEVERAGE_TYPES: AssetType[] = ["crypto", "index"];
+export function isLeverageable(type: AssetType): boolean {
+  return LEVERAGE_TYPES.includes(type);
+}
+/** Assets that can be traded with leverage in the futures section. */
+export const LEVERAGE_ASSETS: Asset[] = TRADEABLE_ASSETS.filter((a) =>
+  isLeverageable(a.type),
+);
 
 export const ASSET_BY_TICKER: Record<string, Asset> = Object.fromEntries(
   ASSETS.map((a) => [a.ticker, a]),

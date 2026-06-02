@@ -19,6 +19,11 @@ import {
 import { and, eq, gte, sql, desc, asc } from "drizzle-orm";
 import { getLivePrices } from "@/lib/prices";
 import { ASSET_BY_TICKER } from "@/lib/assets";
+import {
+  settleAndValuePositions,
+  type PositionView,
+} from "@/lib/positions";
+import { positions as positionsTable } from "@/db/schema";
 
 export const MAX_HOLDINGS = 10;
 export const MAX_TRADES_PER_DAY = 10;
@@ -48,10 +53,13 @@ export interface PortfolioView {
   cashTry: number;
   startingTry: number;
   investedTry: number;
+  /** total equity tied up in open leveraged positions (margin + live P&L) */
+  positionsEquityTry: number;
   totalTry: number;
   totalPnlTry: number;
   totalReturnPct: number;
   holdings: HoldingView[];
+  positions: PositionView[];
   tradesToday: number;
   tradesLeft: number;
   pricedAt: number;
@@ -129,7 +137,12 @@ export async function getPortfolio(userId: string): Promise<PortfolioView> {
   });
 
   const investedTry = valued.reduce((s, h) => s + h.valueTry, 0);
-  const totalTry = cashTry + investedTry;
+
+  // Leveraged futures: live-value open positions (auto-liquidating crossed ones).
+  const { positions: positionViews, equityTry: positionsEquityTry } =
+    await settleAndValuePositions(userId, snap);
+
+  const totalTry = cashTry + investedTry + positionsEquityTry;
 
   const holdingViews: HoldingView[] = valued
     .map((h) => ({ ...h, weight: totalTry > 0 ? h.valueTry / totalTry : 0 }))
@@ -141,10 +154,12 @@ export async function getPortfolio(userId: string): Promise<PortfolioView> {
     cashTry,
     startingTry,
     investedTry,
+    positionsEquityTry,
     totalTry,
     totalPnlTry: totalTry - startingTry,
     totalReturnPct: startingTry > 0 ? ((totalTry - startingTry) / startingTry) * 100 : 0,
     holdings: holdingViews,
+    positions: positionViews,
     tradesToday,
     tradesLeft: Math.max(0, MAX_TRADES_PER_DAY - tradesToday),
     pricedAt: snap.fetchedAt,
@@ -212,10 +227,14 @@ export interface LeaderRow {
 
 /** Value every registered user with live prices and rank them. */
 export async function getLeaderboard(): Promise<LeaderRow[]> {
-  const [allUsers, allHoldings, snap, followCounts, likeCounts, tradeCounts] =
+  const [allUsers, allHoldings, openPositions, snap, followCounts, likeCounts, tradeCounts] =
     await Promise.all([
       db.select().from(users),
       db.select().from(holdings),
+      db
+        .select()
+        .from(positionsTable)
+        .where(eq(positionsTable.status, "open")),
       getLivePrices(),
       db
         .select({ id: follows.followingId, c: sql<number>`count(*)::int` })
@@ -234,6 +253,21 @@ export async function getLeaderboard(): Promise<LeaderRow[]> {
   const fMap = new Map(followCounts.map((r) => [r.id, Number(r.c)]));
   const lMap = new Map(likeCounts.map((r) => [r.id, Number(r.c)]));
   const tMap = new Map(tradeCounts.map((r) => [r.id, Number(r.c)]));
+
+  // Live equity from open leveraged positions, per user (crossed → liquidated → 0).
+  const posEquity = new Map<string, number>();
+  for (const p of openPositions) {
+    const price = snap.prices[p.assetId]?.priceTry ?? Number(p.entryPriceTry);
+    const entry = Number(p.entryPriceTry);
+    const qty = Number(p.quantity);
+    const margin = Number(p.marginTry);
+    const liq = Number(p.liquidationPriceTry);
+    const crossed = p.side === "long" ? price <= liq : price >= liq;
+    let pnl = (price - entry) * qty * (p.side === "long" ? 1 : -1);
+    if (crossed || pnl <= -margin) continue; // liquidated, no equity
+    if (pnl < -margin) pnl = -margin;
+    posEquity.set(p.userId, (posEquity.get(p.userId) ?? 0) + margin + pnl);
+  }
 
   const byUser = new Map<string, typeof allHoldings>();
   for (const h of allHoldings) {
@@ -254,7 +288,7 @@ export async function getLeaderboard(): Promise<LeaderRow[]> {
       return { ticker, name: h.name, color: meta?.color ?? "#888", valueTry: qty * priceTry };
     });
     const invested = valued.reduce((s, v) => s + v.valueTry, 0);
-    const totalTry = cashTry + invested;
+    const totalTry = cashTry + invested + (posEquity.get(u.id) ?? 0);
     const slices: LeaderSlice[] = valued
       .map((v) => ({ ...v, weight: totalTry > 0 ? v.valueTry / totalTry : 0 }))
       .sort((a, b) => b.valueTry - a.valueTry);
