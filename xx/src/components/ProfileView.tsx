@@ -9,6 +9,7 @@ import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtAssetPrice } from "@/lib/format";
 import { fmtMoney, fmtMoneyFull } from "@/lib/currency";
 import type { AssetType } from "@/lib/assets";
+import { FuturesPositionsList, type PositionView } from "@/components/FuturesPanel";
 import { useT, useCurrency } from "@/components/Providers";
 
 interface HoldingView {
@@ -23,7 +24,7 @@ interface PublicTrade {
 export interface ProfileData {
   id: string; name: string; handle: string; image: string | null; bio: string | null;
   rank: number; totalTry: number; returnPct: number; cashTry: number; investedTry: number;
-  holdings: HoldingView[]; equity: number[];
+  holdings: HoldingView[]; positions: PositionView[]; equity: number[];
   followers: number; likes: number; commentsCount: number; tradesCount: number;
   isFollowing: boolean; isLiked: boolean; isSelf: boolean;
   recentTrades: PublicTrade[];
@@ -235,6 +236,13 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
               })}
             </div>
           )}
+
+          {/* leveraged positions (read-only) */}
+          <FuturesPositionsList
+            positions={p.positions}
+            pf={{ cashTry: 0, usdTry: p.usdTry }}
+            readOnly
+          />
         </div>
       </div>
 
