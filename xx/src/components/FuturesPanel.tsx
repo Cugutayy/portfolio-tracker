@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { LEVERAGE_ASSETS, ASSET_BY_TICKER, type AssetType } from "@/lib/assets";
+import {
+  LEVERAGE_ASSETS,
+  ASSET_BY_TICKER,
+  leverageGroup,
+  type LeverageGroup,
+  type AssetType,
+} from "@/lib/assets";
 import { fmtAssetPrice } from "@/lib/format";
 import { fmtMoney } from "@/lib/currency";
 import { useT, useCurrency } from "@/components/Providers";
@@ -155,18 +161,23 @@ export function FuturesForm({
   const [lev, setLev] = useState<number>(5);
   const [margin, setMargin] = useState<string>("");
   const [query, setQuery] = useState("");
+  const [openGroup, setOpenGroup] = useState<LeverageGroup | null>("crypto");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
-  const rows = useMemo(() => {
+  const grouped = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("tr");
-    return LEVERAGE_ASSETS.filter(
-      (a) =>
-        !q ||
-        a.ticker.toLocaleLowerCase("tr").includes(q) ||
-        a.name.toLocaleLowerCase("tr").includes(q),
-    );
+    const map: Record<LeverageGroup, typeof LEVERAGE_ASSETS> = { crypto: [], viop: [], index: [] };
+    for (const a of LEVERAGE_ASSETS) {
+      if (q && !(a.ticker.toLocaleLowerCase("tr").includes(q) || a.name.toLocaleLowerCase("tr").includes(q))) continue;
+      map[leverageGroup(a)].push(a);
+    }
+    return map;
   }, [query]);
+  const searching = query.trim().length > 0;
+  const GROUP_ORDER: LeverageGroup[] = ["crypto", "viop", "index"];
+  const groupLabel = (g: LeverageGroup) =>
+    g === "crypto" ? tx.fut_grp_crypto : g === "viop" ? tx.fut_grp_viop : tx.fut_grp_index;
 
   const asset = ASSET_BY_TICKER[selected];
   const lp = prices[selected];
@@ -213,8 +224,8 @@ export function FuturesForm({
 
   return (
     <div>
-      {/* asset picker */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+      {/* asset picker — collapsible categories */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
         <span className="eyebrow">{tx.fut_pick}</span>
         <input
           value={query}
@@ -223,28 +234,53 @@ export function FuturesForm({
           style={{ width: 150, padding: ".4rem .7rem", borderRadius: 8, border: "1px solid var(--card-border)", background: "var(--fill)", color: "var(--ink)", fontSize: ".76rem", outline: "none" }}
         />
       </div>
-      <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 8, marginBottom: 14 }}>
-        {rows.map((a) => {
-          const isSel = selected === a.ticker;
-          const p = prices[a.ticker];
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+        {GROUP_ORDER.map((g) => {
+          const items = grouped[g];
+          if (items.length === 0) return null;
+          const open = searching || openGroup === g;
+          const hasSel = items.some((a) => a.ticker === selected);
           return (
-            <button
-              key={a.ticker}
-              onClick={() => setSelected(a.ticker)}
-              style={{
-                flexShrink: 0, textAlign: "left", cursor: "pointer", padding: "8px 11px", borderRadius: 10,
-                border: isSel ? "1px solid var(--accent)" : "1px solid var(--card-border)",
-                background: isSel ? "var(--accent-soft)" : "var(--fill)", transition: "all .15s",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 2, background: a.color }} />
-                <span style={{ fontWeight: 600, fontSize: ".8rem" }}>{a.ticker}</span>
-              </div>
-              <div className="mono" style={{ fontSize: ".62rem", color: "var(--muted)", marginTop: 3 }}>
-                {p ? fmtAssetPrice(p.nativePrice, p.nativeCcy, a.type) : "·"}
-              </div>
-            </button>
+            <div key={g} style={{ border: `1px solid ${hasSel ? "var(--accent)" : "var(--card-border)"}`, borderRadius: 12, overflow: "hidden", background: "var(--fill)" }}>
+              <button
+                onClick={() => setOpenGroup(open && !searching ? null : g)}
+                style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "11px 13px", background: "transparent", border: "none", cursor: "pointer", color: "var(--ink)" }}
+              >
+                <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontWeight: 600, fontSize: ".86rem" }}>{groupLabel(g)}</span>
+                  <span className="mono" style={{ fontSize: ".58rem", color: "var(--muted)", padding: ".1rem .4rem", borderRadius: 6, background: "var(--card-border)" }}>{items.length}</span>
+                </span>
+                <span style={{ display: "inline-block", transition: "transform .2s ease", transform: open ? "rotate(90deg)" : "rotate(0deg)", color: "var(--muted)", fontSize: ".8rem" }}>▶</span>
+              </button>
+              {open && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(108px, 1fr))", gap: 6, padding: "0 10px 10px" }}>
+                  {items.map((a) => {
+                    const isSel = selected === a.ticker;
+                    const p = prices[a.ticker];
+                    return (
+                      <button
+                        key={a.ticker}
+                        onClick={() => setSelected(a.ticker)}
+                        title={a.name}
+                        style={{
+                          textAlign: "left", cursor: "pointer", padding: "8px 10px", borderRadius: 10,
+                          border: isSel ? "1px solid var(--accent)" : "1px solid var(--card-border)",
+                          background: isSel ? "var(--accent-soft)" : "var(--paper, var(--bg))", transition: "all .15s",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: 2, background: a.color, flexShrink: 0 }} />
+                          <span style={{ fontWeight: 600, fontSize: ".78rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.ticker}</span>
+                        </div>
+                        <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {p ? fmtAssetPrice(p.nativePrice, p.nativeCcy, a.type) : "·"}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>

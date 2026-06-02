@@ -115,7 +115,6 @@ const INDEX: Row[] = [
   ["DOW", "Dow Jones", "^DJI", "#1f3d5c"],
   ["BIST100", "BIST 100", "XU100.IS", "#16a34a"],
   ["BIST30", "BIST 30", "XU030.IS", "#15803d"],
-  ["VIOP30", "VIOP-30 (BIST 30 Vadeli)", "XU030.IS", "#0e7a4a"],
   ["DAX", "DAX (Almanya)", "^GDAXI", "#d4a017"],
   ["FTSE", "FTSE 100", "^FTSE", "#5b21b6"],
   ["NIKKEI", "Nikkei 225", "^N225", "#c23b2b"],
@@ -323,15 +322,40 @@ export const ASSETS: Asset[] = [
 /** Only the assets buyable in the markets browser (archived ones excluded). */
 export const TRADEABLE_ASSETS: Asset[] = ASSETS.filter((a) => !a.archived);
 
-/** Asset types that support leveraged long/short (futures): crypto + indices/VIOP. */
-export const LEVERAGE_TYPES: AssetType[] = ["crypto", "index"];
-export function isLeverageable(type: AssetType): boolean {
-  return LEVERAGE_TYPES.includes(type);
+/**
+ * BIST-30 constituents — tradeable as single-stock futures (VIOP-30 group).
+ * Curated from a recent XU030 list; values are virtual so quarterly drift is fine.
+ */
+export const BIST30_TICKERS = new Set<string>([
+  "AKBNK", "ALARK", "ARCLK", "ASELS", "ASTOR", "BIMAS", "BRSAN", "EKGYO",
+  "ENKAI", "EREGL", "FROTO", "GARAN", "GUBRF", "HEKTS", "ISCTR", "KCHOL",
+  "KONTR", "KRDMD", "MGROS", "OYAKC", "PETKM", "PGSUS", "SAHOL", "SASA",
+  "SISE", "TCELL", "THYAO", "TOASO", "TUPRS", "YKBNK",
+]);
+
+/**
+ * Whether an asset can be traded with leverage in the futures panel.
+ * Crypto, global/BIST indices, and the BIST-30 single stocks (VIOP-30).
+ */
+export function isLeverageable(a: Asset): boolean {
+  if (a.archived) return false;
+  return (
+    a.type === "crypto" ||
+    a.type === "index" ||
+    (a.type === "bist100" && BIST30_TICKERS.has(a.ticker))
+  );
 }
+
+/** Group key for the futures asset picker. */
+export type LeverageGroup = "crypto" | "viop" | "index";
+export function leverageGroup(a: Asset): LeverageGroup {
+  if (a.type === "crypto") return "crypto";
+  if (a.type === "bist100") return "viop";
+  return "index";
+}
+
 /** Assets that can be traded with leverage in the futures section. */
-export const LEVERAGE_ASSETS: Asset[] = TRADEABLE_ASSETS.filter((a) =>
-  isLeverageable(a.type),
-);
+export const LEVERAGE_ASSETS: Asset[] = TRADEABLE_ASSETS.filter(isLeverageable);
 
 export const ASSET_BY_TICKER: Record<string, Asset> = Object.fromEntries(
   ASSETS.map((a) => [a.ticker, a]),

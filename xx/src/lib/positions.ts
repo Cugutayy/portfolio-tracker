@@ -60,7 +60,7 @@ export async function openPosition(
 ): Promise<PositionResult> {
   const meta = ASSET_BY_TICKER[input.ticker];
   if (!meta) return err("Geçersiz varlık.");
-  if (!isLeverageable(meta.type))
+  if (!isLeverageable(meta))
     return err("Bu varlık kaldıraçlı işleme uygun değil.");
   if (input.side !== "long" && input.side !== "short")
     return err("Geçersiz yön.");
