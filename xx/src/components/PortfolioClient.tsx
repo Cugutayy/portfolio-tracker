@@ -9,6 +9,7 @@ import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtAssetPrice } from "@/lib/format";
 import { fmtMoney, fmtMoneyFull } from "@/lib/currency";
 import { useT, useCurrency } from "@/components/Providers";
+import { FuturesPanel, type PositionView } from "@/components/FuturesPanel";
 
 interface HoldingView {
   ticker: string;
@@ -31,10 +32,12 @@ interface PortfolioView {
   cashTry: number;
   startingTry: number;
   investedTry: number;
+  positionsEquityTry: number;
   totalTry: number;
   totalPnlTry: number;
   totalReturnPct: number;
   holdings: HoldingView[];
+  positions: PositionView[];
   tradesToday: number;
   tradesLeft: number;
   pricedAt: number;
@@ -442,6 +445,9 @@ export function PortfolioClient({
           />
           <Stat label={tx.pc_cash} value={moneyFull(pf?.cashTry ?? 0)} />
           <Stat label={tx.pc_invested} value={moneyFull(pf?.investedTry ?? 0)} />
+          {pf && (pf.positions?.length ?? 0) > 0 && (
+            <Stat label={tx.fut_title} value={moneyFull(pf.positionsEquityTry ?? 0)} />
+          )}
           <Stat
             label={tx.pc_today}
             value={`${pf?.tradesToday ?? 0} / ${(pf?.tradesToday ?? 0) + (pf?.tradesLeft ?? 0)}`}
@@ -800,6 +806,14 @@ export function PortfolioClient({
           </div>
         </div>
       </div>
+
+      {/* leveraged futures */}
+      <FuturesPanel
+        positions={pf?.positions ?? []}
+        prices={prices}
+        pf={{ cashTry: pf?.cashTry ?? 0, usdTry: pf?.usdTry ?? 0 }}
+        onPortfolio={(p) => setPf(p as PortfolioView)}
+      />
 
       {/* trade history */}
       <div className="glass" style={{ padding: 24 }}>
