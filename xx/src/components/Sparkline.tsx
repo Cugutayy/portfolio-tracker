@@ -5,6 +5,8 @@ interface Props {
   height?: number;
   fill?: boolean;
   strokeWidth?: number;
+  /** Stretch to the container width (keeps the numeric viewBox for scaling). */
+  full?: boolean;
 }
 
 /** Compact equity-curve sparkline / area chart. Pure SVG. */
@@ -15,6 +17,7 @@ export function Sparkline({
   height = 36,
   fill = true,
   strokeWidth = 1.5,
+  full = false,
 }: Props) {
   if (data.length < 2) return null;
   const min = Math.min(...data);
@@ -30,7 +33,7 @@ export function Sparkline({
   const id = `sg-${positive ? "p" : "n"}-${width}-${height}`;
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ display: "block" }}>
+    <svg width={full ? "100%" : width} height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ display: "block" }}>
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity={0.28} />

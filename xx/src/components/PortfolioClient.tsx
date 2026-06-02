@@ -10,6 +10,7 @@ import { fmtAssetPrice } from "@/lib/format";
 import { fmtMoney, fmtMoneyFull } from "@/lib/currency";
 import { useT, useCurrency } from "@/components/Providers";
 import { FuturesPositionsList, FuturesForm, type PositionView } from "@/components/FuturesPanel";
+import { Sparkline } from "@/components/Sparkline";
 
 interface HoldingView {
   ticker: string;
@@ -38,6 +39,7 @@ interface PortfolioView {
   totalReturnPct: number;
   holdings: HoldingView[];
   positions: PositionView[];
+  equity: number[];
   tradesToday: number;
   tradesLeft: number;
   pricedAt: number;
@@ -456,6 +458,16 @@ export function PortfolioClient({
             sub={resetIn ? `${tx.pc_renew_label} ${resetIn}` : undefined}
           />
         </div>
+
+        {/* equity curve over time */}
+        {pf && pf.equity.length >= 2 && (
+          <div style={{ marginTop: 18 }}>
+            <div className="eyebrow" style={{ marginBottom: 6 }}>{tx.pc_curve}</div>
+            <div style={{ width: "100%" }}>
+              <Sparkline data={pf.equity} positive={up} width={680} height={64} strokeWidth={2} full />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* profile editor */}
