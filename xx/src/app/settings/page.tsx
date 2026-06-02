@@ -5,6 +5,7 @@ import { getDict } from "@/lib/i18n";
 import { PasswordForm } from "@/components/PasswordForm";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { CurrencyToggle } from "@/components/CurrencyToggle";
+import { LogoutButton } from "@/components/LogoutButton";
 import { AppHeader } from "@/components/AppHeader";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,9 @@ export default async function SettingsPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 18 }}>
           <span className="eyebrow">{t.set_username}</span>
           <span className="mono" style={{ fontSize: ".95rem" }}>@{user.handle}</span>
+        </div>
+        <div style={{ marginTop: 20 }}>
+          <LogoutButton className="btn" />
         </div>
       </section>
 

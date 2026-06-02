@@ -6,8 +6,9 @@ import { useSession } from "next-auth/react";
 import { PortfolioWheel } from "@/components/PortfolioWheel";
 import { MiniWheel } from "@/components/MiniWheel";
 import { AppHeader } from "@/components/AppHeader";
-import { useLocale, useT } from "@/components/Providers";
+import { useLocale, useT, useCurrency } from "@/components/Providers";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
+import { fmtMoney } from "@/lib/currency";
 
 interface LeaderSlice { ticker: string; name: string; color: string; weight: number; valueTry: number }
 interface LeaderRow {
@@ -40,6 +41,7 @@ export default function ArenaPage() {
   const locale = useLocale();
   const t = useT();
   const [rows, setRows] = useState<LeaderRow[]>([]);
+  const [usdTry, setUsdTry] = useState(0);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<Sort>("gainers");
   const [query, setQuery] = useState("");
@@ -50,7 +52,10 @@ export default function ArenaPage() {
       try {
         const r = await fetch("/api/leaderboard", { cache: "no-store" });
         const j = await r.json();
-        if (alive && j.ok) setRows(j.leaderboard);
+        if (alive && j.ok) {
+          setRows(j.leaderboard);
+          setUsdTry(j.usdTry ?? 0);
+        }
       } finally {
         if (alive) setLoading(false);
       }
@@ -126,7 +131,7 @@ export default function ArenaPage() {
           <EmptyState />
         ) : (
           <>
-            {spotlight && <Spotlight r={spotlight} rank={valueRank.get(spotlight.id) ?? 1} />}
+            {spotlight && <Spotlight r={spotlight} rank={valueRank.get(spotlight.id) ?? 1} usdTry={usdTry} />}
 
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", margin: "40px 0 16px" }}>
               <h2 className="display" style={{ fontSize: "1.5rem", margin: 0 }}>{t.ar_all}</h2>
@@ -135,7 +140,7 @@ export default function ArenaPage() {
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 14 }}>
               {filtered.map((p) => (
-                <ArenaCard key={p.id} p={p} rank={valueRank.get(p.id) ?? 0} />
+                <ArenaCard key={p.id} p={p} rank={valueRank.get(p.id) ?? 0} usdTry={usdTry} />
               ))}
             </div>
           </>
@@ -147,13 +152,16 @@ export default function ArenaPage() {
   );
 }
 
-function Spotlight({ r, rank }: { r: LeaderRow; rank: number }) {
+function Spotlight({ r, rank, usdTry }: { r: LeaderRow; rank: number; usdTry: number }) {
   const t = useT();
+  const cur = useCurrency();
+  const money = (n: number) => fmtMoney(n, cur, usdTry);
+  const altMoney = (n: number) => (cur === "usd" ? fmtTry(n) : fmtMoney(n, "usd", usdTry));
   const up = r.returnPct >= 0;
   return (
     <div className="glass spotlight-grid" style={{ padding: "36px 40px" }}>
       <div className="spotlight-wheel" style={{ display: "flex", justifyContent: "center", padding: "0 50px" }}>
-        <PortfolioWheel slices={slicesWithCash(r)} initials={initialsOf(r.name)} gradient={gradFor(r.handle)} image={r.image} size={260} />
+        <PortfolioWheel slices={slicesWithCash(r)} initials={initialsOf(r.name)} gradient={gradFor(r.handle)} image={r.image} size={260} format={money} formatAlt={altMoney} />
       </div>
       <div>
         <div className="pw-legend" style={{ flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
@@ -172,7 +180,7 @@ function Spotlight({ r, rank }: { r: LeaderRow; rank: number }) {
         <div className="mono" style={{ fontSize: ".72rem", color: "var(--muted)" }}>@{r.handle}</div>
 
         <div style={{ display: "flex", gap: 28, flexWrap: "wrap", margin: "20px 0" }}>
-          <div><div className="eyebrow">{t.sp_value}</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2 }}>{fmtTry(r.totalTry)}</div></div>
+          <div><div className="eyebrow">{t.sp_value}</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2 }}>{money(r.totalTry)}</div></div>
           <div><div className="eyebrow">{t.sp_return}</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2, color: up ? "var(--green-t)" : "var(--red-t)" }}>{up ? "+" : ""}{num(r.returnPct)}%</div></div>
           <div><div className="eyebrow">{t.sp_likes}</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2 }}>{r.likes}</div></div>
         </div>
@@ -185,8 +193,10 @@ function Spotlight({ r, rank }: { r: LeaderRow; rank: number }) {
   );
 }
 
-function ArenaCard({ p, rank }: { p: LeaderRow; rank: number }) {
+function ArenaCard({ p, rank, usdTry }: { p: LeaderRow; rank: number; usdTry: number }) {
   const t = useT();
+  const cur = useCurrency();
+  const money = (n: number) => fmtMoney(n, cur, usdTry);
   const up = p.returnPct >= 0;
   return (
     <Link href={`/u/${p.handle}`} className="glass glass-hover" style={{ textDecoration: "none", color: "inherit", padding: 16, display: "flex", flexDirection: "column", gap: 12, border: "1px solid var(--card-border)" }}>
@@ -201,7 +211,7 @@ function ArenaCard({ p, rank }: { p: LeaderRow; rank: number }) {
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
         <div>
           <div className="mono" style={{ fontSize: "1rem", fontWeight: 600, color: up ? "var(--green-t)" : "var(--red-t)" }}>{up ? "+" : ""}{num(p.returnPct)}%</div>
-          <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)" }}>{fmtTry(p.totalTry)}</div>
+          <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)" }}>{money(p.totalTry)}</div>
         </div>
         <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", textAlign: "right" }}>
           {p.holdingsCount} {t.ar_assets}<br />♥ {p.likes}
