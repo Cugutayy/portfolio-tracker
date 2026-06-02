@@ -88,7 +88,7 @@ const ARCHETYPES = [
   { focus: "mixed", spot: 2, pos: 4, cash: 0.20, short: true }, // Selin — leverage heavy
   { focus: "bist", spot: 6, pos: 0, cash: 0.04, short: false }, // Burak — full stock BIST
   { focus: "mixed", spot: 3, pos: 1, cash: 0.40, short: false }, // Ayşe — cash heavy
-  { focus: "crypto", spot: 2, pos: 4, cash: 0.15, short: true }, // Kerem — crypto leverage
+  { focus: "crypto", spot: 2, pos: 4, cash: 0.15, short: true, force: ["DOGE"] }, // Kerem — crypto leverage (DOGE short)
   { focus: "index", spot: 4, pos: 1, cash: 0.15, short: false }, // Deniz — index focus
   { focus: "bist", spot: 6, pos: 0, cash: 0.07, short: false }, // Ozan — value full stock
   { focus: "crypto", spot: 4, pos: 2, cash: 0.12, short: false }, // Ece — crypto mixed
@@ -188,15 +188,17 @@ async function main() {
     if (A.pos > 0 && marginBudget > 0) {
       const levPool = levPoolFor(A.focus).filter(priced);
       let tks = shuffle(levPool, r).slice(0, A.pos);
-      if (A.short && priced("BTC") && !tks.includes("BTC")) tks[0] = "BTC";
-      tks = [...new Set(tks)];
+      if (A.force) tks = [...A.force.filter(priced), ...tks]; // pinned tickers (e.g. DOGE)
+      if (A.short && priced("BTC") && !tks.includes("BTC")) tks.push("BTC");
+      tks = [...new Set(tks)].slice(0, A.pos);
       const w = tks.map(() => 0.5 + r());
       const ws = w.reduce((a, b) => a + b, 0);
       tks.forEach((t, i) => {
         const margin = marginBudget * (w[i] / ws);
         if (margin < 3000) return;
         const lev = 3 + Math.floor(r() * 8); // 3..10
-        const side = A.short ? (t === "BTC" ? "short" : r() < 0.6 ? "short" : "long") : r() < 0.5 ? "long" : "short";
+        const forced = A.force && A.force.includes(t);
+        const side = forced ? "short" : A.short ? (t === "BTC" ? "short" : r() < 0.6 ? "short" : "long") : r() < 0.5 ? "long" : "short";
         const entry = P[t].priceTry;
         const qty = (margin * lev) / entry;
         const liq = side === "long" ? entry * (1 - 1 / lev) : entry * (1 + 1 / lev);
