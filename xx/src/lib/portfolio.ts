@@ -384,6 +384,7 @@ export interface PublicProfile {
   cashTry: number;
   investedTry: number;
   holdings: HoldingView[];
+  positions: PositionView[];
   equity: number[];
   followers: number;
   likes: number;
@@ -461,6 +462,7 @@ export async function getPublicProfile(
     cashTry: view.cashTry,
     investedTry: view.investedTry,
     holdings: view.holdings,
+    positions: view.positions,
     equity,
     followers: Number(fc[0]?.c ?? 0),
     likes: Number(lc[0]?.c ?? 0),

@@ -50,10 +50,13 @@ export function FuturesPositionsList({
   positions,
   pf,
   onPortfolio,
+  readOnly = false,
 }: {
   positions: PositionView[];
   pf: PortfolioLike;
-  onPortfolio: (p: unknown) => void;
+  onPortfolio?: (p: unknown) => void;
+  /** Viewing someone else's profile — show positions but no Close button. */
+  readOnly?: boolean;
 }) {
   const tx = useT();
   const cur = useCurrency();
@@ -75,7 +78,7 @@ export function FuturesPositionsList({
       if (!j.ok) {
         setMsg({ kind: "err", text: j.error ?? tx.pc_msg_fail });
       } else {
-        onPortfolio(j.portfolio);
+        onPortfolio?.(j.portfolio);
         const pnl = Number(j.realizedPnlTry ?? 0);
         setMsg({ kind: pnl >= 0 ? "ok" : "err", text: `${tx.fut_closed} · ${pnl >= 0 ? "+" : ""}${money(pnl)}` });
       }
@@ -146,19 +149,21 @@ export function FuturesPositionsList({
                 <Stat2 label={tx.fut_equity} value={money(p.equityTry)} />
               </div>
 
-              <button
-                className="btn"
-                style={{ width: "100%", marginTop: 12, padding: ".45rem", fontSize: ".74rem", fontWeight: 600, opacity: closingId === p.id ? 0.55 : 1 }}
-                disabled={closingId === p.id}
-                onClick={() => closePosition(p.id)}
-              >
-                {closingId === p.id ? tx.fut_closing : tx.fut_close}
-              </button>
+              {!readOnly && (
+                <button
+                  className="btn"
+                  style={{ width: "100%", marginTop: 12, padding: ".45rem", fontSize: ".74rem", fontWeight: 600, opacity: closingId === p.id ? 0.55 : 1 }}
+                  disabled={closingId === p.id}
+                  onClick={() => closePosition(p.id)}
+                >
+                  {closingId === p.id ? tx.fut_closing : tx.fut_close}
+                </button>
+              )}
             </div>
           );
         })}
       </div>
-      {msg && (
+      {!readOnly && msg && (
         <div style={{ fontSize: ".76rem", marginTop: 8, color: msg.kind === "ok" ? "var(--green-t)" : "var(--red-t)" }}>
           {msg.text}
         </div>
