@@ -11,44 +11,44 @@ neonConfig.webSocketConstructor = ws;
 
 const CAGATAY_EMAIL = "cugutayy@gmail.com";
 
-// admiring / banter lines aimed at Çağatay's portfolio
+// comments aimed at Çağatay's portfolio (grounded, no emoji, no cringe)
 const CAGATAY = [
-  "DEÜ İşletme Fakültesi'nin selamı var hocam 🎓",
-  "reis bu işi biliyo, helal",
-  "bro bu nasıl portföy ya, kral",
-  "noluyo burda, adam coşmuş",
   "short long hepsi var, profesyonel iş",
-  "10x kaldıraçla bile soğukkanlı, saygı duydum",
-  "abi bana da bi öneri ver",
-  "çağatay'a güven tam",
-  "bu adam piyasayı yönetiyor resmen",
-  "ben de aynısına gireyim mi reis",
-  "elinize sağlık, portföy şahane",
-  "kralın portföyü bu işte 👑",
+  "DEÜ İşletme Fakültesi'nin selamı var hocam",
+  "bro bu nasıl portföy ya, helal",
+  "noluyo burda, adam coşmuş",
+  "dağılım çok dengeli olmuş, eline sağlık",
+  "BTC short açarken bile soğukkanlısın, saygı",
+  "bu portföyü örnek alıyorum açıkçası",
+  "kaldıraç yönetimin temiz",
+  "abi bana da bir öneri ver",
+  "endeks ve kripto dengesi yerinde",
+  "girişlerin zamanlaması iyiymiş",
+  "bu işi ciddiye almışsın belli",
 ];
 
-// generic cross-arena comments (teasing + admiring, dozunda)
+// generic cross-arena comments (teasing + serious, no emoji)
 const GENERIC = [
-  "bu kadar NVDA fazla değil mi 😅",
+  "bu kadar NVDA fazla değil mi",
   "BTC short açana saygı duyuyorum",
   "stop koy bi yere kanka",
-  "risk yönetimi nerede bro",
+  "risk yönetimi biraz zayıf gibi",
   "valla tuttu, helal olsun",
   "ASELS sevdası bitmez bizde",
-  "temettü babası 💰",
+  "temettü hisseleri ağırlıkta, mantıklı",
   "bu ne cesaret ya",
-  "ayı piyasası gelince görüşürüz",
+  "ayı piyasası gelince konuşuruz",
   "tam boğa olmuşsun",
   "gece gece ne işin var borsada",
   "düşüşten alana selam",
   "portföyü görünce kendiminkinden utandım",
-  "panikleme tut kanka",
+  "panikleme, tut bence",
   "bunu nerden buldun ya",
-  "kaldıraç bağımlısı olmuşsun 😂",
-  "hocam ben de katılabilir miyim",
-  "abi bu coin batar dikkat et",
+  "kaldıraç biraz fazla olmamış mı",
+  "ben de katılayım mı bu işe",
+  "bu coin riskli, dikkat et",
   "erken almışsın, gözün aydın",
-  "bro bu portföy çok dağınık olmuş",
+  "dağılım biraz dağınık olmuş",
 ];
 
 const shuffle = (a) => {
@@ -69,6 +69,7 @@ async function main() {
   const all = (await q("SELECT id, handle, name, email FROM users")).rows;
   const demos = all.filter((u) => u.email.endsWith("@arena.demo"));
   const cagatay = all.find((u) => u.email === CAGATAY_EMAIL) || all.find((u) => u.handle === "hyperliquid");
+  const emir = all.find((u) => u.handle === "emir_kaan");
   if (demos.length === 0) throw new Error("no demo users — run seed-demo.mjs first");
   if (!cagatay) throw new Error("Çağatay (hyperliquid) not found");
 
@@ -90,6 +91,15 @@ async function main() {
       [d.id, cagatay.id],
     );
     likeCount++;
+    // Emir Kaan also gets liked by most demo users (~75%)
+    if (emir && Math.random() < 0.75) {
+      await q(
+        `INSERT INTO likes (user_id, portfolio_user_id, created_at) VALUES ($1,$2,${stagger})
+         ON CONFLICT DO NOTHING`,
+        [d.id, emir.id],
+      );
+      likeCount++;
+    }
     // plus a handful of random others (not self, not Çağatay again)
     const others = shuffle(all.filter((u) => u.id !== d.id && u.id !== cagatay.id)).slice(0, 3 + Math.floor(Math.random() * 4));
     for (const o of others) {
@@ -126,10 +136,14 @@ async function main() {
     for (const c of commenters) await addComment(c.id, target.id, pick(GENERIC));
   }
 
-  // a few demo comments on real users too (realism, light)
-  const realTargets = shuffle(all.filter((u) => !u.email.endsWith("@arena.demo") && u.id !== cagatay.id)).slice(0, 4);
+  // random subset of real users get comments too (Emir Kaan guaranteed)
+  const reals = all.filter((u) => !u.email.endsWith("@arena.demo") && u.id !== cagatay.id);
+  const realTargets = shuffle(reals).slice(0, 5);
+  if (emir && !realTargets.some((u) => u.id === emir.id)) realTargets.push(emir);
   for (const rt of realTargets) {
-    await addComment(pick(demos).id, rt.id, pick(GENERIC));
+    const n = 1 + Math.floor(Math.random() * 2); // 1..2
+    const commenters = shuffle(demos).slice(0, n);
+    for (const c of commenters) await addComment(c.id, rt.id, pick(GENERIC));
   }
 
   await pool.end();
