@@ -9,7 +9,7 @@ import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtAssetPrice } from "@/lib/format";
 import { fmtMoney, fmtMoneyFull } from "@/lib/currency";
 import { useT, useCurrency } from "@/components/Providers";
-import { FuturesPanel, type PositionView } from "@/components/FuturesPanel";
+import { FuturesPositionsList, FuturesForm, type PositionView } from "@/components/FuturesPanel";
 
 interface HoldingView {
   ticker: string;
@@ -137,6 +137,8 @@ export function PortfolioClient({
   const [selected, setSelected] = useState<string>("BTC");
   const [amount, setAmount] = useState<string>("");
   const [mode, setMode] = useState<"buy" | "sell">("buy");
+  /** spot trading vs leveraged futures, within the same trade panel */
+  const [tradeKind, setTradeKind] = useState<"spot" | "futures">("spot");
   /** When the user picked "Tümü", sell the exact held quantity (no ₺ dust). */
   const [sellExact, setSellExact] = useState(false);
   const [marketTab, setMarketTab] = useState<AssetType>("crypto");
@@ -639,12 +641,46 @@ export function PortfolioClient({
               })}
             </div>
           )}
+
+          {/* open leveraged positions, alongside spot holdings */}
+          <FuturesPositionsList
+            positions={pf?.positions ?? []}
+            pf={{ cashTry: pf?.cashTry ?? 0, usdTry: pf?.usdTry ?? 0 }}
+            onPortfolio={(p) => setPf(p as PortfolioView)}
+          />
         </div>
 
         {/* trade panel */}
         <div className="glass" style={{ padding: 24 }} ref={tradeRef}>
           <div className="eyebrow" style={{ marginBottom: 12 }}>{tx.pc_trade}</div>
 
+          {/* spot vs leveraged-futures kind */}
+          <div style={{ display: "flex", gap: 6, marginBottom: 16, padding: 4, borderRadius: 12, background: "var(--fill)", border: "1px solid var(--card-border)" }}>
+            {(["spot", "futures"] as const).map((k) => (
+              <button
+                key={k}
+                onClick={() => { setTradeKind(k); setMsg(null); }}
+                style={{
+                  flex: 1, padding: ".5rem", borderRadius: 9, cursor: "pointer", fontWeight: 600, fontSize: ".82rem",
+                  border: "none", transition: "all .15s",
+                  background: tradeKind === k ? "var(--accent)" : "transparent",
+                  color: tradeKind === k ? "#fff" : "var(--muted)",
+                }}
+              >
+                {k === "spot" ? tx.pc_spot : tx.fut_title}
+              </button>
+            ))}
+          </div>
+
+          {tradeKind === "futures" ? (
+            <FuturesForm
+              prices={prices}
+              pf={{ cashTry: pf?.cashTry ?? 0, usdTry: pf?.usdTry ?? 0 }}
+              positionCount={pf?.positions?.length ?? 0}
+              onPortfolio={(p) => setPf(p as PortfolioView)}
+            />
+          ) : (
+          <>
           {/* selected asset header */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, padding: "12px 14px", borderRadius: 12, background: "var(--fill)", border: "1px solid var(--card-border)" }}>
             <span style={{ width: 12, height: 12, borderRadius: 4, background: selectedAsset?.color ?? "var(--accent)", flexShrink: 0 }} />
@@ -804,16 +840,10 @@ export function PortfolioClient({
               ? `${tx.pc_trades_left_a}${pf?.tradesLeft}${tx.pc_trades_left_b}${resetIn ? ` · ${resetIn} ${tx.pc_renew}` : ""}`
               : `${tx.pc_trades_done}${resetIn ? ` · ${resetIn} ${tx.pc_renew}` : ""}`}
           </div>
+          </>
+          )}
         </div>
       </div>
-
-      {/* leveraged futures */}
-      <FuturesPanel
-        positions={pf?.positions ?? []}
-        prices={prices}
-        pf={{ cashTry: pf?.cashTry ?? 0, usdTry: pf?.usdTry ?? 0 }}
-        onPortfolio={(p) => setPf(p as PortfolioView)}
-      />
 
       {/* trade history */}
       <div className="glass" style={{ padding: 24 }}>
