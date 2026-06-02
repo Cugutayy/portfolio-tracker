@@ -57,23 +57,23 @@ for (const [t, s, n] of [...CRYPTO, ...BIST, ...US, ...INDEX]) {
 const SPOT_POOL = [...CRYPTO, ...BIST, ...US, ...INDEX].map((r) => r[0]);
 const LEV_POOL = [...CRYPTO, ...BIST, ...INDEX].map((r) => r[0]);
 
-// ── 15 personas ──
+// ── 15 personas (realistic Turkish names) ──
 const USERS = [
-  ["Boğa Burak", "boga_burak", "Her mum yeşil olacak."],
-  ["Ayı Ahmet", "ayi_ahmet", "Short açmadan uyuyamam."],
-  ["Kaldıraç Kemal", "kaldirac_kemal", "10x ya da hiç."],
-  ["Sabırlı Selin", "sabirli_selin", "Uzun vade kazandırır."],
-  ["Pump Pelin", "pump_pelin", "Mum diken alır."],
-  ["HODL Hasan", "hodl_hasan", "Satmıyorum, taşıyorum."],
-  ["Marj Mert", "marj_mert", "Teminat bende rahat durmaz."],
-  ["Panik Pınar", "panik_pinar", "Kırmızı görünce satarım."],
-  ["Diamond Deniz", "diamond_deniz", "Elmas eller."],
-  ["Balina Volkan", "balina_volkan", "Derinden vururum."],
-  ["Stop Süleyman", "stop_suleyman", "Stop'um hep tetiklenir."],
-  ["FOMO Furkan", "fomo_furkan", "Tepe noktadan girerim."],
-  ["Tilki Tarık", "tilki_tarik", "Wall Street'in kurdu."],
-  ["Likidite Lokman", "likidite_lokman", "Nakit kraldır, bazen."],
-  ["Gece Bekçisi Gökhan", "gece_gokhan", "ABD seansı benim."],
+  ["Mert Demir", "mert_demir", "Uzun vadeli yatırımcı."],
+  ["Elif Yılmaz", "elif_yilmaz", "Teknoloji hisseleri ağırlıklı."],
+  ["Can Kaya", "can_kaya", "Kripto ve endeks dengesi."],
+  ["Zeynep Şahin", "zeynep_sahin", "Temettü ve büyüme."],
+  ["Emre Çelik", "emre_celik", "BIST ve global karışık."],
+  ["Selin Arslan", "selin_arslan", "Riski seven trader."],
+  ["Burak Doğan", "burak_dogan", "Kısa vade, hızlı işlem."],
+  ["Ayşe Koç", "ayse_koc", "Sabırlı portföy."],
+  ["Kerem Aydın", "kerem_aydin", "Kaldıraçlı işlemler."],
+  ["Deniz Yıldız", "deniz_yildiz", "Endeks takipçisi."],
+  ["Ozan Aksoy", "ozan_aksoy", "Değer yatırımı."],
+  ["Ece Polat", "ece_polat", "Kripto ağırlıklı."],
+  ["Tolga Erdoğan", "tolga_erdogan", "Momentum avcısı."],
+  ["Cem Öztürk", "cem_ozturk", "Dengeli ve temkinli."],
+  ["Gizem Acar", "gizem_acar", "Teknoloji ve enerji."],
 ];
 
 // deterministic RNG so reruns are stable
