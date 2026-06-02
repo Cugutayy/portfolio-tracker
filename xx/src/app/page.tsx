@@ -4,6 +4,7 @@ import { TickerTape } from "@/components/TickerTape";
 import { CountUp } from "@/components/CountUp";
 import { ArenaPulse } from "@/components/ArenaPulse";
 import { AsciiBackdrop } from "@/components/AsciiBackdrop";
+import { MarketBrief } from "@/components/MarketBrief";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { InviteButton } from "@/components/InviteButton";
 import { getCurrentUser } from "@/lib/session";
@@ -228,6 +229,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* ═══════════ daily market brief ═══════════ */}
+      <MarketBrief locale={locale} />
 
       {/* ═══════════ ACT 2 — live edition ═══════════ */}
       <section

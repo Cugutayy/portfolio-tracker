@@ -236,6 +236,7 @@ export interface LeaderRow {
   totalTry: number;
   returnPct: number;
   /** period returns (%) from value snapshots; fall back to since-inception */
+  dailyPct: number;
   weeklyPct: number;
   monthlyPct: number;
   quarterlyPct: number;
@@ -355,6 +356,7 @@ export async function getLeaderboard(): Promise<LeaderRow[]> {
       image: u.image,
       totalTry,
       returnPct: startingTry > 0 ? ((totalTry - startingTry) / startingTry) * 100 : 0,
+      dailyPct: pctSince(totalTry, baselineAt(snaps, now - 1 * 86400_000), startingTry),
       weeklyPct: pctSince(totalTry, baselineAt(snaps, now - 7 * 86400_000), startingTry),
       monthlyPct: pctSince(totalTry, baselineAt(snaps, now - 30 * 86400_000), startingTry),
       quarterlyPct: pctSince(totalTry, baselineAt(snaps, now - 90 * 86400_000), startingTry),
