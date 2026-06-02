@@ -32,7 +32,6 @@ const GENERIC = [
   "bu kadar NVDA fazla değil mi",
   "BTC short açana saygı duyuyorum",
   "stop koy bi yere kanka",
-  "risk yönetimi biraz zayıf gibi",
   "valla tuttu, helal olsun",
   "ASELS sevdası bitmez bizde",
   "temettü hisseleri ağırlıkta, mantıklı",
@@ -48,7 +47,6 @@ const GENERIC = [
   "ben de katılayım mı bu işe",
   "bu coin riskli, dikkat et",
   "erken almışsın, gözün aydın",
-  "dağılım biraz dağınık olmuş",
 ];
 
 const shuffle = (a) => {
