@@ -90,35 +90,65 @@ export function FuturesPositionsList({
 
   return (
     <div style={{ marginTop: 16 }}>
-      <div className="eyebrow" style={{ marginBottom: 8 }}>{tx.fut_open_positions}</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="eyebrow" style={{ marginBottom: 10 }}>{tx.fut_open_positions}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         {positions.map((p) => {
           const up = p.pnlTry >= 0;
           const isLong = p.side === "long";
           const aType = (ASSET_BY_TICKER[p.ticker]?.type ?? p.type) as AssetType;
           const ratio = p.priceTry > 0 ? p.priceNative / p.priceTry : 0;
+          const sideColor = isLong ? "var(--green-t)" : "var(--red-t)";
+          // liquidation "health": 1 at entry, 0 at the liquidation price
+          const denom = isLong ? p.entryPriceTry - p.liquidationPriceTry : p.liquidationPriceTry - p.entryPriceTry;
+          const distNow = isLong ? p.priceTry - p.liquidationPriceTry : p.liquidationPriceTry - p.priceTry;
+          const health = denom > 0 ? Math.max(0, Math.min(1, distNow / denom)) : 0;
+          const liqDistPct = p.priceTry > 0 ? (Math.abs(p.priceTry - p.liquidationPriceTry) / p.priceTry) * 100 : 0;
+          const barColor = health > 0.6 ? "var(--green-t)" : health > 0.3 ? "#d98324" : "var(--red-t)";
           return (
-            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, background: "var(--fill)", border: "1px solid var(--card-border)" }}>
-              <span className="mono" style={{ fontSize: ".58rem", fontWeight: 700, padding: ".12rem .42rem", borderRadius: 6, background: isLong ? "rgba(26,122,74,0.14)" : "rgba(194,59,43,0.12)", color: isLong ? "var(--green-t)" : "var(--red-t)" }}>
-                {isLong ? tx.fut_long : tx.fut_short} {p.leverage}x
-              </span>
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: ".86rem" }}>{p.ticker}</div>
-                <div className="mono" style={{ fontSize: ".56rem", color: "var(--muted)" }}>
-                  {tx.fut_liq} {fmtAssetPrice(p.liquidationPriceTry * ratio, p.nativeCcy, aType)}
+            <div key={p.id} style={{ position: "relative", borderRadius: 12, background: "var(--fill)", border: "1px solid var(--card-border)", borderLeft: `3px solid ${sideColor}`, padding: "12px 13px", overflow: "hidden" }}>
+              {/* header: side + ticker, P&L */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <span className="mono" style={{ fontSize: ".56rem", fontWeight: 700, padding: ".12rem .42rem", borderRadius: 6, background: isLong ? "rgba(26,122,74,0.14)" : "rgba(194,59,43,0.12)", color: sideColor }}>
+                      {isLong ? tx.fut_long : tx.fut_short} {p.leverage}x
+                    </span>
+                    <span style={{ fontWeight: 700, fontSize: ".92rem" }}>{p.ticker}</span>
+                  </div>
+                  <div className="mono" style={{ fontSize: ".56rem", color: "var(--muted)", marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 150 }}>{p.name}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div className="mono" style={{ fontSize: ".98rem", fontWeight: 700, color: up ? "var(--green-t)" : "var(--red-t)" }}>
+                    {up ? "+" : ""}{money(p.pnlTry)}
+                  </div>
+                  <div className="mono" style={{ fontSize: ".58rem", color: up ? "var(--green-t)" : "var(--red-t)" }}>
+                    {up ? "▲" : "▼"} {up ? "+" : ""}{num(p.pnlPct)}%
+                  </div>
                 </div>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <div className="mono" style={{ fontSize: ".8rem", color: up ? "var(--green-t)" : "var(--red-t)" }}>
-                  {up ? "+" : ""}{money(p.pnlTry)}
+
+              {/* liquidation gauge */}
+              <div style={{ marginTop: 11 }}>
+                <div style={{ height: 5, borderRadius: 99, background: "var(--card-border)", overflow: "hidden" }}>
+                  <div style={{ width: `${Math.round(health * 100)}%`, height: "100%", background: barColor, transition: "width .4s ease" }} />
                 </div>
-                <div className="mono" style={{ fontSize: ".56rem", color: "var(--muted)" }}>
-                  {money(p.equityTry)} · {up ? "+" : ""}{num(p.pnlPct)}%
+                <div className="mono" style={{ display: "flex", justifyContent: "space-between", fontSize: ".54rem", color: "var(--muted)", marginTop: 4 }}>
+                  <span>{tx.fut_dist} %{num(liqDistPct, 1)}</span>
+                  <span>{tx.fut_liq} {fmtAssetPrice(p.liquidationPriceTry * ratio, p.nativeCcy, aType)}</span>
                 </div>
               </div>
+
+              {/* mini stats */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 12px", marginTop: 11 }}>
+                <Stat2 label={tx.fut_entry} value={fmtAssetPrice(p.entryNative, p.nativeCcy, aType)} />
+                <Stat2 label={tx.fut_mark} value={fmtAssetPrice(p.priceNative, p.nativeCcy, aType)} />
+                <Stat2 label={tx.fut_collateral} value={money(p.marginTry)} />
+                <Stat2 label={tx.fut_equity} value={money(p.equityTry)} />
+              </div>
+
               <button
                 className="btn"
-                style={{ padding: ".32rem .65rem", fontSize: ".7rem", opacity: closingId === p.id ? 0.55 : 1 }}
+                style={{ width: "100%", marginTop: 12, padding: ".45rem", fontSize: ".74rem", fontWeight: 600, opacity: closingId === p.id ? 0.55 : 1 }}
                 disabled={closingId === p.id}
                 onClick={() => closePosition(p.id)}
               >
@@ -133,6 +163,15 @@ export function FuturesPositionsList({
           {msg.text}
         </div>
       )}
+    </div>
+  );
+}
+
+function Stat2({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div className="eyebrow" style={{ fontSize: ".5rem" }}>{label}</div>
+      <div className="mono" style={{ fontSize: ".74rem", fontWeight: 600, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
     </div>
   );
 }

@@ -33,11 +33,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok) return null;
 
+        // NOTE: never put `image` here — avatars are base64 data URLs and would
+        // bloat the JWT session cookie past the edge header limit (HTTP 494).
+        // The avatar is always read fresh from the DB via getCurrentUser().
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          image: user.image,
         };
       },
     }),
@@ -88,6 +90,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async jwt({ token, user }) {
       if (user?.id) token.id = user.id;
+      // Keep the JWT cookie tiny: drop any avatar/picture that would otherwise
+      // be embedded (base64 data URLs would overflow the edge header → HTTP 494).
+      if ("picture" in token) delete (token as { picture?: unknown }).picture;
       return token;
     },
     async session({ session, token }) {
