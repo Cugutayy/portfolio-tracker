@@ -136,6 +136,13 @@ async function main() {
     for (const c of commenters) await addComment(c.id, target.id, pick(GENERIC));
   }
 
+  // Emir Kaan gets specific complimentary comments
+  if (emir) {
+    const lines = shuffle(["dengeli portföy, eline sağlık", "yakışıklı trader", "dengeli ve sağlam portföy, helal"]);
+    const au = shuffle(demos).slice(0, lines.length);
+    for (let i = 0; i < lines.length; i++) await addComment(au[i].id, emir.id, lines[i]);
+  }
+
   // random subset of real users get comments too (Emir Kaan guaranteed)
   const reals = all.filter((u) => !u.email.endsWith("@arena.demo") && u.id !== cagatay.id);
   const realTargets = shuffle(reals).slice(0, 5);
