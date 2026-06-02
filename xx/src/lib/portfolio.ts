@@ -217,6 +217,10 @@ export interface LeaderRow {
   image: string | null;
   totalTry: number;
   returnPct: number;
+  /** period returns (%) from value snapshots; fall back to since-inception */
+  weeklyPct: number;
+  monthlyPct: number;
+  quarterlyPct: number;
   cashTry: number;
   holdingsCount: number;
   slices: LeaderSlice[];
@@ -227,7 +231,7 @@ export interface LeaderRow {
 
 /** Value every registered user with live prices and rank them. */
 export async function getLeaderboard(): Promise<LeaderRow[]> {
-  const [allUsers, allHoldings, openPositions, snap, followCounts, likeCounts, tradeCounts] =
+  const [allUsers, allHoldings, openPositions, snap, followCounts, likeCounts, tradeCounts, snapHistory] =
     await Promise.all([
       db.select().from(users),
       db.select().from(holdings),
@@ -248,11 +252,44 @@ export async function getLeaderboard(): Promise<LeaderRow[]> {
         .select({ id: trades.userId, c: sql<number>`count(*)::int` })
         .from(trades)
         .groupBy(trades.userId),
+      // value history for period returns (only need ~last 100 days)
+      db
+        .select({
+          userId: portfolioSnapshots.userId,
+          v: portfolioSnapshots.valueTry,
+          t: portfolioSnapshots.takenAt,
+        })
+        .from(portfolioSnapshots)
+        .where(gte(portfolioSnapshots.takenAt, new Date(Date.now() - 100 * 86400_000)))
+        .orderBy(asc(portfolioSnapshots.takenAt)),
     ]);
 
   const fMap = new Map(followCounts.map((r) => [r.id, Number(r.c)]));
   const lMap = new Map(likeCounts.map((r) => [r.id, Number(r.c)]));
   const tMap = new Map(tradeCounts.map((r) => [r.id, Number(r.c)]));
+
+  // Group snapshots per user (ascending) for period-return baselines.
+  const snapsByUser = new Map<string, { v: number; t: number }[]>();
+  for (const s of snapHistory) {
+    const arr = snapsByUser.get(s.userId) ?? [];
+    arr.push({ v: Number(s.v), t: new Date(s.t).getTime() });
+    snapsByUser.set(s.userId, arr);
+  }
+  const now = Date.now();
+  /** Latest snapshot value at-or-before the cutoff; else earliest known. */
+  const baselineAt = (snaps: { v: number; t: number }[] | undefined, cutoff: number) => {
+    if (!snaps || snaps.length === 0) return null;
+    let base: number | null = null;
+    for (const s of snaps) {
+      if (s.t <= cutoff) base = s.v;
+      else break;
+    }
+    return base ?? snaps[0].v;
+  };
+  const pctSince = (total: number, base: number | null, fallbackBase: number) => {
+    const b = base ?? fallbackBase;
+    return b > 0 ? ((total - b) / b) * 100 : 0;
+  };
 
   // Live equity from open leveraged positions, per user (crossed → liquidated → 0).
   const posEquity = new Map<string, number>();
@@ -292,6 +329,7 @@ export async function getLeaderboard(): Promise<LeaderRow[]> {
     const slices: LeaderSlice[] = valued
       .map((v) => ({ ...v, weight: totalTry > 0 ? v.valueTry / totalTry : 0 }))
       .sort((a, b) => b.valueTry - a.valueTry);
+    const snaps = snapsByUser.get(u.id);
     return {
       id: u.id,
       name: u.name,
@@ -299,6 +337,9 @@ export async function getLeaderboard(): Promise<LeaderRow[]> {
       image: u.image,
       totalTry,
       returnPct: startingTry > 0 ? ((totalTry - startingTry) / startingTry) * 100 : 0,
+      weeklyPct: pctSince(totalTry, baselineAt(snaps, now - 7 * 86400_000), startingTry),
+      monthlyPct: pctSince(totalTry, baselineAt(snaps, now - 30 * 86400_000), startingTry),
+      quarterlyPct: pctSince(totalTry, baselineAt(snaps, now - 90 * 86400_000), startingTry),
       cashTry,
       holdingsCount: hs.length,
       slices,

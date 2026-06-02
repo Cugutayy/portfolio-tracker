@@ -13,16 +13,32 @@ import { fmtMoney } from "@/lib/currency";
 interface LeaderSlice { ticker: string; name: string; color: string; weight: number; valueTry: number }
 interface LeaderRow {
   id: string; name: string; handle: string; image: string | null;
-  totalTry: number; returnPct: number; cashTry: number; holdingsCount: number;
+  totalTry: number; returnPct: number;
+  weeklyPct: number; monthlyPct: number; quarterlyPct: number;
+  cashTry: number; holdingsCount: number;
   slices: LeaderSlice[]; followers: number; likes: number; tradesCount: number;
 }
 
-type Sort = "gainers" | "losers" | "liked";
-const SORTS: { key: Sort; labelKey: "sort_gainers" | "sort_losers" | "sort_liked" }[] = [
+type Sort = "gainers" | "losers" | "liked" | "weekly" | "monthly" | "quarterly";
+type SortLabel =
+  | "sort_gainers" | "sort_losers" | "sort_liked"
+  | "sort_weekly" | "sort_monthly" | "sort_quarterly";
+const SORTS: { key: Sort; labelKey: SortLabel }[] = [
   { key: "gainers", labelKey: "sort_gainers" },
+  { key: "weekly", labelKey: "sort_weekly" },
+  { key: "monthly", labelKey: "sort_monthly" },
+  { key: "quarterly", labelKey: "sort_quarterly" },
   { key: "losers", labelKey: "sort_losers" },
   { key: "liked", labelKey: "sort_liked" },
 ];
+
+/** The return % + short label relevant to the active sort (all-time otherwise). */
+function periodPct(r: LeaderRow, sort: Sort): number {
+  if (sort === "weekly") return r.weeklyPct;
+  if (sort === "monthly") return r.monthlyPct;
+  if (sort === "quarterly") return r.quarterlyPct;
+  return r.returnPct;
+}
 
 const num = (n: number, d = 2) =>
   new Intl.NumberFormat("tr-TR", { minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
@@ -72,7 +88,8 @@ export default function ArenaPage() {
     const list = [...rows];
     if (sort === "gainers") list.sort((a, b) => b.returnPct - a.returnPct);
     else if (sort === "losers") list.sort((a, b) => a.returnPct - b.returnPct);
-    else list.sort((a, b) => b.likes - a.likes);
+    else if (sort === "liked") list.sort((a, b) => b.likes - a.likes);
+    else list.sort((a, b) => periodPct(b, sort) - periodPct(a, sort));
     return list;
   }, [rows, sort]);
 
@@ -131,7 +148,7 @@ export default function ArenaPage() {
           <EmptyState />
         ) : (
           <>
-            {spotlight && <Spotlight r={spotlight} rank={valueRank.get(spotlight.id) ?? 1} usdTry={usdTry} />}
+            {spotlight && <Spotlight r={spotlight} rank={valueRank.get(spotlight.id) ?? 1} usdTry={usdTry} sort={sort} />}
 
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", margin: "40px 0 16px" }}>
               <h2 className="display" style={{ fontSize: "1.5rem", margin: 0 }}>{t.ar_all}</h2>
@@ -140,7 +157,7 @@ export default function ArenaPage() {
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 14 }}>
               {filtered.map((p) => (
-                <ArenaCard key={p.id} p={p} rank={valueRank.get(p.id) ?? 0} usdTry={usdTry} />
+                <ArenaCard key={p.id} p={p} rank={valueRank.get(p.id) ?? 0} usdTry={usdTry} sort={sort} />
               ))}
             </div>
           </>
@@ -152,12 +169,20 @@ export default function ArenaPage() {
   );
 }
 
-function Spotlight({ r, rank, usdTry }: { r: LeaderRow; rank: number; usdTry: number }) {
+const periodLabel = (t: ReturnType<typeof useT>, sort: Sort): string => {
+  if (sort === "weekly") return t.sort_weekly;
+  if (sort === "monthly") return t.sort_monthly;
+  if (sort === "quarterly") return t.sort_quarterly;
+  return t.sp_return;
+};
+
+function Spotlight({ r, rank, usdTry, sort }: { r: LeaderRow; rank: number; usdTry: number; sort: Sort }) {
   const t = useT();
   const cur = useCurrency();
   const money = (n: number) => fmtMoney(n, cur, usdTry);
   const altMoney = (n: number) => (cur === "usd" ? fmtTry(n) : fmtMoney(n, "usd", usdTry));
-  const up = r.returnPct >= 0;
+  const ret = periodPct(r, sort);
+  const up = ret >= 0;
   return (
     <div className="glass spotlight-grid" style={{ padding: "36px 40px" }}>
       <div className="spotlight-wheel" style={{ display: "flex", justifyContent: "center", padding: "0 50px" }}>
@@ -181,7 +206,7 @@ function Spotlight({ r, rank, usdTry }: { r: LeaderRow; rank: number; usdTry: nu
 
         <div style={{ display: "flex", gap: 28, flexWrap: "wrap", margin: "20px 0" }}>
           <div><div className="eyebrow">{t.sp_value}</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2 }}>{money(r.totalTry)}</div></div>
-          <div><div className="eyebrow">{t.sp_return}</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2, color: up ? "var(--green-t)" : "var(--red-t)" }}>{up ? "+" : ""}{num(r.returnPct)}%</div></div>
+          <div><div className="eyebrow">{periodLabel(t, sort)}</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2, color: up ? "var(--green-t)" : "var(--red-t)" }}>{up ? "+" : ""}{num(ret)}%</div></div>
           <div><div className="eyebrow">{t.sp_likes}</div><div className="mono" style={{ fontSize: "1.5rem", fontWeight: 600, marginTop: 2 }}>{r.likes}</div></div>
         </div>
 
@@ -193,11 +218,13 @@ function Spotlight({ r, rank, usdTry }: { r: LeaderRow; rank: number; usdTry: nu
   );
 }
 
-function ArenaCard({ p, rank, usdTry }: { p: LeaderRow; rank: number; usdTry: number }) {
+function ArenaCard({ p, rank, usdTry, sort }: { p: LeaderRow; rank: number; usdTry: number; sort: Sort }) {
   const t = useT();
   const cur = useCurrency();
   const money = (n: number) => fmtMoney(n, cur, usdTry);
-  const up = p.returnPct >= 0;
+  const isPeriod = sort === "weekly" || sort === "monthly" || sort === "quarterly";
+  const ret = periodPct(p, sort);
+  const up = ret >= 0;
   return (
     <Link href={`/u/${p.handle}`} className="glass glass-hover" style={{ textDecoration: "none", color: "inherit", padding: 16, display: "flex", flexDirection: "column", gap: 12, border: "1px solid var(--card-border)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -210,7 +237,10 @@ function ArenaCard({ p, rank, usdTry }: { p: LeaderRow; rank: number; usdTry: nu
       </div>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
         <div>
-          <div className="mono" style={{ fontSize: "1rem", fontWeight: 600, color: up ? "var(--green-t)" : "var(--red-t)" }}>{up ? "+" : ""}{num(p.returnPct)}%</div>
+          <div className="mono" style={{ fontSize: "1rem", fontWeight: 600, color: up ? "var(--green-t)" : "var(--red-t)" }}>
+            {up ? "+" : ""}{num(ret)}%
+            {isPeriod && <span style={{ fontSize: ".55rem", color: "var(--muted)", marginLeft: 4 }}>{periodLabel(t, sort)}</span>}
+          </div>
           <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)" }}>{money(p.totalTry)}</div>
         </div>
         <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", textAlign: "right" }}>
