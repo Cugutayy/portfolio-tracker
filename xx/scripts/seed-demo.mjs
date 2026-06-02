@@ -123,33 +123,47 @@ async function main() {
     const image = `https://picsum.photos/seed/${handle}/256`;
     const email = `${handle}@arena.demo`;
 
-    // ── build basket ──
+    // ── build basket: crowded (4..7 spot), class-diversified ──
     let cash = START;
-    const spotTickers = shuffle(SPOT_POOL.filter(priced), r).slice(0, 2 + Math.floor(r() * 3)); // 2..4
-    const levTickers = shuffle(LEV_POOL.filter(priced), r).slice(0, 1 + Math.floor(r() * 3)); // 1..3
+    const usAvail = US.map((x) => x[0]).filter(priced);
+    const spotCount = 4 + Math.floor(r() * 4); // 4..7
+    let spotTickers = shuffle(SPOT_POOL.filter(priced), r).slice(0, spotCount);
+    // guarantee at least one NASDAQ/US name in the basket
+    if (usAvail.length && !spotTickers.some((t) => TYPE.get(t) === "nasdaq100")) {
+      spotTickers[spotTickers.length - 1] = pick(usAvail, r);
+    }
+    spotTickers = [...new Set(spotTickers)];
 
     const holdings = [];
-    let spotBudget = 280_000 + Math.floor(r() * 380_000); // 280k..660k
+    const spotBudget = 320_000 + Math.floor(r() * 340_000); // 320k..660k
+    const per = spotBudget / spotTickers.length;
     for (const t of spotTickers) {
-      const amt = Math.min(cash * 0.6, spotBudget / spotTickers.length);
-      if (amt < 1000) continue;
+      const amt = Math.min(cash * 0.4, per * (0.6 + r() * 0.85)); // varied sizes
+      if (amt < 1500) continue;
       const priceTry = P[t].priceTry;
-      const qty = amt / priceTry;
-      holdings.push({ t, amt, qty, priceTry, native: P[t].nativePrice });
+      holdings.push({ t, amt, qty: amt / priceTry, priceTry, native: P[t].nativePrice });
       cash -= amt;
     }
 
+    // ── positions: some short BTC + mixed long/short extras ──
     const positions = [];
-    for (const t of levTickers) {
-      const margin = 30_000 + Math.floor(r() * 110_000); // 30k..140k
-      if (margin > cash * 0.7) continue;
-      const lev = 2 + Math.floor(r() * 9); // 2..10
-      const side = r() < 0.5 ? "long" : "short";
+    const usedPos = new Set();
+    const addPos = (t, side) => {
+      if (!priced(t) || usedPos.has(t)) return;
+      const margin = 28_000 + Math.floor(r() * 92_000); // 28k..120k
+      if (margin > cash * 0.6) return;
+      const lev = 3 + Math.floor(r() * 8); // 3..10
       const entry = P[t].priceTry;
       const qty = (margin * lev) / entry;
       const liq = side === "long" ? entry * (1 - 1 / lev) : entry * (1 + 1 / lev);
       positions.push({ t, margin, lev, side, entry, qty, liq });
+      usedPos.add(t);
       cash -= margin;
+    };
+    if (r() < 0.45) addPos("BTC", "short"); // ~45% short BTC
+    const extra = 1 + Math.floor(r() * 3); // 1..3 more
+    for (const t of shuffle(LEV_POOL.filter(priced), r).slice(0, extra)) {
+      addPos(t, r() < 0.5 ? "long" : "short");
     }
 
     // ── insert user ──
@@ -175,14 +189,14 @@ async function main() {
       );
     }
 
-    // ── seed history so daily/weekly/monthly returns vary ──
-    const v7 = START * (0.86 + r() * 0.22); // 7 days ago
-    const v1 = START * (0.92 + r() * 0.18); // 1 day ago
+    // Anchor the competition start: one snapshot at the 1M starting balance.
+    // No fake history — returns are measured from this start (and from each
+    // asset's purchase price), so period figures stay honest until the daily
+    // cron accrues real history.
     await q(
-      `INSERT INTO portfolio_snapshots (user_id, value_try, taken_at) VALUES
-        ($1,$2, now() - interval '7 days'),
-        ($1,$3, now() - interval '1 day')`,
-      [id, v7.toFixed(4), v1.toFixed(4)],
+      `INSERT INTO portfolio_snapshots (user_id, value_try, taken_at)
+       VALUES ($1,$2, now() - interval '2 hours')`,
+      [id, String(START)],
     );
 
     made++;
