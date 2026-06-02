@@ -74,3 +74,31 @@ export async function POST(req: Request) {
     },
   });
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// DELETE /api/social/comment { commentId }
+// Only the profile owner (the page the comment is on) may delete a comment.
+export async function DELETE(req: Request) {
+  const me = await getCurrentUser();
+  if (!me)
+    return NextResponse.json({ ok: false, error: "unauthenticated" }, { status: 401 });
+
+  const { commentId } = (await req.json().catch(() => ({}))) as { commentId?: string };
+  if (!commentId || !UUID_RE.test(commentId))
+    return NextResponse.json({ ok: false, error: "Geçersiz istek" }, { status: 400 });
+
+  const [c] = await db
+    .select({ id: comments.id, portfolioUserId: comments.portfolioUserId })
+    .from(comments)
+    .where(eq(comments.id, commentId))
+    .limit(1);
+  if (!c)
+    return NextResponse.json({ ok: false, error: "Yorum bulunamadı" }, { status: 404 });
+  // authorization: must be the owner of the profile this comment lives on
+  if (c.portfolioUserId !== me.id)
+    return NextResponse.json({ ok: false, error: "Bu yorumu silme yetkin yok" }, { status: 403 });
+
+  await db.delete(comments).where(eq(comments.id, commentId));
+  return NextResponse.json({ ok: true, id: commentId });
+}

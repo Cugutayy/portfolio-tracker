@@ -29,12 +29,12 @@ const CAGATAY = [
 
 // generic cross-arena comments (teasing + serious, no emoji)
 const GENERIC = [
-  "bu kadar NVDA fazla değil mi",
   "BTC short açana saygı duyuyorum",
   "stop koy bi yere kanka",
   "valla tuttu, helal olsun",
-  "ASELS sevdası bitmez bizde",
   "temettü hisseleri ağırlıkta, mantıklı",
+  "dengeli bir portföy olmuş",
+  "girişlerin iyi zamanlanmış",
   "bu ne cesaret ya",
   "ayı piyasası gelince konuşuruz",
   "tam boğa olmuşsun",
