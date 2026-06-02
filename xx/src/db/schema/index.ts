@@ -4,6 +4,7 @@ import {
   uuid,
   text,
   numeric,
+  integer,
   timestamp,
   index,
   uniqueIndex,
@@ -20,6 +21,12 @@ export const assetTypeEnum = pgEnum("asset_type", [
   "bist100",
 ]);
 export const tradeSideEnum = pgEnum("trade_side", ["buy", "sell"]);
+export const positionSideEnum = pgEnum("position_side", ["long", "short"]);
+export const positionStatusEnum = pgEnum("position_status", [
+  "open",
+  "closed",
+  "liquidated",
+]);
 
 // ════════════════════════════════════════════════════════════
 // USERS — each user IS a portfolio (1M TL starting balance)
@@ -129,6 +136,41 @@ export const trades = pgTable(
 );
 
 // ════════════════════════════════════════════════════════════
+// POSITIONS — leveraged long/short futures (crypto + index/VIOP only).
+// Spot holdings live in `holdings`; these are separate margin positions.
+// ════════════════════════════════════════════════════════════
+export const positions = pgTable(
+  "positions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    assetId: text("asset_id").notNull(),
+    assetType: assetTypeEnum("asset_type").notNull(),
+    symbol: text("symbol").notNull(),
+    name: text("name").notNull(),
+    side: positionSideEnum("side").notNull(),
+    leverage: integer("leverage").notNull(), // 1..10
+    // underlying units controlled (= notional / entry price)
+    quantity: numeric("quantity", { precision: 32, scale: 12 }).notNull(),
+    entryPriceTry: numeric("entry_price_try", { precision: 24, scale: 6 }).notNull(),
+    // collateral locked from cash (notional = margin * leverage)
+    marginTry: numeric("margin_try", { precision: 24, scale: 4 }).notNull(),
+    liquidationPriceTry: numeric("liquidation_price_try", { precision: 24, scale: 6 }).notNull(),
+    status: positionStatusEnum("status").notNull().default("open"),
+    // realized P/L in TRY, set when the position is closed or liquidated
+    realizedPnlTry: numeric("realized_pnl_try", { precision: 24, scale: 4 }),
+    openedAt: timestamp("opened_at", { withTimezone: true }).notNull().defaultNow(),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("positions_user_idx").on(t.userId),
+    index("positions_user_status_idx").on(t.userId, t.status),
+  ],
+);
+
+// ════════════════════════════════════════════════════════════
 // FOLLOWS
 // ════════════════════════════════════════════════════════════
 export const follows = pgTable(
@@ -234,4 +276,5 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Holding = typeof holdings.$inferSelect;
 export type Trade = typeof trades.$inferSelect;
+export type Position = typeof positions.$inferSelect;
 export type Comment = typeof comments.$inferSelect;
