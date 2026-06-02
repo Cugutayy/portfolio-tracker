@@ -60,6 +60,7 @@ export interface PortfolioView {
   totalReturnPct: number;
   holdings: HoldingView[];
   positions: PositionView[];
+  equity: number[];
   tradesToday: number;
   tradesLeft: number;
   pricedAt: number;
@@ -86,11 +87,12 @@ export async function countTradesToday(userId: string): Promise<number> {
 
 /** Build the full valued portfolio for a user. */
 export async function getPortfolio(userId: string): Promise<PortfolioView> {
-  const [[user], rows, snap, tradesToday] = await Promise.all([
+  const [[user], rows, snap, tradesToday, equity] = await Promise.all([
     db.select().from(users).where(eq(users.id, userId)).limit(1),
     db.select().from(holdings).where(eq(holdings.userId, userId)),
     getLivePrices(),
     countTradesToday(userId),
+    getEquityCurve(userId),
   ]);
 
   if (!user) throw new Error("user not found");
@@ -160,6 +162,8 @@ export async function getPortfolio(userId: string): Promise<PortfolioView> {
     totalReturnPct: startingTry > 0 ? ((totalTry - startingTry) / startingTry) * 100 : 0,
     holdings: holdingViews,
     positions: positionViews,
+    // historical snapshots + a live "now" point; ensure at least 2 points
+    equity: equity.length ? [...equity, totalTry] : [startingTry, totalTry],
     tradesToday,
     tradesLeft: Math.max(0, MAX_TRADES_PER_DAY - tradesToday),
     pricedAt: snap.fetchedAt,
@@ -189,6 +193,20 @@ export async function maybeSnapshot(
   if (!last || Date.now() - new Date(last.takenAt).getTime() > minGapMs) {
     await recordSnapshot(userId, valueTry);
   }
+}
+
+/**
+ * Snapshot every user's current total value (cash + spot + open positions).
+ * Driven by the daily cron so period leaderboards have real history even for
+ * users who didn't open the app. Returns how many rows were written.
+ */
+export async function snapshotAllUsers(): Promise<number> {
+  const rows = await getLeaderboard();
+  if (rows.length === 0) return 0;
+  await db.insert(portfolioSnapshots).values(
+    rows.map((r) => ({ userId: r.id, valueTry: String(r.totalTry) })),
+  );
+  return rows.length;
 }
 
 /** Equity curve (chronological TRY values) for sparklines/charts. */
