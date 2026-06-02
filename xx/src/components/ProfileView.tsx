@@ -71,6 +71,23 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
 
   useEffect(() => { loadComments(); }, [loadComments]);
 
+  // Profile owner can delete comments left on their own page.
+  async function deleteComment(id: string) {
+    if (id.startsWith("tmp-")) return;
+    setComments((c) => c.filter((x) => x.id !== id)); // optimistic
+    try {
+      const r = await fetch("/api/social/comment", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commentId: id }),
+      });
+      const j = await r.json();
+      if (!j.ok) loadComments(); // re-sync on failure
+    } catch {
+      loadComments();
+    }
+  }
+
   async function toggleFollow() {
     if (!loggedIn) { window.location.href = "/join"; return; }
     setP((s) => ({ ...s, isFollowing: !s.isFollowing, followers: s.followers + (s.isFollowing ? -1 : 1) }));
@@ -315,6 +332,16 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
                     <span className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", marginLeft: "auto" }}>
                       {new Date(c.createdAt).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
                     </span>
+                    {p.isSelf && !c.id.startsWith("tmp-") && (
+                      <button
+                        onClick={() => deleteComment(c.id)}
+                        title={t.pv_delete_comment}
+                        aria-label={t.pv_delete_comment}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontSize: ".95rem", lineHeight: 1, padding: "0 2px", marginLeft: 2 }}
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
                   <div style={{ fontSize: ".9rem", marginTop: 2, color: "var(--ink)" }}>{c.body}</div>
                 </div>
