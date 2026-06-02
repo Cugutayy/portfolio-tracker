@@ -295,7 +295,13 @@ export async function getLeaderboard(): Promise<LeaderRow[]> {
     snapsByUser.set(s.userId, arr);
   }
   const now = Date.now();
-  /** Latest snapshot value at-or-before the cutoff; else earliest known. */
+  /**
+   * Latest snapshot value at-or-before the cutoff. Returns null when the
+   * account is younger than the period (no snapshot that far back) so the
+   * caller falls back to the 1M starting balance — period returns are always
+   * measured from the competition/purchase start, never inflated by a later
+   * mid-life snapshot.
+   */
   const baselineAt = (snaps: { v: number; t: number }[] | undefined, cutoff: number) => {
     if (!snaps || snaps.length === 0) return null;
     let base: number | null = null;
@@ -303,7 +309,7 @@ export async function getLeaderboard(): Promise<LeaderRow[]> {
       if (s.t <= cutoff) base = s.v;
       else break;
     }
-    return base ?? snaps[0].v;
+    return base; // null → younger than period → since-start baseline
   };
   const pctSince = (total: number, base: number | null, fallbackBase: number) => {
     const b = base ?? fallbackBase;
