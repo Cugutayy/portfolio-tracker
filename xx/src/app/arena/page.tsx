@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { PortfolioWheel } from "@/components/PortfolioWheel";
 import { MiniWheel } from "@/components/MiniWheel";
 import { AppHeader } from "@/components/AppHeader";
+import { ActivityFeed } from "@/components/ActivityFeed";
 import { useLocale, useT, useCurrency } from "@/components/Providers";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtMoney } from "@/lib/currency";
@@ -162,6 +163,10 @@ export default function ArenaPage() {
             </div>
           </>
         )}
+
+        <div style={{ marginTop: 40 }}>
+          <ActivityFeed />
+        </div>
 
         <ExamplesNote />
       </div>
