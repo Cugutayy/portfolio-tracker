@@ -56,6 +56,17 @@ interface TradeRow {
   realizedPnlTry: number | null;
   tradedAt: string;
 }
+interface PosHistoryRow {
+  id: string;
+  ticker: string;
+  name: string;
+  side: "long" | "short";
+  leverage: number;
+  marginTry: number;
+  realizedPnlTry: number | null;
+  liquidated: boolean;
+  closedAt: string;
+}
 interface LivePrice {
   ticker: string;
   priceTry: number;
@@ -131,6 +142,7 @@ export function PortfolioClient({
   const cur = useCurrency();
   const [pf, setPf] = useState<PortfolioView | null>(null);
   const [trades, setTrades] = useState<TradeRow[]>([]);
+  const [posHistory, setPosHistory] = useState<PosHistoryRow[]>([]);
   const [prices, setPrices] = useState<Record<string, LivePrice>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -173,6 +185,7 @@ export function PortfolioClient({
     if (j.ok) {
       setPf(j.portfolio);
       setTrades(j.trades);
+      setPosHistory(j.positionHistory ?? []);
     }
   }, []);
 
@@ -238,6 +251,17 @@ export function PortfolioClient({
     }
     return s;
   }, [pf, tx]);
+
+  // Unified, chronological history: spot trades + closed leveraged positions.
+  type HistItem = { kind: "trade"; t: TradeRow } | { kind: "pos"; p: PosHistoryRow };
+  const historyItems = useMemo<HistItem[]>(() => {
+    const items: { at: number; node: HistItem }[] = [
+      ...trades.map((t) => ({ at: new Date(t.tradedAt).getTime(), node: { kind: "trade", t } as HistItem })),
+      ...posHistory.map((p) => ({ at: new Date(p.closedAt).getTime(), node: { kind: "pos", p } as HistItem })),
+    ];
+    items.sort((a, b) => b.at - a.at);
+    return items.map((i) => i.node);
+  }, [trades, posHistory]);
 
   const initials = useMemo(
     () => name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase(),
@@ -873,42 +897,64 @@ export function PortfolioClient({
       {/* trade history */}
       <div className="glass" style={{ padding: 24 }}>
         <div className="eyebrow" style={{ marginBottom: 14 }}>{tx.pc_history}</div>
-        {trades.length === 0 ? (
+        {historyItems.length === 0 ? (
           <div style={{ color: "var(--muted)" }}>{tx.pc_no_trades}</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column" }}>
-            {trades.map((t) => {
-              // show the unit price in the asset's native currency (USD for
-              // crypto/US, ₺ for BIST) — the total amount stays in ₺ since
-              // that's the real cash moved from the 1M TL balance.
-              const lp = prices[t.ticker];
-              const aType = ASSET_BY_TICKER[t.ticker]?.type as AssetType | undefined;
-              const ccy = lp?.nativeCcy ?? (aType === "bist100" ? "TRY" : "USD");
-              const ratio = lp && lp.priceTry > 0 ? lp.nativePrice / lp.priceTry : (pf?.usdTry ? 1 / pf.usdTry : 1);
-              const unitNative = t.priceTry * ratio;
-              return (
-              <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--rule)" }}>
-                <span className="mono" style={{ fontSize: ".68rem", padding: ".15rem .5rem", borderRadius: 6, background: t.side === "buy" ? "rgba(74,222,128,0.12)" : "rgba(255,122,133,0.12)", color: t.side === "buy" ? "var(--green-t)" : "var(--red-t)" }}>
-                  {t.side === "buy" ? tx.pc_badge_buy : tx.pc_badge_sell}
-                </span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontWeight: 600 }}>{t.ticker}</span>
-                  <span className="mono" style={{ fontSize: ".68rem", color: "var(--muted)", marginLeft: 8 }}>
-                    {num(t.quantity, 4)} @ {fmtAssetPrice(unitNative, ccy, aType)}
-                  </span>
+            {historyItems.map((it) => {
+              const date = it.kind === "trade" ? it.t.tradedAt : it.p.closedAt;
+              const dateStr = new Date(date).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+              const pnl = it.kind === "trade" ? it.t.realizedPnlTry : it.p.realizedPnlTry;
+              const pnlNode = pnl != null && (it.kind === "pos" || it.t.side === "sell") ? (
+                <div className="mono" style={{ fontSize: ".66rem", fontWeight: 600, color: pnl >= 0 ? "var(--green-t)" : "var(--red-t)" }}>
+                  {pnl >= 0 ? tx.pc_profit : tx.pc_loss} {pnl >= 0 ? "+" : ""}{money(pnl)}
                 </div>
-                <div style={{ textAlign: "right" }}>
-                  <div className="mono" style={{ fontSize: ".82rem" }}>{money(t.amountTry)}</div>
-                  {t.realizedPnlTry != null && (
-                    <div className="mono" style={{ fontSize: ".62rem", color: t.realizedPnlTry >= 0 ? "var(--green-t)" : "var(--red-t)" }}>
-                      {t.realizedPnlTry >= 0 ? "+" : ""}{money(t.realizedPnlTry)}
+              ) : null;
+
+              if (it.kind === "trade") {
+                const t = it.t;
+                const lp = prices[t.ticker];
+                const aType = ASSET_BY_TICKER[t.ticker]?.type as AssetType | undefined;
+                const ccy = lp?.nativeCcy ?? (aType === "bist100" ? "TRY" : "USD");
+                const ratio = lp && lp.priceTry > 0 ? lp.nativePrice / lp.priceTry : (pf?.usdTry ? 1 / pf.usdTry : 1);
+                const unitNative = t.priceTry * ratio;
+                return (
+                  <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--rule)" }}>
+                    <span className="mono" style={{ fontSize: ".64rem", width: 52, textAlign: "center", padding: ".18rem 0", borderRadius: 6, background: t.side === "buy" ? "rgba(74,222,128,0.12)" : "rgba(255,122,133,0.12)", color: t.side === "buy" ? "var(--green-t)" : "var(--red-t)", flexShrink: 0 }}>
+                      {t.side === "buy" ? tx.pc_badge_buy : tx.pc_badge_sell}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontWeight: 600 }}>{t.ticker}</span>
+                      <span className="mono" style={{ fontSize: ".66rem", color: "var(--muted)", marginLeft: 8 }}>
+                        {num(t.quantity, 4)} @ {fmtAssetPrice(unitNative, ccy, aType)}
+                      </span>
                     </div>
-                  )}
+                    <div style={{ textAlign: "right" }}>
+                      <div className="mono" style={{ fontSize: ".82rem" }}>{money(t.amountTry)}</div>
+                      {pnlNode}
+                    </div>
+                    <div className="mono" style={{ fontSize: ".58rem", color: "var(--muted)", width: 78, textAlign: "right", flexShrink: 0 }}>{dateStr}</div>
+                  </div>
+                );
+              }
+
+              // closed leveraged position
+              const p = it.p;
+              const isLong = p.side === "long";
+              return (
+                <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid var(--rule)" }}>
+                  <span className="mono" style={{ fontSize: ".58rem", fontWeight: 700, width: 52, textAlign: "center", padding: ".18rem 0", borderRadius: 6, background: isLong ? "rgba(26,122,74,0.14)" : "rgba(194,59,43,0.12)", color: isLong ? "var(--green-t)" : "var(--red-t)", flexShrink: 0 }}>
+                    {isLong ? tx.fut_long : tx.fut_short} {p.leverage}x
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ fontWeight: 600 }}>{p.ticker}</span>
+                    <span className="mono" style={{ fontSize: ".66rem", color: p.liquidated ? "var(--red-t)" : "var(--muted)", marginLeft: 8 }}>
+                      {p.liquidated ? tx.feed_liquidated : tx.feed_closed} · {tx.fut_collateral} {money(p.marginTry)}
+                    </span>
+                  </div>
+                  <div style={{ textAlign: "right" }}>{pnlNode}</div>
+                  <div className="mono" style={{ fontSize: ".58rem", color: "var(--muted)", width: 78, textAlign: "right", flexShrink: 0 }}>{dateStr}</div>
                 </div>
-                <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", width: 88, textAlign: "right" }}>
-                  {new Date(t.tradedAt).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}
-                </div>
-              </div>
               );
             })}
           </div>

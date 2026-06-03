@@ -5,6 +5,7 @@ import { CountUp } from "@/components/CountUp";
 import { ArenaPulse } from "@/components/ArenaPulse";
 import { AsciiBackdrop } from "@/components/AsciiBackdrop";
 import { MarketBrief } from "@/components/MarketBrief";
+import { competitionDay, competitionStartLabel } from "@/lib/config";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { InviteButton } from "@/components/InviteButton";
 import { getCurrentUser } from "@/lib/session";
@@ -93,6 +94,9 @@ export default async function Home() {
           >
             <span className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", letterSpacing: ".16em" }}>
               {t.edition_issue} · {dateline}
+            </span>
+            <span className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", letterSpacing: ".12em" }}>
+              {t.comp_start}: {competitionStartLabel(locale)} · {competitionDay()}. {t.comp_day}
             </span>
           </div>
         </div>

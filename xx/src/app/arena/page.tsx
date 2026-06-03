@@ -7,6 +7,7 @@ import { PortfolioWheel } from "@/components/PortfolioWheel";
 import { MiniWheel } from "@/components/MiniWheel";
 import { AppHeader } from "@/components/AppHeader";
 import { ActivityFeed } from "@/components/ActivityFeed";
+import { competitionDay, competitionStartLabel } from "@/lib/config";
 import { useLocale, useT, useCurrency } from "@/components/Providers";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtMoney } from "@/lib/currency";
@@ -123,6 +124,9 @@ export default function ArenaPage() {
         <p style={{ color: "var(--muted)", marginTop: 6 }}>
           {loading ? t.ar_loading : `${rows.length} ${t.ar_subtitle}`}
         </p>
+        <div className="mono" style={{ fontSize: ".68rem", color: "var(--muted)", marginTop: 6, letterSpacing: ".04em" }}>
+          {t.comp_start}: {competitionStartLabel(locale)} · {competitionDay()}. {t.comp_day}
+        </div>
 
         {/* controls — centered, aligned */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center", justifyContent: "space-between", margin: "24px 0 28px" }}>
