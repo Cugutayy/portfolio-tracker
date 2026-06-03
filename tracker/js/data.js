@@ -63,14 +63,18 @@ const WEEK_NOTES = {
 // ════════════════════════════════════════════════════════════════
 const FURKAN_CAPITAL = 100000;
 const FURKAN_START_DATE = '2026-02-17'; // Course start date
+// apiSrc:'calc' => fetchFurkanHistoricalPrices uses calc.{seed?,rate} for daily accrual
+//   seed omitted => use ins.alloc as principal (e.g. mevduat tracks total TL)
+//   seed numeric => unit-price series (e.g. tahvil nominal 100)
+// decimals controls rendered precision (default 2); used by export label + table cells
 const FURKAN_INSTRS = [
-  { id:'f_btc',   name:'Bitcoin (BTC)',           ticker:'BTC/TRY',      tag:'Kripto Para',    w:30, alloc:30000, buyPrice:null, unit:'TL/BTC',   color:'#f7931a', yahooSym:null,        apiSrc:'binance' },
-  { id:'f_eregl', name:'Eregli D.C. (EREGL.IS)',  ticker:'EREGL.IS',     tag:'Hisse',          w:12, alloc:12000, buyPrice:null, unit:'TL/hisse', color:'#2563eb', yahooSym:'EREGL.IS',  apiSrc:'yahoo' },
-  { id:'f_arclk', name:'Arcelik (ARCLK.IS)',      ticker:'ARCLK.IS',     tag:'Hisse',          w:12, alloc:12000, buyPrice:null, unit:'TL/hisse', color:'#dc2626', yahooSym:'ARCLK.IS',  apiSrc:'yahoo' },
-  { id:'f_altin', name:'Altin (gram)',             ticker:'XAU/TRY',      tag:'Kiymetli Maden', w:16, alloc:16000, buyPrice:null, unit:'TL/gram',  color:'#c9a84c', yahooSym:'GC=F',      apiSrc:'yahoo_gold' },
-  { id:'f_tzt',   name:'Ziraat Fon (TZT)',        ticker:'TZT (TEFAS)',  tag:'Yatirim Fonu',   w:10, alloc:10000, buyPrice:null, unit:'TL/pay',   color:'#16a34a', yahooSym:null,        apiSrc:'tefas' },
-  { id:'f_phe',   name:'Pusula Fon (PHE)',         ticker:'PHE (TEFAS)',  tag:'Yatirim Fonu',   w:10, alloc:10000, buyPrice:null, unit:'TL/pay',   color:'#7c3aed', yahooSym:null,        apiSrc:'tefas' },
-  { id:'f_dep',   name:'Mevduat (Odeabank)',       ticker:'%38.00/yil',   tag:'Mevduat',        w:10, alloc:10000, buyPrice:null, unit:'TL',       color:'#059669', yahooSym:null,        apiSrc:'calc' },
+  { id:'f_btc',   name:'Bitcoin (BTC)',           ticker:'BTC/TRY',      tag:'Kripto Para',    w:30, alloc:30000, buyPrice:null, unit:'TL/BTC',   color:'#f7931a', yahooSym:null,        apiSrc:'binance',    decimals:0 },
+  { id:'f_eregl', name:'Eregli D.C. (EREGL.IS)',  ticker:'EREGL.IS',     tag:'Hisse',          w:12, alloc:12000, buyPrice:null, unit:'TL/hisse', color:'#2563eb', yahooSym:'EREGL.IS',  apiSrc:'yahoo',      decimals:2 },
+  { id:'f_krdmd', name:'Kardemir D (KRDMD.IS)',   ticker:'KRDMD.IS',     tag:'Hisse',          w:12, alloc:12000, buyPrice:null, unit:'TL/hisse', color:'#dc2626', yahooSym:'KRDMD.IS',  apiSrc:'yahoo',      decimals:2 },
+  { id:'f_altin', name:'Altin (gram)',             ticker:'XAU/TRY',      tag:'Kiymetli Maden', w:16, alloc:16000, buyPrice:null, unit:'TL/gram',  color:'#c9a84c', yahooSym:'GC=F',      apiSrc:'yahoo_gold', decimals:2 },
+  { id:'f_bond',  name:'Devlet Tahvili (2Y)',     ticker:'DIBS 2Y',      tag:'Tahvil',         w:10, alloc:10000, buyPrice:100,  unit:'nominal',  color:'#1d4ed8', yahooSym:null,        apiSrc:'calc',       decimals:2, calc:{ seed:100, rate:0.30, label:'Hesaplanan (nominal 100, ~%30 yillik kupon, gunluk tahakkuk)' } },
+  { id:'f_phe',   name:'Pusula Fon (PHE)',         ticker:'PHE (TEFAS)',  tag:'Yatirim Fonu',   w:10, alloc:10000, buyPrice:null, unit:'TL/pay',   color:'#7c3aed', yahooSym:null,        apiSrc:'tefas',      decimals:4 },
+  { id:'f_dep',   name:'Mevduat (Odeabank)',       ticker:'%38.00/yil',   tag:'Mevduat',        w:10, alloc:10000, buyPrice:null, unit:'TL',       color:'#059669', yahooSym:null,        apiSrc:'calc',       decimals:0, calc:{ rate:0.38 * 0.85, label:'Hesaplanan (%38 yillik, %15 stopaj)' } },
 ];
 
 // Dynamic — populated by fetchFurkanHistoricalPrices() from real APIs
@@ -83,10 +87,6 @@ const FURKAN_HISTORY = { dates: [] };
 // so server-side proxies cannot reliably access it.
 // ════════════════════════════════════════════════════════════════
 const TEFAS_FALLBACK = {
-  TZT: {
-    dates:  ['2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-23','2026-02-24','2026-02-25','2026-02-26','2026-02-27','2026-03-02','2026-03-03','2026-03-04','2026-03-05','2026-03-06'],
-    prices: [0.151902, 0.152100, 0.152149, 0.152088, 0.152221, 0.152388, 0.152453, 0.152512, 0.152558, 0.153239, 0.153576, 0.153757, 0.153684, 0.153874],
-  },
   PHE: {
     dates:  ['2026-02-17','2026-02-18','2026-02-19','2026-02-20','2026-02-23','2026-02-24','2026-02-25','2026-02-26','2026-02-27','2026-03-02','2026-03-03','2026-03-04','2026-03-05','2026-03-06'],
     prices: [2.103045, 2.125900, 2.125090, 2.112341, 2.181667, 2.221405, 2.226113, 2.250810, 2.271802, 2.272566, 2.247888, 2.274028, 2.302507, 2.348740],
