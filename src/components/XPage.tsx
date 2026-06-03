@@ -5,6 +5,8 @@ import type { GalleryArt, GalleryVariant } from './Gallery3D'
 const Gallery3D = lazy(() => import('./Gallery3D').then((m) => ({ default: m.Gallery3D })))
 // Leaflet map flyover — only loaded when a 3D salon with real coordinates opens
 const MuseumIntro = lazy(() => import('./MuseumIntro'))
+// GLTF viewer for real photogrammetry scans (.glb) — only loaded when such an entry opens
+const ScanModel = lazy(() => import('./ScanModel'))
 
 // ═══════════════════════════════════════════════════
 // X — cinematic digital-atlas page
@@ -28,6 +30,10 @@ type MuseumItem = {
   kindLabel: string; loc: string; note: string; thumb: string; objPos?: string
   // real-world anchor for the cinematic "fly over the map to the museum" intro
   geo?: { lat: number; lng: number; zoom?: number }; address?: string; placePhoto?: string
+  // a real photogrammetry scan (.glb) — when set, the entry renders our GLTF viewer
+  model?: string
+  // optional short "what this might be" note shown in the dossier (non-expert, honest guess)
+  about?: string
 }
 type Item = ArtItem | MuseumItem
 type Cat = { n: string; slug: string; tr: string; it: string; d: string; img: string; objPos: string; items: Item[] }
@@ -313,6 +319,11 @@ const CATEGORIES: Cat[] = [
         note: 'Helenistik heykeller — duvarlarda', thumb: IMG.izm_sculpt1.thumb,
         geo: { lat: 38.4109, lng: 27.1369, zoom: 16 }, address: 'Bahribaba Parkı, Konak, İzmir',
         placePhoto: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Museo_archeologico_di_izmir%2C_veduta.JPG/1280px-Museo_archeologico_di_izmir%2C_veduta.JPG' },
+      { kind: '3d', id: 'gercek-tarama', title: '3D Gerçek Tarama', scanId: 'scan-01',
+        author: 'Scaniverse · kendi taramam', kindLabel: 'Gerçek Tarama', loc: 'Fotogrametri',
+        note: 'Telefonla taranmış gerçek model — döndürerek incele', thumb: '/x/scans/scan-01-poster.jpg', objPos: '50% 50%',
+        model: '/x/scans/scan-01.glb',
+        about: 'Üzerinde aşınmış antik Yunanca bir kitabe ve kabartma bir çelenk (στέφανος) taşıyan bir mermer stel. Çelenk motifi genellikle bir kişinin ya da topluluğun onurlandırıldığını / taçlandırıldığını simgeler; bu yüzden büyük olasılıkla Helenistik–Roma döneminden bir onur ya da mezar steli (Smyrna / İonia). Kitabenin birebir okuması uzman epigrafi çalışması gerektirir; buradaki yorum kesin değildir.' },
       art('izm-athena-basi', 'izm_athena', 'Athena Başı', 'Smyrna · İonia', 'Helenistik dönem', 'İzmir Arkeoloji Müzesi', 'Mermer baş', '50% 30%', 'Eser'),
       art('izm-herakles-basi', 'izm_herakles', 'Herakles’in Başı', 'Anadolu · İonia', 'Roma dönemi', 'İzmir Arkeoloji Müzesi', 'Mermer baş', '50% 30%', 'Eser'),
       art('izm-helenistik-heykel-1', 'izm_sculpt1', 'Helenistik Heykel', 'İonia · Anadolu', 'Helenistik dönem', 'İzmir Arkeoloji Müzesi', 'Mermer heykel', '50% 35%', 'Eser'),
@@ -863,6 +874,10 @@ iframe.x-mv{display:block;background:#0c0a0b}
   box-shadow:0 22px 60px rgba(0,0,0,.5);background:#0c0a0b}
 .x-plmapbox iframe{display:block;width:100%;height:clamp(240px,42vh,400px);border:0;filter:saturate(.9) contrast(1.02)}
 .x-plcoord{margin-top:10px;font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.16em;color:rgba(243,234,214,.5)}
+.x-plabout{margin:32px 0 8px;border-top:1px solid rgba(216,178,90,.18);padding-top:24px}
+.x-plabout p{margin:11px 0 0;font-size:1rem;font-weight:300;line-height:1.75;color:rgba(243,234,214,.72);max-width:620px}
+.x-light .x-plabout{border-top-color:rgba(156,117,34,.25)}
+.x-light .x-plabout p{color:rgba(43,33,26,.72)}
 .x-plsample{margin:44px 0 8px;border-top:1px solid rgba(216,178,90,.18);padding-top:30px}
 .x-plsambox{position:relative;border-radius:14px;overflow:hidden;border:1px solid rgba(216,178,90,.28);
   box-shadow:0 22px 60px rgba(0,0,0,.5);background:#0c0a0b}
@@ -1084,6 +1099,10 @@ export function XPage() {
                   onArrive={() => setEntered3d(true)}
                 />
               </Suspense>
+            ) : scan.model ? (
+              <Suspense fallback={<div className="g3d-load"><span className="g3d-spin" />Tarama yükleniyor…</div>}>
+                <ScanModel src={scan.model} />
+              </Suspense>
             ) : isSketchfab(scan.scanId) ? (
               <iframe
                 className="x-bg x-mv"
@@ -1112,7 +1131,9 @@ export function XPage() {
           {!showIntro && <div className="x-grain" />}
           {is3d && !showIntro && (
             <div className="x-3dtag"><span className="x-dot" />
-              {scan && isSketchfab(scan.scanId)
+              {scan?.model
+                ? '3D tarama · gerçek model · döndürerek incele'
+                : scan && isSketchfab(scan.scanId)
                 ? '3D tarama · gez · sürükleyerek keşfet'
                 : '3D salon · kendi koleksiyonumuz'}
             </div>
@@ -1235,10 +1256,17 @@ export function XPage() {
                 {scan.address && <div className="x-adcell"><div className="x-adk">Adres</div><div className="x-adv">{scan.address}</div></div>}
               </div>
 
-              {!isSketchfab(scan.scanId) && (
+              {scan.about && (
+                <div className="x-plabout reveal">
+                  <span className="x-adk">Ne olabilir? · uzman okuması değil</span>
+                  <p>{scan.about}</p>
+                </div>
+              )}
+
+              {!isSketchfab(scan.scanId) && !scan.model && (
                 <div className="x-plsample reveal">
                   <div className="x-plsamhd">
-                    <span className="x-adk">Gerçek bir 3B tarama örneği</span>
+                    <span className="x-adk">Gerçek bir 3D tarama örneği</span>
                     <a className="x-plmaplink" href={`https://sketchfab.com/3d-models/${SAMPLE_SCAN_ID}`}
                        target="_blank" rel="noopener noreferrer">{SAMPLE_SCAN_AUTHOR} · Sketchfab ↗</a>
                   </div>
