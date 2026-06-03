@@ -268,7 +268,11 @@ export const portfolioSnapshots = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (t) => [index("psnap_user_taken_idx").on(t.userId, t.takenAt)],
+  (t) => [
+    index("psnap_user_taken_idx").on(t.userId, t.takenAt),
+    // getLeaderboard scans recent snapshots across all users (period baselines)
+    index("psnap_taken_idx").on(t.takenAt),
+  ],
 );
 
 // ─── Inferred types ───

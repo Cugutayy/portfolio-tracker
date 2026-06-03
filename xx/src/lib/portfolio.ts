@@ -254,8 +254,32 @@ export interface LeaderRow {
   tradesCount: number;
 }
 
-/** Value every registered user with live prices and rank them. */
+// ── Leaderboard cache ──
+// getLeaderboard is the heaviest read (values every user live). It's called
+// from the arena API, the homepage (brief + rail), profile rank, OG images and
+// the cron. A short in-memory cache + inflight dedup collapses all of these
+// into a single computation per window. Totals already move on the 30s price
+// cache and the arena refreshes every 60s, so ~15s staleness is invisible.
+const LEADERBOARD_TTL = Number(process.env.LEADERBOARD_TTL_MS ?? 15_000);
+let lbCache: { rows: LeaderRow[]; at: number } | null = null;
+let lbInflight: Promise<LeaderRow[]> | null = null;
+
+/** Value every registered user with live prices and rank them (cached). */
 export async function getLeaderboard(): Promise<LeaderRow[]> {
+  if (lbCache && Date.now() - lbCache.at < LEADERBOARD_TTL) return lbCache.rows;
+  if (lbInflight) return lbInflight;
+  lbInflight = computeLeaderboard()
+    .then((rows) => {
+      lbCache = { rows, at: Date.now() };
+      return rows;
+    })
+    .finally(() => {
+      lbInflight = null;
+    });
+  return lbInflight;
+}
+
+async function computeLeaderboard(): Promise<LeaderRow[]> {
   const [allUsers, allHoldings, openPositions, snap, followCounts, likeCounts, tradeCounts, snapHistory] =
     await Promise.all([
       db.select().from(users),
