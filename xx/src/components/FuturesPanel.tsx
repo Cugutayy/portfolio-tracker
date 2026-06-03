@@ -30,6 +30,8 @@ export interface PositionView {
   pnlTry: number;
   pnlPct: number;
   equityTry: number;
+  tpPct: number | null;
+  slPct: number | null;
 }
 interface LivePrice {
   ticker: string;
@@ -149,6 +151,13 @@ export function FuturesPositionsList({
                 <Stat2 label={tx.fut_equity} value={money(p.equityTry)} />
               </div>
 
+              {(p.tpPct != null || p.slPct != null) && (
+                <div className="mono" style={{ display: "flex", gap: 12, fontSize: ".58rem", marginTop: 8 }}>
+                  {p.tpPct != null && <span style={{ color: "var(--green-t)" }}>{tx.fut_tp_short} +%{p.tpPct}</span>}
+                  {p.slPct != null && <span style={{ color: "var(--red-t)" }}>{tx.fut_sl_short} -%{p.slPct}</span>}
+                </div>
+              )}
+
               {!readOnly && (
                 <button
                   className="btn"
@@ -204,6 +213,8 @@ export function FuturesForm({
   const [side, setSide] = useState<"long" | "short">("long");
   const [lev, setLev] = useState<number>(5);
   const [margin, setMargin] = useState<string>("");
+  const [tp, setTp] = useState<string>("");
+  const [sl, setSl] = useState<string>("");
   const [query, setQuery] = useState("");
   const [openGroup, setOpenGroup] = useState<LeverageGroup | null>("crypto");
   const [busy, setBusy] = useState(false);
@@ -228,6 +239,8 @@ export function FuturesForm({
   const entryTry = lp?.priceTry ?? 0;
   const ratio = lp && lp.priceTry > 0 ? lp.nativePrice / lp.priceTry : 0;
   const marginNum = Number((margin || "").replace(",", ".")) || 0;
+  const tpNum = Math.round(Number((tp || "").replace(",", ".")) || 0);
+  const slNum = Math.round(Number((sl || "").replace(",", ".")) || 0);
   const notionalTry = marginNum * lev;
   const liqTry = side === "long" ? entryTry * (1 - 1 / lev) : entryTry * (1 + 1 / lev);
   const cashTry = pf.cashTry ?? 0;
@@ -246,7 +259,14 @@ export function FuturesForm({
       const r = await fetch("/api/positions/open", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker: selected, side, leverage: lev, marginTry: marginNum }),
+        body: JSON.stringify({
+          ticker: selected,
+          side,
+          leverage: lev,
+          marginTry: marginNum,
+          tpPct: tpNum > 0 ? tpNum : null,
+          slPct: slNum > 0 ? Math.min(slNum, 99) : null,
+        }),
       });
       const j = await r.json();
       if (!j.ok) {
@@ -254,6 +274,8 @@ export function FuturesForm({
       } else {
         onPortfolio(j.portfolio);
         setMargin("");
+        setTp("");
+        setSl("");
         setMsg({
           kind: "ok",
           text: `${tx.fut_opened}: ${selected} ${side === "long" ? tx.fut_long : tx.fut_short} ${lev}x · ${money(marginNum)}`,
@@ -381,6 +403,32 @@ export function FuturesForm({
             %{f * 100}
           </button>
         ))}
+      </div>
+
+      {/* optional take-profit / stop-loss (P&L % on margin) */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+        <div style={{ flex: 1 }}>
+          <label className="eyebrow" style={{ display: "block", marginBottom: 5, color: "var(--green-t)" }}>{tx.fut_tp}</label>
+          <input
+            value={tp}
+            onChange={(e) => setTp(e.target.value)}
+            inputMode="numeric"
+            placeholder={tx.fut_tp_ph}
+            className="mono"
+            style={{ width: "100%", padding: "9px 11px", borderRadius: 9, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: ".9rem" }}
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label className="eyebrow" style={{ display: "block", marginBottom: 5, color: "var(--red-t)" }}>{tx.fut_sl}</label>
+          <input
+            value={sl}
+            onChange={(e) => setSl(e.target.value)}
+            inputMode="numeric"
+            placeholder={tx.fut_sl_ph}
+            className="mono"
+            style={{ width: "100%", padding: "9px 11px", borderRadius: 9, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: ".9rem" }}
+          />
+        </div>
       </div>
 
       {/* preview */}

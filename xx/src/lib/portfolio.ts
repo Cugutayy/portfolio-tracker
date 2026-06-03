@@ -348,6 +348,7 @@ async function computeLeaderboard(): Promise<LeaderRow[]> {
 
   // Live equity from open leveraged positions, per user (crossed → liquidated → 0).
   const posEquity = new Map<string, number>();
+  const posSlicesByUser = new Map<string, LeaderSlice[]>();
   for (const p of openPositions) {
     const price = snap.prices[p.assetId]?.priceTry ?? Number(p.entryPriceTry);
     const entry = Number(p.entryPriceTry);
@@ -358,7 +359,18 @@ async function computeLeaderboard(): Promise<LeaderRow[]> {
     let pnl = (price - entry) * qty * (p.side === "long" ? 1 : -1);
     if (crossed || pnl <= -margin) continue; // liquidated, no equity
     if (pnl < -margin) pnl = -margin;
-    posEquity.set(p.userId, (posEquity.get(p.userId) ?? 0) + margin + pnl);
+    const equity = margin + pnl;
+    posEquity.set(p.userId, (posEquity.get(p.userId) ?? 0) + equity);
+    // a pie slice for this position (equity), labelled e.g. "BTC S6x"
+    const arr = posSlicesByUser.get(p.userId) ?? [];
+    arr.push({
+      ticker: `${p.assetId} ${p.side === "long" ? "L" : "S"}${p.leverage}x`,
+      name: p.name,
+      color: ASSET_BY_TICKER[p.assetId]?.color ?? "#888",
+      weight: 0,
+      valueTry: equity,
+    });
+    posSlicesByUser.set(p.userId, arr);
   }
 
   const byUser = new Map<string, typeof allHoldings>();
@@ -381,7 +393,8 @@ async function computeLeaderboard(): Promise<LeaderRow[]> {
     });
     const invested = valued.reduce((s, v) => s + v.valueTry, 0);
     const totalTry = cashTry + invested + (posEquity.get(u.id) ?? 0);
-    const slices: LeaderSlice[] = valued
+    const posSl = (posSlicesByUser.get(u.id) ?? []).map((s) => ({ ticker: s.ticker, name: s.name, color: s.color, valueTry: s.valueTry }));
+    const slices: LeaderSlice[] = [...valued, ...posSl]
       .map((v) => ({ ...v, weight: totalTry > 0 ? v.valueTry / totalTry : 0 }))
       .sort((a, b) => b.valueTry - a.valueTry);
     const snaps = snapsByUser.get(u.id);
