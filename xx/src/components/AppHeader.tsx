@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getDict, type Locale } from "@/lib/i18n";
 import { LanguageToggle } from "./LanguageToggle";
 import { CurrencyToggle } from "./CurrencyToggle";
+import { NotificationBell } from "./NotificationBell";
 
 /** Shared inner-page header: consistent nav (Home · Arena · Portfolio ·
  *  Settings · Log out) + language toggle, so every page has the same links. */
@@ -40,6 +41,7 @@ export function AppHeader({
         <Link href="/arena" className="btn" style={{ textDecoration: "none" }}>{t.nav_arena}</Link>
         {loggedIn ? (
           <>
+            <NotificationBell />
             <Link href="/portfolio" className="btn" style={{ textDecoration: "none" }}>{t.nav_portfolio}</Link>
             {handle && (
               <Link href={`/u/${handle}`} className="btn" style={{ textDecoration: "none" }}>{t.nav_profile}</Link>
