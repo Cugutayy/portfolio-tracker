@@ -425,8 +425,9 @@ async function exportFurkanCSV(){
     h+='<td style="'+rn+'">%'+ins.w+'</td>';
     h+='<td style="'+rn+'">'+fmt(ins.alloc,0)+'</td>';
     h+='<td style="'+rn+'">'+(qty?qty.toFixed(ins.id==='f_btc'?6:2):'--')+'</td>';
-    h+='<td style="'+rn+'">'+(ins.buyPrice?fmt(ins.buyPrice,ins.id==='f_btc'?0:ins.id==='f_tzt'||ins.id==='f_phe'?4:2):'--')+'</td>';
-    h+='<td style="'+rn+'">'+fmt(ins.id==='f_dep'?cv:price,ins.id==='f_btc'?0:ins.id==='f_tzt'||ins.id==='f_phe'?4:2)+'</td>';
+    const dec = ins.decimals ?? 2;
+    h+='<td style="'+rn+'">'+(ins.buyPrice?fmt(ins.buyPrice,dec):'--')+'</td>';
+    h+='<td style="'+rn+'">'+fmt(ins.buyPrice?price:cv,dec)+'</td>';
     h+='<td style="'+rn+'font-weight:600">'+fmt(cv,2)+'</td>';
     h+='<td style="'+plS+'">'+(pl>=0?'+':'')+fmt(pl,2)+'</td>';
     h+='<td style="'+plS+'">'+(pp>=0?'+':'')+pp.toFixed(2)+'%</td>';
@@ -448,8 +449,8 @@ async function exportFurkanCSV(){
   FI.forEach((ins,idx)=>{
     const bg=idx%2===0?'#fff':'#fafaf8';
     const r = result?.results?.[ins.id];
-    const src = r ? r.src : (ins.id==='f_dep' ? 'Hesaplanan (%38/yil, %15 stopaj)' : 'Veri alinamadi');
-    const verified = r ? '3x dogrulanmis' : (ins.id==='f_dep' ? 'Faiz hesabi' : 'EKSIK');
+    const src = r ? r.src : (ins.apiSrc==='calc' ? ins.calc.label : 'Veri alinamadi');
+    const verified = r ? '3x dogrulanmis' : (ins.apiSrc==='calc' ? 'Faiz hesabi' : 'EKSIK');
     h+='<tr><td colspan="3" style="'+srcStyle+'background:'+bg+'">'+ins.name+'</td>';
     h+='<td colspan="4" style="'+srcStyle+'background:'+bg+'">'+src+'</td>';
     h+='<td colspan="3" style="'+srcStyle+'background:'+bg+'">'+verified+'</td></tr>';
@@ -581,13 +582,7 @@ async function exportFurkanCSV(){
       FI.forEach(ins=>{
         const p=FH[ins.id]?.[di];
         const val=(p!==undefined&&p!==null)?p:'-';
-        let fmtVal;
-        if(typeof val==='number'){
-          if(ins.id==='f_btc') fmtVal=fmt(val,0);
-          else if(ins.id==='f_dep') fmtVal=fmt(val,0);
-          else if(ins.id==='f_tzt'||ins.id==='f_phe') fmtVal=fmt(val,4);
-          else fmtVal=fmt(val,2);
-        } else fmtVal=val;
+        const fmtVal = typeof val==='number' ? fmt(val, ins.decimals ?? 2) : val;
         h+='<td style="'+numStyle+'background:'+bg+'">'+fmtVal+'</td>';
       });
       h+='</tr>';

@@ -531,24 +531,25 @@ async function fetchFurkanHistoricalPrices(progressCb) {
     throw new Error(`No ${fonKod} data from TEFAS or fallback`);
   };
 
-  // Fire all 6 requests simultaneously
+  // Fire all 5 API requests simultaneously (bond + dep hesaplanir, API yok)
   const settled = await Promise.allSettled([
     fetchBTC(),
     fetchYahooStock('EREGL.IS', 'f_eregl'),
-    fetchYahooStock('ARCLK.IS', 'f_arclk'),
+    fetchYahooStock('KRDMD.IS', 'f_krdmd'),
     fetchGold(),
-    fetchFund('TZT', 'f_tzt'),
     fetchFund('PHE', 'f_phe'),
   ]);
 
   // Process results
-  const labels = ['BTC/TRY','EREGL.IS','ARCLK.IS','Gram Altin','TZT','PHE'];
+  const labels = ['BTC/TRY','EREGL.IS','KRDMD.IS','Gram Altin','PHE'];
   settled.forEach((s, i) => {
     if(s.status === 'fulfilled'){
       const r = s.value;
       results[r.id] = r;
+      const ins = FURKAN_INSTRS.find(x => x.id === r.id);
       const lastP = r.prices[r.prices.length-1];
-      const fmtP = r.id === 'f_btc' ? lastP?.toLocaleString() : r.id.includes('f_t') || r.id.includes('f_p') ? lastP?.toFixed(4) : lastP?.toFixed?.(2) || lastP;
+      const dec = ins?.decimals ?? 2;
+      const fmtP = dec === 0 ? lastP?.toLocaleString() : lastP?.toFixed?.(dec) || lastP;
       report(`  ✓ ${labels[i]}: ${r.dates.length} gun — son: ${fmtP} TL — ${r.src}`);
     } else {
       report(`  ✗ ${labels[i]} HATA: ${s.reason?.message || s.reason}`);
@@ -587,15 +588,17 @@ async function fetchFurkanHistoricalPrices(progressCb) {
   FURKAN_INSTRS.forEach(ins => {
     const r = results[ins.id];
 
-    if(ins.id === 'f_dep'){
-      // Deposit: calculate from 38% gross annual rate, 15% withholding tax
-      const arr = [];
-      sortedDates.forEach((d, i) => {
-        if(i === 0){ arr.push(ins.alloc); return; }
-        const dayCount = Math.round((new Date(d) - new Date(sortedDates[i-1])) / 86400000);
-        const dailyNetRate = (0.38 / 365) * 0.85; // brut * (1 - stopaj)
-        arr.push(+(arr[i-1] + ins.alloc * dailyNetRate * dayCount).toFixed(2));
-      });
+    if(ins.apiSrc === 'calc'){
+      // Calc instruments (deposit, bond): seed value + daily accrual.
+      // calc.seed omitted => principal = ins.alloc (deposit tracks total TL)
+      // calc.seed numeric => unit-price series (bond nominal 100)
+      const seed = ins.calc.seed ?? ins.alloc;
+      const dailyRate = ins.calc.rate / 365;
+      const arr = [seed];
+      for(let i = 1; i < sortedDates.length; i++){
+        const dayCount = Math.round((new Date(sortedDates[i]) - new Date(sortedDates[i-1])) / 86400000);
+        arr.push(+(arr[i-1] + seed * dailyRate * dayCount).toFixed(2));
+      }
       history[ins.id] = arr;
       return;
     }
@@ -655,7 +658,7 @@ async function fetchFurkanHistoricalPrices(progressCb) {
   const crossChecks = await Promise.allSettled([
     safeGet('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=try', 8000),
     safeGet(yahooProxy('EREGL.IS'), 8000),
-    safeGet(yahooProxy('ARCLK.IS'), 8000),
+    safeGet(yahooProxy('KRDMD.IS'), 8000),
   ]);
 
   // BTC cross-check
@@ -670,8 +673,8 @@ async function fetchFurkanHistoricalPrices(progressCb) {
   } else { report(`  ⚠ CoinGecko dogrulama hatasi: ${crossChecks[0].reason?.message}`); }
 
   // Stock cross-checks
-  ['EREGL.IS','ARCLK.IS'].forEach((sym, idx) => {
-    const insId = sym === 'EREGL.IS' ? 'f_eregl' : 'f_arclk';
+  ['EREGL.IS','KRDMD.IS'].forEach((sym, idx) => {
+    const insId = sym === 'EREGL.IS' ? 'f_eregl' : 'f_krdmd';
     const check = crossChecks[idx + 1];
     if(check.status === 'fulfilled'){
       const spotPrice = check.value?.chart?.result?.[0]?.meta?.regularMarketPrice;
@@ -688,7 +691,7 @@ async function fetchFurkanHistoricalPrices(progressCb) {
   report('Kontrol 3/3: Mantiklilik kontrolu...');
   FURKAN_INSTRS.forEach(ins => {
     const arr = FURKAN_HISTORY[ins.id];
-    if(!arr || ins.id === 'f_dep') return;
+    if(!arr || ins.apiSrc === 'calc') return;
     const maxSwing = ins.id === 'f_btc' ? 0.30 : 0.20; // 30% crypto, 20% stocks/funds
     let extremes = 0;
     for(let i = 1; i < arr.length; i++){
@@ -703,7 +706,7 @@ async function fetchFurkanHistoricalPrices(progressCb) {
   });
 
   const successIds = Object.keys(results);
-  const totalInstr = FURKAN_INSTRS.filter(i => i.id !== 'f_dep').length;
+  const totalInstr = FURKAN_INSTRS.filter(i => i.apiSrc !== 'calc').length;
   report(`\n=== SONUC: ${successIds.length}/${totalInstr} enstruman API'den cekildi ===`);
 
   // Log data sources for transparency
@@ -711,7 +714,7 @@ async function fetchFurkanHistoricalPrices(progressCb) {
   FURKAN_INSTRS.forEach(ins => {
     const r = results[ins.id];
     if(r) report(`  ${ins.name}: ${r.src}`);
-    else if(ins.id === 'f_dep') report(`  ${ins.name}: Hesaplanan (%38 yillik, %15 stopaj)`);
+    else if(ins.apiSrc === 'calc') report(`  ${ins.name}: ${ins.calc.label}`);
     else report(`  ${ins.name}: VERI ALINAMADI`);
   });
 
