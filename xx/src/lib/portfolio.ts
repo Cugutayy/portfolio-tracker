@@ -17,7 +17,7 @@ import {
   portfolioSnapshots,
 } from "@/db/schema";
 import { and, eq, gte, sql, desc, asc } from "drizzle-orm";
-import { getLivePrices } from "@/lib/prices";
+import { getLivePrices, getFreshPrices } from "@/lib/prices";
 import { ASSET_BY_TICKER } from "@/lib/assets";
 import {
   settleAndValuePositions,
@@ -27,6 +27,12 @@ import { positions as positionsTable } from "@/db/schema";
 
 export const MAX_HOLDINGS = 10;
 export const MAX_TRADES_PER_DAY = 10;
+/**
+ * Execution spread (anti front-running): buys fill slightly above mid, sells
+ * slightly below. A small, realistic cost that makes arbing a stale price move
+ * unprofitable for casual front-running. ~0.15% each side.
+ */
+export const EXEC_SPREAD = Number(process.env.TRADE_SPREAD ?? 0.0015);
 
 export interface HoldingView {
   ticker: string;
@@ -521,14 +527,17 @@ export async function executeTrade(
   if (meta.archived && input.side === "buy")
     return { ok: false, error: "Bu varlık artık listede değil; yalnızca satabilirsin." };
 
-  const snap = await getLivePrices();
+  // Freshest data at fill time (anti front-running), then apply the spread:
+  // buys fill above mid, sells below mid.
+  const snap = await getFreshPrices();
   const live = snap.prices[input.ticker];
   if (!live || !(live.priceTry > 0))
     return { ok: false, error: "Bu varlık için anlık fiyat alınamadı, tekrar dene." };
-  const priceTry = live.priceTry;
+  const mid = live.priceTry;
+  const priceTry = input.side === "buy" ? mid * (1 + EXEC_SPREAD) : mid * (1 - EXEC_SPREAD);
   // native cost basis (USD for crypto/US/commodity, TRY for BIST, points for index)
-  const priceNative =
-    live.nativePrice > 0 ? live.nativePrice : priceTry / (snap.usdTry || 1);
+  const midNative = live.nativePrice > 0 ? live.nativePrice : mid / (snap.usdTry || 1);
+  const priceNative = midNative * (priceTry / mid);
 
   return db.transaction(async (tx) => {
     const [user] = await tx

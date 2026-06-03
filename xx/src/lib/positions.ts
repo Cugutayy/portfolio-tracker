@@ -7,11 +7,13 @@
 import { db } from "@/lib/db";
 import { positions, users } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
-import { getLivePrices, type PriceSnapshot } from "@/lib/prices";
+import { getLivePrices, getFreshPrices, type PriceSnapshot } from "@/lib/prices";
 import { ASSET_BY_TICKER, isLeverageable } from "@/lib/assets";
 
 export const MAX_LEVERAGE = 10;
 export const MAX_OPEN_POSITIONS = 10;
+// Execution spread (anti front-running) — same default as spot trades.
+const EXEC_SPREAD = Number(process.env.TRADE_SPREAD ?? 0.0015);
 
 export interface PositionView {
   id: string;
@@ -71,11 +73,13 @@ export async function openPosition(
   if (!(margin > 0)) return err("Geçerli bir teminat gir.");
   margin = Math.round(margin * 100) / 100;
 
-  const snap = await getLivePrices();
+  // Freshest data at open time (anti front-running) + spread: long enters
+  // slightly above mid, short slightly below.
+  const snap = await getFreshPrices();
   const live = snap.prices[input.ticker];
   if (!live || !(live.priceTry > 0))
     return err("Anlık fiyat alınamadı, tekrar dene.");
-  const entry = live.priceTry;
+  const entry = input.side === "long" ? live.priceTry * (1 + EXEC_SPREAD) : live.priceTry * (1 - EXEC_SPREAD);
 
   return db.transaction(async (tx) => {
     const [user] = await tx.select().from(users).where(eq(users.id, userId)).limit(1);

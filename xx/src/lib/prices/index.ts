@@ -36,7 +36,7 @@ export interface PriceSnapshot {
   missing: string[];
 }
 
-const PRICE_TTL_MS = Number(process.env.PRICE_TTL_MS ?? 60_000);
+const PRICE_TTL_MS = Number(process.env.PRICE_TTL_MS ?? 30_000);
 const USDTRY_FALLBACK = Number(process.env.PRICE_USDTRY_FALLBACK ?? 42);
 
 let cache: PriceSnapshot | null = null;
@@ -118,6 +118,26 @@ async function build(): Promise<PriceSnapshot> {
 /** Get all live prices (cached). */
 export async function getLivePrices(): Promise<PriceSnapshot> {
   if (isFresh(cache)) return cache;
+  if (inflight) return inflight;
+  inflight = build()
+    .then((snap) => {
+      cache = snap;
+      return snap;
+    })
+    .finally(() => {
+      inflight = null;
+    });
+  return inflight;
+}
+
+/**
+ * Freshest possible snapshot for trade execution — forces a refetch when the
+ * cache is older than `maxAgeMs`. Anti front-running: a user can't fill at a
+ * stale price they saw move on a real exchange; the fill uses the latest data
+ * our sources have.
+ */
+export async function getFreshPrices(maxAgeMs = 10_000): Promise<PriceSnapshot> {
+  if (cache && Date.now() - cache.fetchedAt < maxAgeMs) return cache;
   if (inflight) return inflight;
   inflight = build()
     .then((snap) => {

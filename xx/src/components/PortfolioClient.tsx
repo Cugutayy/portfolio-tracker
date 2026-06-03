@@ -207,6 +207,7 @@ export function PortfolioClient({
 
   const slices: DemoSlice[] = useMemo(() => {
     if (!pf) return [];
+    const total = pf.totalTry || 1;
     const s: DemoSlice[] = pf.holdings.map((h) => ({
       ticker: h.ticker,
       name: h.name,
@@ -214,6 +215,18 @@ export function PortfolioClient({
       weight: h.weight,
       valueTry: h.valueTry,
     }));
+    // open leveraged positions contribute their equity (margin + live P&L)
+    for (const p of pf.positions ?? []) {
+      if (p.equityTry <= 0) continue;
+      const base = ASSET_BY_TICKER[p.ticker]?.color ?? "#888";
+      s.push({
+        ticker: `${p.ticker} ${p.side === "long" ? "L" : "S"}${p.leverage}x`,
+        name: `${p.name} · ${p.side === "long" ? tx.fut_long : tx.fut_short} ${p.leverage}x`,
+        color: base,
+        weight: p.equityTry / total,
+        valueTry: p.equityTry,
+      });
+    }
     if (pf.cashTry > 0 && pf.totalTry > 0) {
       s.push({
         ticker: "NAKİT",
@@ -224,7 +237,7 @@ export function PortfolioClient({
       });
     }
     return s;
-  }, [pf]);
+  }, [pf, tx]);
 
   const initials = useMemo(
     () => name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase(),

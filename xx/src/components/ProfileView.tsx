@@ -8,7 +8,7 @@ import { Avatar } from "@/components/Avatar";
 import { fmtTry, type DemoSlice } from "@/lib/demo";
 import { fmtAssetPrice } from "@/lib/format";
 import { fmtMoney, fmtMoneyFull } from "@/lib/currency";
-import type { AssetType } from "@/lib/assets";
+import { ASSET_BY_TICKER, type AssetType } from "@/lib/assets";
 import { FuturesPositionsList, type PositionView } from "@/components/FuturesPanel";
 import { useT, useCurrency } from "@/components/Providers";
 
@@ -56,6 +56,15 @@ export function ProfileView({ initial, loggedIn }: { initial: ProfileData; logge
   const initials = p.name.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   const slices: DemoSlice[] = [
     ...p.holdings.map((h) => ({ ticker: h.ticker, name: h.name, color: h.color, weight: h.weight, valueTry: h.valueTry })),
+    ...(p.positions ?? [])
+      .filter((pos) => pos.equityTry > 0)
+      .map((pos) => ({
+        ticker: `${pos.ticker} ${pos.side === "long" ? "L" : "S"}${pos.leverage}x`,
+        name: `${pos.name} · ${pos.side === "long" ? t.fut_long : t.fut_short} ${pos.leverage}x`,
+        color: ASSET_BY_TICKER[pos.ticker]?.color ?? "#888",
+        weight: p.totalTry > 0 ? pos.equityTry / p.totalTry : 0,
+        valueTry: pos.equityTry,
+      })),
     ...(p.cashTry > 0 ? [{ ticker: "NAKİT", name: "Nakit", color: "rgba(26,24,19,0.16)", weight: p.totalTry > 0 ? p.cashTry / p.totalTry : 0, valueTry: p.cashTry }] : []),
   ];
   const up = p.returnPct >= 0;
