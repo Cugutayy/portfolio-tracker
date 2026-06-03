@@ -1165,7 +1165,7 @@ export function XPage() {
                       <p className="x-pmeta">
                         {scan.loc}<span className="sep">/</span>{scan.note}
                       </p>
-                      <div className="x-rtag"><span className="x-dot" />3D tarama · gezilebilir mekân</div>
+                      <div className="x-rtag"><span className="x-dot" />{scan.model ? '3D tarama · döndürülebilir eser' : '3D tarama · gezilebilir mekân'}</div>
                     </>
                   ) : art ? (
                     <>
@@ -1322,7 +1322,7 @@ export function XPage() {
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 2 21 7v10l-9 5-9-5V7z" /><path d="M12 2v20" /><path d="M3 7l9 5 9-5" />
                       </svg>
-                      3D Müze
+                      {it.model ? '3D Eser' : '3D Müze'}
                     </span>
                   ) : (
                     <span className="x-ibadge art">
