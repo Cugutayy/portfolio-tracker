@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { snapshotAllUsers } from "@/lib/portfolio";
+import { settleAllPositions } from "@/lib/positions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,8 +17,9 @@ export async function GET(req: Request) {
     }
   }
   try {
+    const settled = await settleAllPositions(0); // force: settle TP/SL/liquidation
     const count = await snapshotAllUsers();
-    return NextResponse.json({ ok: true, snapshotted: count, at: new Date().toISOString() });
+    return NextResponse.json({ ok: true, settled, snapshotted: count, at: new Date().toISOString() });
   } catch (err) {
     return NextResponse.json(
       { ok: false, error: err instanceof Error ? err.message : "error" },

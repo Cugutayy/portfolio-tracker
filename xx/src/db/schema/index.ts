@@ -158,6 +158,10 @@ export const positions = pgTable(
     // collateral locked from cash (notional = margin * leverage)
     marginTry: numeric("margin_try", { precision: 24, scale: 4 }).notNull(),
     liquidationPriceTry: numeric("liquidation_price_try", { precision: 24, scale: 6 }).notNull(),
+    // Optional take-profit / stop-loss as P&L % on margin (e.g. tp=50 → close at
+    // +50% on collateral; sl=30 → close at -30%). Null = not set.
+    tpPct: integer("tp_pct"),
+    slPct: integer("sl_pct"),
     status: positionStatusEnum("status").notNull().default("open"),
     // realized P/L in TRY, set when the position is closed or liquidated
     realizedPnlTry: numeric("realized_pnl_try", { precision: 24, scale: 4 }),

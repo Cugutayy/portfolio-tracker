@@ -12,6 +12,8 @@ const schema = z.object({
   side: z.enum(["long", "short"]),
   leverage: z.number().int().min(1).max(MAX_LEVERAGE),
   marginTry: z.number().positive().finite(),
+  tpPct: z.number().int().positive().max(5000).nullable().optional(),
+  slPct: z.number().int().positive().max(99).nullable().optional(),
 });
 
 // POST /api/positions/open { ticker, side, leverage, marginTry }
