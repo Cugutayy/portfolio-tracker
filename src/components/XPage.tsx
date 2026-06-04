@@ -449,12 +449,9 @@ const CSS = `
   z-index:0;opacity:0;transition:opacity 1.6s cubic-bezier(.16,1,.3,1);
   animation:xKen 40s ease-in-out infinite alternate;will-change:transform,opacity}
 .x-bg.ready{opacity:1}
-/* Atlas hero: fill the screen edge-to-edge at its widest (no side gaps, no early
-   zoom). Hold that settled view 5s, then begin a slow zoom-in from there. */
-.x-hero-venus .x-bg{object-fit:cover;object-position:center;transform:scale(1);animation:none}
-.x-hero-venus .x-bg.ready{animation:venusReveal 26s cubic-bezier(.4,0,.2,1) 5s forwards}
-@keyframes venusReveal{0%{transform:scale(1)}100%{transform:scale(1.32)}}
-@media (prefers-reduced-motion:reduce){.x-hero-venus .x-bg.ready{animation:none}}
+/* Atlas hero: the painting stays fully visible (fills the screen edge-to-edge),
+   completely static — no zoom / Ken-Burns at all. */
+.x-hero-venus .x-bg,.x-hero-venus .x-bg.ready{object-fit:cover;object-position:center;transform:none;animation:none}
 /* ════ 3D MODEL VIEWER ════ */
 .x-mv{opacity:1;animation:none;border:0;background-color:transparent;--poster-color:transparent;
   --progress-bar-color:#d8b25a;--progress-mask:transparent}
