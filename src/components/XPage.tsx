@@ -449,13 +449,11 @@ const CSS = `
   z-index:0;opacity:0;transition:opacity 1.6s cubic-bezier(.16,1,.3,1);
   animation:xKen 40s ease-in-out infinite alternate;will-change:transform,opacity}
 .x-bg.ready{opacity:1}
-/* Atlas hero: show the WHOLE painting first, then begin a slow zoom-in after 5s.
-   A blurred copy fills the letterbox bars so the full artwork can sit "contained". */
-.x-vbackdrop{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;
-  z-index:0;filter:blur(46px) brightness(.42) saturate(1.05);transform:scale(1.18);pointer-events:none}
-.x-hero-venus .x-bg{object-fit:contain;animation:none;transform:scale(1)}
+/* Atlas hero: fill the screen edge-to-edge at its widest (no side gaps, no early
+   zoom). Hold that settled view 5s, then begin a slow zoom-in from there. */
+.x-hero-venus .x-bg{object-fit:cover;object-position:center;transform:scale(1);animation:none}
 .x-hero-venus .x-bg.ready{animation:venusReveal 26s cubic-bezier(.4,0,.2,1) 5s forwards}
-@keyframes venusReveal{0%{transform:scale(1)}100%{transform:scale(1.34)}}
+@keyframes venusReveal{0%{transform:scale(1)}100%{transform:scale(1.32)}}
 @media (prefers-reduced-motion:reduce){.x-hero-venus .x-bg.ready{animation:none}}
 /* ════ 3D MODEL VIEWER ════ */
 .x-mv{opacity:1;animation:none;border:0;background-color:transparent;--poster-color:transparent;
@@ -1429,7 +1427,6 @@ export function XPage() {
         /* ════════ ATLAS (hero + intro) ════════ */
         <>
           <section className="x-hero x-hero-venus">
-            <img className="x-vbackdrop" src="/x/venus-2k.jpg" alt="" aria-hidden="true" decoding="async" />
             <img
               className="x-bg"
               ref={fadeIn}
