@@ -1146,7 +1146,7 @@ export function XPage() {
     // lang="en" forces dotless-I casing for every uppercase label (no Turkish İ anywhere on this page)
     <div className={`x-page${theme === 'light' ? ' x-light' : ''}`} lang="en">
       <style>{CSS}</style>
-      <audio ref={audioRef} src="/x/audio/gymnopedie.mp3" loop preload="none" />
+      <audio ref={audioRef} src="/x/audio/ambient.mp3" loop preload="none" />
 
       {item && cat ? (
         /* ════════ ITEM — an opened painting OR a walkable 3D museum ════════ */
@@ -1556,7 +1556,7 @@ export function XPage() {
               <button className={!musicOn ? 'on' : ''} onClick={disableMusic}>Kapat</button>
             </div>
           </div>
-          <div className="x-scredit">Gymnopédie No.1 · E. Satie<br />Müzik: Kevin MacLeod · CC BY 4.0</div>
+          <div className="x-scredit">“Anguish” · keman<br />Müzik: Kevin MacLeod · CC BY 4.0</div>
         </div>
       ) : (
         <button className="x-sopen" onClick={() => setSettingsOpen(true)} aria-label="Open settings">

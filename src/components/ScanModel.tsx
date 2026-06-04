@@ -107,12 +107,16 @@ export function ScanModel({ src }: { src: string }) {
         // turntable angle (no clipping as it auto-rotates), and sits dead-centre
         const radius = box.getBoundingSphere(new THREE.Sphere()).radius || Math.max(size.x, size.y, size.z) / 2 || 1
         const vfov = (camera.fov * Math.PI) / 180
-        const dist = (radius / Math.sin(vfov / 2)) * 1.2
+        // extra padding (1.45) + a slight upward aim so the object sits a touch lower —
+        // gives clear headroom so the top never clips under the page header on desktop
+        const dist = (radius / Math.sin(vfov / 2)) * 1.45
+        const aimY = radius * 0.12
         camera.near = Math.max(dist / 1000, 0.001)
         camera.far = dist * 100 + radius
-        camera.position.set(0, radius * 0.12, dist)
+        camera.position.set(0, aimY, dist)
         camera.updateProjectionMatrix()
-        controls.target.set(0, 0, 0)
+        controls.target.set(0, aimY, 0)
+        homeTarget.set(0, aimY, 0)
         controls.minDistance = radius * 0.6
         controls.maxDistance = dist * 3
         controls.update()
