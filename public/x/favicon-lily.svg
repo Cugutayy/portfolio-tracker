@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="64" height="64">
+  <rect width="100" height="100" rx="22" fill="#0c0a0b"/>
+  <defs>
+    <path id="pt" d="M0 0 C -7.5 -13 -6.5 -31 0 -42 C 6.5 -31 7.5 -13 0 0 Z"/>
+    <g id="st">
+      <line x1="0" y1="0" x2="0" y2="-19" stroke="#e7cd86" stroke-width="1.3" stroke-linecap="round"/>
+      <ellipse cx="0" cy="-21.5" rx="2.1" ry="3.1" fill="#e7cd86"/>
+    </g>
+  </defs>
+  <g transform="translate(50 55)" fill="#d8b25a" fill-opacity="0.14" stroke="#e7cd86" stroke-width="2.3" stroke-linejoin="round">
+    <use href="#pt" transform="rotate(0)"/>
+    <use href="#pt" transform="rotate(60)"/>
+    <use href="#pt" transform="rotate(120)"/>
+    <use href="#pt" transform="rotate(180)"/>
+    <use href="#pt" transform="rotate(240)"/>
+    <use href="#pt" transform="rotate(300)"/>
+  </g>
+  <g transform="translate(50 55)">
+    <use href="#st" transform="rotate(30)"/>
+    <use href="#st" transform="rotate(150)"/>
+    <use href="#st" transform="rotate(270)"/>
+    <use href="#st" transform="rotate(90)"/>
+    <use href="#st" transform="rotate(210)"/>
+    <use href="#st" transform="rotate(330)"/>
+    <circle cx="0" cy="0" r="2.2" fill="#e7cd86"/>
+  </g>
+</svg>
