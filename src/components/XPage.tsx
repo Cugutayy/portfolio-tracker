@@ -659,6 +659,9 @@ iframe.x-mv{display:block;background:#0c0a0b}
   font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.06em;transition:all .3s;line-height:1}
 .x-seg button:hover{border-color:rgba(216,178,90,.5);color:#f3ead6}
 .x-seg button.on{background:rgba(216,178,90,.16);border-color:#d8b25a;color:#ecc879}
+.x-scredit{margin-top:10px;padding-top:9px;border-top:1px solid rgba(216,178,90,.14);
+  font-size:.46rem;letter-spacing:.06em;line-height:1.55;color:rgba(243,234,214,.4)}
+.x-light .x-scredit{border-top-color:rgba(156,117,34,.2);color:rgba(43,33,26,.45)}
 
 /* ════ LIGHT THEME ════ */
 .x-light{background:#efe7d6;color:#2b211a}
@@ -984,10 +987,13 @@ export function XPage() {
   const [route, setRoute] = useState<Route>(parseRoute())
   const [theme, setTheme] = useState<Theme>('dark')
   const [settingsOpen, setSettingsOpen] = useState(true)
+  const [musicOn, setMusicOn] = useState(false)
   const [anim, setAnim] = useState<{ type: TransType; phase: 'cover' | 'reveal'; img: string } | null>(null)
   const [entered3d, setEntered3d] = useState(false)
   const introRef = useRef<HTMLElement>(null)
   const artDocRef = useRef<HTMLElement>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const fadeRef = useRef<number | null>(null)
 
   const cat = route.cat ? CATEGORIES.find(c => c.slug === route.cat) ?? null : null
   const item = cat && route.item ? cat.items.find(it => it.id === route.item) ?? null : null
@@ -1080,10 +1086,67 @@ export function XPage() {
   const scrollToIntro = () => introRef.current?.scrollIntoView({ behavior: 'smooth' })
   const scrollToArtDoc = () => artDocRef.current?.scrollIntoView({ behavior: 'smooth' })
 
+  // ── ambient background music (quiet, looped, user-toggled; never autoplays loud) ──
+  const MUSIC_VOL = 0.18
+  const fadeMusic = (target: number, done?: () => void) => {
+    const a = audioRef.current; if (!a) return
+    if (fadeRef.current) { clearTimeout(fadeRef.current); fadeRef.current = null }
+    const step = () => {
+      const d = target - a.volume
+      if (Math.abs(d) <= 0.02) { a.volume = target; fadeRef.current = null; done?.(); return }
+      a.volume = Math.max(0, Math.min(1, a.volume + (d > 0 ? 0.02 : -0.02)))
+      fadeRef.current = window.setTimeout(step, 45)
+    }
+    step()
+  }
+  const enableMusic = () => {
+    const a = audioRef.current; if (!a || musicOn) return
+    a.volume = 0
+    a.play().then(() => {
+      setMusicOn(true)
+      try { localStorage.setItem('x-music', '1') } catch { /* ignore */ }
+      fadeMusic(MUSIC_VOL)
+    }).catch(() => { /* blocked until a user gesture */ })
+  }
+  const disableMusic = () => {
+    const a = audioRef.current; if (!a) return
+    setMusicOn(false)
+    try { localStorage.setItem('x-music', '0') } catch { /* ignore */ }
+    fadeMusic(0, () => a.pause())
+  }
+
+  // pause while the tab is hidden (saves battery/CPU), resume if it was on
+  useEffect(() => {
+    const onVis = () => {
+      const a = audioRef.current; if (!a) return
+      if (document.hidden) a.pause()
+      else if (musicOn) a.play().catch(() => { /* ignore */ })
+    }
+    document.addEventListener('visibilitychange', onVis)
+    return () => document.removeEventListener('visibilitychange', onVis)
+  }, [musicOn])
+
+  // remembered "on" preference can't autoplay without a gesture — arm a one-time resume
+  useEffect(() => {
+    let armed = false
+    try { armed = localStorage.getItem('x-music') === '1' } catch { /* ignore */ }
+    if (!armed) return
+    const resume = () => { enableMusic(); cleanup() }
+    const cleanup = () => {
+      window.removeEventListener('pointerdown', resume)
+      window.removeEventListener('keydown', resume)
+    }
+    window.addEventListener('pointerdown', resume, { once: true })
+    window.addEventListener('keydown', resume, { once: true })
+    return cleanup
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     // lang="en" forces dotless-I casing for every uppercase label (no Turkish İ anywhere on this page)
     <div className={`x-page${theme === 'light' ? ' x-light' : ''}`} lang="en">
       <style>{CSS}</style>
+      <audio ref={audioRef} src="/x/audio/gymnopedie.mp3" loop preload="none" />
 
       {item && cat ? (
         /* ════════ ITEM — an opened painting OR a walkable 3D museum ════════ */
@@ -1486,6 +1549,14 @@ export function XPage() {
               <button className={theme === 'dark' ? 'on' : ''} onClick={() => setTheme('dark')}>Dark</button>
             </div>
           </div>
+          <div className="x-srow">
+            <span className="x-slabel">Müzik</span>
+            <div className="x-seg">
+              <button className={musicOn ? 'on' : ''} onClick={enableMusic}>♪ Aç</button>
+              <button className={!musicOn ? 'on' : ''} onClick={disableMusic}>Kapat</button>
+            </div>
+          </div>
+          <div className="x-scredit">Gymnopédie No.1 · E. Satie<br />Müzik: Kevin MacLeod · CC BY 4.0</div>
         </div>
       ) : (
         <button className="x-sopen" onClick={() => setSettingsOpen(true)} aria-label="Open settings">
