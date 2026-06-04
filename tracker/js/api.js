@@ -469,7 +469,7 @@ async function fetchFurkanHistoricalPrices(progressCb) {
   const fetchBTC = async () => {
     report('  BTC/TRY cekiliyor (Binance)...');
     const [btcData, tryData] = await Promise.all([
-      safeGet(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${fromMs}&endTime=${nowMs}&limit=30`),
+      safeGet(`https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&startTime=${fromMs}&endTime=${nowMs}&limit=500`),
       safeGet('https://api.binance.com/api/v3/ticker/price?symbol=USDTTRY')
     ]);
     const usdtTry = parseFloat(tryData.price);
