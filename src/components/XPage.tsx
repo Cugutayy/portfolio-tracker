@@ -573,7 +573,7 @@ iframe.x-mv{display:block;background:#0c0a0b}
 .reveal{opacity:0;transform:translateY(28px);
   transition:opacity .9s cubic-bezier(.16,1,.3,1),transform .9s cubic-bezier(.16,1,.3,1)}
 .reveal.in{opacity:1;transform:none}
-.x-cat.reveal{transition-delay:calc(var(--i,0) * 80ms)}
+.x-cat.reveal{transition-delay:calc(min(var(--i,0),5) * 35ms)}
 
 /* ════ TRANSITIONS ════ */
 .x-trans{position:fixed;inset:0;z-index:9000;pointer-events:none;overflow:hidden}
@@ -840,7 +840,8 @@ iframe.x-mv{display:block;background:#0c0a0b}
   border-left:1px solid rgba(216,178,90,.4);padding-left:clamp(20px,3vw,34px)}
 .x-adgrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;
   background:rgba(216,178,90,.16);border:1px solid rgba(216,178,90,.16)}
-@media(min-width:760px){.x-adgrid{grid-template-columns:repeat(4,1fr)}}
+/* auto-fit so a 3-cell dossier fills the row (no empty/tinted cell) while a 4-cell one stays 4-up */
+@media(min-width:760px){.x-adgrid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}}
 .x-adcell{background:#0c0a0b;padding:18px 20px}
 .x-adk{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.22em;text-transform:uppercase;color:#d8b25a;opacity:.85;margin-bottom:7px}
 .x-adv{font-size:1.02rem;line-height:1.35;color:rgba(243,234,214,.86)}
@@ -1043,7 +1044,7 @@ export function XPage() {
     if (!('IntersectionObserver' in window)) { els.forEach(e => e.classList.add('in')); return }
     const io = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) } })
-    }, { threshold: 0.18, rootMargin: '0px 0px -8% 0px' })
+    }, { threshold: 0.02, rootMargin: '0px 0px 22% 0px' })
     els.forEach(e => io.observe(e))
     return () => io.disconnect()
   }, [route, cat, item])
@@ -1427,7 +1428,7 @@ export function XPage() {
                     onClick={() => openCat(c)}
                   >
                     <div className="x-cthumb">
-                      <img src={c.img} alt="" loading="lazy" decoding="async"
+                      <img src={c.img} alt="" loading="eager" decoding="async" fetchPriority={i < 3 ? 'high' : 'auto'}
                         style={{ objectPosition: c.objPos }}
                         onLoad={(e) => e.currentTarget.classList.add('ld')} />
                       <span className="x-ccount"><b>{c.items.length}</b> eser</span>
