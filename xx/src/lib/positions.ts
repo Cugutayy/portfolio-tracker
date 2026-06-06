@@ -12,8 +12,8 @@ import { ASSET_BY_TICKER, isLeverageable } from "@/lib/assets";
 
 export const MAX_LEVERAGE = 10;
 export const MAX_OPEN_POSITIONS = 10;
-// Execution spread (anti front-running) — same default as spot trades.
-const EXEC_SPREAD = Number(process.env.TRADE_SPREAD ?? 0.0015);
+// Execution spread — 0 (real-time crypto pricing makes slippage unnecessary).
+const EXEC_SPREAD = Number(process.env.TRADE_SPREAD ?? 0);
 
 export interface PositionView {
   id: string;

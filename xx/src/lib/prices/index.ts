@@ -10,7 +10,8 @@
 // ─────────────────────────────────────────────────────────────
 
 import { ASSETS, type Asset } from "@/lib/assets";
-import { fetchCryptoTry } from "./coingecko";
+import { fetchCryptoTry, type CryptoQuote } from "./coingecko";
+import { fetchCryptoBinance } from "./binance";
 import { fetchYahooQuotes, fetchUsdTryYahoo } from "./yahoo";
 
 export interface LivePrice {
@@ -25,7 +26,7 @@ export interface LivePrice {
   nativeCcy: string;
   /** 24h / day change %, when available. */
   changePct: number | null;
-  source: "coingecko" | "yahoo";
+  source: "binance" | "coingecko" | "yahoo";
 }
 
 export interface PriceSnapshot {
@@ -36,7 +37,7 @@ export interface PriceSnapshot {
   missing: string[];
 }
 
-const PRICE_TTL_MS = Number(process.env.PRICE_TTL_MS ?? 30_000);
+const PRICE_TTL_MS = Number(process.env.PRICE_TTL_MS ?? 15_000);
 const USDTRY_FALLBACK = Number(process.env.PRICE_USDTRY_FALLBACK ?? 42);
 
 let cache: PriceSnapshot | null = null;
@@ -50,15 +51,30 @@ async function build(): Promise<PriceSnapshot> {
   const cryptoAssets = ASSETS.filter((a) => a.type === "crypto" && a.symbol);
   const otherAssets = ASSETS.filter((a) => a.type !== "crypto" && a.symbol);
 
+  // Crypto: Binance (near real-time) first, CoinGecko fills any gaps (e.g. HYPE).
+  const fetchCrypto = async (): Promise<{ quotes: Map<string, CryptoQuote>; usdTry: number | null }> => {
+    try {
+      const b = await fetchCryptoBinance(cryptoAssets.map((a) => ({ ticker: a.ticker, cgId: a.symbol! })));
+      const quotes = b.quotes;
+      let cgUsdTry: number | null = null;
+      if (b.missing.length) {
+        const cg = await fetchCryptoTry(b.missing).catch(() => ({ quotes: new Map(), usdTry: null }));
+        for (const [id, q] of cg.quotes) if (!quotes.has(id)) quotes.set(id, q);
+        cgUsdTry = cg.usdTry;
+      }
+      return { quotes, usdTry: b.usdTry ?? cgUsdTry };
+    } catch {
+      const cg = await fetchCryptoTry(cryptoAssets.map((a) => a.symbol!)).catch(() => ({ quotes: new Map<string, CryptoQuote>(), usdTry: null }));
+      return { quotes: cg.quotes, usdTry: cg.usdTry };
+    }
+  };
+
   const [cryptoRes, yahooMap] = await Promise.all([
-    fetchCryptoTry(cryptoAssets.map((a) => a.symbol!)).catch(() => ({
-      quotes: new Map(),
-      usdTry: null,
-    })),
+    fetchCrypto(),
     fetchYahooQuotes(otherAssets.map((a) => a.symbol!)).catch(() => new Map()),
   ]);
 
-  // Resolve USD→TRY: CoinGecko-derived first, then Yahoo, then fallback.
+  // Resolve USD→TRY: Binance/CoinGecko-derived first, then Yahoo, then fallback.
   let usdTry = cryptoRes.usdTry;
   if (!usdTry || usdTry <= 0) usdTry = await fetchUsdTryYahoo().catch(() => null);
   if (!usdTry || usdTry <= 0) usdTry = USDTRY_FALLBACK;
@@ -72,15 +88,18 @@ async function build(): Promise<PriceSnapshot> {
       missing.push(a.ticker);
       continue;
     }
+    // price uniformly via the resolved FX: priceTry = priceUsd × usdTry
+    const priceUsd = q.priceUsd > 0 ? q.priceUsd : usdTry > 0 ? q.priceTry / usdTry : 0;
+    const priceTry = priceUsd > 0 ? priceUsd * usdTry : q.priceTry;
     prices[a.ticker] = {
       ticker: a.ticker,
       name: a.name,
       type: a.type,
-      priceTry: q.priceTry,
-      nativePrice: q.priceUsd > 0 ? q.priceUsd : q.priceTry / usdTry,
+      priceTry,
+      nativePrice: priceUsd > 0 ? priceUsd : priceTry / usdTry,
       nativeCcy: "USD",
       changePct: q.changePct24h,
-      source: "coingecko",
+      source: "binance",
     };
   }
 
@@ -136,7 +155,7 @@ export async function getLivePrices(): Promise<PriceSnapshot> {
  * stale price they saw move on a real exchange; the fill uses the latest data
  * our sources have.
  */
-export async function getFreshPrices(maxAgeMs = 10_000): Promise<PriceSnapshot> {
+export async function getFreshPrices(maxAgeMs = 3_000): Promise<PriceSnapshot> {
   if (cache && Date.now() - cache.fetchedAt < maxAgeMs) return cache;
   if (inflight) return inflight;
   inflight = build()

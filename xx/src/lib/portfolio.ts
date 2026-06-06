@@ -28,11 +28,11 @@ import { positions as positionsTable } from "@/db/schema";
 export const MAX_HOLDINGS = 10;
 export const MAX_TRADES_PER_DAY = 10;
 /**
- * Execution spread (anti front-running): buys fill slightly above mid, sells
- * slightly below. A small, realistic cost that makes arbing a stale price move
- * unprofitable for casual front-running. ~0.15% each side.
+ * Execution spread. Now 0 — crypto is priced from Binance in near real-time,
+ * so front-running a stale price isn't profitable and no slippage is needed.
+ * Still env-tunable if a spread is ever wanted again.
  */
-export const EXEC_SPREAD = Number(process.env.TRADE_SPREAD ?? 0.0015);
+export const EXEC_SPREAD = Number(process.env.TRADE_SPREAD ?? 0);
 
 export interface HoldingView {
   ticker: string;
