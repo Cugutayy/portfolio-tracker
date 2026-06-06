@@ -10,6 +10,7 @@ import {
 } from "@/lib/assets";
 import { fmtAssetPrice } from "@/lib/format";
 import { fmtMoney } from "@/lib/currency";
+import { useLiveCrypto } from "@/lib/useLiveCrypto";
 import { useT, useCurrency } from "@/components/Providers";
 
 export interface PositionView {
@@ -269,6 +270,10 @@ export function FuturesForm({
   const ud = pf.usdTry ?? 0;
   const money = (n: number) => fmtMoney(n, cur, ud);
 
+  // live crypto ticks straight from Binance WS (no backend load)
+  const cryptoTickers = useMemo(() => LEVERAGE_ASSETS.filter((a) => a.type === "crypto").map((a) => a.ticker), []);
+  const live = useLiveCrypto(cryptoTickers);
+
   const [selected, setSelected] = useState<string>("BTC");
   const [side, setSide] = useState<"long" | "short">("long");
   const [lev, setLev] = useState<number>(5);
@@ -399,7 +404,12 @@ export function FuturesForm({
                           <span style={{ fontWeight: 600, fontSize: ".78rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{a.ticker}</span>
                         </div>
                         <div className="mono" style={{ fontSize: ".6rem", color: "var(--muted)", marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {p ? fmtAssetPrice(p.nativePrice, p.nativeCcy, a.type) : "·"}
+                          {(() => {
+                            const lt = a.type === "crypto" ? live[a.ticker] : undefined;
+                            const np = lt?.price ?? p?.nativePrice;
+                            const ccy = lt ? "USD" : p?.nativeCcy ?? "USD";
+                            return np ? fmtAssetPrice(np, ccy, a.type) : "·";
+                          })()}
                         </div>
                       </button>
                     );
