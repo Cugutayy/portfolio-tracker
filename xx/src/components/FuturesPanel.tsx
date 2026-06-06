@@ -66,6 +66,43 @@ export function FuturesPositionsList({
   const money = (n: number) => fmtMoney(n, cur, ud);
   const [closingId, setClosingId] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [tpD, setTpD] = useState("");
+  const [slD, setSlD] = useState("");
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  function openEditor(p: PositionView) {
+    setEditId(p.id);
+    setTpD(p.tpPct != null ? String(p.tpPct) : "");
+    setSlD(p.slPct != null ? String(p.slPct) : "");
+  }
+
+  async function saveTpsl(id: string) {
+    setSavingId(id);
+    setMsg(null);
+    try {
+      const r = await fetch("/api/positions/tpsl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          positionId: id,
+          tpPct: Number(tpD) > 0 ? Math.round(Number(tpD)) : null,
+          slPct: Number(slD) > 0 ? Math.min(99, Math.round(Number(slD))) : null,
+        }),
+      });
+      const j = await r.json();
+      if (j.ok) {
+        onPortfolio?.(j.portfolio);
+        setEditId(null);
+      } else {
+        setMsg({ kind: "err", text: j.error ?? tx.pc_msg_fail });
+      }
+    } catch {
+      setMsg({ kind: "err", text: tx.pc_msg_net });
+    } finally {
+      setSavingId(null);
+    }
+  }
 
   async function closePosition(id: string) {
     setMsg(null);
@@ -151,17 +188,40 @@ export function FuturesPositionsList({
                 <Stat2 label={tx.fut_equity} value={money(p.equityTry)} />
               </div>
 
-              {(p.tpPct != null || p.slPct != null) && (
-                <div className="mono" style={{ display: "flex", gap: 12, fontSize: ".58rem", marginTop: 8 }}>
+              {/* TP/SL display (+ owner edit) */}
+              {editId === p.id ? (
+                <div style={{ marginTop: 9, display: "flex", gap: 6, alignItems: "flex-end" }}>
+                  <div style={{ flex: 1 }}>
+                    <div className="eyebrow" style={{ fontSize: ".5rem", color: "var(--green-t)" }}>{tx.fut_tp_short} +%</div>
+                    <input value={tpD} onChange={(e) => setTpD(e.target.value)} inputMode="numeric" placeholder={tx.fut_tp_ph} className="mono"
+                      style={{ width: "100%", padding: "6px 8px", borderRadius: 7, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: ".78rem" }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div className="eyebrow" style={{ fontSize: ".5rem", color: "var(--red-t)" }}>{tx.fut_sl_short} -%</div>
+                    <input value={slD} onChange={(e) => setSlD(e.target.value)} inputMode="numeric" placeholder={tx.fut_sl_ph} className="mono"
+                      style={{ width: "100%", padding: "6px 8px", borderRadius: 7, background: "var(--input-bg)", color: "var(--ink)", border: "1px solid var(--card-border)", fontSize: ".78rem" }} />
+                  </div>
+                  <button className="btn btn-accent" onClick={() => saveTpsl(p.id)} disabled={savingId === p.id} style={{ padding: ".42rem .6rem", fontSize: ".66rem", fontWeight: 600 }}>
+                    {savingId === p.id ? "…" : tx.pc_save}
+                  </button>
+                  <button className="btn" onClick={() => setEditId(null)} style={{ padding: ".42rem .5rem", fontSize: ".66rem" }}>✕</button>
+                </div>
+              ) : (
+                <div className="mono" style={{ display: "flex", gap: 10, alignItems: "center", fontSize: ".58rem", marginTop: 8 }}>
                   {p.tpPct != null && <span style={{ color: "var(--green-t)" }}>{tx.fut_tp_short} +%{p.tpPct}</span>}
                   {p.slPct != null && <span style={{ color: "var(--red-t)" }}>{tx.fut_sl_short} -%{p.slPct}</span>}
+                  {!readOnly && (
+                    <button onClick={() => openEditor(p)} style={{ marginLeft: "auto", background: "none", border: "none", color: "var(--accent)", cursor: "pointer", fontSize: ".58rem", padding: 0 }}>
+                      {p.tpPct != null || p.slPct != null ? tx.fut_edit : tx.fut_set_tpsl}
+                    </button>
+                  )}
                 </div>
               )}
 
               {!readOnly && (
                 <button
                   className="btn"
-                  style={{ width: "100%", marginTop: 12, padding: ".45rem", fontSize: ".74rem", fontWeight: 600, opacity: closingId === p.id ? 0.55 : 1 }}
+                  style={{ width: "100%", marginTop: 10, padding: ".45rem", fontSize: ".74rem", fontWeight: 600, opacity: closingId === p.id ? 0.55 : 1 }}
                   disabled={closingId === p.id}
                   onClick={() => closePosition(p.id)}
                 >
