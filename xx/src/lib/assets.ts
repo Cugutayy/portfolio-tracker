@@ -325,13 +325,6 @@ export const ASSETS: Asset[] = [
 export const TRADEABLE_ASSETS: Asset[] = ASSETS.filter((a) => !a.archived);
 
 /**
- * Crypto tickers that have NO Binance USDT spot pair → priced via CoinGecko
- * and excluded from the Binance batch (mixing invalid symbols makes Binance
- * reject the whole request) and from the live WS. Update when adding coins.
- */
-export const CRYPTO_NO_BINANCE = new Set<string>(["HYPE", "BAS", "BLESS"]);
-
-/**
  * BIST-30 constituents — tradeable as single-stock futures (VIOP-30 group).
  * Curated from a recent XU030 list; values are virtual so quarterly drift is fine.
  */
