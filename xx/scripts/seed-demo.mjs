@@ -167,16 +167,45 @@ async function main() {
   console.log("Wiping previous demo users…");
   await q("DELETE FROM users WHERE email LIKE '%@arena.demo'");
 
+  // Real funny pet photos (stable CDN urls) for profile-picture variety.
+  const fetchPool = async (url, target) => {
+    const out = [];
+    for (let i = 0; i < 6 && out.length < target; i++) {
+      try {
+        const arr = await fetch(url).then((r) => r.json());
+        for (const c of arr) if (c.url && !out.includes(c.url)) out.push(c.url);
+      } catch {
+        /* ignore */
+      }
+    }
+    return out;
+  };
+  console.log("Fetching pet photos…");
+  const catPool = await fetchPool("https://api.thecatapi.com/v1/images/search?limit=10", 18);
+  const dogPool = await fetchPool("https://api.thedogapi.com/v1/images/search?limit=10", 18);
+  console.log(`  cats: ${catPool.length}, dogs: ${dogPool.length}`);
+
   let made = 0;
-  let mPhoto = 0, wPhoto = 0; // real-person portrait indices (randomuser.me, not AI)
+  let mPhoto = 0, wPhoto = 0, catI = 0, dogI = 0;
   for (let uidx = 0; uidx < NAMES.length; uidx++) {
     const [name, handle, gender] = NAMES[uidx];
     const r = rng(handle);
     const A = archetypeFor(r);
     const bio = r() < 0.65 ? pick(BIOS, r) : ""; // ~35% leave bio blank
     const id = randomUUID();
-    const photoN = gender === "f" ? wPhoto++ : mPhoto++;
-    const image = `https://randomuser.me/api/portraits/${gender === "f" ? "women" : "men"}/${photoN}.jpg`;
+    // Mixed, human-feeling profile pics: people / funny cats / dogs / scenery
+    const roll = r();
+    let image;
+    if (roll < 0.5) {
+      const n = gender === "f" ? wPhoto++ : mPhoto++;
+      image = `https://randomuser.me/api/portraits/${gender === "f" ? "women" : "men"}/${n}.jpg`;
+    } else if (roll < 0.7 && catPool.length) {
+      image = catPool[catI++ % catPool.length];
+    } else if (roll < 0.85 && dogPool.length) {
+      image = dogPool[dogI++ % dogPool.length];
+    } else {
+      image = `https://picsum.photos/seed/${handle}/400`; // real scenery/objects
+    }
     const email = `${handle}@arena.demo`;
 
     // ── archetype-driven basket: some full-stock, some leverage-heavy ──
