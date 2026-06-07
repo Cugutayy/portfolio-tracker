@@ -9,7 +9,7 @@
 // public-API rate limits even with many concurrent valuations.
 // ─────────────────────────────────────────────────────────────
 
-import { ASSETS, type Asset } from "@/lib/assets";
+import { ASSETS, CRYPTO_NO_BINANCE, type Asset } from "@/lib/assets";
 import { fetchCryptoTry, type CryptoQuote } from "./coingecko";
 import { fetchCryptoBinance } from "./binance";
 import { fetchYahooQuotes, fetchUsdTryYahoo } from "./yahoo";
@@ -51,16 +51,21 @@ async function build(): Promise<PriceSnapshot> {
   const cryptoAssets = ASSETS.filter((a) => a.type === "crypto" && a.symbol);
   const otherAssets = ASSETS.filter((a) => a.type !== "crypto" && a.symbol);
 
-  // Crypto: Binance (near real-time) first, CoinGecko fills any gaps (e.g. HYPE).
-  // `binanceIds` = cgIds actually priced by Binance → those get live WS ticks.
+  // Crypto: Binance (near real-time) for spot-listed coins; CoinGecko for the
+  // rest (Binance-Alpha / non-spot like HYPE, BAS, BLESS). Excluded coins must
+  // NOT go into the Binance batch — one invalid symbol makes Binance reject the
+  // whole request. `binanceIds` = cgIds priced by Binance → those get WS ticks.
+  const binanceEligible = cryptoAssets.filter((a) => !CRYPTO_NO_BINANCE.has(a.ticker));
+  const cgOnlyIds = cryptoAssets.filter((a) => CRYPTO_NO_BINANCE.has(a.ticker)).map((a) => a.symbol!);
   const fetchCrypto = async (): Promise<{ quotes: Map<string, CryptoQuote>; usdTry: number | null; binanceIds: Set<string> }> => {
     try {
-      const b = await fetchCryptoBinance(cryptoAssets.map((a) => ({ ticker: a.ticker, cgId: a.symbol! })));
+      const b = await fetchCryptoBinance(binanceEligible.map((a) => ({ ticker: a.ticker, cgId: a.symbol! })));
       const quotes = b.quotes;
       const binanceIds = new Set(b.quotes.keys());
       let cgUsdTry: number | null = null;
-      if (b.missing.length) {
-        const cg = await fetchCryptoTry(b.missing).catch(() => ({ quotes: new Map(), usdTry: null }));
+      const needCg = [...b.missing, ...cgOnlyIds];
+      if (needCg.length) {
+        const cg = await fetchCryptoTry(needCg).catch(() => ({ quotes: new Map(), usdTry: null }));
         for (const [id, q] of cg.quotes) if (!quotes.has(id)) quotes.set(id, q);
         cgUsdTry = cg.usdTry;
       }
