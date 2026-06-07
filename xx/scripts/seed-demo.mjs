@@ -186,22 +186,21 @@ async function main() {
   console.log(`  cats: ${catPool.length}, dogs: ${dogPool.length}`);
 
   let made = 0;
-  let mPhoto = 0, wPhoto = 0, catI = 0, dogI = 0;
+  let catI = 0, dogI = 0;
   for (let uidx = 0; uidx < NAMES.length; uidx++) {
-    const [name, handle, gender] = NAMES[uidx];
+    const [name, handle] = NAMES[uidx];
     const r = rng(handle);
+    // a random moment within the last ~3 days (spreads purchase times)
+    const someTime = () => new Date(Date.now() - Math.floor(r() * 72 * 3600 * 1000));
     const A = archetypeFor(r);
     const bio = r() < 0.65 ? pick(BIOS, r) : ""; // ~35% leave bio blank
     const id = randomUUID();
-    // Mixed, human-feeling profile pics: people / funny cats / dogs / scenery
+    // No generic human portraits — funny cats / dogs / scenery only
     const roll = r();
     let image;
-    if (roll < 0.5) {
-      const n = gender === "f" ? wPhoto++ : mPhoto++;
-      image = `https://randomuser.me/api/portraits/${gender === "f" ? "women" : "men"}/${n}.jpg`;
-    } else if (roll < 0.7 && catPool.length) {
+    if (roll < 0.4 && catPool.length) {
       image = catPool[catI++ % catPool.length];
-    } else if (roll < 0.85 && dogPool.length) {
+    } else if (roll < 0.72 && dogPool.length) {
       image = dogPool[dogI++ % dogPool.length];
     } else {
       image = `https://picsum.photos/seed/${handle}/400`; // real scenery/objects
@@ -227,7 +226,7 @@ async function main() {
         const amt = spotBudget * (w[i] / ws);
         if (amt < 500) return;
         const priceTry = P[t].priceTry;
-        holdings.push({ t, amt, qty: amt / priceTry, priceTry, native: P[t].nativePrice });
+        holdings.push({ t, amt, qty: amt / priceTry, priceTry, native: P[t].nativePrice, at: someTime() });
         cash -= amt;
       });
     }
@@ -251,7 +250,7 @@ async function main() {
         const entry = P[t].priceTry;
         const qty = (margin * lev) / entry;
         const liq = side === "long" ? entry * (1 - 1 / lev) : entry * (1 + 1 / lev);
-        positions.push({ t, margin, lev, side, entry, qty, liq });
+        positions.push({ t, margin, lev, side, entry, qty, liq, at: someTime() });
         cash -= margin;
       });
     }
@@ -265,17 +264,23 @@ async function main() {
 
     for (const h of holdings) {
       await q(
-        `INSERT INTO holdings (user_id, asset_id, asset_type, symbol, name, quantity, avg_buy_price_try, avg_buy_price_native)
-         VALUES ($1,$2,$3::asset_type,$4,$5,$6,$7,$8)`,
-        [id, h.t, TYPE.get(h.t), SYMBOL.get(h.t), NAME.get(h.t), h.qty.toFixed(12), h.priceTry.toFixed(6), String(h.native)],
+        `INSERT INTO holdings (user_id, asset_id, asset_type, symbol, name, quantity, avg_buy_price_try, avg_buy_price_native, created_at, updated_at)
+         VALUES ($1,$2,$3::asset_type,$4,$5,$6,$7,$8,$9,$9)`,
+        [id, h.t, TYPE.get(h.t), SYMBOL.get(h.t), NAME.get(h.t), h.qty.toFixed(12), h.priceTry.toFixed(6), String(h.native), h.at],
+      );
+      // matching spot buy in trade history → feed shows varied purchase times
+      await q(
+        `INSERT INTO trades (user_id, asset_id, asset_type, symbol, name, side, quantity, price_try, amount_try, traded_at)
+         VALUES ($1,$2,$3::asset_type,$4,$5,'buy',$6,$7,$8,$9)`,
+        [id, h.t, TYPE.get(h.t), SYMBOL.get(h.t), NAME.get(h.t), h.qty.toFixed(12), h.priceTry.toFixed(6), h.amt.toFixed(4), h.at],
       );
     }
 
     for (const p of positions) {
       await q(
-        `INSERT INTO positions (user_id, asset_id, asset_type, symbol, name, side, leverage, quantity, entry_price_try, margin_try, liquidation_price_try, status)
-         VALUES ($1,$2,$3::asset_type,$4,$5,$6::position_side,$7,$8,$9,$10,$11,'open')`,
-        [id, p.t, TYPE.get(p.t), SYMBOL.get(p.t), NAME.get(p.t), p.side, p.lev, p.qty.toFixed(12), p.entry.toFixed(6), p.margin.toFixed(4), p.liq.toFixed(6)],
+        `INSERT INTO positions (user_id, asset_id, asset_type, symbol, name, side, leverage, quantity, entry_price_try, margin_try, liquidation_price_try, status, opened_at)
+         VALUES ($1,$2,$3::asset_type,$4,$5,$6::position_side,$7,$8,$9,$10,$11,'open',$12)`,
+        [id, p.t, TYPE.get(p.t), SYMBOL.get(p.t), NAME.get(p.t), p.side, p.lev, p.qty.toFixed(12), p.entry.toFixed(6), p.margin.toFixed(4), p.liq.toFixed(6), p.at],
       );
     }
 
