@@ -84,6 +84,7 @@ const CRYPTO: Row[] = [
   ["ATOM", "Cosmos", "cosmos", "#2e3148"],
   ["BAS", "BNB Attestation Service", "bas", "#f0b90b"],
   ["BLESS", "Bless", "bless-2", "#7c5cff"],
+  ["BANK", "Lorenzo Protocol", "lorenzo-protocol", "#e8b84b"],
 ];
 
 // ── Archived crypto — dropped from the top-30 buy list, but still priceable
