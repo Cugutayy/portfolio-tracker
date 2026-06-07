@@ -26,13 +26,12 @@ export async function fetchCryptoBinance(
 
   const symToCg = new Map<string, string>();
   for (const a of assets) symToCg.set(`${a.ticker.toUpperCase()}USDT`, a.cgId);
-  const symbols = [...symToCg.keys()];
 
-  const tickerUrl =
-    `${BASE}/ticker/24hr?symbols=` + encodeURIComponent(JSON.stringify(symbols));
-
+  // Fetch ALL tickers (no symbols filter): one invalid symbol in a filtered
+  // batch makes Binance reject the whole request, so we pick ours from the full
+  // list instead. Any coin not listed simply falls back to CoinGecko.
   const [tickerResp, fxResp] = await Promise.all([
-    fetch(tickerUrl, { cache: "no-store" }),
+    fetch(`${BASE}/ticker/24hr`, { cache: "no-store" }),
     fetch(`${BASE}/ticker/price?symbol=USDTTRY`, { cache: "no-store" }),
   ]);
   if (!tickerResp.ok) throw new Error(`Binance ${tickerResp.status}`);
