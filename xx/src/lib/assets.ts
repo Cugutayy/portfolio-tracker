@@ -82,6 +82,8 @@ const CRYPTO: Row[] = [
   ["ETC", "Ethereum Classic", "ethereum-classic", "#328332"],
   ["PEPE", "Pepe", "pepe", "#4caf50"],
   ["ATOM", "Cosmos", "cosmos", "#2e3148"],
+  ["BAS", "BNB Attestation Service", "bas", "#f0b90b"],
+  ["BLESS", "Bless", "bless-2", "#7c5cff"],
 ];
 
 // ── Archived crypto — dropped from the top-30 buy list, but still priceable

@@ -40,6 +40,7 @@ interface LivePrice {
   nativePrice: number;
   nativeCcy: string;
   changePct: number | null;
+  source?: string;
 }
 type PortfolioLike = { cashTry: number; usdTry: number };
 
@@ -270,8 +271,13 @@ export function FuturesForm({
   const ud = pf.usdTry ?? 0;
   const money = (n: number) => fmtMoney(n, cur, ud);
 
-  // live crypto ticks straight from Binance WS (no backend load)
-  const cryptoTickers = useMemo(() => LEVERAGE_ASSETS.filter((a) => a.type === "crypto").map((a) => a.ticker), []);
+  // live crypto ticks straight from Binance WS (no backend load) — only for
+  // coins Binance actually lists (source === "binance"); others (HYPE, BAS,
+  // BLESS…) are CoinGecko-priced and would break the WS, so they're excluded.
+  const cryptoTickers = useMemo(
+    () => LEVERAGE_ASSETS.filter((a) => a.type === "crypto" && prices[a.ticker]?.source === "binance").map((a) => a.ticker),
+    [prices],
+  );
   const live = useLiveCrypto(cryptoTickers);
 
   const [selected, setSelected] = useState<string>("BTC");

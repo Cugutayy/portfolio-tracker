@@ -52,20 +52,22 @@ async function build(): Promise<PriceSnapshot> {
   const otherAssets = ASSETS.filter((a) => a.type !== "crypto" && a.symbol);
 
   // Crypto: Binance (near real-time) first, CoinGecko fills any gaps (e.g. HYPE).
-  const fetchCrypto = async (): Promise<{ quotes: Map<string, CryptoQuote>; usdTry: number | null }> => {
+  // `binanceIds` = cgIds actually priced by Binance → those get live WS ticks.
+  const fetchCrypto = async (): Promise<{ quotes: Map<string, CryptoQuote>; usdTry: number | null; binanceIds: Set<string> }> => {
     try {
       const b = await fetchCryptoBinance(cryptoAssets.map((a) => ({ ticker: a.ticker, cgId: a.symbol! })));
       const quotes = b.quotes;
+      const binanceIds = new Set(b.quotes.keys());
       let cgUsdTry: number | null = null;
       if (b.missing.length) {
         const cg = await fetchCryptoTry(b.missing).catch(() => ({ quotes: new Map(), usdTry: null }));
         for (const [id, q] of cg.quotes) if (!quotes.has(id)) quotes.set(id, q);
         cgUsdTry = cg.usdTry;
       }
-      return { quotes, usdTry: b.usdTry ?? cgUsdTry };
+      return { quotes, usdTry: b.usdTry ?? cgUsdTry, binanceIds };
     } catch {
       const cg = await fetchCryptoTry(cryptoAssets.map((a) => a.symbol!)).catch(() => ({ quotes: new Map<string, CryptoQuote>(), usdTry: null }));
-      return { quotes: cg.quotes, usdTry: cg.usdTry };
+      return { quotes: cg.quotes, usdTry: cg.usdTry, binanceIds: new Set<string>() };
     }
   };
 
@@ -99,7 +101,7 @@ async function build(): Promise<PriceSnapshot> {
       nativePrice: priceUsd > 0 ? priceUsd : priceTry / usdTry,
       nativeCcy: "USD",
       changePct: q.changePct24h,
-      source: "binance",
+      source: cryptoRes.binanceIds.has(a.symbol!) ? "binance" : "coingecko",
     };
   }
 
