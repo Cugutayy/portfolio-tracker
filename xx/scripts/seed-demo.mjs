@@ -57,45 +57,62 @@ for (const [t, s, n] of [...CRYPTO, ...BIST, ...US, ...INDEX]) {
 const SPOT_POOL = [...CRYPTO, ...BIST, ...US, ...INDEX].map((r) => r[0]);
 const LEV_POOL = [...CRYPTO, ...BIST, ...INDEX].map((r) => r[0]);
 
-// ── 15 personas (realistic Turkish names) ──
-const USERS = [
-  ["Mert Demir", "mert_demir", "Uzun vadeli yatırımcı."],
-  ["Elif Yılmaz", "elif_yilmaz", "Teknoloji hisseleri ağırlıklı."],
-  ["Can Kaya", "can_kaya", "Kripto ve endeks dengesi."],
-  ["Zeynep Şahin", "zeynep_sahin", "Temettü ve büyüme."],
-  ["Emre Çelik", "emre_celik", "BIST ve global karışık."],
-  ["Selin Arslan", "selin_arslan", "Riski seven trader."],
-  ["Burak Doğan", "burak_dogan", "Kısa vade, hızlı işlem."],
-  ["Ayşe Koç", "ayse_koc", "Sabırlı portföy."],
-  ["Kerem Aydın", "kerem_aydin", "Kaldıraçlı işlemler."],
-  ["Deniz Yıldız", "deniz_yildiz", "Endeks takipçisi."],
-  ["Ozan Aksoy", "ozan_aksoy", "Değer yatırımı."],
-  ["Ece Polat", "ece_polat", "Kripto ağırlıklı."],
-  ["Tolga Erdoğan", "tolga_erdogan", "Momentum avcısı."],
-  ["Cem Öztürk", "cem_ozturk", "Dengeli ve temkinli."],
-  ["Gizem Acar", "gizem_acar", "Teknoloji ve enerji."],
+// ── 60 personas: [name, handle, gender] — gender matches the profile photo ──
+const NAMES = [
+  ["Mert Demir", "mert_demir", "m"], ["Elif Yılmaz", "elif_yilmaz", "f"],
+  ["Can Kaya", "can_kaya", "m"], ["Zeynep Şahin", "zeynep_sahin", "f"],
+  ["Emre Çelik", "emre_celik", "m"], ["Selin Arslan", "selin_arslan", "f"],
+  ["Burak Doğan", "burak_dogan", "m"], ["Ayşe Koç", "ayse_koc", "f"],
+  ["Kerem Aydın", "kerem_aydin", "m"], ["Deniz Yıldız", "deniz_yildiz", "m"],
+  ["Ozan Aksoy", "ozan_aksoy", "m"], ["Ece Polat", "ece_polat", "f"],
+  ["Tolga Erdoğan", "tolga_erdogan", "m"], ["Cem Öztürk", "cem_ozturk", "m"],
+  ["Gizem Acar", "gizem_acar", "f"], ["Ahmet Yıldırım", "ahmet_yildirim", "m"],
+  ["Mehmet Şahin", "mehmet_sahin", "m"], ["Ali Koç", "ali_koc", "m"],
+  ["Hasan Kurt", "hasan_kurt", "m"], ["Hüseyin Arslan", "huseyin_arslan", "m"],
+  ["İbrahim Çelik", "ibrahim_celik", "m"], ["Murat Polat", "murat_polat", "m"],
+  ["Yusuf Aydın", "yusuf_aydin", "m"], ["Oğuz Çetin", "oguz_cetin", "m"],
+  ["Barış Şen", "baris_sen", "m"], ["Serkan Acar", "serkan_acar", "m"],
+  ["Volkan Kara", "volkan_kara", "m"], ["Onur Güneş", "onur_gunes", "m"],
+  ["Furkan Aslan", "furkan_aslan", "m"], ["Berk Yalçın", "berk_yalcin", "m"],
+  ["Kaan Şimşek", "kaan_simsek", "m"], ["Eren Yıldız", "eren_yildiz", "m"],
+  ["Umut Taş", "umut_tas", "m"], ["Sinan Bulut", "sinan_bulut", "m"],
+  ["Tarık Erdem", "tarik_erdem", "m"], ["Gökhan Avcı", "gokhan_avci", "m"],
+  ["Halil Doğan", "halil_dogan", "m"], ["Selim Kaplan", "selim_kaplan", "m"],
+  ["Engin Yavuz", "engin_yavuz", "m"], ["Bora Çakır", "bora_cakir", "m"],
+  ["Çağrı Özdemir", "cagri_ozdemir", "m"], ["Doruk Yılmaz", "doruk_yilmaz", "m"],
+  ["Arda Demir", "arda_demir", "m"], ["Merve Demir", "merve_demir", "f"],
+  ["Büşra Çelik", "busra_celik", "f"], ["Esra Kaya", "esra_kaya", "f"],
+  ["Fatma Yıldız", "fatma_yildiz", "f"], ["Hatice Aydın", "hatice_aydin", "f"],
+  ["Derya Kurt", "derya_kurt", "f"], ["Sıla Arslan", "sila_arslan", "f"],
+  ["İrem Şen", "irem_sen", "f"], ["Beyza Aksoy", "beyza_aksoy", "f"],
+  ["Melike Doğan", "melike_dogan", "f"], ["Nazlı Kaya", "nazli_kaya", "f"],
+  ["Pınar Yılmaz", "pinar_yilmaz", "f"], ["Cansu Erdoğan", "cansu_erdogan", "f"],
+  ["Damla Öztürk", "damla_ozturk", "f"], ["Aslı Korkmaz", "asli_korkmaz", "f"],
+  ["Tuğçe Çetin", "tugce_cetin", "f"], ["Yağmur Kara", "yagmur_kara", "f"],
 ];
 
-// Per-user archetype (aligned to USERS order) — drives a *varied* mix:
-// focus = asset class · spot = # holdings · pos = # leveraged positions
-// (0 = full stock, no futures) · cash = leftover cash fraction · short = BTC short bias
-const ARCHETYPES = [
-  { focus: "bist", spot: 6, pos: 0, cash: 0.06, short: false }, // Mert — full stock BIST
-  { focus: "us", spot: 5, pos: 0, cash: 0.08, short: false }, // Elif — full stock US tech
-  { focus: "crypto", spot: 3, pos: 3, cash: 0.10, short: true }, // Can — crypto degen
-  { focus: "mixed", spot: 5, pos: 1, cash: 0.22, short: false }, // Zeynep — balanced
-  { focus: "mixed", spot: 7, pos: 0, cash: 0.05, short: false }, // Emre — full stock mixed
-  { focus: "mixed", spot: 2, pos: 4, cash: 0.20, short: true }, // Selin — leverage heavy
-  { focus: "bist", spot: 6, pos: 0, cash: 0.04, short: false }, // Burak — full stock BIST
-  { focus: "mixed", spot: 3, pos: 1, cash: 0.40, short: false }, // Ayşe — cash heavy
-  { focus: "crypto", spot: 2, pos: 4, cash: 0.15, short: true, force: ["DOGE"] }, // Kerem — crypto leverage (DOGE short)
-  { focus: "index", spot: 4, pos: 1, cash: 0.15, short: false }, // Deniz — index focus
-  { focus: "bist", spot: 6, pos: 0, cash: 0.07, short: false }, // Ozan — value full stock
-  { focus: "crypto", spot: 4, pos: 2, cash: 0.12, short: false }, // Ece — crypto mixed
-  { focus: "mixed", spot: 5, pos: 2, cash: 0.10, short: false }, // Tolga — momentum mixed
-  { focus: "mixed", spot: 6, pos: 0, cash: 0.18, short: false }, // Cem — balanced full stock
-  { focus: "us", spot: 4, pos: 2, cash: 0.12, short: true }, // Gizem — US tech + a BTC short
+// realistic bios — assigned at random; many users leave it blank
+const BIOS = [
+  "Uzun vadeli yatırımcı.", "Teknoloji hisseleri ağırlıkta.", "Kripto ve endeks dengesi.",
+  "Temettü sever.", "BIST takipçisi.", "Riski yöneten trader.", "Kısa vade, hızlı işlem.",
+  "Sabırlı portföy.", "Kaldıraçlı işlemler.", "Endeks fonu mantığı.", "Değer yatırımı.",
+  "Momentum avcısı.", "Dengeli ve temkinli.", "Borsada 3. yılım.", "Grafik okumayı severim.",
+  "Düşüşte alırım.", "Stop'a sadığım.", "Spot ağırlıklı.", "ABD piyasası favorim.",
+  "Yeni başladım, öğreniyorum.", "Kahve + grafik.", "Sadece sağlam projeler.",
 ];
+
+// Procedural archetype per user (from their seeded RNG) → fully varied
+// portfolios: asset focus, holding count, leverage usage, cash level. Some
+// will coincide — that's fine, real groups overlap too.
+function archetypeFor(r) {
+  const focus = pick(["mixed", "mixed", "mixed", "crypto", "crypto", "bist", "bist", "us", "index"], r);
+  const spot = 2 + Math.floor(r() * 7); // 2..8
+  const pr = r();
+  const pos = pr < 0.42 ? 0 : pr < 0.72 ? 1 + Math.floor(r() * 2) : 2 + Math.floor(r() * 3); // 0 / 1-2 / 2-4
+  const cash = 0.03 + r() * 0.42; // 3%..45%
+  const short = pos > 0 && r() < 0.5;
+  return { focus, spot, pos, cash, short };
+}
 
 const poolFor = (focus) => {
   if (focus === "crypto") return CRYPTO.map((x) => x[0]);
@@ -151,12 +168,15 @@ async function main() {
   await q("DELETE FROM users WHERE email LIKE '%@arena.demo'");
 
   let made = 0;
-  for (let uidx = 0; uidx < USERS.length; uidx++) {
-    const [name, handle, bio] = USERS[uidx];
-    const A = ARCHETYPES[uidx];
+  let mPhoto = 0, wPhoto = 0; // real-person portrait indices (randomuser.me, not AI)
+  for (let uidx = 0; uidx < NAMES.length; uidx++) {
+    const [name, handle, gender] = NAMES[uidx];
     const r = rng(handle);
+    const A = archetypeFor(r);
+    const bio = r() < 0.65 ? pick(BIOS, r) : ""; // ~35% leave bio blank
     const id = randomUUID();
-    const image = `https://picsum.photos/seed/${handle}/256`;
+    const photoN = gender === "f" ? wPhoto++ : mPhoto++;
+    const image = `https://randomuser.me/api/portraits/${gender === "f" ? "women" : "men"}/${photoN}.jpg`;
     const email = `${handle}@arena.demo`;
 
     // ── archetype-driven basket: some full-stock, some leverage-heavy ──
