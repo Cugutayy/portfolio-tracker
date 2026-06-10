@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Asset Trend Bot · Live Paper Trading</title>
+<meta name="description" content="3-ay canli paper trading: 29 varlik multi-asset trend-following. 14.5y backtest Jensen alpha p=0.0001 ile kanitlanmis.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a0a0a'/%3E%3Cpath d='M5 22 L11 16 L17 19 L22 11 L27 14' stroke='%2334d399' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-2: #0e0e0e;
+    --surface: #141414;
+    --surface2: #1c1c1c;
+    --border: #252525;
+    --accent: #34d399;
+    --accent-soft: rgba(52,211,153,0.10);
+    --gold: #f59e0b;
+    --gold-soft: rgba(245,158,11,0.10);
+    --danger: #ef4444;
+    --danger-soft: rgba(239,68,68,0.10);
+    --muted: #6b6b6b;
+    --text: #e8e8e8;
+    --text2: #a8a8a8;
+    --chart-grid: #252525;
+    --chart-tick: #6b6b6b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.5; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: 'DM Mono', monospace; background: var(--surface); padding: 1px 5px; border-radius: 3px; font-size: 0.9em; }
+
+  .topbar { position: sticky; top: 0; z-index: 50; background: rgba(10,10,10,.85); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); padding: 0 24px; height: 48px; display: flex; align-items: center; justify-content: space-between; }
+  .hub-btn { background: transparent; border: 1px solid var(--border); color: var(--text2); padding: 5px 12px; border-radius: 6px; font-family: 'DM Mono', monospace; font-size: 0.72rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; transition: all .15s; }
+  .hub-btn:hover { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+  .topbar-title { font-family: 'Newsreader', serif; font-size: 0.92rem; font-weight: 400; color: var(--text2); font-style: italic; }
+  .topbar-status { display: flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--accent); }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(52,211,153,.6); } 50% { box-shadow: 0 0 0 6px rgba(52,211,153,0); } }
+
+  .container { max-width: 1280px; margin: 0 auto; padding: 32px 28px 60px; }
+
+  /* Hero */
+  .hero { background: radial-gradient(ellipse at top right, rgba(52,211,153,.06), transparent 60%), linear-gradient(135deg, var(--surface), var(--bg-2)); border: 1px solid var(--border); border-radius: 14px; padding: 32px 36px; margin-bottom: 28px; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--accent), transparent); opacity: .35; }
+  .hero-status { display: inline-flex; align-items: center; gap: 10px; font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: .06em; color: var(--text2); margin-bottom: 14px; text-transform: uppercase; }
+  .hero h1 { font-family: 'Newsreader', serif; font-size: 2.2rem; font-weight: 300; letter-spacing: -0.01em; margin-bottom: 6px; }
+  .hero h1 em { color: var(--accent); font-style: italic; }
+  .hero .tagline { color: var(--text2); font-size: 0.95rem; max-width: 720px; line-height: 1.6; margin-top: 8px; }
+  .hero-tags { display: flex; gap: 8px; margin-top: 18px; flex-wrap: wrap; }
+  .hero-tags span { background: var(--surface2); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--text2); }
+
+  /* KPI grid */
+  h2 { font-family: 'Newsreader', serif; font-size: 1.25rem; font-style: italic; color: var(--text); margin: 36px 0 14px 0; padding-bottom: 10px; border-bottom: 1px solid var(--border); font-weight: 400; }
+  h3 { font-family: 'Newsreader', serif; font-size: 1.05rem; font-weight: 400; margin: 18px 0 10px; color: var(--text2); }
+  .caption { font-family: 'DM Mono', monospace; font-size: 0.74rem; color: var(--muted); margin-bottom: 18px; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 18px 0 24px 0; }
+  .kpi { background: linear-gradient(135deg, var(--surface), var(--surface2)); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; transition: all 0.2s; }
+  .kpi:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.5); border-color: var(--accent); }
+  .kpi-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; font-weight: 500; }
+  .kpi-value { font-family: 'DM Mono', monospace; font-size: 1.7rem; font-weight: 400; line-height: 1.1; }
+  .kpi-value.pos { color: var(--accent); }
+  .kpi-value.neg { color: var(--danger); }
+  .kpi-sub { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted); margin-top: 8px; }
+
+  .chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 22px; margin: 12px 0 24px; }
+
+  table { width: 100%; border-collapse: collapse; font-family: 'DM Mono', monospace; font-size: 0.78rem; }
+  th, td { padding: 9px 14px; border-bottom: 1px solid var(--border); text-align: left; }
+  th { color: var(--muted); font-weight: 400; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.1em; background: var(--bg-2); }
+  th.num { text-align: right; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.pos { color: var(--accent); }
+  td.neg { color: var(--danger); }
+  tbody tr:hover { background: var(--surface2); }
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 0.66rem; font-weight: 500; font-family: 'DM Mono', monospace; }
+  .badge-buy { background: var(--accent-soft); color: var(--accent); }
+  .badge-sell { background: var(--danger-soft); color: var(--danger); }
+  .badge-hold { background: rgba(245,158,11,.12); color: var(--gold); }
+  .badge-close { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  .progress { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin: 14px 0; }
+  .progress-bar { width: 100%; height: 8px; background: var(--bg-2); border-radius: 4px; overflow: hidden; margin: 10px 0; }
+  .progress-bar > div { height: 100%; background: linear-gradient(90deg, var(--accent), #5eead4); transition: width 0.5s; }
+  .progress-label { display: flex; justify-content: space-between; font-family: 'DM Mono', monospace; font-size: 0.74rem; color: var(--text2); }
+
+  footer { margin-top: 50px; padding: 24px 0; border-top: 1px solid var(--border); font-size: 0.74rem; color: var(--muted); text-align: center; }
+
+  .empty-state { padding: 40px; text-align: center; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.84rem; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:18px">
+    <a href="/" class="hub-btn" title="Hub">← Hub</a>
+    <span class="topbar-title">Multi-Asset Trend <em style="color:var(--accent)">Bot</em></span>
+  </div>
+  <div class="topbar-status">
+    <span class="live-dot"></span>
+    <span id="liveLabel">Live Paper Trading</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="hero">
+    <div class="hero-status">
+      <span class="live-dot"></span>
+      <span style="color:var(--accent);font-weight:500">3-AYLIK CANLI TEST</span>
+      <span style="width:1px;height:12px;background:var(--border)"></span>
+      <span id="periodLabel">2026-06-09 → 2026-09-09</span>
+    </div>
+    <h1>Multi-Asset Trend <em>Bot</em></h1>
+    <p class="tagline">29 likit ETF/kripto üzerine kantitatif trend-following sistemi. <strong>14.5 yıllık backtest Jensen alpha p=0.0001</strong> ile kanıtlanmış. 3 ay canlı paper trading ile gerçek performans takip ediliyor.</p>
+    <div class="hero-tags">
+      <span>Multi-Asset (29)</span>
+      <span>3-Sinyal Blend</span>
+      <span>Risk-Parity</span>
+      <span>Vol-Target %15</span>
+      <span>Backtest CAGR +20.56%</span>
+      <span>Sharpe 0.974</span>
+    </div>
+  </div>
+
+  <div class="progress">
+    <div class="progress-label">
+      <span><strong>3-Ay Canlı Test İlerlemesi</strong></span>
+      <span id="progressText">Gün <span id="daysLive">0</span> / 92</span>
+    </div>
+    <div class="progress-bar"><div id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label">
+      <span style="color:var(--muted)">Başlangıç: 2026-06-09</span>
+      <span style="color:var(--muted)">Bitiş: 2026-09-09</span>
+    </div>
+  </div>
+
+  <h2>Live Performance</h2>
+  <div class="kpi-grid" id="kpiGrid">
+    <div class="empty-state">Performans yükleniyor...</div>
+  </div>
+
+  <h3>Bot Değeri vs SPY Buy-Hold</h3>
+  <div class="chart-box"><canvas id="chartEquity" height="100"></canvas></div>
+
+  <h2>Açık Pozisyonlar</h2>
+  <div id="positionsContainer">
+    <div class="empty-state">Pozisyon verisi bekleniyor...</div>
+  </div>
+
+  <h2>İşlem Geçmişi</h2>
+  <div id="tradesContainer">
+    <div class="empty-state">İşlem verisi bekleniyor...</div>
+  </div>
+
+  <h2>Strateji Metodolojisi</h2>
+  <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit, minmax(220px, 1fr))">
+    <div class="kpi"><div class="kpi-label">Universe</div><div style="font-family:'DM Mono';font-size:0.86rem;line-height:1.5;color:var(--text2);margin-top:6px">29 ETF/kripto: 10 hisse (SPY/QQQ/XLE/...), 5 tahvil (TLT/TLT/LQD/...), 7 emtia (GLD/SLV/USO/...), 3 FX (UUP/FXE/FXY), 2 kripto (BTC/ETH)</div></div>
+    <div class="kpi"><div class="kpi-label">Sinyaller (3 blend)</div><div style="font-family:'DM Mono';font-size:0.86rem;line-height:1.5;color:var(--text2);margin-top:6px">1. MA crossover (50/200)<br>2. Donchian breakout (50g)<br>3. TS-momentum (60/120/250g)</div></div>
+    <div class="kpi"><div class="kpi-label">Risk Yönetimi</div><div style="font-family:'DM Mono';font-size:0.86rem;line-height:1.5;color:var(--text2);margin-top:6px">Risk-parity (1/vol ağırlık)<br>Vol-target %15 (ex-post)<br>Leverage cap 5x<br>%5 rebalance threshold</div></div>
+    <div class="kpi"><div class="kpi-label">Backtest Kanıt</div><div style="font-family:'DM Mono';font-size:0.86rem;line-height:1.5;color:var(--text2);margin-top:6px">14.5y · 3651 gün<br>CAGR +20.56% (SPY +10.28%)<br>Sharpe 0.974 vs 0.463<br>Jensen α +16.66%, p=0.0001<br>Beta = −0.09 (market-neutral)</div></div>
+  </div>
+
+  <footer>
+    <strong>Salih Çağatay Sönmez</strong> · <a href="mailto:s.cagatay.sonmez@gmail.com">s.cagatay.sonmez@gmail.com</a> · <a href="https://github.com/Cugutayy/bist-sentiment-bot" target="_blank">github/bist-sentiment-bot</a>
+  </footer>
+</div>
+
+<script>
+const DATA_BASE = "./data";
+const FMT_USD = x => (x>=0?"+":"") + "$" + Math.abs(x).toLocaleString("en-US", {maximumFractionDigits:0});
+const FMT_PCT = x => (x>=0?"+":"") + x.toFixed(2) + "%";
+
+async function loadJSON(name) {
+  try {
+    const res = await fetch(`${DATA_BASE}/${name}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) { return null; }
+}
+
+function kpi(label, value, sub, tone) {
+  const cls = tone === "pos" ? "kpi-value pos" : tone === "neg" ? "kpi-value neg" : "kpi-value";
+  return `<div class="kpi"><div class="kpi-label">${label}</div><div class="${cls}">${value}</div>${sub ? `<div class="kpi-sub">${sub}</div>` : ""}</div>`;
+}
+
+async function render() {
+  const [metrics, equity, positions, trades, state] = await Promise.all([
+    loadJSON("metrics.json"),
+    loadJSON("equity.json"),
+    loadJSON("positions.json"),
+    loadJSON("trades.json"),
+    loadJSON("state.json"),
+  ]);
+
+  // Progress
+  const daysLive = state?.days_live || 0;
+  const pct = Math.min(100, (daysLive / 92) * 100);
+  document.getElementById("daysLive").textContent = daysLive;
+  document.getElementById("progressFill").style.width = pct + "%";
+
+  // KPIs
+  const grid = document.getElementById("kpiGrid");
+  if (metrics) {
+    const ret = metrics.total_return_pct;
+    const bench = metrics.benchmark_return_pct;
+    const excess = ret - bench;
+    grid.innerHTML = [
+      kpi("Bot Değeri", "$" + metrics.current_value.toLocaleString("en-US", {maximumFractionDigits:0}),
+          FMT_PCT(ret), ret >= 0 ? "pos" : "neg"),
+      kpi("SPY Benchmark", "$" + metrics.benchmark_value.toLocaleString("en-US", {maximumFractionDigits:0}),
+          FMT_PCT(bench), bench >= 0 ? "pos" : "neg"),
+      kpi("Excess vs SPY", FMT_PCT(excess), `${FMT_USD(metrics.excess_return_pct * 1000)} fark`, excess >= 0 ? "pos" : "neg"),
+      kpi("Sharpe", metrics.sharpe.toFixed(2), `SPY: ${metrics.benchmark_sharpe.toFixed(2)}`,
+          metrics.sharpe > metrics.benchmark_sharpe ? "pos" : "neg"),
+      kpi("Max DD", FMT_PCT(metrics.max_drawdown_pct), "Geri çekilme", "neg"),
+      kpi("Gün", String(metrics.days_live), `${metrics.live_start} → ${metrics.live_end}`, "neutral"),
+    ].join("");
+  } else if (state) {
+    // Tek gün — daha az metrik
+    grid.innerHTML = [
+      kpi("Bot Değeri", "$" + state.total_value.toLocaleString("en-US", {maximumFractionDigits:0}),
+          "Gün 1 başlangıç", "neutral"),
+      kpi("SPY Benchmark", "$" + state.benchmark_value.toLocaleString("en-US", {maximumFractionDigits:0}),
+          "Gün 1 başlangıç", "neutral"),
+      kpi("Açık Pozisyon", String(Object.keys(state.positions || {}).length), "Aktif", "neutral"),
+      kpi("Nakit", "$" + state.cash.toLocaleString("en-US", {maximumFractionDigits:0}),
+          `${((state.cash/state.total_value)*100).toFixed(1)}%`, "neutral"),
+    ].join("");
+  } else {
+    grid.innerHTML = '<div class="empty-state">Bot bugün ilk güne başladı. Veriler birikiyor...</div>';
+  }
+
+  // Equity chart
+  if (equity && equity.length >= 1) {
+    const ctx = document.getElementById("chartEquity").getContext("2d");
+    const labels = equity.map(p => p.date);
+    new Chart(ctx, {
+      type: "line",
+      data: { labels, datasets: [
+        { label: "Bot", data: equity.map(p => p.value), borderColor: "#34d399", backgroundColor: "rgba(52,211,153,.08)", borderWidth: 2.5, fill: true, pointRadius: 0, tension: 0.1 },
+        { label: "SPY", data: equity.map(p => p.benchmark), borderColor: "#f59e0b", borderDash: [4,4], borderWidth: 1.5, pointRadius: 0, tension: 0.1, fill: false },
+      ]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: "#a8a8a8", font: { family: "DM Mono" } } } },
+        scales: {
+          x: { ticks: { color: "#6b6b6b", font: { family: "DM Mono", size: 10 }, maxTicksLimit: 10 }, grid: { color: "#252525" } },
+          y: { ticks: { color: "#6b6b6b", font: { family: "DM Mono" }, callback: v => "$" + v.toLocaleString() }, grid: { color: "#252525" } },
+        },
+      },
+    });
+  } else {
+    document.getElementById("chartEquity").parentElement.innerHTML = '<div class="empty-state">Equity curve birikecek...</div>';
+  }
+
+  // Positions
+  if (positions && positions.length > 0) {
+    document.getElementById("positionsContainer").innerHTML = `<table>
+      <thead><tr><th>Ticker</th><th>Açılış</th><th class="num">Ağırlık</th><th class="num">Miktar</th><th class="num">Giriş ($)</th><th class="num">Güncel ($)</th><th class="num">Değer ($)</th></tr></thead>
+      <tbody>${positions.map(p => `<tr>
+        <td><strong>${p.ticker}</strong></td>
+        <td>${p.entry_date || "-"}</td>
+        <td class="num ${p.weight>=0?"pos":"neg"}">${(p.weight*100).toFixed(1)}%</td>
+        <td class="num">${p.qty.toFixed(4)}</td>
+        <td class="num">${p.entry_price.toFixed(2)}</td>
+        <td class="num">${(p.current_price||p.entry_price).toFixed(2)}</td>
+        <td class="num">$${(p.current_value||p.qty*p.entry_price).toLocaleString("en-US", {maximumFractionDigits:0})}</td>
+      </tr>`).join("")}</tbody></table>`;
+  }
+
+  // Trades
+  if (trades && trades.length > 0) {
+    const recent = trades.slice(-30).reverse();
+    document.getElementById("tradesContainer").innerHTML = `<table>
+      <thead><tr><th>Tarih</th><th>Ticker</th><th>Aksiyon</th><th class="num">Eski Ağırlık</th><th class="num">Yeni Ağırlık</th><th class="num">Fiyat</th></tr></thead>
+      <tbody>${recent.map(t => `<tr>
+        <td>${t.date}</td>
+        <td><strong>${t.ticker}</strong></td>
+        <td><span class="badge badge-${t.action.toLowerCase()}">${t.action}</span></td>
+        <td class="num">${(t.weight_old*100).toFixed(1)}%</td>
+        <td class="num ${t.weight_new>=0?"pos":"neg"}">${(t.weight_new*100).toFixed(1)}%</td>
+        <td class="num">${t.price.toFixed(2)}</td>
+      </tr>`).join("")}</tbody></table>
+      ${trades.length > 30 ? `<div style="text-align:center;padding:10px;color:var(--muted);font-size:0.74rem">Son 30 işlem (toplam ${trades.length})</div>` : ""}`;
+  }
+}
+
+render();
+</script>
+
+</body>
+</html>

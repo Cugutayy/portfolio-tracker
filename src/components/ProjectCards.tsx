@@ -85,6 +85,20 @@ export function ProjectCards({ t }: Props) {
         </ScrollReveal>
 
         <ScrollReveal delay={480} style={{ height: '100%' }}>
+          <GlassCard href="/tracker/trend-bot/" label="06b" accent="#34d399">
+            <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>Multi-Asset <em style={{ color:'#34d399', fontStyle:'italic', fontWeight:300 }}>Trend Bot</em></h3>
+            <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>29 ETF/kripto trend-following. 14.5y backtest Jensen α p=0.0001. Şu an <strong style={{color:'#34d399'}}>3 aylık canlı paper trading</strong>.</p>
+            <SentimentMini />
+            <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap',alignItems:'center'}}>
+              <Stat label="Alpha" value="+16.66%" pos />
+              <Stat label="Sharpe" value="0.97" pos />
+              <LiveDot label="Live" />
+            </div>
+            <Tags items={['Trend','Risk-Parity','Vol-Target','Jensen α']} />
+          </GlassCard>
+        </ScrollReveal>
+
+        <ScrollReveal delay={480} style={{ height: '100%' }}>
           <GlassCard href="/tracker/sentiment-bot/" label="06" accent="#4ade80">
             <h3 style={{ fontSize:'.95rem', fontWeight:500, marginBottom:6 }}>Sentiment Trading <em style={{ color:'#4ade80', fontStyle:'italic', fontWeight:300 }}>with LLM</em></h3>
             <p style={{ color:'var(--muted)', fontSize:'.72rem', lineHeight:1.45, marginBottom:10 }}>BIST 30 + 40 akademik feature + 5-model bagging ensemble + vol-targeting. 1052-gün continuous walk-forward XU100'ü +39pp CAGR ile geçer.</p>
