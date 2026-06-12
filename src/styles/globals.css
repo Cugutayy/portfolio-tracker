@@ -120,4 +120,69 @@ body::before {
 @media(prefers-reduced-motion: reduce) {
   body::before { animation: none; }
   .orb { animation: none !important; }
+  .fade-up { animation: none !important; opacity: 1 !important; transform: none !important; }
 }
+
+/* ═══════════ Editorial broadsheet system ═══════════ */
+.eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: .58rem;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.display {
+  font-family: 'Newsreader', Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+}
+.italic-accent { font-style: italic; color: var(--accent); font-weight: 400; }
+
+/* newspaper rules */
+.rule-thick { border: none; border-top: 2px solid var(--ink); }
+.rule-thin  { border: none; border-top: 1px solid var(--rule); }
+.rule-double { border: none; border-top: 3px double var(--ink); }
+
+.fade-up {
+  opacity: 0;
+  transform: translateY(22px);
+  animation: fadeUp 1s cubic-bezier(.16,1,.3,1) forwards;
+}
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+/* editorial project card — flat, hairline, refined hover */
+.ed-card {
+  display: block;
+  position: relative;
+  border: 1px solid var(--rule);
+  background: var(--card-bg);
+  padding: 22px 24px 20px;
+  height: 100%;
+  transition: border-color .3s ease, background .3s ease, transform .45s cubic-bezier(.16,1,.3,1), box-shadow .45s ease;
+}
+.ed-card::after {
+  content: '';
+  position: absolute; left: 0; right: 0; top: -1px; height: 2px;
+  background: var(--ed-accent, var(--accent));
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .45s cubic-bezier(.16,1,.3,1);
+}
+.ed-card:hover { transform: translateY(-3px); box-shadow: 0 14px 40px var(--shadow); border-color: var(--card-border-h, var(--rule)); }
+.ed-card:hover::after { transform: scaleX(1); }
+.ed-card .ed-arrow { opacity: 0; transform: translateX(-4px); transition: opacity .3s ease, transform .3s ease; }
+.ed-card:hover .ed-arrow { opacity: .9; transform: translateX(0); }
+
+/* lead story block */
+.lead-card {
+  display: block;
+  border: 1px solid var(--rule);
+  background: var(--card-bg);
+  transition: border-color .3s ease, box-shadow .5s ease, transform .5s cubic-bezier(.16,1,.3,1);
+}
+.lead-card:hover { transform: translateY(-3px); box-shadow: 0 18px 50px var(--shadow); }
+
+.lead-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 0; }
+@media(max-width: 760px) { .lead-grid { grid-template-columns: 1fr; } }
+
+.ed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }

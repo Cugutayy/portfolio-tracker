@@ -1,89 +1,86 @@
 import { useState, useEffect } from 'react'
 
+/**
+ * Masthead hero — personal broadsheet nameplate.
+ * Eyebrow · giant serif name with italic accent · role line ·
+ * newspaper edition line (date · live Istanbul clock · issue) between rules.
+ */
 export function Hero({ lang }: { lang: string }) {
   const [clock, setClock] = useState('')
-  const [vis, setVis] = useState(false)
-
-  useEffect(() => { const t = setTimeout(() => setVis(true), 80); return () => clearTimeout(t) }, [])
+  const [dateLine, setDateLine] = useState('')
 
   useEffect(() => {
     const update = () => {
       const now = new Date()
       const locale = lang === 'zh' ? 'zh-CN' : lang === 'en' ? 'en-US' : 'tr-TR'
-      const t = now.toLocaleTimeString(locale, { timeZone:'Europe/Istanbul', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false })
-      const d = now.toLocaleDateString(locale, { timeZone:'Europe/Istanbul', day:'numeric', month:'long', year:'numeric' })
-      setClock(`${d} \u00B7 ${t}`)
+      setClock(now.toLocaleTimeString(locale, { timeZone: 'Europe/Istanbul', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }))
+      setDateLine(
+        now
+          .toLocaleDateString(locale, { timeZone: 'Europe/Istanbul', day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' })
+          .toLocaleUpperCase(locale),
+      )
     }
     update()
     const id = setInterval(update, 1000)
     return () => clearInterval(id)
   }, [lang])
 
-  const role = lang === 'zh' ? '\u91D1\u878D \u00B7 \u673A\u5668\u5B66\u4E60 \u00B7 \u6570\u636E\u79D1\u5B66'
-    : lang === 'en' ? 'Finance \u00B7 Machine Learning \u00B7 Data'
-    : 'Finans \u00B7 Makine \u00D6\u011Frenmesi \u00B7 Veri'
+  const eyebrow = lang === 'zh' ? '个人版 · 伊兹密尔' : lang === 'en' ? 'PERSONAL EDITION · IZMIR' : 'KİŞİSEL EDİSYON · İZMİR'
+  const role = lang === 'zh' ? '金融 · 机器学习 · 数据'
+    : lang === 'en' ? 'Finance · Machine Learning · Data'
+    : 'Finans · Makine Öğrenmesi · Veri'
+  const issue = lang === 'zh' ? '第 II 期 · 9个项目' : lang === 'en' ? 'VOL. II · 9 PROJECTS' : 'CİLT II · 9 PROJE'
+  const liveLabel = lang === 'zh' ? '实时' : lang === 'en' ? 'LIVE' : 'CANLI'
 
   return (
-    <header style={{
-      minHeight: '52vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-      paddingTop: 80,
-      paddingBottom: 8,
-    }}>
-      {/* Clock — subtle top detail */}
-      <div className="mono" style={{
-        fontSize: '.52rem',
-        color: 'var(--muted)',
-        letterSpacing: '.08em',
-        opacity: vis ? 0.35 : 0,
-        transition: 'opacity 1.5s ease 0.6s',
-        marginBottom: 28,
-      }}>
-        {clock}
+    <header className="container" style={{ paddingTop: 92, paddingBottom: 8 }}>
+      {/* nameplate */}
+      <div style={{ textAlign: 'center', padding: '40px 0 34px' }}>
+        <div className="eyebrow fade-up" style={{ marginBottom: 26, animationDelay: '.05s' }}>
+          {eyebrow}
+        </div>
+
+        <h1 className="display fade-up" style={{
+          fontSize: 'clamp(3rem, 9vw, 6.4rem)',
+          margin: 0,
+          animationDelay: '.16s',
+        }}>
+          {'S. Çağatay '}
+          <span className="italic-accent">Sönmez</span>
+        </h1>
+
+        <p className="mono fade-up" style={{
+          fontSize: '.62rem',
+          color: 'var(--muted)',
+          letterSpacing: '.24em',
+          textTransform: 'uppercase',
+          marginTop: 24,
+          animationDelay: '.3s',
+        }}>
+          {role}
+        </p>
       </div>
 
-      {/* Main Title */}
-      <h1 style={{
-        fontSize: 'clamp(2.6rem, 6.5vw, 5rem)',
-        fontWeight: 400,
-        letterSpacing: '-0.035em',
-        lineHeight: 1.06,
-        textAlign: 'center',
-        fontStyle: 'italic',
-        opacity: vis ? 1 : 0,
-        transform: vis ? 'translateY(0)' : 'translateY(24px)',
-        transition: 'opacity 1.1s cubic-bezier(.16,1,.3,1), transform 1.1s cubic-bezier(.16,1,.3,1)',
-      }}>
-        {"S. \u00C7a\u011Fatay"}<br/>{"S\u00F6nmez"}
-      </h1>
-
-      {/* Role subtitle */}
-      <p className="mono" style={{
-        fontSize: '.62rem',
-        color: 'var(--muted)',
-        letterSpacing: '.18em',
-        textTransform: 'uppercase',
-        marginTop: 20,
-        opacity: vis ? 0.55 : 0,
-        transform: vis ? 'translateY(0)' : 'translateY(14px)',
-        transition: 'opacity 1.3s cubic-bezier(.16,1,.3,1) 0.15s, transform 1.3s cubic-bezier(.16,1,.3,1) 0.15s',
-      }}>
-        {role}
-      </p>
-
-      {/* Geometric accent — thin vertical line */}
-      <div style={{
-        width: 1,
-        height: 44,
-        background: 'linear-gradient(to bottom, var(--rule), transparent)',
-        marginTop: 32,
-        opacity: vis ? 0.4 : 0,
-        transition: 'opacity 2s ease 0.4s',
-      }} />
+      {/* edition line — between newspaper rules */}
+      <div className="fade-up" style={{ animationDelay: '.42s' }}>
+        <hr className="rule-thick" style={{ opacity: .85 }} />
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 14, flexWrap: 'wrap', padding: '9px 2px',
+        }}>
+          <span className="mono" style={{ fontSize: '.56rem', letterSpacing: '.14em', color: 'var(--muted)' }}>
+            {issue}
+          </span>
+          <span className="mono" style={{ fontSize: '.56rem', letterSpacing: '.14em', color: 'var(--muted)' }}>
+            {dateLine}
+          </span>
+          <span className="mono" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: '.56rem', letterSpacing: '.14em', color: 'var(--muted)' }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--green)', animation: 'pd 2s ease-in-out infinite', display: 'inline-block' }} />
+            {liveLabel} · {clock}
+          </span>
+        </div>
+        <hr className="rule-thin" />
+      </div>
     </header>
   )
 }
