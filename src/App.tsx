@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Navbar } from './components/Navbar'
 import { Hero } from './components/Hero'
-import { InteractiveGraph } from './components/InteractiveGraph'
 import { ProjectCards } from './components/ProjectCards'
 import { Footer } from './components/Footer'
 import { F1Page } from './components/F1Page'
@@ -9,53 +8,9 @@ import { AlbionPage } from './components/AlbionPage'
 import { XPage } from './components/XPage'
 
 const I18N: Record<string, Record<string, string>> = {
-  tr: { secP:'Projeler', pCnt:'8 proje', p1d:'Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi.', pf:'Portföy', ch:'Değişim', gd:'Altın', lv:'Canlı', tF:'Finans', tA:'Canlı API', p2t:'F1 Yarış Tahmini', p2d:'Ensemble ML (Ridge+GB+ELO) ile F1 yarış tahmini. Canlı telemetri, sektör analizi, lap-by-lap güncelleme.', drivers:'sürücü', p3t:'Tez Konusu', p3d:'BIST 2020–2025 halka arz düşük fiyatlaması, sürü davranışı ve SPK cezaları. 209 halka arz, 5 araştırma sorusu.', p4t:'Albion Piyasa Tarayıcı', p4d:'Albion Online piyasa arbitraj tarayıcı. Şehirler arası ve Kara Pazar fiyat farkı analizi.', p5t:'Alsancak Runners', p5d:'İzmir merkezli urban running topluluğu. Strava entegrasyonu, etkinlik yönetimi, topluluk dashboard\'ı.', p7t:'X', p7d:'3D / 360° dijital mekân arşivi. Gezilen estetik ve otantik mekânların sinematik, immersive dijital atlası. (Geliştiriliyor)', p8t:'XX', p8d:'Traderların 1.000.000 ₺ sanal portföyle yarıştığı sosyal yatırım arenası. Gerçek piyasa fiyatları, canlı liderlik. (Geliştiriliyor)', navP:'projeler', navC:'iletişim' },
-  en: { secP:'Projects', pCnt:'8 projects', p1d:'Portfolio tracking system for Responsible Investment course. 100K TL, 7 instruments, live prices, ESG analysis.', pf:'Portfolio', ch:'Change', gd:'Gold', lv:'Live', tF:'Finance', tA:'Live API', p2t:'F1 Race Predictor', p2d:'F1 race prediction with Ensemble ML. Live telemetry, sector analysis, lap-by-lap updates.', drivers:'drivers', p3t:'Thesis', p3d:'BIST 2020–2025 IPO underpricing, herding behavior & SPK penalties. 209 IPOs, 5 research questions.', p4t:'Albion Market Scanner', p4d:'Albion Online market arbitrage scanner. City-to-city and Black Market price gap analysis.', p5t:'Alsancak Runners', p5d:'Urban running collective based in Izmir. Strava integration, event management, community dashboard.', p7t:'X', p7d:'A 3D / 360° digital archive of places. A cinematic, immersive digital atlas of the aesthetic and authentic spaces visited. (Work in progress)', p8t:'XX', p8d:'A social investing arena where traders compete with a 1,000,000 ₺ virtual portfolio. Real market prices, live leaderboard. (Work in progress)', navP:'projects', navC:'contact' },
-  zh: { secP:'项目', pCnt:'8个项目', p1d:'负责任投资课程的投资组合跟踪系统。', pf:'投资组合', ch:'变化', gd:'黄金', lv:'实时', tF:'金融', tA:'实时API', p2t:'F1比赛预测', p2d:'集成ML模型预测F1比赛。实时遥测、扇区分析。', drivers:'车手', p3t:'毕业论文', p3d:'BIST 2020-2025 IPO定价不足和羊群行为研究。209家IPO。', p4t:'Albion市场扫描器', p4d:'Albion Online市场套利扫描器。城市间和黑市价格差分析。', p5t:'Alsancak Runners', p5d:'伊兹密尔城市跑步社区。Strava集成、活动管理、社区仪表板。', p7t:'X', p7d:'3D / 360° 数字空间档案。一座记录所游历的美学与本真场所的电影级沉浸式数字地图集。（开发中）', p8t:'XX', p8d:'交易者用100万₺虚拟投资组合竞争的社交投资竞技场。真实市场价格，实时排行榜。（开发中）', navP:'项目', navC:'联系' },
-}
-
-/* Pure CSS ambient orbs — zero JS, GPU composited */
-function AmbientOrbs({ dark }: { dark: boolean }) {
-  return (
-    <div className="ambient-orbs" aria-hidden="true" style={{ position:'fixed', inset:0, zIndex:0, pointerEvents:'none', overflow:'hidden' }}>
-      <div className="orb orb-1" style={{
-        position:'absolute', width:'45vmax', height:'45vmax', borderRadius:'50%',
-        top:'-10%', left:'-5%',
-        background: dark
-          ? 'radial-gradient(circle, rgba(200,160,100,0.07) 0%, transparent 70%)'
-          : 'radial-gradient(circle, rgba(180,140,80,0.08) 0%, transparent 70%)',
-        filter:'blur(60px)',
-        animation:'orbFloat1 30s ease-in-out infinite alternate',
-      }} />
-      <div className="orb orb-2" style={{
-        position:'absolute', width:'40vmax', height:'40vmax', borderRadius:'50%',
-        top:'30%', right:'-10%',
-        background: dark
-          ? 'radial-gradient(circle, rgba(80,110,160,0.06) 0%, transparent 70%)'
-          : 'radial-gradient(circle, rgba(100,130,180,0.06) 0%, transparent 70%)',
-        filter:'blur(70px)',
-        animation:'orbFloat2 35s ease-in-out infinite alternate',
-      }} />
-      <div className="orb orb-3" style={{
-        position:'absolute', width:'35vmax', height:'35vmax', borderRadius:'50%',
-        bottom:'-5%', left:'30%',
-        background: dark
-          ? 'radial-gradient(circle, rgba(160,90,100,0.05) 0%, transparent 70%)'
-          : 'radial-gradient(circle, rgba(180,100,120,0.05) 0%, transparent 70%)',
-        filter:'blur(80px)',
-        animation:'orbFloat3 28s ease-in-out infinite alternate',
-      }} />
-      <div className="orb orb-4" style={{
-        position:'absolute', width:'25vmax', height:'25vmax', borderRadius:'50%',
-        top:'60%', left:'10%',
-        background: dark
-          ? 'radial-gradient(circle, rgba(100,180,140,0.04) 0%, transparent 70%)'
-          : 'radial-gradient(circle, rgba(80,160,120,0.04) 0%, transparent 70%)',
-        filter:'blur(50px)',
-        animation:'orbFloat4 32s ease-in-out infinite alternate',
-      }} />
-    </div>
-  )
+  tr: { lead:'MANŞET', leadCta:'Arenaya gir', leadStart:'Başlangıç', leadLev:'Kaldıraç', leadData:'CANLI VERİ', secP:'Projeler', pCnt:'9 proje', p1d:'Responsible Investment dersi için 100.000 TL portföy takip sistemi. 7 enstrüman, canlı fiyatlar, ESG analizi.', pf:'Portföy', ch:'Değişim', gd:'Altın', lv:'Canlı', tF:'FİNANS', tA:'Canlı API', p2t:'F1 Yarış Tahmini', p2d:'Ensemble ML (Ridge+GB+ELO) ile F1 yarış tahmini. Canlı telemetri, sektör analizi, lap-by-lap güncelleme.', drivers:'sürücü', p3t:'Tez Konusu', p3d:'BIST 2020–2025 halka arz düşük fiyatlaması, sürü davranışı ve SPK cezaları. 209 halka arz, 5 araştırma sorusu.', p4t:'Albion Piyasa Tarayıcı', p4d:'Albion Online piyasa arbitraj tarayıcı. Şehirler arası ve Kara Pazar fiyat farkı analizi.', p5t:'Alsancak Runners', p5d:'İzmir merkezli urban running topluluğu. Strava entegrasyonu, etkinlik yönetimi, topluluk dashboard\'ı.', p7t:'X', p7d:'3D / 360° dijital mekân arşivi. Gezilen estetik ve otantik mekânların sinematik, immersive dijital atlası. (Geliştiriliyor)', p8t:'XX', p8d:'Traderların 1.000.000 ₺ sanal portföyle yarıştığı sosyal yatırım arenası. Gerçek piyasa fiyatları, canlı liderlik. (Geliştiriliyor)', navP:'projeler', navC:'iletişim' },
+  en: { lead:'LEAD STORY', leadCta:'Enter the arena', leadStart:'Starting', leadLev:'Leverage', leadData:'Live data', secP:'Projects', pCnt:'9 projects', p1d:'Portfolio tracking system for Responsible Investment course. 100K TL, 7 instruments, live prices, ESG analysis.', pf:'Portfolio', ch:'Change', gd:'Gold', lv:'Live', tF:'Finance', tA:'Live API', p2t:'F1 Race Predictor', p2d:'F1 race prediction with Ensemble ML. Live telemetry, sector analysis, lap-by-lap updates.', drivers:'drivers', p3t:'Thesis', p3d:'BIST 2020–2025 IPO underpricing, herding behavior & SPK penalties. 209 IPOs, 5 research questions.', p4t:'Albion Market Scanner', p4d:'Albion Online market arbitrage scanner. City-to-city and Black Market price gap analysis.', p5t:'Alsancak Runners', p5d:'Urban running collective based in Izmir. Strava integration, event management, community dashboard.', p7t:'X', p7d:'A 3D / 360° digital archive of places. A cinematic, immersive digital atlas of the aesthetic and authentic spaces visited. (Work in progress)', p8t:'XX', p8d:'A social investing arena where traders compete with a 1,000,000 ₺ virtual portfolio. Real market prices, live leaderboard. (Work in progress)', navP:'projects', navC:'contact' },
+  zh: { lead:'头条', leadCta:'进入竞技场', leadStart:'起始', leadLev:'杠杆', leadData:'实时数据', secP:'项目', pCnt:'9个项目', p1d:'负责任投资课程的投资组合跟踪系统。', pf:'投资组合', ch:'变化', gd:'黄金', lv:'实时', tF:'金融', tA:'实时API', p2t:'F1比赛预测', p2d:'集成ML模型预测F1比赛。实时遥测、扇区分析。', drivers:'车手', p3t:'毕业论文', p3d:'BIST 2020-2025 IPO定价不足和羊群行为研究。209家IPO。', p4t:'Albion市场扫描器', p4d:'Albion Online市场套利扫描器。城市间和黑市价格差分析。', p5t:'Alsancak Runners', p5d:'伊兹密尔城市跑步社区。Strava集成、活动管理、社区仪表板。', p7t:'X', p7d:'3D / 360° 数字空间档案。一座记录所游历的美学与本真场所的电影级沉浸式数字地图集。（开发中）', p8t:'XX', p8d:'交易者用100万₺虚拟投资组合竞争的社交投资竞技场。真实市场价格，实时排行榜。（开发中）', navP:'项目', navC:'联系' },
 }
 
 export default function App() {
@@ -93,15 +48,11 @@ export default function App() {
   }
 
   return (
-    <>
-      <AmbientOrbs dark={dark} />
-      <div style={{ position:'relative', zIndex:1 }}>
-        <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />
-        <Hero lang={lang} />
-        <InteractiveGraph dark={dark} t={t} />
-        <ProjectCards t={t} />
-        <Footer />
-      </div>
-    </>
+    <div style={{ position:'relative', zIndex:1 }}>
+      <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />
+      <Hero lang={lang} />
+      <ProjectCards t={t} />
+      <Footer />
+    </div>
   )
 }
