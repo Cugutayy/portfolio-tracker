@@ -186,3 +186,91 @@ body::before {
 @media(max-width: 760px) { .lead-grid { grid-template-columns: 1fr; } }
 
 .ed-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+
+/* ═══════════ Cinematic lily hero ═══════════ */
+.font-display { font-family: 'Instrument Serif', Georgia, serif; }
+.font-ui { font-family: 'Inter', system-ui, sans-serif; }
+
+/* Liquid glass — subtle (chips/cards) */
+.liquid-glass {
+  background: rgba(255,255,255,0.02);
+  backdrop-filter: blur(6px) saturate(1.1);
+  -webkit-backdrop-filter: blur(6px) saturate(1.1);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.12);
+  position: relative; overflow: hidden;
+}
+.liquid-glass::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1.4px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 20%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.45) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+}
+/* Liquid glass — strong (primary CTA) */
+.liquid-glass-strong {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(36px) saturate(1.2);
+  -webkit-backdrop-filter: blur(36px) saturate(1.2);
+  border: none;
+  box-shadow: 4px 4px 18px rgba(0,0,0,0.25), inset 0 1px 1px rgba(255,255,255,0.18);
+  position: relative; overflow: hidden;
+}
+.liquid-glass-strong::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1.4px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 20%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.2) 80%, rgba(255,255,255,0.5) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none;
+}
+
+/* blur-fade-up entrance (staggered via inline animation-delay) */
+@keyframes hfUp { from { opacity: 0; filter: blur(12px); transform: translateY(26px); } to { opacity: 1; filter: blur(0); transform: translateY(0); } }
+.hf { opacity: 0; animation: hfUp 1s cubic-bezier(.16,1,.3,1) forwards; }
+
+/* word-by-word blur-in for the serif headline */
+@keyframes hwBlur { 0% { opacity: 0; filter: blur(12px); transform: translateY(38px); } 55% { opacity: .55; filter: blur(5px); transform: translateY(-5px); } 100% { opacity: 1; filter: blur(0); transform: translateY(0); } }
+.hw { display: inline-block; opacity: 0; animation: hwBlur .9s cubic-bezier(.16,1,.3,1) forwards; }
+
+/* ── lily bloom ── */
+/* each petal's fan-rotation is an SVG transform on its wrapper <g>; CSS only
+   blooms it (scale from its base + fade), which is reliable across browsers */
+@keyframes petalBloom {
+  0%   { opacity: 0; transform: scale(.04); }
+  28%  { opacity: 1; }
+  72%  { transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.petal {
+  transform-box: fill-box; transform-origin: 50% 100%;
+  opacity: 0;
+  animation: petalBloom 1.6s cubic-bezier(.34,1.32,.5,1) forwards;
+  animation-delay: var(--pd, 0s);
+}
+@keyframes lilyBreathe { 0%,100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.02) rotate(1.1deg); } }
+.lily-breathe { transform-box: view-box; transform-origin: 200px 210px; animation: lilyBreathe 9s ease-in-out 1.7s infinite; }
+@keyframes lilyGlow { 0%,100% { opacity: .45; transform: scale(1); } 50% { opacity: .72; transform: scale(1.07); } }
+.lily-glow { transform-box: view-box; transform-origin: 200px 200px; animation: lilyGlow 7s ease-in-out infinite; }
+@keyframes centerIn { from { opacity: 0; } to { opacity: 1; } }
+.lily-center { opacity: 0; animation: centerIn 1.2s ease 1.1s forwards; }
+
+/* drifting pollen motes */
+@keyframes pollenRise {
+  0%   { transform: translateY(10px) translateX(0); opacity: 0; }
+  14%  { opacity: .75; }
+  85%  { opacity: .4; }
+  100% { transform: translateY(-130px) translateX(var(--px, 0)); opacity: 0; }
+}
+.pollen {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,242,214,.95) 0%, rgba(255,222,170,0) 70%);
+  filter: blur(.4px); pointer-events: none;
+  animation: pollenRise var(--pdur, 9s) linear infinite;
+  animation-delay: var(--pdl, 0s);
+}
+@keyframes scrollCue { 0%,100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(6px); opacity: 1; } }
+.scroll-cue { animation: scrollCue 2.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hf, .hw { animation: none; opacity: 1; filter: none; transform: none; }
+  .petal, .lily-breathe, .lily-glow, .lily-center, .pollen, .scroll-cue { animation: none; opacity: 1; }
+  .petal { transform: scale(1); }
+}
