@@ -123,6 +123,24 @@ body::before {
   .fade-up { animation: none !important; opacity: 1 !important; transform: none !important; }
 }
 
+/* ═══════════ Site-wide fixed lily backdrop ═══════════ */
+/* one crisp 4K photo fixed behind the whole page; a scroll-driven scrim keeps
+   the hero bright and gently darkens behind the content so text stays legible */
+.site-lily {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: #050506 url('/lily.jpg') center 38% / cover no-repeat;
+}
+.site-scrim {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: var(--bg); opacity: 0.12; transition: opacity .15s linear;
+}
+.site-grain {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  opacity: 0.045; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  background-size: 180px 180px;
+}
+
 /* ═══════════ Editorial broadsheet system ═══════════ */
 .eyebrow {
   font-family: 'DM Mono', monospace;
