@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Navbar } from './components/Navbar'
 import { Hero } from './components/Hero'
 import { ProjectCards } from './components/ProjectCards'
@@ -15,17 +15,22 @@ export default function App() {
   const [lang, setLang] = useState('tr')
   const [dark, setDark] = useState(true)
   const [page, setPage] = useState<'hub' | 'f1' | 'albion' | 'x'>('hub')
-  const [scrim, setScrim] = useState(0.12)
+  const lilyRef = useRef<HTMLDivElement>(null)
+  const scrimRef = useRef<HTMLDivElement>(null)
   const t = (key: string) => I18N[lang]?.[key] || key
 
-  // scroll-driven scrim: hero stays bright, content darkens for legibility
+  // scroll-driven backdrop: the lily gently drifts down to reveal its lower
+  // stems (parallax) while a soft scrim keeps content legible without hiding it
   useEffect(() => {
     let raf = 0
     const onScroll = () => {
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
-        const k = Math.min(1, window.scrollY / (window.innerHeight * 0.75))
-        setScrim(0.12 + k * 0.7)
+        const vh = window.innerHeight || 1
+        const kScrim = Math.min(1, window.scrollY / (vh * 0.8))
+        const kPar = Math.min(1, window.scrollY / (vh * 1.8))
+        if (scrimRef.current) scrimRef.current.style.opacity = String(0.1 + kScrim * 0.46)
+        if (lilyRef.current) lilyRef.current.style.backgroundPosition = `center ${38 + kPar * 30}%`
       })
     }
     onScroll()
@@ -60,9 +65,9 @@ export default function App() {
 
   return (
     <>
-      {/* site-wide fixed lily backdrop */}
-      <div className="site-lily" aria-hidden />
-      <div className="site-scrim" aria-hidden style={{ opacity: scrim }} />
+      {/* site-wide fixed lily backdrop (drifts on scroll) */}
+      <div className="site-lily" aria-hidden ref={lilyRef} />
+      <div className="site-scrim" aria-hidden ref={scrimRef} />
       <div className="site-grain" aria-hidden />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
