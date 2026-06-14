@@ -33,24 +33,17 @@ export function Hero({ lang }: { lang: string }) {
         textAlign: 'center', padding: '92px 22px clamp(8vh, 12vh, 130px)',
       }}
     >
-      {/* the lily lives in the site-wide fixed backdrop. No band/filter — just a
-          faint top wash for the nav and a soft pool behind the nameplate so the
-          serif stays legible over the bright bloom */}
-      <div aria-hidden style={{
-        position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(to bottom, rgba(5,5,6,0.2) 0%, rgba(5,5,6,0) 16%)',
-      }} />
-      <div aria-hidden style={{
-        position: 'absolute', inset: 0, zIndex: 1,
-        background: 'radial-gradient(115% 48% at 50% 80%, rgba(5,5,6,0.6) 0%, rgba(5,5,6,0.26) 42%, rgba(5,5,6,0) 72%)',
-      }} />
+      {/* No area filter at all — the lily reads at full brightness here exactly
+          like the rest of the page. The nameplate stays legible purely through
+          its own text shadow (a halo on the glyphs, not a rectangle). */}
 
       {/* ── glass content ── */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: 720 }}>
         <h1 className="font-display" style={{
           fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(3.4rem, 9.5vw, 7rem)', lineHeight: 0.9,
           letterSpacing: '-0.03em', margin: 0, display: 'flex', flexWrap: 'wrap', justifyContent: 'center',
-          columnGap: '0.28em', rowGap: '0.02em', textShadow: '0 2px 60px rgba(0,0,0,0.8)',
+          columnGap: '0.28em', rowGap: '0.02em',
+          textShadow: '0 1px 2px rgba(0,0,0,0.6), 0 2px 12px rgba(0,0,0,0.7), 0 4px 36px rgba(0,0,0,0.85)',
         }}>
           {name.map((w, i) => (
             <span key={i} className="hw" style={{ animationDelay: `${0.4 + i * 0.13}s`, color: i === 2 ? '#f0cf86' : '#fdf8ee' }}>{w}</span>
@@ -58,14 +51,14 @@ export function Hero({ lang }: { lang: string }) {
         </h1>
 
         <div className="hf" style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 26, flexWrap: 'wrap', justifyContent: 'center', animationDelay: '.9s' }}>
-          <a href="mailto:s.cagatay.sonmez@gmail.com" style={{ fontSize: '.86rem', color: 'rgba(244,239,230,0.82)', textDecoration: 'none', borderBottom: '1px solid rgba(244,239,230,0.32)', paddingBottom: 2 }}>{t.contact}</a>
+          <a href="mailto:s.cagatay.sonmez@gmail.com" style={{ fontSize: '.86rem', color: '#f4efe6', textDecoration: 'none', borderBottom: '1px solid rgba(244,239,230,0.4)', paddingBottom: 2, textShadow: '0 1px 3px rgba(0,0,0,0.7), 0 1px 12px rgba(0,0,0,0.8)' }}>{t.contact}</a>
         </div>
 
         {/* bare, frameless live clock */}
         <div className="hf font-display" style={{
           marginTop: 22, animationDelay: '1.05s', fontStyle: 'italic', lineHeight: 1,
           fontSize: 'clamp(2rem, 4.6vw, 3rem)', letterSpacing: '-0.01em', color: '#fdf8ee',
-          textShadow: '0 2px 34px rgba(0,0,0,0.85)',
+          textShadow: '0 1px 2px rgba(0,0,0,0.6), 0 2px 16px rgba(0,0,0,0.8), 0 3px 34px rgba(0,0,0,0.85)',
         }}>{clock || '··:··'}</div>
       </div>
 
