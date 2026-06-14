@@ -27,7 +27,9 @@ export default function App() {
       raf = requestAnimationFrame(() => {
         const vh = window.innerHeight || 1
         const kPar = Math.min(1, window.scrollY / (vh * 1.8))
-        if (lilyRef.current) lilyRef.current.style.backgroundPosition = `center ${38 + kPar * 30}%`
+        // GPU-composited transform (no repaint) — div is 120% tall, so up to
+        // 16vh of drift reveals the lily's lower stems without leaving a gap
+        if (lilyRef.current) lilyRef.current.style.transform = `translate3d(0, ${-(kPar * vh * 0.16).toFixed(1)}px, 0)`
       })
     }
     onScroll()
@@ -65,7 +67,6 @@ export default function App() {
       {/* site-wide fixed lily backdrop (drifts on scroll) */}
       <div className="site-lily" aria-hidden ref={lilyRef} />
       <div className="site-scrim" aria-hidden />
-      <div className="site-grain" aria-hidden />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />

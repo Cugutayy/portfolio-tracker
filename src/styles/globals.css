@@ -49,32 +49,8 @@ a { color: inherit; text-decoration: none; }
 
 @keyframes pd { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-/* Premium ambient background */
-body::before {
-  content: '';
-  position: fixed;
-  inset: -40%;
-  width: 180%; height: 180%;
-  background:
-    radial-gradient(ellipse 700px 500px at 25% 25%, rgba(180,140,100,0.035) 0%, transparent 70%),
-    radial-gradient(ellipse 500px 700px at 75% 65%, rgba(100,120,160,0.025) 0%, transparent 70%),
-    radial-gradient(ellipse 600px 400px at 50% 80%, rgba(160,110,130,0.02) 0%, transparent 60%);
-  animation: ambientDrift 35s ease-in-out infinite alternate;
-  z-index: -1;
-  pointer-events: none;
-}
-[data-theme="dark"] body::before {
-  background:
-    radial-gradient(ellipse 700px 500px at 25% 25%, rgba(200,160,100,0.04) 0%, transparent 70%),
-    radial-gradient(ellipse 500px 700px at 75% 65%, rgba(80,100,150,0.03) 0%, transparent 70%),
-    radial-gradient(ellipse 600px 400px at 50% 80%, rgba(150,90,110,0.025) 0%, transparent 60%);
-}
-@keyframes ambientDrift {
-  0%   { transform: translate(0,0) rotate(0deg) scale(1); }
-  33%  { transform: translate(1.2%,-0.8%) rotate(0.3deg) scale(1.003); }
-  66%  { transform: translate(-0.8%,1%) rotate(-0.2deg) scale(0.997); }
-  100% { transform: translate(0.6%,-0.4%) rotate(0.15deg) scale(1.001); }
-}
+/* Ambient orb backdrop removed — the fixed lily backdrop covers it, so it was
+   just burning paint cycles. */
 
 /* Logo mark */
 .logo-mark {
@@ -127,20 +103,13 @@ body::before {
 /* one crisp 4K photo fixed behind the whole page; a scroll-driven scrim keeps
    the hero bright and gently darkens behind the content so text stays legible */
 .site-lily {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background: #050506 url('/lily.jpg') center 38% / cover no-repeat;
-  transition: background-position .35s cubic-bezier(.22,1,.36,1);
-  will-change: background-position;
+  position: fixed; left: 0; right: 0; top: 0; height: 120%; z-index: 0; pointer-events: none;
+  background: #050506 url('/lily.jpg') center 40% / cover no-repeat;
+  will-change: transform; transform: translate3d(0, 0, 0); backface-visibility: hidden;
 }
 .site-scrim {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background: var(--bg); opacity: 0.08;
-}
-.site-grain {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  opacity: 0.045; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  background-size: 180px 180px;
 }
 
 /* ═══════════ Editorial broadsheet system ═══════════ */
