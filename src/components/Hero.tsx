@@ -33,13 +33,17 @@ export function Hero({ lang }: { lang: string }) {
         textAlign: 'center', padding: '92px 22px clamp(8vh, 12vh, 130px)',
       }}
     >
-      {/* the lily lives in the site-wide fixed backdrop; here we only grade the
-          hero viewport — darken the top (nav) and bottom (nameplate) for legibility */}
+      {/* the lily lives in the site-wide fixed backdrop. No band/filter — just a
+          faint top wash for the nav and a soft pool behind the nameplate so the
+          serif stays legible over the bright bloom */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(to bottom, rgba(5,5,6,0.22) 0%, rgba(5,5,6,0.02) 16%, rgba(5,5,6,0) 52%, rgba(5,5,6,0.12) 70%, rgba(5,5,6,0.6) 89%, transparent 100%)',
+        background: 'linear-gradient(to bottom, rgba(5,5,6,0.2) 0%, rgba(5,5,6,0) 16%)',
       }} />
-      <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 1, boxShadow: 'inset 0 -110px 140px -65px rgba(0,0,0,0.72)' }} />
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, zIndex: 1,
+        background: 'radial-gradient(115% 48% at 50% 80%, rgba(5,5,6,0.6) 0%, rgba(5,5,6,0.26) 42%, rgba(5,5,6,0) 72%)',
+      }} />
 
       {/* ── glass content ── */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: 720 }}>
