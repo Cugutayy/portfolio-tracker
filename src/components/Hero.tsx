@@ -37,9 +37,9 @@ export function Hero({ lang }: { lang: string }) {
           hero viewport — darken the top (nav) and bottom (nameplate) for legibility */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(to bottom, rgba(5,5,6,0.6) 0%, rgba(5,5,6,0.1) 20%, rgba(5,5,6,0) 46%, rgba(5,5,6,0.2) 64%, rgba(5,5,6,0.7) 86%, transparent 100%)',
+        background: 'linear-gradient(to bottom, rgba(5,5,6,0.22) 0%, rgba(5,5,6,0.02) 16%, rgba(5,5,6,0) 52%, rgba(5,5,6,0.12) 70%, rgba(5,5,6,0.6) 89%, transparent 100%)',
       }} />
-      <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 1, boxShadow: 'inset 0 -110px 150px -60px rgba(0,0,0,0.85), inset 0 0 320px 80px rgba(0,0,0,0.5)' }} />
+      <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 1, boxShadow: 'inset 0 -110px 140px -65px rgba(0,0,0,0.72)' }} />
 
       {/* ── glass content ── */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: 720 }}>
