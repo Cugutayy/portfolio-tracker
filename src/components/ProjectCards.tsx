@@ -70,7 +70,7 @@ export function ProjectCards({ t }: Props) {
         </ScrollReveal>
 
         <ScrollReveal delay={180} style={{ height: '100%' }}>
-          <EdCard href="#/f1" no="02" kicker="Motorsport · ML" accent="#e10600">
+          <EdCard href="#/f1" no="02" kicker="Motorsport · ML" accent="#e10600" locked lockLabel={t('lockK')} lockMsg={t('lockMsg')}>
             <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>{t('p2t')}</h3>
             <p style={{ color: 'var(--muted)', fontSize: '.74rem', lineHeight: 1.5, marginBottom: 10 }}>{t('p2d')}</p>
             <TrackMini />
@@ -93,7 +93,7 @@ export function ProjectCards({ t }: Props) {
         </ScrollReveal>
 
         <ScrollReveal delay={300} style={{ height: '100%' }}>
-          <EdCard href="#/albion" no="04" kicker="Oyun Ekonomisi" accent="#d4a843">
+          <EdCard href="#/albion" no="04" kicker="Oyun Ekonomisi" accent="#d4a843" locked lockLabel={t('lockK')} lockMsg={t('lockMsg')}>
             <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>{t('p4t')}</h3>
             <p style={{ color: 'var(--muted)', fontSize: '.74rem', lineHeight: 1.5, marginBottom: 10 }}>{t('p4d')}</p>
             <ArbitrageMini />
@@ -116,7 +116,7 @@ export function ProjectCards({ t }: Props) {
         </ScrollReveal>
 
         <ScrollReveal delay={420} style={{ height: '100%' }}>
-          <EdCard href="/tracker/sentiment-bot/" no="06" kicker="Quant Research" accent="#4ade80">
+          <EdCard href="/tracker/sentiment-bot/" no="06" kicker="Quant Research" accent="#4ade80" locked lockLabel={t('lockK')} lockMsg={t('lockMsg')}>
             <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>
               Sentiment Trading <em className="italic-accent" style={{ color: '#4ade80', fontSize: '.95rem' }}>LLM</em>
             </h3>
@@ -134,7 +134,7 @@ export function ProjectCards({ t }: Props) {
         </ScrollReveal>
 
         <ScrollReveal delay={480} style={{ height: '100%' }}>
-          <EdCard href="/tracker/trend-bot/" no="06b" kicker="Quant · Live" accent="#34d399">
+          <EdCard href="/tracker/trend-bot/" no="06b" kicker="Quant · Live" accent="#34d399" locked lockLabel={t('lockK')} lockMsg={t('lockMsg')}>
             <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>
               Multi-Asset <em className="italic-accent" style={{ color: '#34d399', fontSize: '.95rem' }}>Trend Bot</em>
             </h3>
@@ -200,9 +200,66 @@ function ScrollReveal({ children, delay = 0, style }: { children: React.ReactNod
 // ═══════════════════════════════════════════
 // EDITORIAL CARD — flat, hairline, kicker + number, hover accent rule
 // ═══════════════════════════════════════════
-function EdCard({ children, href, no, kicker, accent }: {
+function LockIcon({ color, size = 11 }: { color: string; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="11" width="16" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+  )
+}
+
+function EdCard({ children, href, no, kicker, accent, locked, lockLabel, lockMsg }: {
   children: React.ReactNode; href: string; no: string; kicker: string; accent: string
+  locked?: boolean; lockLabel?: string; lockMsg?: string
 }) {
+  const [bump, setBump] = useState(false)
+  const tRef = useRef<ReturnType<typeof setTimeout>>()
+
+  if (locked) {
+    return (
+      <div
+        className="ed-card"
+        role="button"
+        tabIndex={0}
+        aria-disabled="true"
+        aria-label={lockMsg}
+        onClick={() => { setBump(true); clearTimeout(tRef.current); tRef.current = setTimeout(() => setBump(false), 2400) }}
+        style={{ '--ed-accent': accent, cursor: 'not-allowed', position: 'relative' } as React.CSSProperties}
+      >
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
+          <span className="mono" style={{ fontSize: '.5rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+            {kicker}
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <LockIcon color={accent} />
+            <span className="mono" style={{ fontSize: '.52rem', color: accent, opacity: .85 }}>{no}</span>
+          </span>
+        </div>
+
+        {/* blurred/obscured content so outsiders can't read it */}
+        <div aria-hidden style={{ filter: 'blur(5px)', opacity: .5, pointerEvents: 'none', userSelect: 'none' }}>
+          {children}
+        </div>
+
+        {/* frosted lock overlay */}
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          gap: 9, textAlign: 'center', padding: 16,
+          background: 'color-mix(in srgb, var(--bg) 55%, transparent)', backdropFilter: 'blur(1px)',
+        }}>
+          <span style={{ width: 38, height: 38, borderRadius: '50%', display: 'grid', placeItems: 'center', border: '1px solid var(--rule)', color: 'var(--muted)' }}>
+            <LockIcon color="currentColor" size={16} />
+          </span>
+          <span className="mono" style={{ fontSize: '.56rem', letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink)' }}>{lockLabel}</span>
+          <span className="mono" style={{
+            fontSize: '.54rem', color: 'var(--bg)', background: 'var(--ink)', padding: '5px 11px', borderRadius: 999, letterSpacing: '.04em',
+            opacity: bump ? 1 : 0, transform: bump ? 'translateY(0)' : 'translateY(5px)', transition: 'opacity .25s, transform .25s',
+          }}>{lockMsg}</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <a href={href} className="ed-card" style={{ '--ed-accent': accent } as React.CSSProperties}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
