@@ -328,7 +328,7 @@ const CATEGORIES: Cat[] = [
         author: 'RealityCapture · kendi taramam', kindLabel: 'Gerçek Tarama', loc: 'Fotogrametri',
         note: 'Fotogrametri ile taranmış gerçek seramik eser — döndürerek incele', thumb: '/x/scans/ceramikos-poster.jpg', objPos: '50% 50%',
         model: '/x/scans/ceramikos.glb',
-        about: 'Fotogrametri (RealityCapture) ile taranmış gerçek bir antik Yunan figürlü vazo. Kırmızı zemin üzerine beyaz figürler: kadınlar ve aulos (çift kaval) çalan bir müzisyen; yuvarlak gövdeli, dar boyunlu, ağzı genişleyen form. Web için tam geometri korunarak optimize edildi (meshopt). Kesin dönem/köken için uzman değerlendirmesi gerekir.' },
+        about: 'Dışa doğru çekilmiş ağız, omuza doğru yükselen yüksekçe bir boyunla gövdeye bağlanır; boyunda ve omuzda görülen bezeme motifi sanatçının kendi imzasıdır. Omuzdan aşağı ovalleşen gövde dibe doğru daralır ve yüksekçe bir kaideye oturur. Bezeme, kırmızı (terracotta) zemin üzerine beyaz figür tekniğindedir: sahnede kadın figürleri yer alır, bunlardan biri aulos çalar — aulos, iki ayrı borudan oluşan, ağızlıkla üflenen antik bir nefesli çalgıdır ve genellikle şölen, tören ve dans sahnelerine eşlik eder. Beyaz figürlerin sıcak kırmızı zeminle kontrastı esere ritmik, zarif bir etki kazandırır.' },
       art('izm-athena-basi', 'izm_athena', 'Athena Başı', 'Smyrna · İonia', 'Helenistik dönem', 'İzmir Arkeoloji Müzesi', 'Mermer baş', '50% 30%', 'Eser'),
       art('izm-herakles-basi', 'izm_herakles', 'Herakles’in Başı', 'Anadolu · İonia', 'Roma dönemi', 'İzmir Arkeoloji Müzesi', 'Mermer baş', '50% 30%', 'Eser'),
       art('izm-helenistik-heykel-1', 'izm_sculpt1', 'Helenistik Heykel', 'İonia · Anadolu', 'Helenistik dönem', 'İzmir Arkeoloji Müzesi', 'Mermer heykel', '50% 35%', 'Eser'),
@@ -1330,7 +1330,7 @@ export function XPage() {
 
               {scan.about && (
                 <div className="x-plabout reveal">
-                  <span className="x-adk">Ne olabilir? · uzman okuması değil</span>
+                  <span className="x-adk">Eser üzerine</span>
                   <p>{scan.about}</p>
                 </div>
               )}
