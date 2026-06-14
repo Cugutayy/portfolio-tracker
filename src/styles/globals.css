@@ -230,6 +230,10 @@ body::before {
 @keyframes hwBlur { 0% { opacity: 0; filter: blur(12px); transform: translateY(38px); } 55% { opacity: .55; filter: blur(5px); transform: translateY(-5px); } 100% { opacity: 1; filter: blur(0); transform: translateY(0); } }
 .hw { display: inline-block; opacity: 0; animation: hwBlur .9s cubic-bezier(.16,1,.3,1) forwards; }
 
+/* cinematic slow ken-burns drift on the hero background video */
+@keyframes heroZoom { 0% { transform: scale(1.04) translate3d(0,0,0); } 100% { transform: scale(1.13) translate3d(-1.2%, -1.4%, 0); } }
+.hero-zoom { animation: heroZoom 34s ease-in-out infinite alternate; will-change: transform; }
+
 /* ── lily bloom ── */
 /* each petal's fan-rotation is an SVG transform on its wrapper <g>; CSS only
    blooms it (scale from its base + fade), which is reliable across browsers */
@@ -311,6 +315,7 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
   .hf, .hw { animation: none; opacity: 1; filter: none; transform: none; }
+  .hero-zoom { animation: none; transform: none; }
   .petal, .lily-breathe, .lily-glow, .lily-center, .pollen, .scroll-cue,
   .mist, .hill, .disc-in, .rays, .firefly, .stalk-grow, .stalk-sway, .leaf, .root { animation: none; opacity: 1; }
   .petal, .stalk-grow, .leaf { transform: none; }
