@@ -16,20 +16,17 @@ export default function App() {
   const [dark, setDark] = useState(true)
   const [page, setPage] = useState<'hub' | 'f1' | 'albion' | 'x'>('hub')
   const lilyRef = useRef<HTMLDivElement>(null)
-  const scrimRef = useRef<HTMLDivElement>(null)
   const t = (key: string) => I18N[lang]?.[key] || key
 
-  // scroll-driven backdrop: the lily gently drifts down to reveal its lower
-  // stems (parallax) while a soft scrim keeps content legible without hiding it
+  // scroll parallax: the lily gently drifts down to reveal its lower stems so
+  // it never feels frozen. No darkening scrim — the bloom stays bright site-wide.
   useEffect(() => {
     let raf = 0
     const onScroll = () => {
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
         const vh = window.innerHeight || 1
-        const kScrim = Math.min(1, window.scrollY / (vh * 0.8))
         const kPar = Math.min(1, window.scrollY / (vh * 1.8))
-        if (scrimRef.current) scrimRef.current.style.opacity = String(0.1 + kScrim * 0.46)
         if (lilyRef.current) lilyRef.current.style.backgroundPosition = `center ${38 + kPar * 30}%`
       })
     }
@@ -67,7 +64,7 @@ export default function App() {
     <>
       {/* site-wide fixed lily backdrop (drifts on scroll) */}
       <div className="site-lily" aria-hidden ref={lilyRef} />
-      <div className="site-scrim" aria-hidden ref={scrimRef} />
+      <div className="site-scrim" aria-hidden />
       <div className="site-grain" aria-hidden />
 
       <div style={{ position: 'relative', zIndex: 1 }}>

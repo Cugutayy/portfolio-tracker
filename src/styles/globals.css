@@ -7,7 +7,7 @@
 }
 [data-theme="dark"] {
   --bg: #0c0b0a; --bg2: #141312; --ink: #e8e4dc; --muted: #7a756c; --rule: #1e1c18;
-  --accent: #d45a3e; --card-bg: rgba(20,19,18,0.72); --card-border: rgba(255,255,255,0.06);
+  --accent: #d45a3e; --card-bg: rgba(17,16,15,0.84); --card-border: rgba(255,255,255,0.06);
   --nav-bg: rgba(12,11,10,0.88); --dash-bg: #0f0f0e; --dash-border: #1e1c16;
   --green: #4ade80; --green-t: #4ade80; --shadow: rgba(0,0,0,0.4);
   --card-hover: rgba(255,255,255,0.03);
@@ -134,7 +134,7 @@ body::before {
 }
 .site-scrim {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background: var(--bg); opacity: 0.12; transition: opacity .15s linear;
+  background: var(--bg); opacity: 0.08;
 }
 .site-grain {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
