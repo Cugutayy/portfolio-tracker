@@ -15,7 +15,23 @@ export default function App() {
   const [lang, setLang] = useState('tr')
   const [dark, setDark] = useState(true)
   const [page, setPage] = useState<'hub' | 'f1' | 'albion' | 'x'>('hub')
+  const [scrim, setScrim] = useState(0.12)
   const t = (key: string) => I18N[lang]?.[key] || key
+
+  // scroll-driven scrim: hero stays bright, content darkens for legibility
+  useEffect(() => {
+    let raf = 0
+    const onScroll = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const k = Math.min(1, window.scrollY / (window.innerHeight * 0.75))
+        setScrim(0.12 + k * 0.7)
+      })
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf) }
+  }, [page])
 
   useEffect(() => { document.documentElement.lang = lang }, [lang])
   useEffect(() => { document.documentElement.setAttribute('data-theme', dark ? 'dark' : '') }, [dark])
@@ -43,12 +59,19 @@ export default function App() {
   }
 
   return (
-    <div style={{ position:'relative', zIndex:1 }}>
-      <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />
-      <Hero lang={lang} />
-      <ProjectCards t={t} />
-      <Footer />
-    </div>
+    <>
+      {/* site-wide fixed lily backdrop */}
+      <div className="site-lily" aria-hidden />
+      <div className="site-scrim" aria-hidden style={{ opacity: scrim }} />
+      <div className="site-grain" aria-hidden />
+
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />
+        <Hero lang={lang} />
+        <ProjectCards t={t} />
+        <Footer />
+      </div>
+    </>
   )
 }
 

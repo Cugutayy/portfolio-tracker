@@ -35,37 +35,18 @@ export function Hero({ lang }: { lang: string }) {
       className="font-ui"
       style={{
         position: 'relative', minHeight: '100svh', overflow: 'hidden',
-        background: '#050506', color: '#f4efe6',
+        background: 'transparent', color: '#f4efe6',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
         textAlign: 'center', padding: '92px 22px clamp(8vh, 12vh, 130px)',
       }}
     >
-      {/* full-bleed 4K lily photograph with a slow cinematic ken-burns drift */}
-      <img
-        src="/lily.jpg"
-        alt=""
-        aria-hidden
-        className="hero-zoom"
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', zIndex: 0 }}
-      />
-
-      {/* cinematic grade — keep the blooms bright, darken top (nav) + bottom (text) */}
+      {/* the lily lives in the site-wide fixed backdrop; here we only grade the
+          hero viewport — darken the top (nav) and bottom (nameplate) for legibility */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(to bottom, rgba(5,5,6,0.66) 0%, rgba(5,5,6,0.12) 20%, rgba(5,5,6,0) 44%, rgba(5,5,6,0.28) 62%, rgba(5,5,6,0.82) 84%, var(--bg) 100%)',
+        background: 'linear-gradient(to bottom, rgba(5,5,6,0.6) 0%, rgba(5,5,6,0.1) 20%, rgba(5,5,6,0) 46%, rgba(5,5,6,0.2) 64%, rgba(5,5,6,0.7) 86%, transparent 100%)',
       }} />
-      <div aria-hidden style={{
-        position: 'absolute', inset: 0, zIndex: 1, mixBlendMode: 'soft-light', opacity: 0.45,
-        background: 'radial-gradient(115% 80% at 60% 34%, rgba(220,235,210,0.22) 0%, rgba(220,235,210,0) 46%)',
-      }} />
-      <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 1, boxShadow: 'inset 0 -120px 170px -50px rgba(0,0,0,0.92), inset 0 0 320px 70px rgba(0,0,0,0.6)' }} />
-
-      {/* fine film grain for a textured, premium feel */}
-      <div aria-hidden style={{
-        position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none', opacity: 0.045, mixBlendMode: 'overlay',
-        backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
-        backgroundSize: '180px 180px',
-      }} />
+      <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 1, boxShadow: 'inset 0 -110px 150px -60px rgba(0,0,0,0.85), inset 0 0 320px 80px rgba(0,0,0,0.5)' }} />
 
       {/* ── glass content ── */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: 720 }}>
