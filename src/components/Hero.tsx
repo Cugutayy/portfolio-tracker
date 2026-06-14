@@ -18,10 +18,7 @@ export function Hero({ lang }: { lang: string }) {
   }, [lang])
 
   const t = {
-    cta: lang === 'zh' ? '查看项目' : lang === 'en' ? 'See the work' : 'Projeleri gör',
     contact: lang === 'zh' ? '联系' : lang === 'en' ? 'Contact' : 'İletişim',
-    s1: lang === 'zh' ? '项目' : lang === 'en' ? 'Projects' : 'Proje',
-    s2: lang === 'zh' ? '实时' : lang === 'en' ? 'Live' : 'Canlı',
     scroll: lang === 'zh' ? '向下滚动' : lang === 'en' ? 'Scroll' : 'Kaydır',
   }
   const name = ['S.', 'Çağatay', 'Sönmez']
@@ -56,35 +53,21 @@ export function Hero({ lang }: { lang: string }) {
           ))}
         </h1>
 
-        <div className="hf" style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 30, flexWrap: 'wrap', justifyContent: 'center', animationDelay: '.9s' }}>
-          <a href="#projects" className="liquid-glass-strong" style={{ borderRadius: 999, padding: '12px 22px', display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: '.86rem', fontWeight: 500, color: '#fff', textDecoration: 'none' }}>
-            {t.cta}
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7" /><path d="M7 7h10v10" /></svg>
-          </a>
+        <div className="hf" style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 26, flexWrap: 'wrap', justifyContent: 'center', animationDelay: '.9s' }}>
           <a href="mailto:s.cagatay.sonmez@gmail.com" style={{ fontSize: '.86rem', color: 'rgba(244,239,230,0.82)', textDecoration: 'none', borderBottom: '1px solid rgba(244,239,230,0.32)', paddingBottom: 2 }}>{t.contact}</a>
         </div>
 
-        <div className="hf" style={{ display: 'flex', gap: 12, marginTop: 28, flexWrap: 'wrap', justifyContent: 'center', animationDelay: '1.05s' }}>
-          <Chip label={t.s1} value="9" />
-          <Chip label={t.s2} value={clock || '··:··'} dot />
-        </div>
+        {/* bare, frameless live clock */}
+        <div className="hf font-display" style={{
+          marginTop: 22, animationDelay: '1.05s', fontStyle: 'italic', lineHeight: 1,
+          fontSize: 'clamp(2rem, 4.6vw, 3rem)', letterSpacing: '-0.01em', color: '#fdf8ee',
+          textShadow: '0 2px 34px rgba(0,0,0,0.85)',
+        }}>{clock || '··:··'}</div>
       </div>
 
       <a href="#projects" aria-label={t.scroll} className="scroll-cue" style={{ position: 'absolute', bottom: 22, left: '50%', transform: 'translateX(-50%)', zIndex: 11, color: 'rgba(244,239,230,0.5)', textDecoration: 'none' }}>
         <svg width="18" height="26" viewBox="0 0 18 26" fill="none" stroke="currentColor" strokeWidth="1.4"><rect x="1" y="1" width="16" height="24" rx="8" /><line x1="9" y1="7" x2="9" y2="12" strokeLinecap="round" /></svg>
       </a>
     </header>
-  )
-}
-
-function Chip({ label, value, dot }: { label: string; value: string; dot?: boolean }) {
-  return (
-    <div className="liquid-glass" style={{ borderRadius: 16, padding: '11px 16px', minWidth: 96, textAlign: 'left' }}>
-      <div className="mono" style={{ fontFamily: "'DM Mono', monospace", fontSize: '.5rem', letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(244,239,230,0.62)', display: 'flex', alignItems: 'center', gap: 6 }}>
-        {dot && <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#7fd18a', boxShadow: '0 0 7px #7fd18a', animation: 'pd 2s ease-in-out infinite' }} />}
-        {label}
-      </div>
-      <div className="font-display" style={{ fontStyle: 'italic', fontSize: '1.7rem', lineHeight: 1, marginTop: 4, color: '#fdf8ee' }}>{value}</div>
-    </div>
   )
 }
