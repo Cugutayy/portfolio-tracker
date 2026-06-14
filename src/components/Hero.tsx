@@ -84,25 +84,38 @@ export function Hero({ lang }: { lang: string }) {
         textAlign: 'center', padding: '92px 22px clamp(8vh, 12vh, 130px)',
       }}
     >
-      {/* full-bleed lily video */}
+      {/* full-bleed lily video with a slow cinematic ken-burns drift */}
       <video
         ref={videoRef}
+        className="hero-zoom"
         muted
         playsInline
         autoPlay
         preload="auto"
+        poster="/lily-poster.jpg"
         aria-hidden
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0, zIndex: 0, willChange: 'opacity' }}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 42%', opacity: 0, zIndex: 0 }}
       >
         <source src="/lily.mp4" type="video/mp4" />
       </video>
 
-      {/* cinematic grade: warm-dark gradient + vignette for legibility */}
+      {/* cinematic grade: warm-dark gradient, edge vignette + a subtle teal/amber tint */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(to bottom, rgba(6,6,10,0.62) 0%, rgba(6,6,10,0.18) 32%, rgba(6,6,10,0.32) 60%, rgba(6,6,10,0.86) 88%, var(--bg) 100%)',
+        background: 'linear-gradient(to bottom, rgba(6,6,10,0.64) 0%, rgba(6,6,10,0.16) 30%, rgba(6,6,10,0.10) 48%, rgba(6,6,10,0.34) 64%, rgba(6,6,10,0.88) 86%, var(--bg) 100%)',
       }} />
-      <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 1, boxShadow: 'inset 0 -120px 160px -50px rgba(0,0,0,0.9), inset 0 0 240px 40px rgba(0,0,0,0.5)' }} />
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, zIndex: 1, mixBlendMode: 'soft-light', opacity: 0.5,
+        background: 'radial-gradient(120% 80% at 50% 18%, rgba(255,214,150,0.28) 0%, rgba(255,214,150,0) 45%), radial-gradient(120% 90% at 50% 110%, rgba(40,70,90,0.35) 0%, rgba(40,70,90,0) 55%)',
+      }} />
+      <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 1, boxShadow: 'inset 0 -120px 160px -50px rgba(0,0,0,0.9), inset 0 0 300px 60px rgba(0,0,0,0.55)' }} />
+
+      {/* fine film grain for a textured, premium feel */}
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none', opacity: 0.05, mixBlendMode: 'overlay',
+        backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+        backgroundSize: '180px 180px',
+      }} />
 
       {/* ── glass content ── */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: 720 }}>
