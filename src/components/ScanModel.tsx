@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 
 // ═══════════════════════════════════════════════════
 // ScanModel — displays a REAL photogrammetry scan (a .glb exported from Scaniverse)
@@ -81,6 +82,7 @@ export function ScanModel({ src }: { src: string }) {
     let homePos = new THREE.Vector3(0, 0, 5)
     const homeTarget = new THREE.Vector3(0, 0, 0)
     const loader = new GLTFLoader()
+    loader.setMeshoptDecoder(MeshoptDecoder)   // for EXT_meshopt_compression scans
     loader.load(
       src,
       (gltf) => {
