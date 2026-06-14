@@ -18,10 +18,6 @@ export function Hero({ lang }: { lang: string }) {
   }, [lang])
 
   const t = {
-    role: lang === 'zh' ? '金融 · 机器学习 · 数据' : lang === 'en' ? 'Finance · Machine Learning · Data' : 'Finans · Makine Öğrenmesi · Veri',
-    sub: lang === 'zh' ? '九个项目，跨越市场、模型与代码。精心打造，缓缓绽放。'
-      : lang === 'en' ? 'Nine projects across markets, models and code. Built with care, unfolding slowly.'
-      : 'Piyasalar, modeller ve kod arasında dokuz proje. Özenle kuruldu, yavaşça açıyor.',
     cta: lang === 'zh' ? '查看项目' : lang === 'en' ? 'See the work' : 'Projeleri gör',
     contact: lang === 'zh' ? '联系' : lang === 'en' ? 'Contact' : 'İletişim',
     s1: lang === 'zh' ? '项目' : lang === 'en' ? 'Projects' : 'Proje',
@@ -60,17 +56,7 @@ export function Hero({ lang }: { lang: string }) {
           ))}
         </h1>
 
-        <p className="mono hf" style={{
-          fontFamily: "'DM Mono', monospace", fontSize: '.62rem', letterSpacing: '.24em', textTransform: 'uppercase',
-          color: 'rgba(244,239,230,0.66)', marginTop: 18, animationDelay: '.9s',
-        }}>{t.role}</p>
-
-        <p className="hf" style={{
-          fontSize: 'clamp(.92rem, 1.6vw, 1.06rem)', fontWeight: 300, lineHeight: 1.55,
-          color: 'rgba(244,239,230,0.88)', maxWidth: 470, marginTop: 16, animationDelay: '1.05s', textShadow: '0 1px 26px rgba(0,0,0,0.8)',
-        }}>{t.sub}</p>
-
-        <div className="hf" style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 26, flexWrap: 'wrap', justifyContent: 'center', animationDelay: '1.2s' }}>
+        <div className="hf" style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 30, flexWrap: 'wrap', justifyContent: 'center', animationDelay: '.9s' }}>
           <a href="#projects" className="liquid-glass-strong" style={{ borderRadius: 999, padding: '12px 22px', display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: '.86rem', fontWeight: 500, color: '#fff', textDecoration: 'none' }}>
             {t.cta}
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7" /><path d="M7 7h10v10" /></svg>
@@ -78,7 +64,7 @@ export function Hero({ lang }: { lang: string }) {
           <a href="mailto:s.cagatay.sonmez@gmail.com" style={{ fontSize: '.86rem', color: 'rgba(244,239,230,0.82)', textDecoration: 'none', borderBottom: '1px solid rgba(244,239,230,0.32)', paddingBottom: 2 }}>{t.contact}</a>
         </div>
 
-        <div className="hf" style={{ display: 'flex', gap: 12, marginTop: 28, flexWrap: 'wrap', justifyContent: 'center', animationDelay: '1.35s' }}>
+        <div className="hf" style={{ display: 'flex', gap: 12, marginTop: 28, flexWrap: 'wrap', justifyContent: 'center', animationDelay: '1.05s' }}>
           <Chip label={t.s1} value="9" />
           <Chip label={t.s2} value={clock || '··:··'} dot />
         </div>
