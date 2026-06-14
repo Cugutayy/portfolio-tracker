@@ -129,6 +129,8 @@ body::before {
 .site-lily {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background: #050506 url('/lily.jpg') center 38% / cover no-repeat;
+  transition: background-position .35s cubic-bezier(.22,1,.36,1);
+  will-change: background-position;
 }
 .site-scrim {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
