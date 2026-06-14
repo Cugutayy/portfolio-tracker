@@ -1,17 +1,12 @@
-import { useRef, useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 
 /**
- * Cinematic hero — a full-bleed looping video of a white lily opening on dark
- * water, with a custom rAF fade-in / fade-out loop so the clip restarts
- * seamlessly. Over it sits liquid-glass chrome and a serif nameplate that
+ * Cinematic hero — a 4K photograph of white lilies glowing out of pure black,
+ * full-bleed with a slow ken-burns drift. The image's black ground blends into
+ * the dark hub; over it sit liquid-glass chrome and a serif nameplate that
  * blurs in word by word.
  */
-const FADE_MS = 600
-const FADE_OUT_LEAD = 0.6 // start fading this many seconds before the end
-
 export function Hero({ lang }: { lang: string }) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const fadeRaf = useRef(0)
   const [clock, setClock] = useState('')
 
   useEffect(() => {
@@ -21,45 +16,6 @@ export function Hero({ lang }: { lang: string }) {
     }
     tick(); const id = setInterval(tick, 1000); return () => clearInterval(id)
   }, [lang])
-
-  // custom fade-loop for the background video
-  useEffect(() => {
-    const v = videoRef.current
-    if (!v) return
-    let mounted = true
-
-    const fadeTo = (to: number) => {
-      cancelAnimationFrame(fadeRaf.current)
-      const from = Number(v.style.opacity || '0')
-      const start = performance.now()
-      const step = (now: number) => {
-        if (!mounted) return
-        const k = Math.min(1, (now - start) / FADE_MS)
-        v.style.opacity = String(from + (to - from) * k)
-        if (k < 1) fadeRaf.current = requestAnimationFrame(step)
-      }
-      fadeRaf.current = requestAnimationFrame(step)
-    }
-
-    const onLoaded = () => { v.play().catch(() => {}); fadeTo(1) }
-    const onTime = () => {
-      if (v.duration && v.currentTime >= v.duration - FADE_OUT_LEAD) fadeTo(0)
-    }
-    const onEnded = () => { v.currentTime = 0; v.play().catch(() => {}); fadeTo(1) }
-
-    v.style.opacity = '0'
-    v.addEventListener('loadeddata', onLoaded)
-    v.addEventListener('timeupdate', onTime)
-    v.addEventListener('ended', onEnded)
-    if (v.readyState >= 2) onLoaded()
-    return () => {
-      mounted = false
-      cancelAnimationFrame(fadeRaf.current)
-      v.removeEventListener('loadeddata', onLoaded)
-      v.removeEventListener('timeupdate', onTime)
-      v.removeEventListener('ended', onEnded)
-    }
-  }, [])
 
   const t = {
     role: lang === 'zh' ? '金融 · 机器学习 · 数据' : lang === 'en' ? 'Finance · Machine Learning · Data' : 'Finans · Makine Öğrenmesi · Veri',
@@ -79,40 +35,34 @@ export function Hero({ lang }: { lang: string }) {
       className="font-ui"
       style={{
         position: 'relative', minHeight: '100svh', overflow: 'hidden',
-        background: '#06060a', color: '#f4efe6',
+        background: '#050506', color: '#f4efe6',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
         textAlign: 'center', padding: '92px 22px clamp(8vh, 12vh, 130px)',
       }}
     >
-      {/* full-bleed lily video with a slow cinematic ken-burns drift */}
-      <video
-        ref={videoRef}
-        className="hero-zoom"
-        muted
-        playsInline
-        autoPlay
-        preload="auto"
-        poster="/lily-poster.jpg"
+      {/* full-bleed 4K lily photograph with a slow cinematic ken-burns drift */}
+      <img
+        src="/lily.jpg"
+        alt=""
         aria-hidden
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 42%', opacity: 0, zIndex: 0 }}
-      >
-        <source src="/lily.mp4" type="video/mp4" />
-      </video>
+        className="hero-zoom"
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%', zIndex: 0 }}
+      />
 
-      {/* cinematic grade: warm-dark gradient, edge vignette + a subtle teal/amber tint */}
+      {/* cinematic grade — keep the blooms bright, darken top (nav) + bottom (text) */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1,
-        background: 'linear-gradient(to bottom, rgba(6,6,10,0.64) 0%, rgba(6,6,10,0.16) 30%, rgba(6,6,10,0.10) 48%, rgba(6,6,10,0.34) 64%, rgba(6,6,10,0.88) 86%, var(--bg) 100%)',
+        background: 'linear-gradient(to bottom, rgba(5,5,6,0.66) 0%, rgba(5,5,6,0.12) 20%, rgba(5,5,6,0) 44%, rgba(5,5,6,0.28) 62%, rgba(5,5,6,0.82) 84%, var(--bg) 100%)',
       }} />
       <div aria-hidden style={{
-        position: 'absolute', inset: 0, zIndex: 1, mixBlendMode: 'soft-light', opacity: 0.5,
-        background: 'radial-gradient(120% 80% at 50% 18%, rgba(255,214,150,0.28) 0%, rgba(255,214,150,0) 45%), radial-gradient(120% 90% at 50% 110%, rgba(40,70,90,0.35) 0%, rgba(40,70,90,0) 55%)',
+        position: 'absolute', inset: 0, zIndex: 1, mixBlendMode: 'soft-light', opacity: 0.45,
+        background: 'radial-gradient(115% 80% at 60% 34%, rgba(220,235,210,0.22) 0%, rgba(220,235,210,0) 46%)',
       }} />
-      <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 1, boxShadow: 'inset 0 -120px 160px -50px rgba(0,0,0,0.9), inset 0 0 300px 60px rgba(0,0,0,0.55)' }} />
+      <div aria-hidden style={{ position: 'absolute', inset: 0, zIndex: 1, boxShadow: 'inset 0 -120px 170px -50px rgba(0,0,0,0.92), inset 0 0 320px 70px rgba(0,0,0,0.6)' }} />
 
       {/* fine film grain for a textured, premium feel */}
       <div aria-hidden style={{
-        position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none', opacity: 0.05, mixBlendMode: 'overlay',
+        position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none', opacity: 0.045, mixBlendMode: 'overlay',
         backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
         backgroundSize: '180px 180px',
       }} />
@@ -122,7 +72,7 @@ export function Hero({ lang }: { lang: string }) {
         <h1 className="font-display" style={{
           fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(3.4rem, 9.5vw, 7rem)', lineHeight: 0.9,
           letterSpacing: '-0.03em', margin: 0, display: 'flex', flexWrap: 'wrap', justifyContent: 'center',
-          columnGap: '0.28em', rowGap: '0.02em', textShadow: '0 2px 50px rgba(0,0,0,0.7)',
+          columnGap: '0.28em', rowGap: '0.02em', textShadow: '0 2px 60px rgba(0,0,0,0.8)',
         }}>
           {name.map((w, i) => (
             <span key={i} className="hw" style={{ animationDelay: `${0.4 + i * 0.13}s`, color: i === 2 ? '#f0cf86' : '#fdf8ee' }}>{w}</span>
@@ -136,7 +86,7 @@ export function Hero({ lang }: { lang: string }) {
 
         <p className="hf" style={{
           fontSize: 'clamp(.92rem, 1.6vw, 1.06rem)', fontWeight: 300, lineHeight: 1.55,
-          color: 'rgba(244,239,230,0.86)', maxWidth: 470, marginTop: 16, animationDelay: '1.05s', textShadow: '0 1px 24px rgba(0,0,0,0.7)',
+          color: 'rgba(244,239,230,0.88)', maxWidth: 470, marginTop: 16, animationDelay: '1.05s', textShadow: '0 1px 26px rgba(0,0,0,0.8)',
         }}>{t.sub}</p>
 
         <div className="hf" style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 26, flexWrap: 'wrap', justifyContent: 'center', animationDelay: '1.2s' }}>
