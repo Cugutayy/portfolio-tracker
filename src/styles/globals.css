@@ -103,9 +103,10 @@ a { color: inherit; text-decoration: none; }
 /* one crisp 4K photo fixed behind the whole page; a scroll-driven scrim keeps
    the hero bright and gently darkens behind the content so text stays legible */
 .site-lily {
-  position: fixed; left: 0; right: 0; top: 0; height: 120%; z-index: 0; pointer-events: none;
-  background: #050506 url('/lily.jpg') center 40% / cover no-repeat;
-  will-change: transform; transform: translate3d(0, 0, 0); backface-visibility: hidden;
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: #050506 url('/lily.jpg') center 44% / auto 112% no-repeat;
+  will-change: transform; transform: translate3d(0, 0, 0); transform-origin: center center;
+  backface-visibility: hidden;
 }
 .site-scrim {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
