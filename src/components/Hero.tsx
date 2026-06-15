@@ -46,17 +46,17 @@ export function Hero({ lang }: { lang: string }) {
           textShadow: '0 1px 2px rgba(0,0,0,0.6), 0 2px 12px rgba(0,0,0,0.7), 0 4px 36px rgba(0,0,0,0.85)',
         }}>
           {name.map((w, i) => (
-            <span key={i} className="hw" style={{ animationDelay: `${0.4 + i * 0.13}s`, color: i === 2 ? '#f0cf86' : '#fdf8ee' }}>{w}</span>
+            <span key={i} className="hw" style={{ animationDelay: `${0.06 + i * 0.07}s`, color: i === 2 ? '#f0cf86' : '#fdf8ee' }}>{w}</span>
           ))}
         </h1>
 
-        <div className="hf" style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 26, flexWrap: 'wrap', justifyContent: 'center', animationDelay: '.9s' }}>
+        <div className="hf" style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 26, flexWrap: 'wrap', justifyContent: 'center', animationDelay: '.32s' }}>
           <a href="mailto:s.cagatay.sonmez@gmail.com" style={{ fontSize: '.86rem', color: '#f4efe6', textDecoration: 'none', borderBottom: '1px solid rgba(244,239,230,0.4)', paddingBottom: 2, textShadow: '0 1px 3px rgba(0,0,0,0.7), 0 1px 12px rgba(0,0,0,0.8)' }}>{t.contact}</a>
         </div>
 
         {/* bare, frameless live clock */}
         <div className="hf font-display" style={{
-          marginTop: 22, animationDelay: '1.05s', fontStyle: 'italic', lineHeight: 1,
+          marginTop: 22, animationDelay: '.44s', fontStyle: 'italic', lineHeight: 1,
           fontSize: 'clamp(2rem, 4.6vw, 3rem)', letterSpacing: '-0.01em', color: '#fdf8ee',
           textShadow: '0 1px 2px rgba(0,0,0,0.6), 0 2px 16px rgba(0,0,0,0.8), 0 3px 34px rgba(0,0,0,0.85)',
         }}>{clock || '··:··'}</div>
