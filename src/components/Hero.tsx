@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 /**
  * Cinematic hero — a 4K photograph of white lilies glowing out of pure black,
@@ -8,6 +8,27 @@ import { useState, useEffect } from 'react'
  */
 export function Hero({ lang }: { lang: string }) {
   const [clock, setClock] = useState('')
+  const ref = useRef<HTMLElement>(null)
+  const raf = useRef(0)
+
+  // pointer-spotlight — a faint light beam follows the cursor over the bloom
+  useEffect(() => {
+    const el = ref.current
+    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches || window.matchMedia('(hover: none)').matches) return
+    const onMove = (e: PointerEvent) => {
+      cancelAnimationFrame(raf.current)
+      raf.current = requestAnimationFrame(() => {
+        const r = el.getBoundingClientRect()
+        el.style.setProperty('--mx', `${e.clientX - r.left}px`)
+        el.style.setProperty('--my', `${e.clientY - r.top}px`)
+        el.style.setProperty('--mo', '1')
+      })
+    }
+    const onLeave = () => el.style.setProperty('--mo', '0')
+    el.addEventListener('pointermove', onMove)
+    el.addEventListener('pointerleave', onLeave)
+    return () => { el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerleave', onLeave); cancelAnimationFrame(raf.current) }
+  }, [])
 
   useEffect(() => {
     const tick = () => {
@@ -25,6 +46,7 @@ export function Hero({ lang }: { lang: string }) {
 
   return (
     <header
+      ref={ref}
       className="font-ui"
       style={{
         position: 'relative', minHeight: '100svh', overflow: 'hidden',
@@ -36,6 +58,13 @@ export function Hero({ lang }: { lang: string }) {
       {/* No area filter at all — the lily reads at full brightness here exactly
           like the rest of the page. The nameplate stays legible purely through
           its own text shadow (a halo on the glyphs, not a rectangle). */}
+
+      {/* pointer-spotlight — a soft beam that warms the bloom under the cursor */}
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', mixBlendMode: 'screen',
+        opacity: 'var(--mo, 0)' as unknown as number, transition: 'opacity .45s ease',
+        background: 'radial-gradient(240px circle at var(--mx, 50%) var(--my, 38%), rgba(255,246,224,0.18), rgba(255,246,224,0.06) 42%, transparent 70%)',
+      }} />
 
       {/* ── small top-right identity cluster ── */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', maxWidth: 460 }}>

@@ -59,7 +59,7 @@ export function ProjectCards({ t }: Props) {
           <EdCard href="/tracker/" no="01" kicker={t('tF')} accent="var(--green-t)">
             <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>Portfolio Tracker</h3>
             <p style={{ color: 'var(--muted)', fontSize: '.74rem', lineHeight: 1.5, marginBottom: 10 }}>{t('p1d')}</p>
-            <MiniChart />
+            <LiveSparkline />
             <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               <Stat label={t('pf')} value="101K ₺" />
               <Stat label="K/Z" value="+1.02%" pos />
@@ -70,7 +70,7 @@ export function ProjectCards({ t }: Props) {
         </ScrollReveal>
 
         <ScrollReveal delay={180} style={{ height: '100%' }}>
-          <EdCard href="#/f1" no="02" kicker="Motorsport · ML" accent="#e10600" locked lockLabel={t('lockK')} lockMsg={t('lockMsg')}>
+          <EdCard href="#/f1" no="02" kicker="Motorsport · ML" accent="#e10600" locked lockLabel={t('lockK')} lockReq={t('lockReq')}>
             <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>{t('p2t')}</h3>
             <p style={{ color: 'var(--muted)', fontSize: '.74rem', lineHeight: 1.5, marginBottom: 10 }}>{t('p2d')}</p>
             <TrackMini />
@@ -93,7 +93,7 @@ export function ProjectCards({ t }: Props) {
         </ScrollReveal>
 
         <ScrollReveal delay={300} style={{ height: '100%' }}>
-          <EdCard href="#/albion" no="04" kicker="Oyun Ekonomisi" accent="#d4a843" locked lockLabel={t('lockK')} lockMsg={t('lockMsg')}>
+          <EdCard href="#/albion" no="04" kicker="Oyun Ekonomisi" accent="#d4a843" locked lockLabel={t('lockK')} lockReq={t('lockReq')}>
             <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>{t('p4t')}</h3>
             <p style={{ color: 'var(--muted)', fontSize: '.74rem', lineHeight: 1.5, marginBottom: 10 }}>{t('p4d')}</p>
             <ArbitrageMini />
@@ -116,7 +116,7 @@ export function ProjectCards({ t }: Props) {
         </ScrollReveal>
 
         <ScrollReveal delay={420} style={{ height: '100%' }}>
-          <EdCard href="/tracker/sentiment-bot/" no="06" kicker="Quant Research" accent="#4ade80" locked lockLabel={t('lockK')} lockMsg={t('lockMsg')}>
+          <EdCard href="/tracker/sentiment-bot/" no="06" kicker="Quant Research" accent="#4ade80" locked lockLabel={t('lockK')} lockReq={t('lockReq')}>
             <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>
               Sentiment Trading <em className="italic-accent" style={{ color: '#4ade80', fontSize: '.95rem' }}>LLM</em>
             </h3>
@@ -134,7 +134,7 @@ export function ProjectCards({ t }: Props) {
         </ScrollReveal>
 
         <ScrollReveal delay={480} style={{ height: '100%' }}>
-          <EdCard href="/tracker/trend-bot/" no="06b" kicker="Quant · Live" accent="#34d399" locked lockLabel={t('lockK')} lockMsg={t('lockMsg')}>
+          <EdCard href="/tracker/trend-bot/" no="06b" kicker="Quant · Live" accent="#34d399" locked lockLabel={t('lockK')} lockReq={t('lockReq')}>
             <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>
               Multi-Asset <em className="italic-accent" style={{ color: '#34d399', fontSize: '.95rem' }}>Trend Bot</em>
             </h3>
@@ -208,24 +208,14 @@ function LockIcon({ color, size = 11 }: { color: string; size?: number }) {
   )
 }
 
-function EdCard({ children, href, no, kicker, accent, locked, lockLabel, lockMsg }: {
+function EdCard({ children, href, no, kicker, accent, locked, lockLabel, lockReq }: {
   children: React.ReactNode; href: string; no: string; kicker: string; accent: string
-  locked?: boolean; lockLabel?: string; lockMsg?: string
+  locked?: boolean; lockLabel?: string; lockReq?: string
 }) {
-  const [bump, setBump] = useState(false)
-  const tRef = useRef<ReturnType<typeof setTimeout>>()
-
   if (locked) {
+    const mailto = `mailto:s.cagatay.sonmez@gmail.com?subject=${encodeURIComponent('Erişim talebi — ' + kicker)}`
     return (
-      <div
-        className="ed-card"
-        role="button"
-        tabIndex={0}
-        aria-disabled="true"
-        aria-label={lockMsg}
-        onClick={() => { setBump(true); clearTimeout(tRef.current); tRef.current = setTimeout(() => setBump(false), 2400) }}
-        style={{ '--ed-accent': accent, cursor: 'not-allowed', position: 'relative' } as React.CSSProperties}
-      >
+      <div className="ed-card" style={{ '--ed-accent': accent, position: 'relative' } as React.CSSProperties}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
           <span className="mono" style={{ fontSize: '.5rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--muted)' }}>
             {kicker}
@@ -241,20 +231,20 @@ function EdCard({ children, href, no, kicker, accent, locked, lockLabel, lockMsg
           {children}
         </div>
 
-        {/* frosted lock overlay */}
+        {/* frosted lock overlay — a quiet door rather than a wall */}
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          gap: 9, textAlign: 'center', padding: 16,
+          gap: 11, textAlign: 'center', padding: 16,
           background: 'color-mix(in srgb, var(--bg) 55%, transparent)', backdropFilter: 'blur(1px)',
         }}>
           <span style={{ width: 38, height: 38, borderRadius: '50%', display: 'grid', placeItems: 'center', border: '1px solid var(--rule)', color: 'var(--muted)' }}>
             <LockIcon color="currentColor" size={16} />
           </span>
           <span className="mono" style={{ fontSize: '.56rem', letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink)' }}>{lockLabel}</span>
-          <span className="mono" style={{
-            fontSize: '.54rem', color: 'var(--bg)', background: 'var(--ink)', padding: '5px 11px', borderRadius: 999, letterSpacing: '.04em',
-            opacity: bump ? 1 : 0, transform: bump ? 'translateY(0)' : 'translateY(5px)', transition: 'opacity .25s, transform .25s',
-          }}>{lockMsg}</span>
+          <a href={mailto} className="mono" style={{
+            fontSize: '.54rem', letterSpacing: '.1em', textTransform: 'uppercase', textDecoration: 'none',
+            color: 'var(--bg)', background: 'var(--ink)', padding: '7px 14px', borderRadius: 999,
+          }}>{lockReq} →</a>
         </div>
       </div>
     )
@@ -286,6 +276,60 @@ function MiniChart() {
       <path d="M0,25 L31,27 L62,30 L93,33 L124,31 L155,33 L186,34 L217,38 L248,36 L279,35 L310,39 L341,27 L372,23 L400,24 L400,50 L0,50Z" fill="url(#cf)"/>
       <polyline points="0,25 31,27 62,30 93,33 124,31 155,33 186,34 217,38 248,36 279,35 310,39 341,27 372,23 400,24" fill="none" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity=".7"/>
     </svg>
+  )
+}
+
+// ═══════════════════════════════════════════
+// LIVE SPARKLINE — real BTC/USD last-30-days (CoinGecko, no key, CORS-open)
+// Falls back to the static path if the fetch fails, so the card never breaks.
+// ═══════════════════════════════════════════
+function LiveSparkline() {
+  const [pts, setPts] = useState<number[] | null>(null)
+  const [chg, setChg] = useState<number | null>(null)
+
+  useEffect(() => {
+    let alive = true
+    fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=30&interval=daily')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('bad'))))
+      .then((d: { prices?: [number, number][] }) => {
+        if (!alive || !d.prices?.length) return
+        const ps = d.prices.map((p) => p[1])
+        setPts(ps)
+        setChg(((ps[ps.length - 1] - ps[0]) / ps[0]) * 100)
+      })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [])
+
+  const W = 400, H = 50
+  const up = (chg ?? 0) >= 0
+  const stroke = up ? '#22c55e' : '#ef4444'
+
+  let line = 'M0,25 L31,27 L62,30 L93,33 L124,31 L155,33 L186,34 L217,38 L248,36 L279,35 L310,39 L341,27 L372,23 L400,24'
+  let area = ''
+  if (pts && pts.length > 1) {
+    const min = Math.min(...pts), max = Math.max(...pts), span = max - min || 1
+    const c = pts.map((v, i) => [ (i / (pts.length - 1)) * W, H - ((v - min) / span) * (H - 8) - 4 ] as const)
+    line = 'M' + c.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' L')
+    area = line + ` L${W},${H} L0,${H} Z`
+  }
+
+  return (
+    <div>
+      <svg style={{ width: '100%', height: 36, display: 'block' }} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="lsf" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={stroke} stopOpacity=".16" /><stop offset="100%" stopColor={stroke} stopOpacity=".01" />
+          </linearGradient>
+        </defs>
+        {area && <path d={area} fill="url(#lsf)" />}
+        <path d={line} fill="none" stroke={stroke} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity={pts ? '.9' : '.45'} />
+      </svg>
+      <div className="mono" lang="en" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: '.46rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>
+        <span>BTC/USD · 30g</span>
+        {chg != null && <span style={{ color: up ? 'var(--green-t)' : '#ef4444' }}>{up ? '+' : ''}{chg.toFixed(1)}%</span>}
+      </div>
+    </div>
   )
 }
 
