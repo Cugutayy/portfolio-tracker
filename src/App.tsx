@@ -26,10 +26,10 @@ export default function App() {
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
         const vh = window.innerHeight || 1
-        const kPar = Math.min(1, window.scrollY / (vh * 1.8))
-        // GPU-composited transform (no repaint) — div is 120% tall, so up to
-        // 16vh of drift reveals the lily's lower stems without leaving a gap
-        if (lilyRef.current) lilyRef.current.style.transform = `translate3d(0, ${-(kPar * vh * 0.16).toFixed(1)}px, 0)`
+        const kPar = Math.min(1, window.scrollY / (vh * 1.6))
+        // full lily is visible at the top (scale 1); a gentle GPU-composited
+        // zoom on scroll gives it life without cropping the initial view
+        if (lilyRef.current) lilyRef.current.style.transform = `scale(${(1 + kPar * 0.05).toFixed(3)})`
       })
     }
     onScroll()
