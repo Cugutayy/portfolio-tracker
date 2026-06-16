@@ -161,6 +161,24 @@ export function ProjectCards({ t }: Props) {
             <Tags items={['3D Capture', 'Immersive', 'Polycam']} />
           </EdCard>
         </ScrollReveal>
+
+        <ScrollReveal delay={600} style={{ height: '100%' }}>
+          <EdCard href="/pattern-bot.html" no="09" kicker="Quant · Wyckoff" accent="#a78bfa">
+            <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>
+              Pattern <em className="italic-accent" style={{ color: '#a78bfa' }}>Bot</em>
+            </h3>
+            <p style={{ color: 'var(--muted)', fontSize: '.74rem', lineHeight: 1.5, marginBottom: 10 }}>
+              Crypto Homerun takvimi — 66 coin için MA'dan bağımsız Wyckoff faz tarayıcı: BC→SC→AR→ST→Spring→SOS→UT→SOW, gerçek OHLC, log skala, beklenen hareket.
+            </p>
+            <SentimentMini />
+            <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Stat label="Coin" value="66" />
+              <Stat label="Faz" value="A·B·C·D·E" />
+              <LiveDot label="Tarama" />
+            </div>
+            <Tags items={['Wyckoff', 'Birikim/Dağıtım', 'OHLC']} />
+          </EdCard>
+        </ScrollReveal>
       </div>
     </section>
   )
