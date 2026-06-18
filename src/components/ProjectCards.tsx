@@ -9,7 +9,7 @@ interface Props { t: (k: string) => string }
  */
 export function ProjectCards({ t }: Props) {
   return (
-    <section id="projects" className="container" style={{ padding: '40px 0 56px' }}>
+    <section id="projects" className="container" style={{ paddingTop: 40, paddingBottom: 56 }}>
       {/* section header */}
       <ScrollReveal delay={0}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 18 }}>
@@ -22,7 +22,7 @@ export function ProjectCards({ t }: Props) {
       <ScrollReveal delay={60}>
         <a href="https://xx-arena.vercel.app" className="lead-card" style={{ marginBottom: 14, '--ed-accent': '#a78bfa' } as React.CSSProperties}>
           <div className="lead-grid">
-            <div style={{ padding: '28px 30px', borderRight: '1px solid var(--rule)' }}>
+            <div className="lead-left">
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
                 <span className="mono" style={{ fontSize: '.52rem', letterSpacing: '.2em', color: 'var(--bg)', background: 'var(--ink)', padding: '3px 8px' }}>
                   {t('lead')}
@@ -44,7 +44,7 @@ export function ProjectCards({ t }: Props) {
                 {t('leadCta')} →
               </span>
             </div>
-            <div style={{ padding: '28px 26px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 14 }}>
+            <div className="lead-right">
               <PortfolioMini />
               {/* pre-uppercased: Tags is lang="en", so Turkish words must arrive final-form */}
               <Tags items={['Next.js 16', 'VADELİ · TP/SL', 'CANLI LİDERLİK', 'Sosyal']} />

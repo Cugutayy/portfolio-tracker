@@ -14,12 +14,12 @@ export function Navbar({ lang, setLang, dark, setDark, t }: Props) {
 
   return (
     <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'var(--nav-bg)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--rule)' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 28px', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 26 }}>
+      <div className="nav-inner" style={{ maxWidth: 1200, margin: '0 auto', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="nav-links">
           <a href="/" className="logo-mark" style={{ marginRight: 6 }}>cs</a>
           <a href="#projects" className="link-ed mono" style={{ fontSize: '.62rem', color: 'var(--muted)', letterSpacing: '.12em', textTransform: 'uppercase' }}>{t('navP')}</a>
-          <a href="mailto:s.cagatay.sonmez@gmail.com" className="link-ed mono" style={{ fontSize: '.62rem', color: 'var(--muted)', letterSpacing: '.12em', textTransform: 'uppercase' }}>{t('navC')}</a>
-          <a href="https://github.com/Cugutayy" target="_blank" lang="en" className="link-ed mono" style={{ fontSize: '.62rem', color: 'var(--muted)', letterSpacing: '.12em', textTransform: 'uppercase' }}>github</a>
+          <a href="mailto:s.cagatay.sonmez@gmail.com" className="link-ed mono nav-hide-sm" style={{ fontSize: '.62rem', color: 'var(--muted)', letterSpacing: '.12em', textTransform: 'uppercase' }}>{t('navC')}</a>
+          <a href="https://github.com/Cugutayy" target="_blank" lang="en" className="link-ed mono nav-hide-sm" style={{ fontSize: '.62rem', color: 'var(--muted)', letterSpacing: '.12em', textTransform: 'uppercase' }}>github</a>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {langs.map(([code, label]) => (
