@@ -132,10 +132,15 @@ a { color: inherit; text-decoration: none; }
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background: var(--bg); opacity: 0.08;
 }
-/* Reframe the bloom on tall mobile screens so it fills the view instead of
-   cropping to a thin vertical sliver (placed AFTER .site-lily so it wins). */
+/* Reframe the bloom on tall mobile screens. The photo is landscape with a pure
+   black ground, so we fit it to WIDTH (whole bloom visible, never cropped at the
+   sides) and let the black fill the rest — it blends seamlessly with the page.
+   Placed AFTER .site-lily so it wins the cascade. */
 @media(max-width:640px) {
-  .site-lily { background-size: cover; background-position: center 36%; }
+  .site-lily { background-size: 122% auto; background-position: center 34%; }
+}
+@media(max-width:380px) {
+  .site-lily { background-size: 140% auto; background-position: center 32%; }
 }
 
 /* ═══════════ Editorial broadsheet system ═══════════ */
