@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
+  <meta name="theme-color" content="#f2b134" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="KediDex" />
+  <title>KediDex — Sokak Kedisi Avı</title>
+  <meta name="description" content="Sokakta gördüğün gerçek kedileri yakala, koleksiyon yap. Türkiye'nin sokak kedisi avı oyunu." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- ÜST BAR -->
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-paw">🐾</span>
+        <span class="brand-name">KediDex</span>
+      </div>
+      <div class="profile">
+        <button id="nickBtn" class="chip" title="Avcı adını değiştir"><span class="chip-ico">👤</span><span id="nickName">Avcı</span></button>
+        <button id="xBtn" class="chip hidden" title="X ile giriş">𝕏</button>
+        <div class="chip" title="Seviye"><span class="chip-ico">⭐</span><span id="lvl">1</span></div>
+        <div class="chip" title="Günlük seri"><span class="chip-ico">🔥</span><span id="streak">0</span></div>
+        <div class="xp"><div class="xp-fill" id="xpFill"></div><span class="xp-label" id="xpLabel">0/100</span></div>
+      </div>
+    </header>
+
+    <!-- GÖRÜNÜMLER -->
+    <main class="views">
+      <!-- KOLEKSİYON -->
+      <section id="view-collection" class="view active">
+        <div class="view-head">
+          <h1>Koleksiyonum</h1>
+          <div class="dex-counter"><span id="dexCount">0</span> kedi yakalandı</div>
+        </div>
+        <div id="dexProgress" class="dex-progress"></div>
+        <div id="questPanel" class="quest-panel"></div>
+        <div id="badgeRow" class="badge-row"></div>
+        <div class="rarity-legend" id="rarityLegend"></div>
+        <div id="grid" class="grid"></div>
+        <div id="empty" class="empty">
+          <div class="empty-art">🐱</div>
+          <h2>Henüz kedin yok</h2>
+          <p>Sokağa çık, gerçek bir kedi bul ve <b>Yakala</b> sekmesinden ilk kedini koleksiyonuna ekle!</p>
+        </div>
+      </section>
+
+      <!-- YAKALA -->
+      <section id="view-catch" class="view">
+        <div class="camera-wrap">
+          <video id="video" playsinline muted></video>
+          <canvas id="overlay"></canvas>
+          <div class="scan-frame"></div>
+
+          <div class="cam-top">
+            <div id="modelStatus" class="model-status">📷 Kamerayı başlatmak için dokun</div>
+          </div>
+
+          <div id="detStatus" class="det-status searching">Hazır</div>
+
+          <div class="cam-bottom">
+            <button id="startBtn" class="btn btn-primary">📷 Kamerayı Aç</button>
+            <button id="catchBtn" class="btn btn-catch hidden">🎯 Yakala!</button>
+            <button id="demoBtn" class="btn btn-ghost">🎲 Demo: rastgele kedi</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- HARİTA -->
+      <section id="view-map" class="view">
+        <div class="view-head">
+          <h1>Yakındaki Kediler</h1>
+          <div class="dex-counter" id="mapLive">Yükleniyor…</div>
+        </div>
+        <div id="map"></div>
+      </section>
+    </main>
+
+    <!-- ALT NAVİGASYON -->
+    <nav class="bottomnav">
+      <button class="nav-btn active" data-view="collection"><span>📒</span>Koleksiyon</button>
+      <button class="nav-btn nav-catch" data-view="catch"><span>📷</span>Yakala</button>
+      <button class="nav-btn" data-view="map"><span>🗺️</span>Harita</button>
+    </nav>
+  </div>
+
+  <!-- YAKALAMA MİNİ OYUNU (üst seviye; kamera + harita için) -->
+  <div id="game" class="game hidden">
+    <div class="game-target"></div>
+    <div class="game-ring" id="gameRing"></div>
+    <div class="game-hint">Halka <b>beyaz çembere</b> girince DOKUN! 🎯</div>
+  </div>
+
+  <!-- YAKALAMA SONRASI KART AÇILIŞI -->
+  <div id="reveal" class="modal hidden">
+    <div class="reveal-inner">
+      <div class="reveal-burst"></div>
+      <div id="revealCard" class="card big"></div>
+      <div id="revealMeta" class="reveal-meta"></div>
+      <div class="reveal-actions">
+        <button id="shareBtn" class="btn btn-share">📤 Kartı Paylaş</button>
+        <button id="revealClose" class="btn btn-primary">Koleksiyona ekle ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KEDİ DETAY -->
+  <div id="detail" class="modal hidden">
+    <div class="detail-inner">
+      <button id="detailClose" class="modal-close">✕</button>
+      <div id="detailBody"></div>
+    </div>
+  </div>
+
+  <!-- bildirim -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- ses -->
+  <audio id="sndCatch" preload="auto"></audio>
+
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="storage.js"></script>
+  <script src="api.js"></script>
+  <script src="photostore.js"></script>
+  <script src="catgen.js"></script>
+  <script src="detector.js"></script>
+  <script src="mapview.js"></script>
+  <script src="share.js"></script>
+  <script src="app.js"></script>
+  <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
+  <script type="module" src="figurine.js"></script>
+</body>
+</html>

@@ -12,3 +12,7 @@ netlify.toml
 # Claude Code
 .claude/
 .vercel
+
+# Cloudflare yerel secret'lar + state
+.dev.vars
+.wrangler/
