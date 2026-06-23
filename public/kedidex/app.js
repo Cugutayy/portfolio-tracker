@@ -21,6 +21,7 @@
     bindButtons();
     renderProfile();
     initIdentity();
+    maybeShowWelcome();
     renderLegend();
     renderCollection();
     askPosition();
@@ -81,6 +82,9 @@
       xUser = me;
       KD.api.setNick('@' + me.username);
       renderNick();
+      // X ile girince karşılamayı geç
+      localStorage.setItem('kedidex.v1.entered', '1');
+      const w = $('#welcome'); if (w) w.classList.add('hidden');
       if (xBtn) { xBtn.textContent = '𝕏 ✓'; xBtn.title = 'X: @' + me.username + ' — çıkış için tıkla'; }
     } else {
       xUser = null;
@@ -107,6 +111,25 @@
     const cur = KD.api.nick();
     const v = window.prompt('Avcı adın (haritada diğer oyunculara görünür):', cur);
     if (v != null && v.trim()) { KD.api.setNick(v.trim()); renderNick(); }
+  }
+
+  // ---------- karşılama / giriş ----------
+  function maybeShowWelcome() {
+    if (localStorage.getItem('kedidex.v1.entered')) return; // daha önce girdi
+    showWelcome();
+  }
+  function showWelcome() {
+    const w = $('#welcome'); if (!w) return;
+    try {
+      const sample = { seed: 777, rarity: 'myth', look: { coat: { n: 'Pamuk', body: '#f1e7d2', belly: '#fffaf0', stripe: '#ddccac' }, eye: '#4a86c5', eye2: '#e0a83b', pattern: 'duz', blush: true } };
+      $('#welcomeCat').innerHTML = KD.catgen.catSVG(sample, 150);
+    } catch (e) {}
+    w.classList.remove('hidden');
+  }
+  function enterApp(nick) {
+    if (nick && nick.trim() && KD.api) { KD.api.setNick(nick.trim()); renderNick(); }
+    localStorage.setItem('kedidex.v1.entered', '1');
+    const w = $('#welcome'); if (w) w.classList.add('hidden');
   }
 
   // ---------- nadirlik lejantı ----------
@@ -550,6 +573,10 @@
   function bindButtons() {
     $('#startBtn').addEventListener('click', startCamera);
     $('#nickBtn').addEventListener('click', editNick);
+    $('#welcomeStart').addEventListener('click', () => enterApp($('#welcomeNick').value));
+    $('#welcomeGuest').addEventListener('click', () => enterApp(null));
+    $('#welcomeX').addEventListener('click', () => { location.href = '/api/x/login'; });
+    $('#welcomeNick').addEventListener('keydown', e => { if (e.key === 'Enter') enterApp($('#welcomeNick').value); });
     $('#shareBtn').addEventListener('click', () => {
       if (lastRevealCat) KD.share.shareCat(lastRevealCat, KD.api && KD.api.nick());
     });
