@@ -179,6 +179,24 @@ export function ProjectCards({ t }: Props) {
             <Tags items={['Wyckoff', 'Birikim/Dağıtım', 'OHLC']} />
           </EdCard>
         </ScrollReveal>
+
+        <ScrollReveal delay={660} style={{ height: '100%' }}>
+          <EdCard href="/kedidex/" no="10" kicker="Sokak Oyunu · AI · PWA" accent="#e8893b">
+            <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>
+              Kedi<em className="italic-accent" style={{ color: '#e8893b' }}>Dex</em>
+            </h3>
+            <p style={{ color: 'var(--muted)', fontSize: '.74rem', lineHeight: 1.5, marginBottom: 10 }}>
+              Sokaktaki gerçek kedileri Pokémon gibi yakala. Cihaz-üstü AI canlı kedi tanıma + sunucu doğrulama (anti-hile), 3B figür kartlar, yaklaş-yakala harita, Van/Ankara nadirleri.
+            </p>
+            <CatMini />
+            <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Stat label="Tanıma" value="Cihaz-üstü" />
+              <Stat label="Nadirlik" value="5 kademe" />
+              <LiveDot label="Yeni" />
+            </div>
+            <Tags items={['PWA', 'TensorFlow.js', 'Cloudflare D1', '3B Figür']} />
+          </EdCard>
+        </ScrollReveal>
       </div>
     </section>
   )
@@ -546,6 +564,41 @@ function RunRouteMini() {
           <animateMotion dur={`${r.d}s`} repeatCount="indefinite" path={RUN_ROUTE} begin={`${r.b}s`} rotate="auto"/>
           <circle r="3" fill={r.c} opacity=".9"/>
           <circle r="6" fill={r.c} opacity=".15"/>
+        </g>
+      ))}
+    </svg>
+  )
+}
+
+// ═══════════════════════════════════════════
+// CAT MINI (KediDex) · mini map with cat pins + range + you-are-here
+// ═══════════════════════════════════════════
+function CatMini() {
+  const cats = [
+    { x: 64, y: 28, c: '#e8893b', b: 0 },
+    { x: 118, y: 58, c: '#c9a06a', b: .6 },
+    { x: 252, y: 33, c: '#9aa3a8', b: 1.1 },
+    { x: 300, y: 60, c: '#e0a83b', b: 1.6 },
+  ]
+  return (
+    <svg style={{ width: '100%', height: 50 }} viewBox="0 0 360 80" preserveAspectRatio="xMidYMid meet">
+      {/* faint street grid */}
+      <g stroke="var(--rule)" strokeWidth=".5" opacity=".22">
+        <line x1="0" y1="22" x2="360" y2="22" /><line x1="0" y1="44" x2="360" y2="44" /><line x1="0" y1="64" x2="360" y2="64" />
+        <line x1="90" y1="0" x2="90" y2="80" /><line x1="180" y1="0" x2="180" y2="80" /><line x1="270" y1="0" x2="270" y2="80" />
+      </g>
+      {/* catch range + you-are-here */}
+      <circle cx="180" cy="42" r="22" fill="#e8893b" opacity=".07" stroke="#e8893b" strokeWidth=".6" />
+      <circle cx="180" cy="42" r="3.2" fill="#e8893b">
+        <animate attributeName="r" values="2.6;4.2;2.6" dur="2s" repeatCount="indefinite" />
+      </circle>
+      {/* cat pins (ears + head) */}
+      {cats.map((k, i) => (
+        <g key={i} transform={`translate(${k.x} ${k.y})`} opacity={.92 - i * .04}>
+          {i % 2 === 0 && <animateTransform attributeName="transform" type="translate" values={`${k.x} ${k.y};${k.x} ${k.y - 3};${k.x} ${k.y}`} dur="2.4s" begin={`${k.b}s`} repeatCount="indefinite" />}
+          <path d="M-4,-3 L-6,-9 L-0.5,-5 Z M4,-3 L6,-9 L0.5,-5 Z" fill={k.c} />
+          <circle r="5.4" fill={k.c} />
+          <circle cx="-1.8" cy="-.5" r=".8" fill="var(--bg)" /><circle cx="1.8" cy="-.5" r=".8" fill="var(--bg)" />
         </g>
       ))}
     </svg>
