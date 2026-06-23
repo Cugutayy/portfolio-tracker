@@ -365,6 +365,7 @@
   function startGame(onResult) {
     if (gameActive) return;            // tekrar girişi engelle (çift yakalama önlemi)
     gameActive = true;
+    if (KD.sound) KD.sound.play('catchStart');
     const g = $('#game'); g.classList.remove('hidden');
     $('#catchBtn').classList.add('hidden');
     setDetStatus('Tam zamanında dokun!', 'ready');
@@ -389,9 +390,11 @@
       const size = parseFloat(ring.dataset.size || RING_MAX);
       const diff = Math.abs(size - TARGET);
       const quality = Math.max(0.05, 1 - diff / 150);
+      if (KD.sound) KD.sound.play('snap');
+      screenFlash('#ffffff');
       g.classList.add('hidden');
       gameActive = false;
-      onResult(quality);
+      setTimeout(() => onResult(quality), 200);
     }
     g.addEventListener('pointerdown', onTap);
 
@@ -462,27 +465,26 @@
       const completed = KD.storage.updateQuestsOnCatch(cat);
       renderProfile(); renderProgress();
       showReveal(cat, q, xpGain, res.leveledUp);
-      completed.forEach((it, i) => setTimeout(() => toast(`✅ Görev tamam: ${it.desc} • +${it.reward} XP`), 700 + i * 1500));
+      completed.forEach((it, i) => setTimeout(() => { toast(`✅ Görev tamam: ${it.desc} • +${it.reward} XP`); if (KD.sound) KD.sound.play('quest'); }, 700 + i * 1500));
       if (KD.api) KD.api.submitCatch(cat);
     });
   }
 
   // ---------- yakalama sonucu ----------
-  function doCapture(quality, verified, frame, photoColor, fp) {
+  function doCapture(quality, verified, frame, photoColor, fp, token) {
     // kopya engeli: aynı kediyi az önce yakaladıysan tekrar sayılmaz
     if (fp && KD.storage.isDuplicate(fp)) {
-      beep(0.3);
+      if (KD.sound) KD.sound.play('fail');
       KD.storage.addXp(5); renderProfile();
       toast('😸 Bu kediyi az önce yakaladın! Yeni bir kedi bul (+5 XP)');
       if (tracker) tracker.reset();
       return;
     }
-    beep(quality);
-    if (navigator.vibrate) navigator.vibrate(quality > 0.6 ? [40, 30, 60] : 40);
     const lat = myPos ? myPos[0] + (Math.random() - 0.5) * 0.0008 : null;
     const lng = myPos ? myPos[1] + (Math.random() - 0.5) * 0.0008 : null;
     const cat = KD.catgen.create({ quality, lat, lng, photoColor });
     cat.verified = verified === true;
+    cat.verifyToken = token || null;
     cat.hasPhoto = !!frame;
     KD.storage.add(cat);
     if (frame && KD.photos) KD.photos.save(cat.id, frame);
@@ -494,7 +496,7 @@
     renderProgress();
     showReveal(cat, quality, xpGain, res.leveledUp);
     completed.forEach((it, i) =>
-      setTimeout(() => toast(`✅ Görev tamam: ${it.desc} • +${it.reward} XP`), 700 + i * 1500));
+      setTimeout(() => { toast(`✅ Görev tamam: ${it.desc} • +${it.reward} XP`); if (KD.sound) KD.sound.play('quest'); }, 700 + i * 1500));
     // paylaşımlı haritaya gönder (arka planda)
     if (KD.api) KD.api.submitCatch(cat).then(j => { if (j && j.backend) flashSynced(); });
     if (fp) KD.storage.recordFingerprint(fp);
@@ -529,8 +531,18 @@
     const stars = '⭐'.repeat(Math.max(1, Math.round(quality * 5)));
     $('#revealMeta').innerHTML = `<div class="rar" style="color:${cat.rarityColor}">${cat.rarityName} kedi yakalandı!</div>
       <div class="quality">${qualityLabel(quality)} ${stars} • +${xp} XP${leveledUp ? ' • 🎉 SEVİYE ATLADIN!' : ''}</div>`;
-    $('#reveal').classList.remove('hidden');
-    confetti();
+
+    const reveal = $('#reveal');
+    reveal.classList.remove('hidden', 'rays-on', 'rays-myth', 'show-card');
+    const epicPlus = cat.rarity === 'epic' || cat.rarity === 'myth';
+    if (KD.sound) KD.sound.play('success', cat.rarity);
+    screenFlash(cat.rarity === 'myth' ? '#ffe9a8' : cat.rarity === 'epic' ? '#ecd9ff' : '#ffffff');
+    if (epicPlus) { reveal.classList.add('rays-on'); if (cat.rarity === 'myth') reveal.classList.add('rays-myth'); }
+    void reveal.offsetWidth; reveal.classList.add('show-card');
+    if (epicPlus) screenShake();
+    if (navigator.vibrate) navigator.vibrate(cat.rarity === 'myth' ? [0, 50, 40, 50, 40, 90] : epicPlus ? [0, 30, 30, 60] : 35);
+    confetti(cat.rarity);
+    if (leveledUp && KD.sound) setTimeout(() => KD.sound.play('levelup'), 650);
   }
 
   // ---------- ses + konfeti ----------
@@ -551,22 +563,39 @@
       });
     } catch (e) {}
   }
-  function confetti() {
+  function confetti(rarity) {
     const host = $('.reveal-inner');
-    const colors = ['#e8893b', '#f2b134', '#5aa86a', '#4a86c5', '#9a5cc6', '#e85d75'];
-    for (let i = 0; i < 36; i++) {
+    let colors = ['#e8893b', '#f2b134', '#5aa86a', '#4a86c5', '#9a5cc6', '#e85d75'];
+    let n = 32;
+    if (rarity === 'rare') n = 46;
+    else if (rarity === 'epic') n = 64;
+    else if (rarity === 'myth') { n = 90; colors = ['#ffd54a', '#f2b134', '#e8893b', '#fff3c4', '#ffe9a8', '#e0a83b']; }
+    for (let i = 0; i < n; i++) {
       const s = document.createElement('span');
-      s.style.cssText = `position:absolute;top:10%;left:50%;width:10px;height:14px;z-index:5;
+      const sz = 8 + Math.random() * 6;
+      s.style.cssText = `position:absolute;top:8%;left:50%;width:${sz}px;height:${sz * 1.4}px;z-index:5;
         background:${colors[i % colors.length]};border:2px solid #2b2118;border-radius:2px;pointer-events:none`;
       host.appendChild(s);
-      const ang = Math.random() * Math.PI * 2, dist = 80 + Math.random() * 180;
-      const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist + 120;
+      const ang = Math.random() * Math.PI * 2, dist = 90 + Math.random() * (rarity === 'myth' ? 280 : 190);
+      const dx = Math.cos(ang) * dist, dy = Math.sin(ang) * dist + 130;
       s.animate([
         { transform: 'translate(-50%,-50%) rotate(0)', opacity: 1 },
-        { transform: `translate(${dx}px,${dy}px) rotate(${Math.random() * 720}deg)`, opacity: 0 }
-      ], { duration: 900 + Math.random() * 500, easing: 'cubic-bezier(.2,.6,.3,1)' });
-      setTimeout(() => s.remove(), 1500);
+        { transform: `translate(${dx}px,${dy}px) rotate(${Math.random() * 900}deg)`, opacity: 0 }
+      ], { duration: 1000 + Math.random() * 700, easing: 'cubic-bezier(.2,.6,.3,1)' });
+      setTimeout(() => s.remove(), 1800);
     }
+  }
+
+  // ekran-çapı flash + sarsıntı
+  function screenFlash(color) {
+    const el = $('#fxFlash'); if (!el) return;
+    el.style.background = color || '#fff';
+    el.classList.remove('go'); void el.offsetWidth; el.classList.add('go');
+  }
+  function screenShake() {
+    const app = $('#app'); if (!app) return;
+    app.classList.remove('shake'); void app.offsetWidth; app.classList.add('shake');
+    setTimeout(() => app.classList.remove('shake'), 600);
   }
 
   // ---------- butonlar ----------
@@ -589,11 +618,12 @@
       const photoColor = sampleVideoColor();
       const fp = computeHash();
       // sunucu-taraflı doğrulama (Workers AI) — gerçek anti-hile ikinci kapısı
-      let verified = null;
+      let verified = null, verifyToken = null;
       if (frame && KD.api) {
         setDetStatus('Sunucuda doğrulanıyor…', 'found');
         const r = await KD.api.verifyCatImage(frame);
         verified = r.verified; // true / false / null(AI yok)
+        verifyToken = r.token || null;
       }
       btn.disabled = false;
       if (verified === false) {
@@ -601,12 +631,12 @@
         if (tracker) tracker.reset();
         return;
       }
-      startGame(q => doCapture(q, verified, frame, photoColor, fp));
+      startGame(q => doCapture(q, verified, frame, photoColor, fp, verifyToken));
     });
     $('#demoBtn').addEventListener('click', () => {
       // demo: tanımayı atla, doğrudan yakalama oyununa geç (doğrulama/foto/parmak izi yok)
       if ($('#view-catch').classList.contains('active') === false) switchView('catch');
-      startGame(q => doCapture(q, null, null, null, null));
+      startGame(q => doCapture(q, null, null, null, null, null));
     });
     $('#revealClose').addEventListener('click', () => {
       $('#reveal').classList.add('hidden');

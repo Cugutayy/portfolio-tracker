@@ -28,7 +28,7 @@ KD.api = (function () {
           id: cat.id, playerId: playerId(), playerName: nick(),
           catName: cat.name, title: cat.title, rarity: cat.rarity,
           seed: cat.seed, level: cat.level, quality: cat.quality,
-          verified: cat.verified ? 1 : 0, breed: cat.breed || null, lat: cat.lat, lng: cat.lng
+          verified: cat.verified ? 1 : 0, token: cat.verifyToken || null, breed: cat.breed || null, lat: cat.lat, lng: cat.lng
         })
       });
       const j = await res.json();
