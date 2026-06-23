@@ -15,6 +15,19 @@ const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, header
 
 const CAT_RE = /\bcat\b|tabby|kitten|feline|persian|siamese|egyptian cat|tiger cat|lynx|cougar|leopard|jaguar/i;
 
+function b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+async function hmac(secret, data) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return b64url(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data)));
+}
+// "kedi doğrulandı" kanıtı: ts.sig (2 dk geçerli) — istemci bunu /api/catches'e iletir
+async function signToken(secret) {
+  const ts = Date.now();
+  return ts + '.' + (await hmac(secret, 'cat|' + ts));
+}
+
 export function onRequestOptions() {
   return new Response('', { headers: CORS });
 }
@@ -36,8 +49,11 @@ export async function onRequestPost({ request, env }) {
       .map(r => ({ label: String(r.label || ''), score: Number(r.score || 0) }))
       .sort((a, b) => b.score - a.score);
     const hit = labels.find(l => CAT_RE.test(l.label));
+    const secret = env.VERIFY_SECRET || env.X_CLIENT_SECRET;
+    const token = (hit && secret) ? await signToken(secret) : null;
     return json({
       verified: !!hit,
+      token,
       label: hit ? hit.label : (labels[0] ? labels[0].label : ''),
       score: hit ? hit.score : (labels[0] ? labels[0].score : 0),
       top: labels.slice(0, 3),

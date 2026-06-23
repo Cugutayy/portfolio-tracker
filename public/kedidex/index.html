@@ -117,6 +117,7 @@
   <!-- YAKALAMA SONRASI KART AÇILIŞI -->
   <div id="reveal" class="modal hidden">
     <div class="reveal-inner">
+      <div id="revealRays" class="reveal-rays"></div>
       <div class="reveal-burst"></div>
       <div id="revealCard" class="card big"></div>
       <div id="revealMeta" class="reveal-meta"></div>
@@ -135,6 +136,9 @@
     </div>
   </div>
 
+  <!-- ekran-çapı flash katmanı -->
+  <div id="fxFlash" class="fx-flash" aria-hidden="true"></div>
+
   <!-- bildirim -->
   <div id="toast" class="toast hidden"></div>
 
@@ -146,6 +150,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="storage.js"></script>
   <script src="api.js"></script>
+  <script src="sound.js"></script>
   <script src="photostore.js"></script>
   <script src="catgen.js"></script>
   <script src="detector.js"></script>

@@ -50,6 +50,21 @@ function clampInt(v, def, lo, hi) {
   return Math.max(lo, Math.min(hi, n));
 }
 
+function b64url(buf) {
+  return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+async function hmac(secret, data) {
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  return b64url(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(data)));
+}
+// /api/verify-cat'ten gelen "kedi doğrulandı" token'ını doğrula (2 dk geçerli)
+async function validToken(secret, token) {
+  if (!token || token.indexOf('.') < 0) return false;
+  const [ts, sig] = token.split('.');
+  if (Date.now() - Number(ts) > 120000) return false;
+  return (await hmac(secret, 'cat|' + ts)) === sig;
+}
+
 export function onRequestOptions() {
   return new Response('', { headers: CORS });
 }
@@ -98,7 +113,10 @@ export async function onRequestPost({ request, env }) {
   const seed = clampInt(body.seed, 0, 0, 4294967295);
   const level = clampInt(body.level, 1, 1, 999);
   const quality = clampInt(body.quality, 0, 0, 100);
-  const verified = body.verified ? 1 : 0;
+  // güvenlik yapılandırıldıysa (secret var) verified YALNIZ geçerli sunucu token'ı ile olur
+  // — istemcinin verified bayrağına güvenilmez. Yapılandırılmadıysa graceful: istemci kararı.
+  const secret = env.VERIFY_SECRET || env.X_CLIENT_SECRET;
+  const verified = secret ? ((await validToken(secret, body.token)) ? 1 : 0) : (body.verified ? 1 : 0);
   const breed = body.breed ? String(body.breed).slice(0, 16) : null;
 
   let lat = parseFloat(body.lat), lng = parseFloat(body.lng);
@@ -112,6 +130,10 @@ export async function onRequestPost({ request, env }) {
 
   try {
     await ensureTable(env.DB);
+    // rate-limit: aynı oyuncu son 60 sn'de en fazla 6 yakalama (spam/sahte koruması)
+    const cnt = await env.DB.prepare('SELECT COUNT(*) AS c FROM catches WHERE player_id=? AND created_at>?')
+      .bind(playerId, Date.now() - 60000).first();
+    if (cnt && cnt.c >= 6) return json({ ok: false, error: 'rate-limit', backend: true }, 429);
     await env.DB.prepare(
       `INSERT OR REPLACE INTO catches
        (id,player_id,player_name,cat_name,title,rarity,seed,level,quality,verified,breed,lat,lng,created_at)
