@@ -107,11 +107,16 @@
     </div>
   </div>
 
-  <!-- YAKALAMA MİNİ OYUNU (üst seviye; kamera + harita için) -->
+  <!-- YAKALAMA MİNİ OYUNU: yatay zamanlama barı (üst seviye; kamera + harita için) -->
   <div id="game" class="game hidden">
-    <div class="game-target"></div>
-    <div class="game-ring" id="gameRing"></div>
-    <div class="game-hint">Halka <b>beyaz çembere</b> girince DOKUN! 🎯</div>
+    <div class="cgame">
+      <div class="cgame-top">🥫 <span id="cgameTries">3/3</span> hak</div>
+      <div class="cgame-bar">
+        <div class="cgame-zone" id="cgameZone"></div>
+        <div class="cgame-marker" id="cgameMarker"></div>
+      </div>
+      <div class="cgame-hint">Turuncu nokta <b>yeşile</b> gelince DOKUN! 🎯</div>
+    </div>
   </div>
 
   <!-- YAKALAMA SONRASI KART AÇILIŞI -->

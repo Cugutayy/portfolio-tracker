@@ -358,9 +358,10 @@
     const c = $('#overlay'); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
   }
 
-  // ---------- yakalama mini-oyunu (zamanlama) ----------
-  let gameRaf = null, gameStart = 0;
-  const TARGET = 120, RING_MAX = 300, RING_MIN = 60, PERIOD = 1100;
+  // ---------- yakalama mini-oyunu (yatay zamanlama barı) ----------
+  let gameRaf = null;
+  const Z_HALF = 0.11;                 // yeşil bölgenin yarı genişliği (0..1)
+  const toPct = v => (6 + v * 88) + '%'; // 0..1 -> %6..%94 (nokta hep görünür)
 
   function startGame(onResult) {
     if (gameActive) return;            // tekrar girişi engelle (çift yakalama önlemi)
@@ -368,38 +369,50 @@
     if (KD.sound) KD.sound.play('catchStart');
     const g = $('#game'); g.classList.remove('hidden');
     $('#catchBtn').classList.add('hidden');
-    setDetStatus('Tam zamanında dokun!', 'ready');
-    gameStart = performance.now();
-    let tapped = false;
+    setDetStatus('Yeşile gelince DOKUN!', 'ready');
 
-    const ring = $('#gameRing');
-    function frame(now) {
-      const t = ((now - gameStart) % PERIOD) / PERIOD;     // 0..1
-      const tri = t < 0.5 ? t * 2 : (1 - t) * 2;            // üçgen dalga 0..1..0
-      const size = RING_MAX - (RING_MAX - RING_MIN) * tri;
-      ring.style.width = ring.style.height = size + 'px';
-      ring.dataset.size = size;
-      gameRaf = requestAnimationFrame(frame);
+    const marker = $('#cgameMarker'), zone = $('#cgameZone'), bar = $('.cgame-bar'), triesEl = $('#cgameTries');
+    const zc = 0.28 + Math.random() * 0.44;   // yeşil merkezi 0.28..0.72
+    zone.style.left = toPct(zc - Z_HALF);
+    zone.style.width = (Z_HALF * 2 * 88) + '%';
+    let tries = 3, finished = false;
+    triesEl.textContent = tries + '/3';
+    // marker CSS animasyonunu yeniden başlat
+    marker.style.animation = 'none'; void marker.offsetWidth; marker.style.animation = '';
+
+    // marker'ın bar içindeki konumu (0..1 mantıksal)
+    function markerP() {
+      const br = bar.getBoundingClientRect(), mr = marker.getBoundingClientRect();
+      const frac = (mr.left + mr.width / 2 - br.left) / br.width; // %0..1 görsel
+      return Math.max(0, Math.min(1, (frac - 0.06) / 0.88));
     }
-    gameRaf = requestAnimationFrame(frame);
-
-    function onTap() {
-      if (tapped) return; tapped = true;
-      cancelAnimationFrame(gameRaf);
+    function finish(quality) {
+      if (finished) return; finished = true;
       g.removeEventListener('pointerdown', onTap);
-      const size = parseFloat(ring.dataset.size || RING_MAX);
-      const diff = Math.abs(size - TARGET);
-      const quality = Math.max(0.05, 1 - diff / 150);
       if (KD.sound) KD.sound.play('snap');
       screenFlash('#ffffff');
       g.classList.add('hidden');
       gameActive = false;
-      setTimeout(() => onResult(quality), 200);
+      setTimeout(() => onResult(quality), 220);
+    }
+    function flashZone(good) { zone.classList.remove('hit', 'miss'); void zone.offsetWidth; zone.classList.add(good ? 'hit' : 'miss'); }
+    function onTap() {
+      if (finished) return;
+      const d = Math.abs(markerP() - zc);
+      if (d <= Z_HALF) {
+        flashZone(true);
+        finish(Math.max(0.4, 1 - (d / Z_HALF) * 0.55));   // merkez=1, kenar=0.45
+      } else {
+        tries--;
+        triesEl.textContent = Math.max(0, tries) + '/3';
+        flashZone(false);
+        if (KD.sound) KD.sound.play('fail');
+        if (tries <= 0) finish(0.12);                      // son hak — zar zor yakaladın
+        else setDetStatus('Iskaladın! Kalan hak: ' + tries, 'found');
+      }
     }
     g.addEventListener('pointerdown', onTap);
-
-    // 4 sn içinde dokunmazsa otomatik düşük kalite
-    setTimeout(() => { if (!tapped) onTap(); }, 4000);
+    setTimeout(() => { if (!finished) finish(0.1); }, 8000); // hiç dokunmazsa
   }
 
   // video karesini küçük JPEG olarak al (sunucu doğrulaması + saklama için)

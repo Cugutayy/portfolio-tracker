@@ -158,9 +158,19 @@ body{
 /* YAKALAMA MİNİ OYUNU */
 .game{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:55;background:rgba(28,22,15,.5)}
 .game.hidden{display:none}
-.game-target{position:absolute;width:120px;height:120px;border:5px solid rgba(255,255,255,.9);border-radius:50%}
-.game-ring{position:absolute;width:300px;height:300px;border:7px solid var(--accent);border-radius:50%;box-shadow:0 0 0 3px var(--ink) inset}
-.game-hint{position:absolute;bottom:120px;color:#fff;font-weight:800;font-size:16px;text-shadow:0 2px 0 var(--ink)}
+/* yatay zamanlama barı */
+.cgame{display:flex;flex-direction:column;align-items:center;gap:18px;padding:24px;width:100%}
+.cgame-top{background:var(--paper);border:3px solid var(--ink);border-radius:999px;padding:5px 16px;font-weight:800;font-size:14px;box-shadow:2px 2px 0 var(--ink)}
+.cgame-bar{position:relative;width:min(88%,360px);height:42px;background:var(--paper);border:4px solid var(--ink);border-radius:999px;box-shadow:3px 3px 0 var(--ink);overflow:hidden}
+.cgame-zone{position:absolute;top:0;bottom:0;background:linear-gradient(180deg,#7bd88a,#4f9d61)}
+.cgame-zone::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:3px;transform:translateX(-50%);background:rgba(43,33,24,.5)}
+.cgame-zone.hit{animation:zoneHit .45s ease-out}
+.cgame-zone.miss{animation:zoneMiss .3s}
+@keyframes zoneHit{0%{filter:brightness(1.7) saturate(1.4)}100%{filter:none}}
+@keyframes zoneMiss{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.cgame-marker{position:absolute;top:50%;left:6%;width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffb86b,var(--accent));border:3px solid var(--ink);transform:translate(-50%,-50%);box-shadow:0 2px 0 var(--ink);z-index:2;animation:markerSlide 1.3s cubic-bezier(.45,0,.55,1) infinite alternate}
+@keyframes markerSlide{from{left:6%}to{left:94%}}
+.cgame-hint{color:#fff;font-weight:800;font-size:16px;text-shadow:0 2px 0 var(--ink);text-align:center}
 
 /* BUTONLAR */
 .btn{font-family:inherit;font-weight:800;font-size:16px;border:4px solid var(--ink);
