@@ -197,6 +197,23 @@ export function ProjectCards({ t }: Props) {
             <Tags items={['PWA', 'TensorFlow.js', 'Cloudflare D1', '3B Figür']} />
           </EdCard>
         </ScrollReveal>
+        <ScrollReveal delay={720} style={{ height: '100%' }}>
+          <EdCard href="/jane-street.html" no="11" kicker="Quant · Jane Street" accent="#63a0f5">
+            <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>
+              Jane Street <em className="italic-accent" style={{ color: '#63a0f5' }}>Trader</em>
+            </h3>
+            <p style={{ color: 'var(--muted)', fontSize: '.74rem', lineHeight: 1.5, marginBottom: 10 }}>
+              Quant trading mülakatına 0'dan ustalığa antrenör: canlı zihinsel matematik testi (Zetamac ayarlı, seviye geri bildirimi), 4-beceri ustalık haritası, olasılık bankası, market-making rehberi.
+            </p>
+            <QuantMini />
+            <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Stat label="Gate" value="2dk · 75+" />
+              <Stat label="Skills" value="4" />
+              <LiveDot label="Antrenör" />
+            </div>
+            <Tags items={['Mental Math', 'Probability', 'Market-Making', 'EV']} />
+          </EdCard>
+        </ScrollReveal>
       </div>
     </section>
   )
@@ -608,6 +625,25 @@ function CatMini() {
 // ═══════════════════════════════════════════
 // SHARED
 // ═══════════════════════════════════════════
+// ═══════════════════════════════════════════
+// QUANT MINI (Jane Street) · mental-math score climb toward the 75 bar
+// ═══════════════════════════════════════════
+function QuantMini() {
+  const scores = [22, 34, 45, 55, 63, 72, 80]
+  const max = 90
+  const barY = 50 - (75 / max) * 46
+  return (
+    <svg style={{ width: '100%', height: 40, display: 'block' }} viewBox="0 0 300 50" preserveAspectRatio="none">
+      {/* Jane Street bar @ 75 */}
+      <line x1="0" y1={barY} x2="300" y2={barY} stroke="#63a0f5" strokeWidth=".6" strokeDasharray="3,3" opacity=".55" />
+      {scores.map((v, i) => {
+        const bw = 30, gap = 8, x = i * (bw + gap) + 6, h = (v / max) * 46
+        return <rect key={i} x={x} y={50 - h} width={bw} height={h} rx={2} fill="#63a0f5" opacity={0.32 + (v / max) * 0.6} />
+      })}
+    </svg>
+  )
+}
+
 function Stat({ label, value, pos }: { label:string; value:string; pos?:boolean }) {
   return (
     <div>
