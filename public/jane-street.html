@@ -390,6 +390,61 @@
     <p class="note warn small"><b>Ek sezgi:</b> edge varsa agresif ol (iyi fiyatta karşı taraf sana size veriyorsa al); edge yoksa geniş dur. Pratik: <a href="https://janestreet.gg/">janestreet.gg</a> simülatörü, <a href="https://github.com/mikinty/Trading-Interview-Questions/blob/master/chapters/games.md">Trading-Interview-Questions → games</a>.</p>
   </section>
 
+  <!-- MARKET-MAKING LIVE GAME -->
+  <style>
+    .mm-wrap{border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
+    .mm-top{padding:clamp(14px,3vw,22px);border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--surface-2),var(--surface));display:flex;flex-direction:column;gap:.5rem}
+    .mm-body{padding:clamp(14px,3vw,22px);display:flex;flex-direction:column;gap:1rem}
+    .mm-dice{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+    .mm-die{width:2.3rem;height:2.3rem;border-radius:9px;border:1px solid var(--line);background:var(--inset);display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:1.05rem}
+    .mm-die.hidden{color:var(--faint)}
+    .mm-die.reveal{border-color:var(--accent);color:var(--accent)}
+    .mm-quote{display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end}
+    .mm-field{display:flex;flex-direction:column;gap:.28rem}
+    .mm-field>label{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+    .mm-field input{font-family:var(--mono);font-size:1.15rem;width:5.2rem;text-align:center;padding:.45rem;border-radius:9px;border:2px solid var(--line);background:var(--surface);color:var(--ink);outline:none;font-variant-numeric:tabular-nums}
+    .mm-field input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+    .mm-sizes{display:flex;gap:.35rem}
+    .mm-size{font-family:var(--mono);font-weight:700;padding:.5rem .75rem;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+    .mm-size.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+    .mm-btns{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+    .mm-err{color:var(--crit);font-size:.8rem;font-family:var(--mono)}
+    .mm-pnl{font-family:var(--mono);font-weight:800;font-size:1.3rem;font-variant-numeric:tabular-nums}
+    .mm-pnl.mm-pos{color:var(--good)} .mm-pnl.mm-neg{color:var(--crit)}
+  </style>
+  <section class="reveal">
+    <div class="sec-head"><p class="eyebrow">Beceri 03 · canlı pratik</p><h2>Make a Market — oyna</h2><p class="muted small">5 gizli zarın toplamına market yap (aralık 5–30, fair 17,5). İstersen zar açarak fair'i daralt, sonra <b>bid @ ask + size</b> ver — her şeyi bilen karşı taraf kötü fiyatını avlar.</p></div>
+    <div class="mm-wrap">
+      <div class="mm-top">
+        <div class="mm-dice" id="mmDice"></div>
+        <p class="small muted" id="mmInfo" style="margin:0"></p>
+      </div>
+      <div class="mm-body">
+        <div class="mm-quote">
+          <div class="mm-field"><label for="mmBid" lang="en">Bid · alış</label><input id="mmBid" inputmode="decimal" autocomplete="off" placeholder="17"></div>
+          <div class="mm-field"><label for="mmAsk" lang="en">Ask · satış</label><input id="mmAsk" inputmode="decimal" autocomplete="off" placeholder="18"></div>
+          <div class="mm-field"><label lang="en">Size</label><div class="mm-sizes" id="mmSizes"><button type="button" class="mm-size on" data-s="1">1</button><button type="button" class="mm-size" data-s="2">2</button><button type="button" class="mm-size" data-s="5">5</button></div></div>
+        </div>
+        <div class="mm-btns">
+          <button type="button" id="mmReveal" class="btn ghost">Zar aç ▸</button>
+          <button type="button" id="mmQuote" class="btn">Kote et</button>
+          <button type="button" id="mmNew" class="btn ghost" hidden>Yeni tur ▸</button>
+          <span class="mm-err" id="mmErr"></span>
+        </div>
+        <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+          <div class="stat"><span class="lab">BU TUR</span><span class="val" id="mmRoundPnl">—</span></div>
+          <div class="stat"><span class="lab">TOPLAM PnL</span><span class="val" id="mmTotal">0</span></div>
+          <div class="stat"><span class="lab">TUR</span><span class="val" id="mmRounds">0</span></div>
+        </div>
+        <div class="result" id="mmResult" hidden>
+          <span class="mm-pnl" id="mmResPnl"></span>
+          <span class="small" id="mmResMsg"></span>
+        </div>
+      </div>
+    </div>
+    <p class="small muted"><b>Ders:</b> fair'e çıpala (17,5 + açılan zarlar), belirsizlik azaldıkça spread'i <b>daralt</b>, <b>size</b>'ı yönet — dar+doğru markette büyük size ödül, yanlış markette büyük zarar (ruin).</p>
+  </section>
+
   <!-- FERMI -->
   <section class="reveal">
     <div class="sec-head"><p class="eyebrow">Beceri 04</p><h2>Fermi / tahmin</h2></div>
@@ -500,6 +555,89 @@
   });
   inputEl.addEventListener("keydown",function(e){ if(e.key==="Enter" && !st.running) start(); });
   startBtn.addEventListener("click",start);
+})();
+
+/* ── Market-Making oyunu ── */
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var diceEl=$("mmDice"), infoEl=$("mmInfo"), bidEl=$("mmBid"), askEl=$("mmAsk"),
+      sizesEl=$("mmSizes"), revealBtn=$("mmReveal"), quoteBtn=$("mmQuote"), newBtn=$("mmNew"),
+      errEl=$("mmErr"), roundPnlEl=$("mmRoundPnl"), totalEl=$("mmTotal"), roundsEl=$("mmRounds"),
+      resEl=$("mmResult"), resPnlEl=$("mmResPnl"), resMsgEl=$("mmResMsg");
+  if(!diceEl) return;
+
+  var rnd=function(a,b){return Math.floor(Math.random()*(b-a+1))+a;};
+  var rd=function(x){return Math.round(x*100)/100;};
+  var fmt=function(x){return (""+x).replace(".",",");};
+  var MAXREVEAL=4;
+  var st={dice:[],revealed:0,size:1,quoted:false,total:0,rounds:0};
+
+  // saf PnL — Node ile test edildi (short/long/flow + ruin)
+  function computePnl(trueV,bid,ask,size){
+    if(trueV>ask) return {pnl:(ask-trueV)*size, kind:"short"};
+    if(trueV<bid) return {pnl:(trueV-bid)*size, kind:"long"};
+    var spread=ask-bid;
+    return {pnl:Math.max(0,6-spread)*size, kind:"flow"};
+  }
+  function sum(a){var s=0;for(var i=0;i<a.length;i++)s+=a[i];return s;}
+  function fairNow(){var k=0;for(var i=0;i<st.revealed;i++)k+=st.dice[i];return k+(5-st.revealed)*3.5;}
+  function renderDice(){
+    var h="";
+    for(var i=0;i<5;i++){ h+= (i<st.revealed) ? '<span class="mm-die reveal">'+st.dice[i]+'</span>' : '<span class="mm-die hidden">?</span>'; }
+    diceEl.innerHTML=h;
+  }
+  function newRound(){
+    st.dice=[]; for(var i=0;i<5;i++) st.dice.push(rnd(1,6));
+    st.revealed=0; st.quoted=false; renderDice();
+    infoEl.textContent="5 gizli zar. Fair tahmini şu an "+fmt(fairNow())+" (17,5 ± bilgi). Kote et ya da zar aç.";
+    bidEl.value=""; askEl.value=""; bidEl.disabled=false; askEl.disabled=false;
+    errEl.textContent=""; resEl.hidden=true; resEl.classList.remove("hit"); roundPnlEl.textContent="—"; roundPnlEl.style.color="";
+    revealBtn.disabled=false; revealBtn.hidden=false; quoteBtn.hidden=false; newBtn.hidden=true;
+  }
+  function reveal(){
+    if(st.quoted||st.revealed>=MAXREVEAL) return;
+    st.revealed++; renderDice();
+    infoEl.textContent="Bilinen "+st.revealed+" zar. Fair tahmini "+fmt(fairNow())+". Kalan "+(5-st.revealed)+" zar gizli — spread'i ona göre tut.";
+    if(st.revealed>=MAXREVEAL){ revealBtn.disabled=true; infoEl.textContent+=" (Son zar 1–6 gizli; daha açılmaz.)"; }
+  }
+  function quote(){
+    if(st.quoted) return;
+    var bid=parseFloat(bidEl.value), ask=parseFloat(askEl.value);
+    if(isNaN(bid)||isNaN(ask)){ errEl.textContent="Bid ve ask gir."; return; }
+    if(bid>=ask){ errEl.textContent="Bid < ask olmalı."; return; }
+    errEl.textContent=""; st.quoted=true;
+    var trueV=sum(st.dice), spread=rd(ask-bid), mid=rd((bid+ask)/2);
+    var r=computePnl(trueV,bid,ask,st.size); r.pnl=rd(r.pnl);
+    st.total=rd(st.total+r.pnl); st.rounds++;
+    st.revealed=5; renderDice();
+    var sign=r.pnl>=0?"+":"";
+    resPnlEl.textContent=sign+fmt(r.pnl)+" chip"+(st.size>1?" ("+st.size+" size)":"");
+    resPnlEl.className="mm-pnl "+(r.pnl>=0?"mm-pos":"mm-neg");
+    resEl.classList.toggle("hit", r.pnl>=0);
+    var msg="Gerçek toplam "+trueV+" · mid'in "+fmt(mid)+" (sapma "+fmt(rd(Math.abs(mid-trueV)))+"). ";
+    if(r.kind==="short") msg+="Fiyatın düşük kaldı — ask "+fmt(ask)+", gerçek "+trueV+". Offer'ın kaldırıldı, short kaldın."+(st.size>1?" Size büyüktü, zarar katlandı.":"");
+    else if(r.kind==="long") msg+="Fiyatın yüksek kaldı — bid "+fmt(bid)+", gerçek "+trueV+". Bid'in vuruldu, long kaldın."+(st.size>1?" Size büyüktü, zarar katlandı.":"");
+    else if(spread<=2) msg+="Dar ve doğru market (spread "+fmt(spread)+") — spread yakaladın. İşte bu.";
+    else if(spread>=5) msg+="Güvenli ama çok geniş (spread "+fmt(spread)+") — gerçek içeride ama edge yok.";
+    else msg+="İyi — market gerçeği kapsadı (spread "+fmt(spread)+"). Biraz daha daraltabilirdin.";
+    resMsgEl.textContent=msg; resEl.hidden=false;
+    roundPnlEl.textContent=sign+fmt(r.pnl); roundPnlEl.style.color=r.pnl>=0?"var(--good)":"var(--crit)";
+    totalEl.textContent=(st.total>=0?"+":"")+fmt(st.total); totalEl.style.color=st.total>=0?"var(--good)":"var(--crit)";
+    roundsEl.textContent=st.rounds;
+    bidEl.disabled=true; askEl.disabled=true; revealBtn.disabled=true; quoteBtn.hidden=true; newBtn.hidden=false;
+  }
+  sizesEl.addEventListener("click",function(e){
+    var b=(e.target && e.target.getAttribute && e.target.getAttribute("data-s")) ? e.target : null;
+    if(!b) return;
+    st.size=parseInt(b.getAttribute("data-s"),10);
+    var all=sizesEl.getElementsByClassName("mm-size");
+    for(var i=0;i<all.length;i++) all[i].classList.remove("on");
+    b.classList.add("on");
+  });
+  revealBtn.addEventListener("click",reveal);
+  quoteBtn.addEventListener("click",quote);
+  newBtn.addEventListener("click",newRound);
+  newRound();
 })();
 </script>
 </body>
