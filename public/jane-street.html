@@ -510,6 +510,47 @@
     </div>
   </section>
 
+  <!-- LEARN / TEACH MODE -->
+  <style>
+    .lrn-wrap{border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow);overflow:hidden}
+    .lrn-tabs{display:flex;flex-wrap:wrap;gap:.4rem;padding:clamp(12px,2.5vw,18px);border-bottom:1px solid var(--line);background:linear-gradient(180deg,var(--surface-2),var(--surface))}
+    .lrn-tab{font-family:var(--mono);font-size:.78rem;font-weight:700;padding:.45rem .8rem;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer}
+    .lrn-tab.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+    .lrn-body{padding:clamp(14px,3vw,22px);display:flex;flex-direction:column;gap:1rem}
+    .lrn-ex{border-left:3px solid var(--accent);background:var(--accent-soft);padding:.8rem 1rem;border-radius:0 10px 10px 0}
+    .lrn-ex .h{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.35rem}
+    .lrn-ex .body{font-size:.92rem;line-height:1.6}
+    .lrn-practice{border:1px solid var(--line);border-radius:12px;background:var(--surface-2);padding:clamp(14px,3vw,20px);display:flex;flex-direction:column;gap:.9rem;align-items:center;text-align:center}
+    .lrn-q{font-family:var(--mono);font-size:clamp(1.6rem,6vw,2.4rem);font-weight:700;font-variant-numeric:tabular-nums}
+    .lrn-input{font-family:var(--mono);font-size:1.4rem;text-align:center;width:min(200px,80%);padding:.45rem;border-radius:10px;border:2px solid var(--line);background:var(--surface);color:var(--ink);outline:none;font-variant-numeric:tabular-nums}
+    .lrn-input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+    .lrn-input:disabled{opacity:.55}
+    .lrn-btns{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
+    .lrn-fb{font-size:.92rem;line-height:1.5;min-height:1.2rem}
+    .lrn-fb .steps{font-family:var(--mono);color:var(--accent);display:block;margin-top:.3rem}
+    .lrn-fb.ok{color:var(--good)} .lrn-fb.no{color:var(--crit)}
+  </style>
+  <section class="reveal">
+    <div class="sec-head"><p class="eyebrow">Öğren · worked-example + alıştır</p><h2>Yöntemi öğret — adım adım</h2><p class="muted small">Eğitim bilimi: yeni öğrenen için <b>işlenmiş örnek</b> (worked example) kılavuzsuz çözmeye üstündür; sonra <b>anlık geri bildirimli alıştırma</b> ile pekişir. Tekniği seç → örneği oku → alıştır. Cevap yanlış olsa bile <b>adım adım çözüm</b> gösterilir — her denemede öğrenirsin.</p></div>
+    <div class="lrn-wrap">
+      <div class="lrn-tabs" id="lrnTabs"></div>
+      <div class="lrn-body">
+        <div class="lrn-ex"><div class="h">İşlenmiş örnek — yöntem</div><div class="body" id="lrnEx"></div></div>
+        <div class="lrn-practice">
+          <div class="lrn-q" id="lrnQ">—</div>
+          <input id="lrnInput" class="lrn-input" inputmode="numeric" autocomplete="off" placeholder="cevap" disabled>
+          <div class="lrn-btns">
+            <button type="button" id="lrnGen" class="btn">Alıştır ▸</button>
+            <button type="button" id="lrnCheck" class="btn" hidden>Kontrol et</button>
+            <button type="button" id="lrnHint" class="btn ghost" hidden>Yöntemi göster</button>
+          </div>
+          <div class="lrn-fb" id="lrnFb"></div>
+        </div>
+      </div>
+    </div>
+    <p class="small muted"><b>Taktik:</b> önce örneği anla (anahtar içgörü), sonra alıştır; kaçırdığın tipi <b>2 gün sonra</b> tekrar dene (aralıklı tekrar). Hız için günlük antrenör, teknik için bu mod.</p>
+  </section>
+
   <hr class="div">
 
   <!-- PROJECTS -->
@@ -697,6 +738,77 @@
   quoteBtn.addEventListener("click",quote);
   newBtn.addEventListener("click",newRound);
   newRound();
+})();
+
+/* ── Öğren modu (worked-example + faded practice) ── */
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var tabsEl=$("lrnTabs"), exEl=$("lrnEx"), qEl=$("lrnQ"), inputEl=$("lrnInput"),
+      genBtn=$("lrnGen"), checkBtn=$("lrnCheck"), hintBtn=$("lrnHint"), fbEl=$("lrnFb");
+  if(!tabsEl) return;
+  var rnd=function(a,b){return Math.floor(Math.random()*(b-a+1))+a;};
+  var fmt=function(x){return (""+x).replace(".",",");};
+
+  var TECHS=[
+    { id:"sq5", name:"Sonu 5 kare",
+      ex:"<b>65²</b> → 6·7 = 42, sonuna <b>25</b> → <b>4225</b>. &nbsp;Kural: (n5)² = n·(n+1) | 25.",
+      gen:function(){ var n=rnd(1,9), num=n*10+5;
+        return {q:num+"²", ans:num*num, steps:num+"² = "+n+"·"+(n+1)+" | 25 = "+(n*(n+1))+"25"}; } },
+    { id:"x11", name:"×11",
+      ex:"<b>53×11</b> → 5 (5+3=<b>8</b>) 3 → <b>583</b>. &nbsp;Taşıma varsa ekle: 68×11 → 6|14|8 → <b>748</b>.",
+      gen:function(){ var a=rnd(12,98), d1=Math.floor(a/10), d2=a%10, m=d1+d2, ans=a*11;
+        var steps = (m<10) ? (a+"×11 = "+d1+" ("+d1+"+"+d2+"="+m+") "+d2+" = "+ans)
+                           : (a+"×11 = "+d1+"|"+m+"|"+d2+" → taşı → "+ans);
+        return {q:a+" × 11", ans:ans, steps:steps}; } },
+    { id:"dsq", name:"Kareler farkı",
+      ex:"<b>47×53</b>: ikisi de 50'ye ±3 uzakta → 50²−3² = 2500−9 = <b>2491</b>.",
+      gen:function(){ var rs=[20,30,40,50,60,70,80,90], r=rs[rnd(0,rs.length-1)], d=rnd(1,9);
+        return {q:(r-d)+" × "+(r+d), ans:r*r-d*d, steps:(r-d)+"×"+(r+d)+" = "+r+"²−"+d+"² = "+(r*r)+"−"+(d*d)+" = "+(r*r-d*d)}; } },
+    { id:"pct", name:"Yüzde",
+      ex:"<b>%25 × 240</b>: %1 = 2,4 → ×25 = <b>60</b>. &nbsp;Takas: %X×N = %N×X — kolay olanı seç.",
+      gen:function(){ var xs=[5,10,15,20,25,50], x=xs[rnd(0,xs.length-1)], N=rnd(1,20)*20;
+        return {q:"%"+x+" × "+N, ans:x*N/100, steps:"%"+x+"×"+N+": %1 = "+fmt(N/100)+" → ×"+x+" = "+(x*N/100)}; } }
+  ];
+
+  var cur=0, curP=null;
+  function renderTabs(){
+    var h=""; for(var i=0;i<TECHS.length;i++){ h+='<button type="button" class="lrn-tab'+(i===cur?' on':'')+'" data-i="'+i+'">'+TECHS[i].name+'</button>'; }
+    tabsEl.innerHTML=h;
+  }
+  function selectTech(i){
+    cur=i; renderTabs(); exEl.innerHTML=TECHS[i].ex;
+    qEl.textContent="—"; inputEl.value=""; inputEl.disabled=true;
+    fbEl.textContent=""; fbEl.className="lrn-fb";
+    genBtn.hidden=false; checkBtn.hidden=true; hintBtn.hidden=true; curP=null;
+  }
+  function newProblem(){
+    curP=TECHS[cur].gen();
+    qEl.textContent=curP.q; inputEl.value=""; inputEl.disabled=false; inputEl.focus();
+    fbEl.textContent=""; fbEl.className="lrn-fb";
+    genBtn.hidden=true; checkBtn.hidden=false; hintBtn.hidden=false;
+  }
+  function showSteps(prefix, cls){
+    fbEl.className="lrn-fb "+(cls||"");
+    fbEl.innerHTML=prefix+'<span class="steps">'+curP.steps+'</span>';
+  }
+  function check(){
+    if(!curP) return;
+    var v=parseFloat((inputEl.value+"").replace(",","."));
+    if(isNaN(v)){ fbEl.className="lrn-fb"; fbEl.textContent="Bir cevap gir."; return; }
+    if(v===curP.ans) showSteps("Doğru ✓ — ", "ok"); else showSteps("Cevap "+curP.ans+". ", "no");
+    inputEl.disabled=true; checkBtn.hidden=true; hintBtn.hidden=true; genBtn.hidden=false;
+  }
+  function hint(){ if(curP) showSteps("Yöntem: ", ""); }
+
+  tabsEl.addEventListener("click",function(e){
+    var b=(e.target && e.target.getAttribute && e.target.getAttribute("data-i")!==null) ? e.target : null;
+    if(!b) return; selectTech(parseInt(b.getAttribute("data-i"),10));
+  });
+  genBtn.addEventListener("click",newProblem);
+  checkBtn.addEventListener("click",check);
+  hintBtn.addEventListener("click",hint);
+  inputEl.addEventListener("keydown",function(e){ if(e.key==="Enter" && !inputEl.disabled) check(); });
+  selectTech(0);
 })();
 </script>
 </body>
