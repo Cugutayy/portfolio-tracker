@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jane Street Trader</title>
+<meta name="description" content="Jane Street quant trading trainer - mental math test, mastery map, probability bank, market-making guide.">
+<style>
+  :root{
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+    --mono: ui-monospace, "Cascadia Code", "Segoe UI Mono", "SF Mono", Menlo, Consolas, monospace;
+
+    /* light (cool graphite paper) */
+    --bg:#E9edf2; --surface:#ffffff; --surface-2:#f2f5f9; --inset:#eef2f7;
+    --ink:#111722; --muted:#5a6675; --faint:#8894a4; --line:#d7dee7;
+    --accent:#1a5fd6; --accent-soft:rgba(26,95,214,.10);
+    --gold:#8f6410; --gold-soft:rgba(143,100,16,.12);
+    --good:#1a8347; --warn:#a95c08; --crit:#bd382a;
+    --good-soft:rgba(26,131,71,.12); --crit-soft:rgba(189,56,42,.10);
+    --shadow:0 1px 2px rgba(16,23,34,.05),0 8px 28px -14px rgba(16,23,34,.22);
+    --radius:14px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0b1016; --surface:#121a23; --surface-2:#0e151d; --inset:#0c131b;
+      --ink:#e7ecf2; --muted:#8a97a8; --faint:#5f6c7c; --line:#223141;
+      --accent:#63a0f5; --accent-soft:rgba(99,160,245,.14);
+      --gold:#e0ac57; --gold-soft:rgba(224,172,87,.14);
+      --good:#4fc483; --warn:#e39a45; --crit:#f0796d;
+      --good-soft:rgba(79,196,131,.14); --crit-soft:rgba(240,121,109,.13);
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px -16px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#E9edf2; --surface:#ffffff; --surface-2:#f2f5f9; --inset:#eef2f7;
+    --ink:#111722; --muted:#5a6675; --faint:#8894a4; --line:#d7dee7;
+    --accent:#1a5fd6; --accent-soft:rgba(26,95,214,.10);
+    --gold:#8f6410; --gold-soft:rgba(143,100,16,.12);
+    --good:#1a8347; --warn:#a95c08; --crit:#bd382a;
+    --good-soft:rgba(26,131,71,.12); --crit-soft:rgba(189,56,42,.10);
+    --shadow:0 1px 2px rgba(16,23,34,.05),0 8px 28px -14px rgba(16,23,34,.22);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0b1016; --surface:#121a23; --surface-2:#0e151d; --inset:#0c131b;
+    --ink:#e7ecf2; --muted:#8a97a8; --faint:#5f6c7c; --line:#223141;
+    --accent:#63a0f5; --accent-soft:rgba(99,160,245,.14);
+    --gold:#e0ac57; --gold-soft:rgba(224,172,87,.14);
+    --good:#4fc483; --warn:#e39a45; --crit:#f0796d;
+    --good-soft:rgba(79,196,131,.14); --crit-soft:rgba(240,121,109,.13);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 34px -16px rgba(0,0,0,.7);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0}
+  .wrap{
+    font-family:var(--font); color:var(--ink); background:var(--bg);
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+    padding:clamp(16px,4vw,40px);
+  }
+  .page{max-width:64rem; margin:0 auto; display:flex; flex-direction:column; gap:clamp(28px,5vw,52px)}
+  .prose{max-width:65ch}
+
+  .eyebrow{
+    font-family:var(--mono); font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--accent); margin:0 0 .5rem; font-weight:600;
+  }
+  h1,h2,h3{text-wrap:balance; margin:0; line-height:1.15; letter-spacing:-.015em}
+  h1{font-size:clamp(2rem,5.4vw,3.1rem); font-weight:800}
+  h2{font-size:clamp(1.35rem,3vw,1.9rem); font-weight:750}
+  h3{font-size:1.05rem; font-weight:700; letter-spacing:-.01em}
+  p{margin:.6rem 0}
+  .muted{color:var(--muted)} .small{font-size:.9rem}
+  a{color:var(--accent); text-underline-offset:3px; text-decoration-thickness:1px}
+
+  /* ---- header ---- */
+  header .kicker{display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; margin-bottom:1rem}
+  .tag{
+    font-family:var(--mono); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+    padding:.32em .6em; border-radius:6px; border:1px solid var(--line); color:var(--muted); font-weight:600;
+  }
+  .tag.hot{color:var(--gold); border-color:color-mix(in srgb,var(--gold) 40%,var(--line)); background:var(--gold-soft)}
+  header h1 .accent{color:var(--accent)}
+  .lede{font-size:clamp(1rem,1.6vw,1.15rem); color:var(--muted); max-width:60ch; margin-top:.9rem}
+
+  .statusbar{
+    margin-top:1.4rem; display:flex; flex-wrap:wrap; gap:.5rem 1.4rem;
+    font-family:var(--mono); font-size:.74rem; letter-spacing:.04em;
+    padding:.7rem 1rem; border:1px solid var(--line); border-radius:10px;
+    background:var(--surface-2); color:var(--muted);
+  }
+  .statusbar b{color:var(--ink); font-weight:700}
+  .statusbar .sep{color:var(--faint)}
+
+  /* ---- generic section ---- */
+  section{display:flex; flex-direction:column; gap:1.1rem}
+  .sec-head{display:flex; flex-direction:column; gap:.15rem}
+
+  /* ---- skill strip ---- */
+  .skills{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:.7rem}
+  .chip{
+    border:1px solid var(--line); border-radius:10px; padding:.75rem .85rem; background:var(--surface);
+    display:flex; flex-direction:column; gap:.15rem;
+  }
+  .chip .n{font-family:var(--mono); font-size:.7rem; color:var(--faint); letter-spacing:.1em}
+  .chip .t{font-weight:700; font-size:.98rem}
+  .chip .d{font-size:.82rem; color:var(--muted)}
+  .chip.gate{border-color:color-mix(in srgb,var(--crit) 45%,var(--line)); background:var(--crit-soft)}
+  .chip.gate .t{color:var(--crit)}
+
+  /* ---- trainer ---- */
+  .trainer{
+    border:1px solid var(--line); border-radius:var(--radius); background:var(--surface);
+    box-shadow:var(--shadow); overflow:hidden;
+  }
+  .trainer-top{
+    padding:clamp(16px,3vw,26px); border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,var(--surface-2),var(--surface));
+    display:flex; flex-direction:column; gap:.4rem;
+  }
+  .cfg{font-family:var(--mono); font-size:.8rem; color:var(--muted); letter-spacing:.02em}
+  .cfg b{color:var(--ink)}
+
+  .game{padding:clamp(16px,3vw,26px); display:flex; flex-direction:column; gap:1.1rem}
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:.6rem}
+  .stat{
+    border:1px solid var(--line); border-radius:10px; background:var(--inset);
+    padding:.6rem .5rem; text-align:center; display:flex; flex-direction:column; gap:.15rem;
+  }
+  .stat .lab{font-family:var(--mono); font-size:.62rem; letter-spacing:.14em; color:var(--faint)}
+  .stat .val{font-family:var(--mono); font-size:clamp(1.15rem,3.4vw,1.6rem); font-weight:700; font-variant-numeric:tabular-nums}
+  #timer.low{color:var(--crit)}
+
+  .prompt{
+    border:1px solid var(--line); border-radius:12px; background:var(--surface-2);
+    padding:clamp(18px,4vw,32px); text-align:center; display:flex; flex-direction:column; gap:1rem; align-items:center;
+  }
+  .problem{font-family:var(--mono); font-size:clamp(2rem,8vw,3.4rem); font-weight:700; letter-spacing:.02em; font-variant-numeric:tabular-nums}
+  .answer{
+    font-family:var(--mono); font-size:clamp(1.4rem,5vw,2rem); text-align:center; width:min(240px,80%);
+    padding:.5rem .6rem; border-radius:10px; border:2px solid var(--line); background:var(--surface); color:var(--ink);
+    outline:none; font-variant-numeric:tabular-nums;
+  }
+  .answer:focus{border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-soft)}
+  .answer:disabled{opacity:.5}
+  .answer.flash{border-color:var(--good); box-shadow:0 0 0 4px var(--good-soft)}
+
+  .controls{display:flex; align-items:center; gap:1rem; flex-wrap:wrap; justify-content:space-between}
+  .btn{
+    font-family:var(--font); font-weight:700; font-size:.98rem; cursor:pointer;
+    border:1px solid var(--accent); background:var(--accent); color:#fff;
+    padding:.7rem 1.5rem; border-radius:10px; transition:transform .08s ease, filter .15s ease;
+  }
+  .btn:hover{filter:brightness(1.06)} .btn:active{transform:translateY(1px)}
+  .btn:focus-visible{outline:3px solid var(--accent-soft); outline-offset:2px}
+  .btn.ghost{background:transparent; color:var(--accent)}
+  .levelpill{
+    font-family:var(--mono); font-size:.8rem; font-weight:700; letter-spacing:.04em;
+    padding:.45em .8em; border-radius:999px; border:1px solid var(--line); color:var(--muted); white-space:nowrap;
+  }
+
+  .result{
+    border:1px dashed var(--line); border-radius:12px; padding:1rem 1.1rem; background:var(--inset);
+    display:flex; flex-direction:column; gap:.35rem;
+  }
+  .result .big{font-family:var(--mono); font-size:1.5rem; font-weight:800}
+  .result.hit{border-color:color-mix(in srgb,var(--good) 45%,var(--line)); background:var(--good-soft)}
+
+  .scale{display:flex; flex-wrap:wrap; gap:.4rem; padding:0 clamp(16px,3vw,26px) clamp(16px,3vw,26px)}
+  .band{font-family:var(--mono); font-size:.7rem; padding:.3em .55em; border-radius:6px; border:1px solid var(--line); color:var(--muted); letter-spacing:.03em}
+  .band.js{color:var(--good); border-color:color-mix(in srgb,var(--good) 45%,var(--line)); background:var(--good-soft); font-weight:700}
+  .band.elite{color:var(--gold); border-color:color-mix(in srgb,var(--gold) 45%,var(--line)); background:var(--gold-soft); font-weight:700}
+
+  /* ---- mastery levels ---- */
+  .levels{display:flex; flex-direction:column; gap:.7rem}
+  .lv{
+    display:grid; grid-template-columns:auto 1fr; gap:.9rem 1.1rem; align-items:start;
+    border:1px solid var(--line); border-radius:12px; padding:1rem 1.1rem; background:var(--surface);
+  }
+  .lv .badge{
+    font-family:var(--mono); font-weight:800; font-size:.9rem; letter-spacing:.03em;
+    width:2.7rem; height:2.7rem; border-radius:9px; display:grid; place-items:center;
+    border:1px solid var(--line); background:var(--inset); color:var(--muted);
+  }
+  .lv.tgt{border-color:color-mix(in srgb,var(--good) 40%,var(--line))}
+  .lv.tgt .badge{color:var(--good); border-color:color-mix(in srgb,var(--good) 45%,var(--line)); background:var(--good-soft)}
+  .lv.top{border-color:color-mix(in srgb,var(--gold) 40%,var(--line))}
+  .lv.top .badge{color:var(--gold); border-color:color-mix(in srgb,var(--gold) 45%,var(--line)); background:var(--gold-soft)}
+  .lv h3{display:flex; gap:.6rem; align-items:baseline; flex-wrap:wrap}
+  .lv h3 .z{font-family:var(--mono); font-size:.74rem; color:var(--accent); font-weight:700; letter-spacing:.05em}
+  .lv ul{margin:.55rem 0 0; padding-left:1.05rem; display:flex; flex-direction:column; gap:.28rem}
+  .lv li{font-size:.9rem; color:var(--muted)}
+  .lv li b{color:var(--ink); font-weight:650}
+
+  /* ---- problem bank (details) ---- */
+  .bank{display:flex; flex-direction:column; gap:.6rem}
+  details.q{border:1px solid var(--line); border-radius:11px; background:var(--surface); overflow:hidden}
+  details.q>summary{
+    cursor:pointer; list-style:none; padding:.85rem 1rem; display:flex; gap:.7rem; align-items:center; font-weight:600;
+  }
+  details.q>summary::-webkit-details-marker{display:none}
+  details.q>summary::after{content:"+"; margin-left:auto; font-family:var(--mono); color:var(--accent); font-size:1.2rem; transition:transform .15s}
+  details.q[open]>summary::after{content:"−"}
+  .qlvl{font-family:var(--mono); font-size:.62rem; letter-spacing:.1em; padding:.25em .5em; border-radius:5px; border:1px solid var(--line); color:var(--muted)}
+  .qlvl.e{color:var(--good); border-color:color-mix(in srgb,var(--good) 40%,var(--line))}
+  .qlvl.m{color:var(--warn); border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+  .qlvl.h{color:var(--crit); border-color:color-mix(in srgb,var(--crit) 40%,var(--line))}
+  .qbody{padding:0 1rem 1rem; border-top:1px solid var(--line); font-size:.92rem}
+  .qbody .frame{font-family:var(--mono); font-size:.78rem; color:var(--accent); letter-spacing:.03em; margin-top:.7rem}
+  .qbody .ans{font-family:var(--mono); font-weight:700; color:var(--ink)}
+  kbd{font-family:var(--mono); background:var(--inset); border:1px solid var(--line); border-radius:5px; padding:.05em .4em; font-size:.85em}
+
+  /* ---- rules / callouts ---- */
+  .rules{display:flex; flex-direction:column; gap:.55rem; counter-reset:r}
+  .rule{display:grid; grid-template-columns:auto 1fr; gap:.9rem; align-items:baseline; border:1px solid var(--line); border-radius:10px; padding:.8rem 1rem; background:var(--surface)}
+  .rule::before{counter-increment:r; content:counter(r); font-family:var(--mono); font-weight:800; color:var(--accent); font-size:1rem}
+  .rule.danger{border-color:color-mix(in srgb,var(--crit) 45%,var(--line)); background:var(--crit-soft)}
+  .rule.danger::before{color:var(--crit)}
+  .rule b{font-weight:700}
+
+  .note{border-left:3px solid var(--accent); background:var(--accent-soft); padding:.85rem 1rem; border-radius:0 10px 10px 0; font-size:.93rem}
+  .note.warn{border-color:var(--gold); background:var(--gold-soft)}
+
+  .example{border:1px solid var(--line); border-radius:10px; background:var(--inset); padding:.9rem 1rem; font-size:.9rem}
+  .example .h{font-family:var(--mono); font-size:.72rem; letter-spacing:.1em; color:var(--faint); text-transform:uppercase; margin-bottom:.4rem}
+
+  /* ---- projects ---- */
+  .projects{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:.8rem}
+  .proj{border:1px solid var(--line); border-radius:12px; padding:1rem 1.05rem; background:var(--surface); display:flex; flex-direction:column; gap:.5rem}
+  .proj .pn{font-family:var(--mono); font-size:.68rem; letter-spacing:.12em; color:var(--accent)}
+  .proj h3{font-size:1rem}
+  .proj .row{font-size:.85rem; color:var(--muted)}
+  .proj .row b{color:var(--ink); font-weight:650}
+  .proj .stars{font-family:var(--mono); font-size:.72rem; color:var(--gold); letter-spacing:.1em}
+
+  hr.div{border:none; border-top:1px solid var(--line); margin:0}
+  footer{color:var(--muted); font-size:.82rem; display:flex; flex-direction:column; gap:.5rem}
+  footer .src{font-family:var(--mono); font-size:.74rem; color:var(--faint)}
+
+  .reveal{opacity:0; transform:translateY(10px)}
+  @media (prefers-reduced-motion:no-preference){
+    .reveal{animation:rise .55s cubic-bezier(.2,.7,.2,1) forwards}
+    .r2{animation-delay:.08s}.r3{animation-delay:.16s}
+  }
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1; transform:none}}
+  @keyframes rise{to{opacity:1; transform:none}}
+
+  @media (max-width:560px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .lv{grid-template-columns:1fr} .lv .badge{width:2.4rem;height:2.4rem}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="page">
+
+  <header class="reveal">
+    <div class="kicker">
+      <span class="tag" lang="en">Jane Street · Quantitative Trading</span>
+      <span class="tag hot">Hedef №1</span>
+    </div>
+    <h1>0'dan Ustalığa: <span class="accent">Trader Antrenörü</span></h1>
+    <p class="lede">Jane Street trader mülakatı finans bilgini test etmez — <b>4 beceriyi</b> test eder. Bu sayfa o yolu sıfırdan elit seviyeye modeller ve merkezine eleme kapısını, yani <b>zihinsel matematiği</b>, gerçekten çalışabileceğin bir antrenörle koyar.</p>
+    <div class="statusbar">
+      <span><span class="sep">GATE ▸</span> <b>Zihinsel Matematik</b></span>
+      <span><span class="sep">BAR ▸</span> <b>2 dk'da 75+</b></span>
+      <span><span class="sep">DÖNGÜ ▸</span> <b>2027 staj / yeni mezun</b></span>
+      <span><span class="sep">TAKVİM ▸</span> <b>Tem–Ağu açılış · Ekim'de dolar</b></span>
+    </div>
+  </header>
+
+  <!-- SKILL MAP -->
+  <section class="reveal r2">
+    <div class="sec-head"><p class="eyebrow">Test edilen her şey</p><h2>Sınavın tamamı bu 4 beceriye iner</h2></div>
+    <div class="skills">
+      <div class="chip gate"><span class="n">01 · GATE</span><span class="t">Zihinsel matematik</span><span class="d">Geçemezsen gerisi yok — en sık ret sebebi.</span></div>
+      <div class="chip"><span class="n">02</span><span class="t">Olasılık / EV</span><span class="d">Her trade beklenen-değer bahsi.</span></div>
+      <div class="chip"><span class="n">03</span><span class="t">Market-making oyunu</span><span class="d">Jane Street'in imza turu.</span></div>
+      <div class="chip"><span class="n">04</span><span class="t">Fermi / tahmin</span><span class="d">Belirsizlikte fiyatlama.</span></div>
+    </div>
+    <p class="note small"><b>+ 2 davranış:</b> her an <b>sesli düşün</b> (sessiz doğru cevap bile puan kaybettirir) ve <b>güvenini kalibre et</b> — Jane Street her cevaptan sonra “ne kadar eminsin?” diye sorar.</p>
+  </section>
+
+  <!-- TRAINER -->
+  <section class="reveal r3">
+    <div class="sec-head"><p class="eyebrow">Eleme kapısı · canlı antrenör</p><h2>Zihinsel Matematik Testi</h2></div>
+    <div class="trainer">
+      <div class="trainer-top">
+        <p class="cfg">Zetamac ayarı → <b>+</b> (2–99) · <b>−</b> (ters) · <b>×</b> (2–12 × 2–99) · <b>÷</b> (ters) · <b>120&nbsp;sn</b></p>
+        <p class="small muted" style="margin:0">Doğru cevabı yazınca otomatik geçer (Enter gerekmez). Skorun = 2 dakikada çözdüğün soru sayısı. Jane Street barı <b>75+</b>.</p>
+      </div>
+      <div class="game">
+        <div class="stats">
+          <div class="stat"><span class="lab">SÜRE</span><span class="val" id="timer">2:00</span></div>
+          <div class="stat"><span class="lab">SKOR</span><span class="val" id="score">0</span></div>
+          <div class="stat"><span class="lab">SERİ</span><span class="val" id="streak">0</span></div>
+          <div class="stat"><span class="lab">EN İYİ</span><span class="val" id="best">–</span></div>
+        </div>
+        <div class="prompt">
+          <div class="problem" id="problem">Hazır mısın?</div>
+          <label for="answer" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Cevap</label>
+          <input id="answer" class="answer" inputmode="numeric" autocomplete="off" placeholder="cevap" disabled>
+        </div>
+        <div class="controls">
+          <button id="startBtn" class="btn">Başlat ▸</button>
+          <span class="levelpill" id="levelPill">Seviye —</span>
+        </div>
+        <div class="result" id="result" hidden>
+          <span class="small muted" id="resLab">SONUÇ</span>
+          <span class="big" id="resScore"></span>
+          <span class="small" id="resMsg"></span>
+        </div>
+      </div>
+      <div class="scale">
+        <span class="band">0–24 Başlangıç</span>
+        <span class="band">25–39 Gelişiyor</span>
+        <span class="band">40–54 İyi</span>
+        <span class="band">55–69 Güçlü</span>
+        <span class="band js">70–89 JS barı ✓</span>
+        <span class="band elite">90+ Elit</span>
+      </div>
+    </div>
+    <p class="small muted">Süre: rutin <b>4–8 hafta günlük</b> pratik; matematik geçmişin iyiyse 3–4; uzun süredir aritmetik yapmadıysan 8–10. Başlangıçta 30–40 gayet normal — herkes oradan çıkıyor.</p>
+  </section>
+
+  <!-- MASTERY MODEL -->
+  <section class="reveal">
+    <div class="sec-head"><p class="eyebrow">Model</p><h2>0 → Ustalık haritası</h2><p class="muted small">Her seviye, 4 becerinin hepsinde ne demek olduğunu tanımlar. Kendini dürüstçe konumla, bir üst seviyeyi hedefle.</p></div>
+    <div class="levels">
+      <div class="lv"><div class="badge">L0</div><div>
+        <h3>Sıfır <span class="z">2 dk &lt; 25</span></h3>
+        <ul><li><b>Matematik:</b> hesap yavaş, hata yüksek.</li><li><b>Olasılık:</b> temel örnek uzayı bile netsiz.</li><li>Başlangıç noktası — utanılacak bir şey değil, herkes burada başlar.</li></ul></div></div>
+      <div class="lv"><div class="badge">L1</div><div>
+        <h3>Temel <span class="z">2 dk 25–39</span></h3>
+        <ul><li><b>Matematik:</b> dört işlem oturmuş, hız düşük.</li><li><b>Olasılık:</b> örnek uzayı, basit beklenen değer.</li><li><b>Fermi:</b> kavramı biliyor, pratiği yok.</li></ul></div></div>
+      <div class="lv"><div class="badge">L2</div><div>
+        <h3>Gelişiyor <span class="z">2 dk 40–54</span></h3>
+        <ul><li><b>Matematik:</b> karesi-farkı, yüzde takası gibi kısayollar refleks olmaya başladı.</li><li><b>Olasılık:</b> linearity of expectation, koşullu olasılık.</li><li><b>Market-making:</b> mekaniği (bid/ask + size) anlıyor.</li></ul></div></div>
+      <div class="lv"><div class="badge">L3</div><div>
+        <h3>Güçlü <span class="z">2 dk 55–69</span></h3>
+        <ul><li><b>Matematik:</b> baskı altında akıcı.</li><li><b>Olasılık:</b> durum denklemleri, gambler's ruin, martingale sezgisi.</li><li><b>Market-making:</b> çıpala–güncelle–envanter döngüsü çalışıyor.</li><li><b>Fermi:</b> parçalayıp sesli yürütüyor.</li></ul></div></div>
+      <div class="lv tgt"><div class="badge">L4</div><div>
+        <h3>Jane Street barı <span class="z">2 dk 70–89 · HEDEF</span></h3>
+        <ul><li><b>Matematik:</b> test barının üstünde, güven kalibrasyonuyla.</li><li><b>Olasılık:</b> zor problemleri sesli ve doğru çerçeveyle çözer.</li><li><b>Market-making:</b> ruin riskini görür, spread'i bilgiyle daraltır.</li><li><b>Fermi:</b> varsayım itirazında panik yok, on-the-fly düzeltir.</li></ul></div></div>
+      <div class="lv top"><div class="badge">L5</div><div>
+        <h3>Elit <span class="z">2 dk 90+</span></h3>
+        <ul><li><b>Matematik:</b> neredeyse anlık.</li><li><b>Olasılık:</b> olimpiyat-seviye, çok aşamalı oyunlar.</li><li><b>Market-making:</b> ruin riskini içgüdüsel yönetir, edge'de agresif.</li><li>Bu seviye offer'ı neredeyse garantiler; asıl rekabet burada.</li></ul></div></div>
+    </div>
+  </section>
+
+  <!-- PROBABILITY BANK -->
+  <section class="reveal">
+    <div class="sec-head"><p class="eyebrow">Beceri 02</p><h2>Olasılık — çerçeveler + problem bankası</h2><p class="muted small">Ezber cevap değil, <b>çerçeve</b> istiyorlar. Cebine koy: linearity of expectation · simetri · durum denklemleri (E=1+p·E) · Bayes · gambler's ruin. Aç, önce kendin çöz, sonra bak.</p></div>
+    <div class="bank">
+      <details class="q"><summary><span class="qlvl e">KOLAY</span> Bir zarı 6 gelene kadar atıyorsun. Beklenen atış sayısı?</summary>
+        <div class="qbody"><p class="frame">ÇERÇEVE ▸ geometrik dağılım, E = 1/p</p><p>Her atışta 6 gelme olasılığı 1/6. Geometrik dağılımda beklenen deneme sayısı <kbd>1/p</kbd>.</p><p class="ans">Cevap: 6</p></div></details>
+
+      <details class="q"><summary><span class="qlvl e">KOLAY</span> İki hilesiz zar. Toplamın 7 gelme olasılığı?</summary>
+        <div class="qbody"><p class="frame">ÇERÇEVE ▸ örnek uzayı sayımı</p><p>36 eşit olası sonuç; toplamı 7 yapan 6 tanesi (1-6, 2-5, 3-4, 4-3, 5-2, 6-1).</p><p class="ans">Cevap: 6/36 = 1/6</p></div></details>
+
+      <details class="q"><summary><span class="qlvl m">ORTA</span> Üst üste 2 tura gelene kadar beklenen atış sayısı?</summary>
+        <div class="qbody"><p class="frame">ÇERÇEVE ▸ durum denklemleri</p><p>E₀ = boştan, E₁ = bir tura tuttuktan sonra. E₁ = 1 + ½·0 + ½·E₀; E₀ = 1 + ½·E₁ + ½·E₀. Çöz → E₀ = 6.</p><p class="ans">Cevap: 6 (kıyas: tek tura için 2, TH gibi farklı desen için 4)</p></div></details>
+
+      <details class="q"><summary><span class="qlvl m">ORTA</span> Karıştırılmış desteden ilk As'ın beklenen pozisyonu?</summary>
+        <div class="qbody"><p class="frame">ÇERÇEVE ▸ simetri</p><p>4 As, desteyi 5 eşit boşluğa böler; 48 As-olmayan kart eşit dağılır. İlk As'a kadar beklenen kart = 48/5 = 9.6, pozisyon = +1.</p><p class="ans">Cevap: (52+1)/(4+1) = 10.6</p></div></details>
+
+      <details class="q"><summary><span class="qlvl h">ZOR</span> [0,1] aralığında rastgele iki nokta. Aralarındaki beklenen uzaklık?</summary>
+        <div class="qbody"><p class="frame">ÇERÇEVE ▸ integral / simetri</p><p>E[|X−Y|] = ∫₀¹∫₀¹|x−y| dx dy. Simetriyle 2·∫∫_{x&gt;y}(x−y) = 1/3.</p><p class="ans">Cevap: 1/3</p></div></details>
+
+      <details class="q"><summary><span class="qlvl h">ZOR</span> 1 chip'le başlıyorsun, adil bahis, 0 veya N'e ulaşınca dur. N'e ulaşma olasılığı?</summary>
+        <div class="qbody"><p class="frame">ÇERÇEVE ▸ gambler's ruin / martingale</p><p>Adil oyunda servet bir martingal; k'den başlayınca N'e ulaşma olasılığı k/N.</p><p class="ans">Cevap: 1/N (k=1 için)</p></div></details>
+    </div>
+    <p class="small muted">Daha fazlası: Jane Street <a href="https://www.janestreet.com/probability-markets/">Probability &amp; Markets Guide</a> (resmi), <a href="https://www.janestreet.com/puzzles/">Puzzles arşivi</a>, <i>Heard on the Street</i> (Crack), <i>A Practical Guide to Quantitative Finance Interviews</i> (Zhou, “yeşil kitap”).</p>
+  </section>
+
+  <!-- MARKET MAKING -->
+  <section class="reveal">
+    <div class="sec-head"><p class="eyebrow">Beceri 03 · imza tur</p><h2>Market-Making oyunu</h2></div>
+    <div class="example">
+      <div class="h">Mekanik</div>
+      <p style="margin:.2rem 0">Interviewer bir miktar hakkında kısmi bilgi verir; sen <b>bid @ ask + size</b> kote edersin. Örn. <b style="font-family:var(--mono)">“20 @ 25, size 2”</b> = 20'den alırım, 25'ten satarım, en fazla 2 adet. Her puan farkında size × fark kadar chip. Yeni bilgi gelir → market'i güncellersin, PnL tutulur.</p>
+    </div>
+    <div class="rules">
+      <div class="rule"><span><b>Çıpala.</b> Fair value'yu EV/Fermi ile hesapla, market'i onun etrafına kur.</span></div>
+      <div class="rule"><span><b>Spread = belirsizlik.</b> Çok bilinmiyorsa geniş; bilgi geldikçe daralt.</span></div>
+      <div class="rule"><span><b>Hızlı güncelle.</b> Yeni bilgide fair value'yu kaydır, donma.</span></div>
+      <div class="rule"><span><b>Envanteri yönet.</b> Tek yöne aşırı pozisyon alma.</span></div>
+      <div class="rule danger"><span><b>Ruin riski — gizli eleme.</b> Interviewer bilerek “aptalı oynar”, kötü oranla dev size teklif eder. Kabul edersen şanssız senaryoda silinirsin. <b>Max loss'unu her an bil.</b></span></div>
+    </div>
+    <p class="note warn small"><b>Ek sezgi:</b> edge varsa agresif ol (iyi fiyatta karşı taraf sana size veriyorsa al); edge yoksa geniş dur. Pratik: <a href="https://janestreet.gg/">janestreet.gg</a> simülatörü, <a href="https://github.com/mikinty/Trading-Interview-Questions/blob/master/chapters/games.md">Trading-Interview-Questions → games</a>.</p>
+  </section>
+
+  <!-- FERMI -->
+  <section class="reveal">
+    <div class="sec-head"><p class="eyebrow">Beceri 04</p><h2>Fermi / tahmin</h2></div>
+    <p class="prose"><i>“ABD'de kaç benzin istasyonu var?”</i> tarzı. Büyük bilinmeyeni <b>parçala</b>, varsayımları <b>sesli kur</b>, mantıkla taşı, sonda <b>sanity check</b>. Kilit: interviewer <b>kasıtlı olarak varsayımına itiraz eder</b> — asıl test, panik yapmadan anında düzeltebilmen.</p>
+  </section>
+
+  <hr class="div">
+
+  <!-- PROJECTS -->
+  <section class="reveal">
+    <div class="sec-head"><p class="eyebrow">Göze giren projeler</p><h2>Bu alanda nasıl proje yapılır?</h2></div>
+    <p class="note small"><b>Dürüst gerçek:</b> Jane Street <b>trading</b> mülakatına seni sokan şey projeler değil, yukarıdaki aptitude testleridir. Ama projelerin en büyük getirisi şu: <b>onları yaparken tam da sınavda test edilen beceriyi öğreniyorsun.</b> Ayrıca researcher hattı ve diğer firmalar için doğrudan CV değeri. En iyi proje = test edilen beceriyi çalıştıran araç.</p>
+    <div class="projects">
+      <div class="proj"><span class="pn">PROJE A · BAŞLANGIÇ</span><h3>Bu antrenörü genişlet</h3><p class="row"><b>Ne kanıtlar:</b> ürünleştirme + kendi zayıflığını ölçme.</p><p class="row"><b>Ekle:</b> oturum istatistikleri, işleme göre isabet oranı, adaptif zorluk, spaced-repetition.</p><span class="stars">★★☆ · hızlı başlangıç</span></div>
+      <div class="proj"><span class="pn">PROJE B · ÇEKİRDEK</span><h3>Market-making simülatörü</h3><p class="row"><b>Ne kanıtlar:</b> mikroyapı sezgisi — trader'ın kalbi.</p><p class="row"><b>Kapsam:</b> limit order book + basit MM stratejisi (Avellaneda–Stoikov), envanter & PnL ayrıştırma.</p><span class="stars">★★★ · en yüksek sinyal</span></div>
+      <div class="proj"><span class="pn">PROJE C</span><h3>Monte Carlo olasılık doğrulayıcı</h3><p class="row"><b>Ne kanıtlar:</b> olasılık + kod titizliği.</p><p class="row"><b>Kapsam:</b> beyin yakan problemlerin analitik cevabını simülasyonla doğrula (analitik vs deneysel).</p><span class="stars">★★★ · yaparken öğrenirsin</span></div>
+      <div class="proj"><span class="pn">PROJE D</span><h3>Trading-game EV çözücü</h3><p class="row"><b>Ne kanıtlar:</b> olasılık + karar teorisi.</p><p class="row"><b>Kapsam:</b> kart/zar oyunları için optimal karar & beklenen değer hesaplayıcı.</p><span class="stars">★★☆</span></div>
+      <div class="proj"><span class="pn">PROJE E</span><h3>Order book görselleştirici</h3><p class="row"><b>Ne kanıtlar:</b> gerçek piyasa mikroyapısı anlayışı.</p><p class="row"><b>Kapsam:</b> canlı bid/ask derinliğini, spread'i ve akışı görselleştir.</p><span class="stars">★★☆</span></div>
+    </div>
+    <p class="small muted"><b>Göze girme çıtası:</b> temiz README + tek komutla çalışan kurulum · sonuçları grafikle · “neden böyle” açıklaması. Amatörden ayıran: simülasyonu kapalı-form teoriyle doğrulamak, ruin/edge mantığını açıkça göstermek.</p>
+  </section>
+
+  <hr class="div">
+
+  <footer class="reveal">
+    <p><b>Öncelik sırası:</b> Her gün antrenör (matematik barı) → olasılık çerçeveleri (Proje C ile) → market-making refleksi (Proje B ile) → Fermi. Yaz açılışında (Tem–Ağu) erken başvur.</p>
+    <p class="src">Kaynaklar: janestreet.com/probability-markets · techinterview.org/companies/jane-street · janestreet.gg · tradermath.org · arithmetic.zetamac.com</p>
+    <p class="src">Bilgiler kamuya açık kaynaklardan derlendi, döneme göre değişebilir. Yatırım tavsiyesi değildir; kariyer/hazırlık amaçlıdır.</p>
+  </footer>
+
+</div>
+</div>
+
+<script>
+(function(){
+  var rnd=function(a,b){return Math.floor(Math.random()*(b-a+1))+a;};
+  // Zetamac-benzeri üretici
+  function gen(){
+    var op=["add","sub","mul","div"][rnd(0,3)], a,b,ans,txt;
+    if(op==="add"){a=rnd(2,99);b=rnd(2,99);ans=a+b;txt=a+" + "+b;}
+    else if(op==="sub"){a=rnd(2,99);b=rnd(2,99);ans=a; txt=(a+b)+" − "+b;} // ters toplama, sonuç≥2
+    else if(op==="mul"){a=rnd(2,12);b=rnd(2,99); if(Math.random()<.5){var t=a;a=b;b=t;} ans=a*b; txt=a+" × "+b;}
+    else{var d=rnd(2,12), q=rnd(2,99); ans=q; txt=(d*q)+" ÷ "+d;}
+    return {txt:txt, ans:ans};
+  }
+
+  var TOTAL=120;
+  var st={running:false,left:TOTAL,score:0,streak:0,ans:0,timer:null};
+  var $=function(id){return document.getElementById(id);};
+  var problemEl=$("problem"), inputEl=$("answer"), timerEl=$("timer"),
+      scoreEl=$("score"), streakEl=$("streak"), bestEl=$("best"),
+      startBtn=$("startBtn"), pill=$("levelPill"), result=$("result"),
+      resScore=$("resScore"), resMsg=$("resMsg");
+
+  function loadBest(){try{return parseInt(localStorage.getItem("js_mm_best"))||0;}catch(e){return 0;}}
+  function saveBest(v){try{localStorage.setItem("js_mm_best",v);}catch(e){}}
+  var best=loadBest(); if(best) bestEl.textContent=best;
+
+  function tier(s){
+    if(s>=90)return{n:"Elit",c:"var(--gold)"};
+    if(s>=70)return{n:"Jane Street barı ✓",c:"var(--good)"};
+    if(s>=55)return{n:"Güçlü",c:"var(--accent)"};
+    if(s>=40)return{n:"İyi",c:"var(--ink)"};
+    if(s>=25)return{n:"Gelişiyor",c:"var(--muted)"};
+    return{n:"Başlangıç",c:"var(--muted)"};
+  }
+  function setPill(s){var t=tier(s); pill.textContent="Seviye: "+t.n; pill.style.color=t.c; pill.style.borderColor="color-mix(in srgb,"+t.c+" 40%,var(--line))";}
+
+  function fmt(s){var m=Math.floor(s/60), r=s%60; return m+":"+(r<10?"0":"")+r;}
+  function next(){var g=gen(); st.ans=g.ans; problemEl.textContent=g.txt; inputEl.value="";}
+
+  function tick(){
+    st.left--; timerEl.textContent=fmt(st.left);
+    if(st.left<=10) timerEl.classList.add("low"); else timerEl.classList.remove("low");
+    if(st.left<=0) end();
+  }
+  function start(){
+    st.running=true; st.left=TOTAL; st.score=0; st.streak=0;
+    scoreEl.textContent="0"; streakEl.textContent="0"; timerEl.textContent=fmt(TOTAL);
+    timerEl.classList.remove("low"); result.hidden=true; result.classList.remove("hit");
+    startBtn.textContent="Yeniden başlat"; inputEl.disabled=false; inputEl.focus();
+    setPill(0); next();
+    if(st.timer) clearInterval(st.timer);
+    st.timer=setInterval(tick,1000);
+  }
+  function end(){
+    st.running=false; clearInterval(st.timer);
+    inputEl.disabled=true; problemEl.textContent="Süre doldu";
+    var t=tier(st.score);
+    result.hidden=false; resScore.textContent=st.score+" doğru — "+t.n;
+    if(st.score>=70) result.classList.add("hit");
+    var gap = st.score>=70 ? "Barın üstündesin. Şimdi kalibrasyon + tutarlılık." : (70-st.score)+" soru sonra Jane Street barındasın. Her gün 8–12 tur.";
+    resMsg.textContent=gap;
+    if(st.score>best){best=st.score; saveBest(best); bestEl.textContent=best;}
+    startBtn.textContent="Tekrar dene ▸";
+  }
+
+  inputEl.addEventListener("input",function(){
+    if(!st.running) return;
+    var v=inputEl.value.trim();
+    if(v==="" || v==="-") return;
+    if(parseInt(v,10)===st.ans){
+      st.score++; st.streak++;
+      scoreEl.textContent=st.score; streakEl.textContent=st.streak; setPill(st.score);
+      inputEl.classList.add("flash"); setTimeout(function(){inputEl.classList.remove("flash");},120);
+      next();
+    }
+  });
+  inputEl.addEventListener("keydown",function(e){ if(e.key==="Enter" && !st.running) start(); });
+  startBtn.addEventListener("click",start);
+})();
+</script>
+</body>
+</html>
