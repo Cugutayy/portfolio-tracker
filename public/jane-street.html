@@ -451,6 +451,65 @@
     <p class="prose"><i>“ABD'de kaç benzin istasyonu var?”</i> tarzı. Büyük bilinmeyeni <b>parçala</b>, varsayımları <b>sesli kur</b>, mantıkla taşı, sonda <b>sanity check</b>. Kilit: interviewer <b>kasıtlı olarak varsayımına itiraz eder</b> — asıl test, panik yapmadan anında düzeltebilmen.</p>
   </section>
 
+  <!-- METHODS CHEAT-SHEET -->
+  <style>
+    .mth-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.7rem}
+    .mth-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:1rem 1.05rem;display:flex;flex-direction:column;gap:.7rem}
+    .mth-card>h3{font-size:1rem;display:flex;gap:.5rem;align-items:baseline;flex-wrap:wrap}
+    .mth-card>h3 .zh{font-family:var(--mono);font-size:.72rem;color:var(--accent);font-weight:600}
+    .mth-list{display:flex;flex-direction:column;gap:.55rem}
+    .mth-item{display:flex;flex-direction:column;gap:.12rem}
+    .mth-item .r{font-weight:650;font-size:.85rem}
+    .mth-item .e{font-family:var(--mono);font-size:.79rem;color:var(--accent);font-variant-numeric:tabular-nums}
+    .mth-item .w{font-size:.79rem;color:var(--muted);font-weight:400}
+    .mth-wide{grid-column:1/-1}
+    .mth-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.5rem .9rem}
+  </style>
+  <section class="reveal">
+    <div class="sec-head"><p class="eyebrow">Yöntemler · 速算 + 微建模</p><h2>Hatırlatma kartı — Çin ekolü yöntemler</h2><p class="muted small">Ezberlenecek yöntemler tek yerde. Çin ekolü iki şeyde güçlü: <b>速算</b> (hız-hesap: çapraz çarpma, kareler) ve <b>微建模</b> (beyin yakanı durum makinesine indir). Interviewer <b>süreç + modelleme sezgisi + EV düşüncesine</b> bakar, sonuca değil.</p></div>
+    <div class="mth-grid">
+
+      <div class="mth-card mth-wide">
+        <h3>Zihinsel matematik — hız yöntemleri <span class="zh">速算</span></h3>
+        <div class="mth-two">
+          <div class="mth-item"><span class="r">Sonu 5 biten kare</span><span class="e">35² = 3·4 | 25 = 1225</span></div>
+          <div class="mth-item"><span class="r">Çapraz çarpma <span class="w">(十字相乘)</span></span><span class="e">47×36 = 12 | 45 | 42 = 1692</span></div>
+          <div class="mth-item"><span class="r">Onlar aynı, birler = 10</span><span class="e">43×47 = 20 | 21 = 2021</span></div>
+          <div class="mth-item"><span class="r">Kareler farkı</span><span class="e">47×53 = 50²−3² = 2491</span></div>
+          <div class="mth-item"><span class="r">Kareye yaklaştır</span><span class="e">43² = 46×40 + 9 = 1849</span></div>
+          <div class="mth-item"><span class="r">×11: araya topla</span><span class="e">53×11 = 5(8)3 = 583</span></div>
+          <div class="mth-item"><span class="r">Yüzde takası</span><span class="e">%18·50 = %50·18 = 9</span></div>
+          <div class="mth-item"><span class="r">Kestirme çarpan</span><span class="e">×5=×10/2 · ×25=×100/4 · ÷5=×2/10</span></div>
+          <div class="mth-item"><span class="r">Kesir → ondalık ezberi</span><span class="e">1/7=0,142857 · 1/8=0,125 · 1/6=0,1667</span></div>
+          <div class="mth-item"><span class="r">Y/X'e böl = X/Y ile çarp</span><span class="e">30 ÷ (3/4) = 30 × 4/3 = 40</span></div>
+        </div>
+        <p class="w" style="font-size:.78rem;color:var(--muted);margin:0">Çin derin pratiği: <b>珠心算</b> (zihinsel abaküs) — sayıyı görselleştir, parça parça birleştir. Günlük Zetamac ile refleks yap.</p>
+      </div>
+
+      <div class="mth-card">
+        <h3>Olasılık — çerçeveler <span class="zh">微建模</span></h3>
+        <div class="mth-list">
+          <div class="mth-item"><span class="r">Durum denklemi <span class="w">状态转移</span></span><span class="w">Durumlara ayır, E = 1 + Σ p·E çöz → HH beklenen atış = 6</span></div>
+          <div class="mth-item"><span class="r">Geriye indüksiyon <span class="w">倒推</span></span><span class="w">Son durumdan optimal eşiği çöz → zar-kabul oyunu</span></div>
+          <div class="mth-item"><span class="r">Örnek uzayı / geometrik <span class="w">几何概型</span></span><span class="w">Say ya da alan hesapla → kırık çubuk = 1/3</span></div>
+          <div class="mth-item"><span class="r">İlk-adım / Markov + yutucu durum</span><span class="w">Gambler's ruin, sarhoş & uçurum → fark denklemi</span></div>
+          <div class="mth-item"><span class="r">İlk ilkeler / kenar durum</span><span class="w">Önce N=1, 2 dene; örüntü bul; p=0/1'de doğrula</span></div>
+          <div class="mth-item"><span class="r">EV doğrusallığı (indikatör)</span><span class="w">İlk As pozisyonu = (52+1)/(4+1) = 10,6</span></div>
+        </div>
+      </div>
+
+      <div class="mth-card">
+        <h3>Market-making + Fermi</h3>
+        <div class="mth-list">
+          <div class="mth-item"><span class="r">Kote zinciri</span><span class="w">Çıpala (EV fair) → spread = belirsizlik → bilgi gelince daralt → envanter → <b>ruin</b> (max loss). Edge varsa agresif.</span></div>
+          <div class="mth-item"><span class="r">Fermi zinciri</span><span class="w">Parçala (nüfus × oran × sıklık) → sesli varsayım → yuvarla → sonda sanity check. İtiraza sakin uyum sağla.</span></div>
+          <div class="mth-item"><span class="r">Altın kural</span><span class="w">Her an <b>sesli düşün</b> + güveni kalibre et. Süreç &gt; sonuç.</span></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <hr class="div">
 
   <!-- PROJECTS -->
