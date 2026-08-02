@@ -214,6 +214,22 @@ export function ProjectCards({ t }: Props) {
             <Tags items={['Mental Math', 'Probability', 'Market-Making', 'EV']} />
           </EdCard>
         </ScrollReveal>
+        <ScrollReveal delay={780} style={{ height: '100%' }}>
+          <EdCard href="/brain/" no="12" kicker="Quant · On-Chain" accent="#1f9e7f">
+            <h3 className="display" style={{ fontSize: '1.15rem', marginBottom: 6 }}>
+              Arz <em className="italic-accent" style={{ color: '#1f9e7f' }}>Mutabakatı</em>
+            </h3>
+            <p style={{ color: 'var(--muted)', fontSize: '.74rem', lineHeight: 1.5, marginBottom: 10 }}>
+              Veri sağlayıcının bildirdiği arz ile zincirin söylediğini karşılaştırır. Piyasa değeri hiçbir zaman kaynaktan alınmaz — her satırda fiyat × dolaşım olarak yeniden hesaplanır, EVM'de totalSupply() ile çapraz kontrol edilir. 16 varlık, float yoğunluğu ve türev konumlanması.
+            </p>
+            <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Stat label="Varlık" value="16" />
+              <Stat label="Bayrak" value="2" />
+              <Stat label="Kaynak" value="Zincir · Binance" pos />
+            </div>
+            <Tags items={['Float / FDV', 'Open Interest', 'Funding', 'Mikroyapı']} />
+          </EdCard>
+        </ScrollReveal>
       </div>
     </section>
   )
