@@ -1,60 +1,41 @@
-# Portfolio Tracker — Responsible Investment
+# Salih Çağatay Sönmez - Project Portfolio
 
-Sorumlu Yatırım dersi için çok enstrümanlı portföy takip sistemi.
+Finans, veri analizi ve web uygulamalarını bir araya getiren kişisel proje deposu.
+Ana arayüz React, TypeScript ve Vite kullanır. Başlangıçtaki portföy takip
+uygulaması `tracker/` altında korunmaktadır.
 
-## Proje Yapısı
+## Projeler ve dizinler
 
-```
-portfolio-tracker/
-├── index.html              # Ana sayfa
-├── css/
-│   └── style.css           # Tüm stiller
-├── js/
-│   ├── i18n.js             # Dil sistemi (TR/EN)
-│   ├── data.js             # Enstrüman verileri, HISTORY
-│   ├── api.js              # API çağrıları (CoinGecko, Yahoo)
-│   ├── core.js             # Dashboard render, hesaplamalar
-│   ├── ttest.js            # t-Test analiz sayfası
-│   ├── beta.js             # Beta analiz sayfası
-│   ├── analytics.js        # Sharpe, VaR, Efficient Frontier
-│   ├── markets.js          # Canlı piyasa verileri
-│   ├── sample.js           # Örnek portföy
-│   └── init.js             # Sayfa navigasyon, başlatma
-├── netlify/
-│   └── functions/
-│       └── prices.js       # Serverless API proxy
-├── netlify.toml            # Netlify yapılandırma + güvenlik
-├── package.json
-└── README.md
-```
+| Dizin | İçerik |
+|---|---|
+| `src/` | React arayüzü ve proje bileşenleri |
+| `tracker/` | Responsible Investment dersi için geliştirilen portföy takip uygulaması |
+| `tez/` | Finans araştırmasının web içeriği |
+| `alsancak-runners/` | Koşu topluluğu web projesi |
+| `rota-app/` | Rota ve topluluk uygulaması |
+| `functions/` | Sunucu tarafı işlevleri |
+| `tools/` | Yardımcı araçlar |
 
-## Özellikler
+Projeler farklı geliştirme aşamalarındadır. Ana arayüzdeki F1 ve Albion rotaları
+mevcut sürümde erişim kısıtı ekranı gösterir. Bir proje kartının bulunması,
+o projenin tüm özelliklerinin yayımlandığı anlamına gelmez.
 
-- 7 enstrümanlı portföy: BTC, THYAO, ASELS, Altın, Tahvil, Fon, Mevduat
-- Canlı fiyat takibi (CoinGecko + Yahoo Finance)
-- 6 sayfa: Dashboard, t-Test, Beta, Analiz, Piyasalar, Örnek Portföy
-- 102 sembol arama önerisi
-- Koyu/açık tema + TR/EN dil desteği
-- Excel export, ESG skorları, korelasyon matrisi
-- Güvenlik başlıkları (CSP, X-Frame-Options, vb.)
+## Yerel geliştirme
 
-## Kurulum
+Kök dizindeki `package.json` komutları:
 
 ```bash
-# Lokal geliştirme
-npx serve .
-
-# Netlify'a deploy
-# 1. GitHub'a push et
-# 2. Netlify'da repo bağla
-# 3. Deploy ayarları:
-#    - Build command: (boş bırak)
-#    - Publish directory: .
+npm ci
+npm run dev
 ```
 
-## Güvenlik
+## Derleme
 
-- Content-Security-Policy ile XSS koruması
-- X-Frame-Options: DENY (clickjacking koruması)
-- Serverless API proxy (CORS yok, key koruması)
-- HTTPS (Netlify otomatik SSL)
+```bash
+npm run build
+npm run preview
+```
+
+Vite çıktıyı `dist/` dizinine yazar; `tracker/` ve `tez/` dizinleri derleme sırasında
+buraya kopyalanır. Alt projelerin sunucu, veri ve ortam değişkeni gereksinimleri
+kendi yapılandırmalarına bağlıdır.
