@@ -35,7 +35,7 @@
 
 ---
 
-## CLAUDE ILE YAPILACAKLAR (Sonraki oturumlar)
+## GELISTIRME PLANI (Sonraki adimlar)
 
 ### Alsancak Runners Web (Kisa vadeli)
 - [ ] Mapbox token eklenince haritayi test et ve screenshot al
