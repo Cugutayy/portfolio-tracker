@@ -1,17 +1,16 @@
 import { useState, useEffect, useRef } from 'react'
 
 /**
- * Cinematic hero — a 4K photograph of white lilies glowing out of pure black,
- * full-bleed with a slow ken-burns drift. The image's black ground blends into
- * the dark hub; over it sit liquid-glass chrome and a serif nameplate that
- * blurs in word by word.
+ * Cinematic hub hero. The visual layer itself lives in .site-lily so the same
+ * fixed backdrop can continue beneath the page; this component owns only the
+ * identity, clock, contact, scroll cue and pointer-light interaction.
  */
 export function Hero({ lang }: { lang: string }) {
   const [clock, setClock] = useState('')
   const ref = useRef<HTMLElement>(null)
   const raf = useRef(0)
 
-  // pointer-spotlight — a faint light beam follows the cursor over the bloom
+  // pointer-spotlight — a faint light beam follows the cursor over the artwork
   useEffect(() => {
     const el = ref.current
     if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches || window.matchMedia('(hover: none)').matches) return
@@ -55,11 +54,11 @@ export function Hero({ lang }: { lang: string }) {
         textAlign: 'right', padding: 'clamp(82px, 11vh, 122px) clamp(20px, 4.5vw, 56px) 0',
       }}
     >
-      {/* No area filter at all — the lily reads at full brightness here exactly
+      {/* No area filter at all — the artwork reads at full brightness here exactly
           like the rest of the page. The nameplate stays legible purely through
           its own text shadow (a halo on the glyphs, not a rectangle). */}
 
-      {/* pointer-spotlight — a soft beam that warms the bloom under the cursor */}
+      {/* pointer-spotlight — a soft beam that warms the artwork under the cursor */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none', mixBlendMode: 'screen',
         opacity: 'var(--mo, 0)' as unknown as number, transition: 'opacity .45s ease',
