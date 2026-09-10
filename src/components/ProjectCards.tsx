@@ -56,14 +56,33 @@ export function ProjectCards({ t }: Props) {
       {/* ── column grid · remaining projects ── */}
       <div className="ed-grid">
         <ScrollReveal delay={90} style={{ height: '100%' }}>
-          <EdCard href="/journey/" no="13" kicker={t('journeyK')} accent="#a34830">
-            <h3 className="display" style={{ fontSize: '1.4rem', marginBottom: 8 }}>Journey <span className="italic-accent" style={{ color: '#a34830' }}>Notes.</span></h3>
-            <p style={{ color: 'var(--muted)', fontSize: '.74rem', lineHeight: 1.6, marginBottom: 14 }}>{t('journeyD')}</p>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, padding: '12px 10px', background: 'var(--bg)', overflow: 'hidden' }} aria-hidden="true">
-              {['020', '010', '022'].map((id, i) => <img key={id} src={`/journey/archive/${id}-small.webp`} alt="" loading="lazy" width="80" height="95" style={{ width: '28%', height: 95, objectFit: 'cover', border: '4px solid var(--surface)', transform: `rotate(${i === 0 ? -7 : i === 2 ? 6 : -1}deg)` }} />)}
+          <a href="/journey/" className="journey-card" aria-label="Journey Notes">
+            <div className="journey-card-media">
+              <img
+                src="/journey/berra.jpg"
+                alt=""
+                loading="lazy"
+                width="400"
+                height="400"
+              />
             </div>
-            <Tags items={[t('journeyTag'), '139 KARE', 'JOURNAL']} />
-          </EdCard>
+            <div className="journey-card-copy">
+              <div className="journey-card-meta">
+                <span>JOURNEY NOTES</span>
+                <span>13</span>
+              </div>
+              <h3>
+                Merhaba,
+                <br />
+                benim adım <em>Berra.</em>
+              </h3>
+              <p>Bu da benim kişisel blogum.</p>
+            </div>
+            <div className="journey-card-foot">
+              <span>Stalk yaparken 2. kez yakalandın.</span>
+              <span aria-hidden="true">♡</span>
+            </div>
+          </a>
         </ScrollReveal>
         <ScrollReveal delay={120} style={{ height: '100%' }}>
           <EdCard href="/tracker/" no="01" kicker={t('tF')} accent="var(--green-t)">
