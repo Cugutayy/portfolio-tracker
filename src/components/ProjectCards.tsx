@@ -57,30 +57,21 @@ export function ProjectCards({ t }: Props) {
       <div className="ed-grid">
         <ScrollReveal delay={90} style={{ height: '100%' }}>
           <a href="/journey/" className="journey-card" aria-label="Journey Notes">
-            <div className="journey-card-media">
-              <img
-                src="/journey/berra.jpg"
-                alt=""
-                loading="lazy"
-                width="400"
-                height="400"
-              />
+            <div className="journey-card-head">
+              <span>{t('journeyK')}</span>
+              <span>13</span>
             </div>
-            <div className="journey-card-copy">
-              <div className="journey-card-meta">
-                <span>JOURNEY NOTES</span>
-                <span>13</span>
-              </div>
-              <h3>
-                Merhaba,
-                <br />
-                benim adım <em>Berra.</em>
-              </h3>
-              <p>Bu da benim kişisel blogum.</p>
+            <h3>Journey <em>Notes</em></h3>
+            <div className="journey-card-strip" aria-hidden="true">
+              {['020', '010', '022'].map((id, i) => (
+                <figure key={id} className={`journey-card-shot journey-card-shot-${i + 1}`}>
+                  <img src={`/journey/archive/${id}-small.webp`} alt="" loading="lazy" />
+                </figure>
+              ))}
             </div>
             <div className="journey-card-foot">
-              <span>Stalk yaparken 2. kez yakalandın.</span>
-              <span aria-hidden="true">♡</span>
+              <span>{t('journeyTag')}</span>
+              <span>139 KARE</span>
             </div>
           </a>
         </ScrollReveal>
