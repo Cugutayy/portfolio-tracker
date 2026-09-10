@@ -1,10 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 
-/**
- * Cinematic hub hero. The visual layer itself lives in .site-lily so the same
- * fixed backdrop can continue beneath the page; this component owns only the
- * identity, clock, contact, scroll cue and pointer-light interaction.
- */
+/** Full-bleed hub hero layered over the shared Botticelli artwork. */
 export function Hero({ lang }: { lang: string }) {
   const [clock, setClock] = useState('')
   const ref = useRef<HTMLElement>(null)
@@ -55,7 +51,7 @@ export function Hero({ lang }: { lang: string }) {
       }}
     >
       {/* No area filter at all — the artwork reads at full brightness here exactly
-          like the rest of the page. The nameplate stays legible purely through
+          like the rest of the page. The nameplate stays legible through
           its own text shadow (a halo on the glyphs, not a rectangle). */}
 
       {/* pointer-spotlight — a soft beam that warms the artwork under the cursor */}
