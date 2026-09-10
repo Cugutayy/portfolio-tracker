@@ -195,88 +195,94 @@ a { color: inherit; text-decoration: none; }
 .ed-card .ed-arrow { opacity: 0; transform: translateX(-4px); transition: opacity .3s ease, transform .3s ease; }
 .ed-card:hover .ed-arrow { opacity: .9; transform: translateX(0); }
 
-/* Journey Notes: restrained photo-journal card. Berra's portrait stays inside /journey/. */
+/* Journey Notes: portrait-led editorial card, deliberately sparse. */
 .journey-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 286px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 326px;
   height: 100%;
-  padding: 18px 18px 14px;
+  padding: 13px;
   overflow: hidden;
-  border: 1px solid rgba(215, 208, 196, .22);
-  background: rgba(20, 17, 15, .76);
-  color: #f2eadf;
+  border: 1px solid rgba(235, 227, 216, .20);
+  background: rgba(14, 12, 11, .82);
+  color: #f7f0e7;
   text-decoration: none;
-  transition: transform .45s cubic-bezier(.16,1,.3,1), border-color .3s ease, background .3s ease;
+  transition: transform .45s cubic-bezier(.16,1,.3,1), border-color .3s ease;
 }
 .journey-card:hover {
   transform: translateY(-3px);
-  border-color: rgba(240, 225, 207, .42);
-  background: rgba(24, 20, 18, .84);
+  border-color: rgba(244, 232, 218, .42);
 }
-.journey-card-head,
-.journey-card-foot {
+.journey-card-head {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  font-family: 'DM Mono', ui-monospace, monospace;
-  font-size: .46rem;
-  line-height: 1.3;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: rgba(242, 234, 223, .58);
-}
-.journey-card h3 {
-  margin: 15px 0 14px;
-  font-family: 'Newsreader', Georgia, serif;
-  font-size: 1.45rem;
-  font-weight: 420;
-  line-height: .98;
-  letter-spacing: -.035em;
-}
-.journey-card h3 em {
-  font: inherit;
-  font-style: italic;
-  color: #d89a78;
-}
-.journey-card-strip {
-  display: grid;
-  grid-template-columns: 1.16fr .88fr 1fr;
   align-items: center;
-  gap: 7px;
-  min-height: 122px;
-  margin: 0 -2px 14px;
+  padding: 2px 1px 10px;
+  font-family: 'Azeret Mono', ui-monospace, monospace;
+  font-size: .43rem;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: .14em;
+  color: rgba(247, 240, 231, .68);
 }
-.journey-card-shot {
-  margin: 0;
+.journey-card-portrait {
+  min-height: 0;
   overflow: hidden;
-  background: #d8d0c4;
-  box-shadow: 0 7px 18px rgba(0,0,0,.18);
+  aspect-ratio: 1.36 / 1;
+  background: #b99e8b;
 }
-.journey-card-shot img {
+.journey-card-portrait img {
   display: block;
   width: 100%;
-  height: 116px;
+  height: 100%;
   object-fit: cover;
-  filter: saturate(.82) contrast(1.04);
-  transition: transform .65s cubic-bezier(.16,1,.3,1), filter .45s ease;
+  object-position: 50% 36%;
+  filter: saturate(.92) contrast(1.025);
+  transform: scale(1.002);
+  transition: transform .7s cubic-bezier(.16,1,.3,1), filter .45s ease;
 }
-.journey-card-shot-1 { transform: rotate(-2.2deg) translateY(3px); }
-.journey-card-shot-2 { transform: rotate(1.4deg) translateY(-2px); }
-.journey-card-shot-3 { transform: rotate(-.7deg) translateY(4px); }
-.journey-card:hover .journey-card-shot img { transform: scale(1.035); filter: saturate(.94) contrast(1.04); }
-.journey-card-foot {
-  margin-top: auto;
-  padding-top: 10px;
-  border-top: 1px solid rgba(242, 234, 223, .16);
-  letter-spacing: .08em;
+.journey-card:hover .journey-card-portrait img {
+  transform: scale(1.018);
+  filter: saturate(.98) contrast(1.03);
+}
+.journey-card-copy {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 1px 1px;
+}
+.journey-card-copy h3 {
+  margin: 0;
+  font-family: 'Bodoni Moda', Didot, 'Iowan Old Style', serif;
+  font-size: clamp(1.3rem, 2vw, 1.62rem);
+  font-weight: 500;
+  line-height: .96;
+  letter-spacing: -.045em;
+}
+.journey-card-copy h3 em {
+  font: inherit;
+  font-style: italic;
+  font-weight: 400;
+  color: #d9a07c;
+}
+.journey-card-copy > span {
+  max-width: 16ch;
+  padding-bottom: 2px;
+  text-align: right;
+  font-family: 'Azeret Mono', ui-monospace, monospace;
+  font-size: .42rem;
+  font-weight: 500;
+  line-height: 1.45;
+  letter-spacing: .015em;
+  color: rgba(247, 240, 231, .57);
 }
 @media(max-width:360px) {
-  .journey-card { min-height: 270px; padding: 16px 15px 13px; }
-  .journey-card-strip { min-height: 112px; gap: 5px; }
-  .journey-card-shot img { height: 106px; }
-  .journey-card h3 { font-size: 1.35rem; }
+  .journey-card { min-height: 300px; padding: 11px; }
+  .journey-card-head { font-size: .39rem; }
+  .journey-card-copy { gap: 9px; padding-top: 11px; }
+  .journey-card-copy h3 { font-size: 1.27rem; }
+  .journey-card-copy > span { font-size: .38rem; max-width: 14ch; }
 }
 
 /* lead story block */
