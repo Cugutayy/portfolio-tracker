@@ -2,7 +2,7 @@
 
 > **Calisma adi:** Rota (kesinlestirilecek)
 > **Alsancak Runners** kulup sitesi olarak kalir, Rota platformunda bir kulup olarak yer alir.
-> Solo gelistirme (Claude ile pair programming).
+> Solo gelistirme (tek gelistirici).
 
 ---
 
@@ -287,7 +287,7 @@ Alsancak Runners (Web)          Kosu Uygulamasi (Mobile)
 | Uygulama adi | **Rota** (calisma adi, kesinlestirilecek) |
 | Hedef bolge | **Izmir** (baslangic), sonra Turkiye geneli |
 | Monetizasyon | **Tamamen ucretsiz** (topluluk buyutme oncelikli) |
-| Takim | **Solo** (Claude ile pair programming) |
+| Takim | **Solo** (tek gelistirici) |
 | MVP'de GPS tracking | **Evet** — uygulamadan kosu baslat/bitir olacak |
 | running_page ozellikleri | **Ileride degerlendirilecek** (MVP'de sadece Strava + Apple Health) |
 | Alsancak Runners iliskisi | **Kulup olarak kalir**, Rota platformunda bir kulup |
