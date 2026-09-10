@@ -420,11 +420,12 @@ export default function App() {
             <section className="berra-hero" aria-labelledby="berra-intro-title">
               <figure className="berra-portrait">
                 <img
-                  src="/journey/berra.jpg"
-                  alt="Berra"
-                  width="400"
-                  height="400"
+                  src="/journey/berra-4k.webp"
+                  alt="Journey Notes portresi"
+                  width="4096"
+                  height="4096"
                   loading="eager"
+                  fetchPriority="high"
                 />
               </figure>
               <div className="berra-intro-copy">
@@ -432,7 +433,7 @@ export default function App() {
                 <h1 id="berra-intro-title">
                   Merhaba,
                   <br />
-                  benim adım <em>Berra.</em>
+                  benim adım <em>Arif.</em>
                 </h1>
                 <p>Bu da benim kişisel blogum.</p>
                 <div className="berra-keepsake" aria-hidden="true">
