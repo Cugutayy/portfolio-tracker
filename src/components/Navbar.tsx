@@ -13,7 +13,7 @@ export function Navbar({ lang, setLang, dark, setDark, t }: Props) {
   const langs: [string, string][] = [['tr', 'TR'], ['en', 'EN'], ['zh', '中文']]
 
   return (
-    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'var(--nav-bg)', backdropFilter: 'blur(16px)', borderBottom: '1px solid var(--rule)' }}>
+    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'transparent', backdropFilter: 'none', WebkitBackdropFilter: 'none', borderBottom: '1px solid rgba(244,239,230,.16)' }}>
       <div className="nav-inner" style={{ maxWidth: 1200, margin: '0 auto', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className="nav-links">
           <a href="/" className="logo-mark" style={{ marginRight: 6 }}>cs</a>
