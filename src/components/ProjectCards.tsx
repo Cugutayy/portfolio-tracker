@@ -58,20 +58,21 @@ export function ProjectCards({ t }: Props) {
         <ScrollReveal delay={90} style={{ height: '100%' }}>
           <a href="/journey/" className="journey-card" aria-label="Journey Notes">
             <div className="journey-card-head">
-              <span>{t('journeyK')}</span>
+              <span>JOURNEY NOTES</span>
               <span>13</span>
             </div>
-            <h3>Journey <em>Notes</em></h3>
-            <div className="journey-card-strip" aria-hidden="true">
-              {['020', '010', '022'].map((id, i) => (
-                <figure key={id} className={`journey-card-shot journey-card-shot-${i + 1}`}>
-                  <img src={`/journey/archive/${id}-small.webp`} alt="" loading="lazy" />
-                </figure>
-              ))}
-            </div>
-            <div className="journey-card-foot">
-              <span>{t('journeyTag')}</span>
-              <span>139 KARE</span>
+            <figure className="journey-card-portrait" aria-hidden="true">
+              <img
+                src="/journey/berra-4k.webp"
+                alt=""
+                loading="lazy"
+                width="4096"
+                height="4096"
+              />
+            </figure>
+            <div className="journey-card-copy">
+              <h3>Journey <em>Notes</em></h3>
+              <span>Stalk yaparken 2. kez yakalandın. ♡</span>
             </div>
           </a>
         </ScrollReveal>
