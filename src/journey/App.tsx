@@ -119,7 +119,6 @@ export default function App() {
         normalize(query),
       ),
   );
-  const featured = photos[0];
   useEffect(() => {
     const sync = () => setRoute(location.hash);
     addEventListener("hashchange", sync);
@@ -155,7 +154,7 @@ export default function App() {
   useEffect(() => {
     document.title = selected
       ? `${selected.title} — Journey Notes`
-      : "Journey Notes — Yolun bıraktıkları";
+      : "Journey Notes | Berra";
     if (selected) {
       window.scrollTo({ top: 0, behavior: "instant" });
       reader.current?.focus({ preventScroll: true });
@@ -426,40 +425,35 @@ export default function App() {
           </main>
         ) : (
           <main>
-            <section className="intro">
-              <span className="eyebrow">GÖRSEL BİR SEYAHAT GÜNLÜĞÜ</span>
-              <h1>
-                Bir yer, bir his, <em>bir not.</em>
-              </h1>
-              <p>
-                Yolda biriken manzaralar, dönüp bakılan sokaklar.
-                <br />
-                Bazen bir fotoğraf, bazen anlatacak biraz daha fazlası.
-              </p>
-              <span className="intro-doodle" aria-hidden="true">
-                ↙
-              </span>
-            </section>
-            <section className="featured" aria-label="Defterden seçilmiş not">
-              <div className="featured-visual">
-                <button
-                  className="featured-photo"
-                  data-note={featured.id}
-                  onClick={() => openNote(featured)}
-                  aria-label={`${featured.title} notunu oku`}
-                >
-                  <Picture photo={featured} priority />
+            <section className="berra-hero" aria-labelledby="berra-intro-title">
+              <figure className="berra-portrait">
+                <img
+                  src="/journey/berra.jpg"
+                  alt="Berra"
+                  width="400"
+                  height="400"
+                  loading="eager"
+                />
+              </figure>
+              <div className="berra-intro-copy">
+                <span className="berra-kicker">JOURNEY NOTES</span>
+                <h1 id="berra-intro-title">
+                  Merhaba,
+                  <br />
+                  benim adım <em>Berra.</em>
+                </h1>
+                <p>Bu da benim kişisel blogum.</p>
+                <div className="berra-keepsake" aria-hidden="true">
+                  <span className="berra-tape" />
+                  <img src="/journey/archive/010-small.webp" alt="" />
+                </div>
+                <button className="berra-enter" onClick={scrollArchive}>
+                  Deftere göz at <Arrow />
                 </button>
               </div>
-              <div className="featured-copy">
-                <p className="featured-place">{featured.place}</p>
-                <h2>
-                  <button onClick={() => openNote(featured)}>
-                    {featured.title}
-                  </button>
-                </h2>
-                <p>{featured.summary}</p>
-              </div>
+              <p className="berra-tease">
+                Stalk yaparken 2. kez yakalandın. <span aria-hidden="true">♡</span>
+              </p>
             </section>
             <section className="archive" id="archive" ref={archive}>
               <div className="section-heading">
