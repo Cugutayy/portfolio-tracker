@@ -1,2 +1,289 @@
-.studio{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;border:0;background:var(--paper);color:var(--ink);padding:0;overflow:auto}.studio::backdrop{background:#20261fcc}.studio-shell{max-width:1060px;margin:auto;padding:35px 30px 30px}.studio-header{display:flex;align-items:center;justify-content:space-between;gap:25px;border-bottom:1px solid var(--line);padding-bottom:24px}.studio-header .eyebrow{font-size:8px;color:var(--muted)}.studio-header h2{font:46px 'Instrument Serif';letter-spacing:-.02em;margin-top:12px}.studio-header h2 em{color:var(--accent)}.studio-header>button{font-size:11px;padding:10px}.studio-notice{font-size:11px;line-height:1.7;color:var(--muted);padding:20px 0}.studio-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px}.studio-actions button{border:1px solid var(--line);padding:12px 18px;font-size:10px}.studio-actions .studio-primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}.studio button:disabled{opacity:.35;cursor:default}.studio-workspace{display:grid;grid-template-columns:1fr 1.05fr;gap:32px;border-top:1px solid var(--line);padding-top:25px}.studio-workspace.is-dragging{outline:2px dashed var(--accent);outline-offset:10px}.studio-gallery>.eyebrow{color:var(--muted);font-size:8px;margin-bottom:20px}.studio-drop{width:100%;min-height:365px;border:1px dashed var(--line);background:var(--sage);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:17px;padding:25px}.studio-drop>span{font:45px 'Instrument Serif';color:var(--accent)}.studio-drop strong{font:27px 'Instrument Serif';font-weight:400}.studio-drop small{font-size:10px;line-height:1.9;color:var(--muted);text-align:center}.studio-thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.studio-thumbs button{height:132px;position:relative;padding:7px;background:var(--sage)}.studio-thumbs button[aria-pressed=true]{outline:2px solid var(--accent);outline-offset:3px}.studio-thumbs img{height:100%;object-fit:contain}.studio-thumbs button>span{position:absolute;left:8px;bottom:7px;background:var(--paper);padding:4px 5px;font:7px 'DM Mono'}.studio-thumbs .add-thumb{font:35px 'Instrument Serif';border:1px dashed var(--line);background:none}.studio-editor{border-left:1px solid var(--line);padding-left:32px}.editor-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;color:var(--muted)}.editor-meta .eyebrow{font-size:8px}.editor-meta button{font-size:18px;padding:5px 10px}.studio-editor label{display:block;font-size:10px;margin-bottom:17px}.studio-editor label>span{color:var(--muted);font-size:8px}.studio-editor input,.studio-editor textarea,.studio-editor select{display:block;border:1px solid var(--line);padding:11px 12px;background:var(--paper);color:var(--ink);font-size:12px;width:100%;margin-top:9px;border-radius:0}.studio-editor textarea{resize:vertical;line-height:1.8}.editor-row{display:grid;grid-template-columns:1fr 1.2fr;gap:14px}.editor-empty{min-height:365px;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center}.editor-empty>span{font:37px serif;color:var(--accent);margin-bottom:25px}.editor-empty h3{font:32px 'Instrument Serif';margin-bottom:16px}.editor-empty p{font-size:11px;line-height:1.9;color:var(--muted)}.remove-draft{font-size:10px;color:var(--accent);padding:4px 0;border-bottom:1px solid var(--line)}.studio-status{font-size:10px;color:var(--muted);line-height:1.9;margin-top:25px;min-height:22px}.studio-undo{display:flex;align-items:center;gap:20px;padding:15px;background:var(--sage);font-size:11px;margin-top:20px}.studio-undo>button{text-decoration:underline;font-size:11px}
-@media(max-width:700px){.studio-shell{padding:24px 23px}.studio-header h2{font-size:38px}.studio-header .eyebrow{font-size:6px}.studio-notice{font-size:10px}.studio-actions{gap:8px}.studio-actions button{font-size:9px;padding:11px 12px}.studio-workspace{grid-template-columns:1fr;gap:24px}.studio-editor{padding:22px 0 0;border-left:0;border-top:1px solid var(--line)}.studio-drop{min-height:230px}.studio-thumbs button{height:116px}.editor-empty{min-height:220px}.studio-status{font-size:9px}.studio-header>button{font-size:10px;padding:7px}}
+.studio {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border: 0;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0;
+  overflow: auto;
+}
+.studio::backdrop {
+  background: #20261fcc;
+}
+.studio-shell {
+  max-width: 1060px;
+  margin: auto;
+  padding: 35px 30px 30px;
+}
+.studio-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 24px;
+}
+.studio-header .eyebrow {
+  font-size: 8px;
+  color: var(--muted);
+}
+.studio-header h2 {
+  font: 46px "Instrument Serif";
+  letter-spacing: -0.02em;
+  margin-top: 12px;
+}
+.studio-header h2 em {
+  color: var(--accent);
+}
+.studio-header > button {
+  font-size: 11px;
+  padding: 10px;
+}
+.studio-notice {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--muted);
+  padding: 20px 0;
+}
+.studio-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.studio-actions button {
+  border: 1px solid var(--line);
+  padding: 12px 18px;
+  font-size: 10px;
+}
+.studio-actions .studio-primary {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.studio button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.studio-workspace {
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  gap: 32px;
+  border-top: 1px solid var(--line);
+  padding-top: 25px;
+}
+.studio-workspace.is-dragging {
+  outline: 2px dashed var(--accent);
+  outline-offset: 10px;
+}
+.studio-gallery > .eyebrow {
+  color: var(--muted);
+  font-size: 8px;
+  margin-bottom: 20px;
+}
+.studio-drop {
+  width: 100%;
+  min-height: 365px;
+  border: 1px dashed var(--line);
+  background: var(--sage);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 17px;
+  padding: 25px;
+}
+.studio-drop > span {
+  font: 45px "Instrument Serif";
+  color: var(--accent);
+}
+.studio-drop strong {
+  font: 27px "Instrument Serif";
+  font-weight: 400;
+}
+.studio-drop small {
+  font-size: 10px;
+  line-height: 1.9;
+  color: var(--muted);
+  text-align: center;
+}
+.studio-thumbs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+.studio-thumbs button {
+  height: 132px;
+  position: relative;
+  padding: 7px;
+  background: var(--sage);
+}
+.studio-thumbs button[aria-pressed="true"] {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.studio-thumbs img {
+  height: 100%;
+  object-fit: contain;
+}
+.studio-thumbs button > span {
+  position: absolute;
+  left: 8px;
+  bottom: 7px;
+  background: var(--paper);
+  padding: 4px 5px;
+  font: 7px "DM Mono";
+}
+.studio-thumbs .add-thumb {
+  font: 35px "Instrument Serif";
+  border: 1px dashed var(--line);
+  background: none;
+}
+.studio-editor {
+  border-left: 1px solid var(--line);
+  padding-left: 32px;
+}
+.editor-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  color: var(--muted);
+}
+.editor-meta .eyebrow {
+  font-size: 8px;
+}
+.editor-meta button {
+  font-size: 18px;
+  padding: 5px 10px;
+}
+.studio-editor label {
+  display: block;
+  font-size: 10px;
+  margin-bottom: 17px;
+}
+.studio-editor label > span {
+  color: var(--muted);
+  font-size: 8px;
+}
+.studio-editor input,
+.studio-editor textarea,
+.studio-editor select {
+  display: block;
+  border: 1px solid var(--line);
+  padding: 11px 12px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 12px;
+  width: 100%;
+  margin-top: 9px;
+  border-radius: 0;
+}
+.studio-editor textarea {
+  resize: vertical;
+  line-height: 1.8;
+}
+.editor-row {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 14px;
+}
+.editor-empty {
+  min-height: 365px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+.editor-empty > span {
+  font: 37px serif;
+  color: var(--accent);
+  margin-bottom: 25px;
+}
+.editor-empty h3 {
+  font: 32px "Instrument Serif";
+  margin-bottom: 16px;
+}
+.editor-empty p {
+  font-size: 11px;
+  line-height: 1.9;
+  color: var(--muted);
+}
+.remove-draft {
+  font-size: 10px;
+  color: var(--accent);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+.studio-status {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.9;
+  margin-top: 25px;
+  min-height: 22px;
+}
+.studio-undo {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 15px;
+  background: var(--sage);
+  font-size: 11px;
+  margin-top: 20px;
+}
+.studio-undo > button {
+  text-decoration: underline;
+  font-size: 11px;
+}
+@media (max-width: 700px) {
+  .studio-shell {
+    padding: 24px 23px;
+  }
+  .studio-header h2 {
+    font-size: 38px;
+  }
+  .studio-header .eyebrow {
+    font-size: 6px;
+  }
+  .studio-notice {
+    font-size: 10px;
+  }
+  .studio-actions {
+    gap: 8px;
+  }
+  .studio-actions button {
+    font-size: 9px;
+    padding: 11px 12px;
+  }
+  .studio-workspace {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .studio-editor {
+    padding: 22px 0 0;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .studio-drop {
+    min-height: 230px;
+  }
+  .studio-thumbs button {
+    height: 116px;
+  }
+  .editor-empty {
+    min-height: 220px;
+  }
+  .studio-status {
+    font-size: 9px;
+  }
+  .studio-header > button {
+    font-size: 10px;
+    padding: 7px;
+  }
+}
