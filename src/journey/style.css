@@ -1,5 +1,5 @@
 :root {
-  font-family: "Manrope", sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #30352d;
   background: #f5f2eb;
   font-synthesis: none;
@@ -69,7 +69,7 @@ figure {
   margin: 0;
 }
 em {
-  font-family: "Instrument Serif", serif;
+  font-family: "Fraunces", serif;
   font-weight: 400;
 }
 ::selection {
@@ -89,7 +89,7 @@ em {
   align-items: center;
   gap: 10px;
   font:
-    9px/1.5 "DM Mono",
+    9px/1.5 "Fragment Mono",
     monospace;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -128,13 +128,13 @@ em {
   align-items: center;
   gap: 9px;
   font:
-    8px "DM Mono",
+    8px "Fragment Mono",
     monospace;
   letter-spacing: 0.055em;
 }
 .mini-mark {
   font:
-    29px "Instrument Serif",
+    29px "Fraunces",
     serif;
   margin-right: 3px;
 }
@@ -168,14 +168,14 @@ em {
 }
 .masthead-aside {
   font:
-    8px/1.8 "DM Mono",
+    8px/1.8 "Fragment Mono",
     monospace;
   letter-spacing: 0.06em;
   flex: 1;
 }
 .wordmark {
   font:
-    clamp(65px, 7.8vw, 109px) / 1 "Instrument Serif",
+    clamp(65px, 7.8vw, 109px) / 1 "Fraunces",
     serif;
   letter-spacing: -0.055em;
   display: flex;
@@ -210,7 +210,7 @@ em {
 }
 .journal-seal span {
   font:
-    6px "DM Mono",
+    6px "Fragment Mono",
     monospace;
   letter-spacing: 0.1em;
 }
@@ -228,7 +228,7 @@ em {
   gap: 31px;
 }
 .nav sup {
-  font: 7px "DM Mono";
+  font: 7px "Fragment Mono";
   color: var(--muted);
   margin-left: 5px;
 }
@@ -273,7 +273,7 @@ em {
 }
 .intro h1 {
   font:
-    clamp(36px, 4.2vw, 57px) / 1.1 "Instrument Serif",
+    clamp(36px, 4.2vw, 57px) / 1.1 "Fraunces",
     serif;
   letter-spacing: -0.025em;
   margin: 16px 0;
@@ -290,7 +290,7 @@ em {
   position: absolute;
   right: 17%;
   bottom: 22px;
-  font: 39px "Instrument Serif";
+  font: 39px "Fraunces";
   color: var(--accent);
   transform: rotate(15deg);
 }
@@ -329,7 +329,7 @@ em {
 
 .featured-copy h2 {
   font:
-    clamp(40px, 4vw, 54px) / 1.08 "Instrument Serif",
+    clamp(40px, 4vw, 54px) / 1.08 "Fraunces",
     serif;
   letter-spacing: -0.025em;
   margin: 14px 0 20px;
@@ -369,7 +369,7 @@ em {
 }
 .section-heading h2 {
   font:
-    44px/1.1 "Instrument Serif",
+    44px/1.1 "Fraunces",
     serif;
   letter-spacing: -0.02em;
   margin-top: 13px;
@@ -416,7 +416,7 @@ em {
   background: var(--accent);
 }
 .filters sup {
-  font: 7px "DM Mono";
+  font: 7px "Fragment Mono";
   margin-left: 5px;
   opacity: 0.65;
 }
@@ -450,7 +450,7 @@ em {
   border-color: var(--accent);
 }
 .search-row > span {
-  font: 8px "DM Mono";
+  font: 8px "Fragment Mono";
   color: var(--muted);
   white-space: nowrap;
 }
@@ -546,7 +546,7 @@ em {
   display: flex;
   justify-content: space-between;
   font:
-    7px "DM Mono",
+    7px "Fragment Mono",
     monospace;
   letter-spacing: 0.055em;
   color: var(--muted);
@@ -555,7 +555,7 @@ em {
 }
 .story h3 {
   font:
-    29px/1.13 "Instrument Serif",
+    29px/1.13 "Fraunces",
     serif;
   letter-spacing: -0.02em;
   margin: 10px 0;
@@ -595,7 +595,7 @@ em {
 .note-head {
   display: flex;
   justify-content: space-between;
-  font: 7px "DM Mono";
+  font: 7px "Fragment Mono";
   letter-spacing: 0.065em;
   color: var(--muted);
 }
@@ -607,7 +607,7 @@ em {
 }
 .field-note blockquote {
   font:
-    36px/1.03 "Instrument Serif",
+    36px/1.03 "Fraunces",
     serif;
   margin: 0;
   letter-spacing: -0.025em;
@@ -630,7 +630,7 @@ em {
 }
 .note-signature {
   display: block;
-  font: italic 23px "Instrument Serif";
+  font: italic 23px "Fraunces";
   margin-top: 24px;
   color: var(--accent);
 }
@@ -679,7 +679,7 @@ em {
   color: var(--accent);
 }
 .end-message {
-  font: italic 20px "Instrument Serif";
+  font: italic 20px "Fraunces";
   color: var(--muted);
 }
 .empty {
@@ -691,7 +691,7 @@ em {
   color: var(--accent);
 }
 .empty h3 {
-  font: 35px "Instrument Serif";
+  font: 35px "Fraunces";
   margin: 20px 0 12px;
 }
 .empty p {
@@ -743,7 +743,7 @@ em {
   position: absolute;
   top: 15px;
   left: 17px;
-  font: 10px "Instrument Serif";
+  font: 10px "Fraunces";
   color: var(--muted);
 }
 .collection:nth-child(2) .collection-stack {
@@ -759,7 +759,7 @@ em {
   margin: 19px 0 8px;
 }
 .collection-label h3 {
-  font: 27px "Instrument Serif";
+  font: 27px "Fraunces";
   letter-spacing: -0.015em;
 }
 .collection-label svg {
@@ -793,7 +793,7 @@ em {
 }
 .about-photo > span {
   display: block;
-  font: 6px "DM Mono";
+  font: 6px "Fragment Mono";
   letter-spacing: 0.1em;
   padding-top: 11px;
   padding-bottom: 3px;
@@ -807,7 +807,7 @@ em {
   color: var(--muted);
 }
 .about-copy h2 {
-  font: 47px/0.98 "Instrument Serif";
+  font: 47px/0.98 "Fraunces";
   letter-spacing: -0.02em;
   margin: 19px 0;
 }
@@ -850,7 +850,7 @@ em {
   border-bottom: 1px solid var(--ink);
 }
 .footer-logo {
-  font: 49px "Instrument Serif";
+  font: 49px "Fraunces";
   letter-spacing: -0.05em;
   white-space: nowrap;
 }
@@ -858,7 +858,7 @@ em {
   color: var(--accent);
 }
 .footer-top > p {
-  font: 9px/1.8 "DM Mono";
+  font: 9px/1.8 "Fragment Mono";
   color: var(--muted);
   letter-spacing: 0.03em;
   margin-left: auto;
@@ -869,14 +869,14 @@ em {
   border: 1px solid var(--line);
   width: 40px;
   height: 40px;
-  font: 23px "Instrument Serif";
+  font: 23px "Fraunces";
 }
 .footer-bottom {
   display: flex;
   justify-content: space-between;
   gap: 15px;
   padding: 21px 0 28px;
-  font: 7px "DM Mono";
+  font: 7px "Fragment Mono";
   color: var(--muted);
   letter-spacing: 0.045em;
 }
@@ -914,7 +914,7 @@ em {
   place-items: center;
   background: var(--paper);
   z-index: 100;
-  font: 26px "Instrument Serif";
+  font: 26px "Fraunces";
 }
 .reader {
   padding: 30px 0 25px;
@@ -937,7 +937,7 @@ em {
   font-size: 8px;
 }
 .reader-heading h1 {
-  font: clamp(40px, 5vw, 64px) / 1.05 "Instrument Serif";
+  font: clamp(40px, 5vw, 64px) / 1.05 "Fraunces";
   letter-spacing: -0.035em;
   margin: 18px 0;
 }
@@ -970,7 +970,7 @@ em {
   display: flex;
   justify-content: space-between;
   gap: 15px;
-  font: 7px "DM Mono";
+  font: 7px "Fragment Mono";
   color: var(--muted);
   margin-top: 16px;
   line-height: 1.6;
@@ -991,7 +991,7 @@ em {
 }
 .reader-copy > p:first-of-type:first-letter {
   float: left;
-  font: 48px/0.9 "Instrument Serif";
+  font: 48px/0.9 "Fraunces";
   padding: 8px 6px 0 0;
   color: var(--accent);
 }
@@ -1005,7 +1005,7 @@ em {
   color: var(--muted);
 }
 .reader-note > p {
-  font: 24px/1.3 "Instrument Serif";
+  font: 24px/1.3 "Fraunces";
   margin-top: 13px;
 }
 .reader-note > p em {
@@ -1047,7 +1047,7 @@ em {
 }
 .related > button > span {
   flex: 1;
-  font: 22px "Instrument Serif";
+  font: 22px "Fraunces";
 }
 [data-theme="night"] {
   --paper: #222820;
@@ -1940,3 +1940,213 @@ em {
 .featured-copy h2 button { font: inherit; letter-spacing: inherit; text-align: left; padding: 0; }
 .featured-copy > .featured-place { font-size: 12px; line-height: 1.6; }
 @media (hover:hover) and (pointer:fine) { .featured-copy h2 button:hover { color: var(--accent); } }
+
+
+/* ═════════════════════════════════════════════════════
+   Journey Notes opening
+   A restrained editorial cover built from real assets.
+   ═════════════════════════════════════════════════════ */
+.masthead {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 17px 0 15px;
+  border-bottom: 0;
+}
+.masthead-aside,
+.journal-seal,
+.brand-flower,
+.brand-dot {
+  display: none;
+}
+.wordmark {
+  justify-self: auto;
+  gap: 0;
+  font: 430 30px/1 "Fraunces", "Iowan Old Style", Baskerville, serif;
+  letter-spacing: -0.035em;
+}
+.wordmark em {
+  font: inherit;
+  font-style: italic;
+  letter-spacing: -0.035em;
+  margin-left: .22em;
+}
+.nav {
+  border-top: 1px solid var(--line);
+}
+
+.berra-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.07fr) minmax(0, .93fr);
+  grid-template-rows: 1fr auto;
+  min-height: 570px;
+  margin: 24px 0 58px;
+  overflow: hidden;
+  border: 1px solid rgba(59, 48, 40, .24);
+  background: #f1ebe1;
+  color: #211c18;
+}
+.berra-portrait {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 520px;
+  overflow: hidden;
+  border-right: 1px solid rgba(59, 48, 40, .20);
+  background: #c9b3a4;
+}
+.berra-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 37%;
+  filter: saturate(.93) contrast(1.025) sepia(.02);
+}
+.berra-intro-copy {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: clamp(34px, 5vw, 68px) clamp(28px, 4vw, 56px) 30px;
+}
+.berra-kicker {
+  font: 9px/1.4 "Fragment Mono", monospace;
+  letter-spacing: .19em;
+  color: rgba(33, 28, 24, .58);
+}
+.berra-intro-copy h1 {
+  margin: clamp(35px, 7vh, 72px) 0 0;
+  max-width: 9.5ch;
+  font: 390 clamp(48px, 5.4vw, 76px)/.94 "Fraunces", "Iowan Old Style", Baskerville, serif;
+  letter-spacing: -.055em;
+}
+.berra-intro-copy h1 em {
+  font-family: inherit;
+  font-style: italic;
+  font-weight: 350;
+}
+.berra-intro-copy > p {
+  margin-top: 24px;
+  font: 360 clamp(19px, 2vw, 27px)/1.2 "Fraunces", "Iowan Old Style", Baskerville, serif;
+  letter-spacing: -.02em;
+  color: rgba(33, 28, 24, .78);
+}
+.berra-keepsake {
+  position: relative;
+  width: 138px;
+  margin: auto 0 21px 8px;
+  padding: 8px 8px 23px;
+  background: #fbf8f0;
+  box-shadow: 0 9px 24px rgba(69, 49, 34, .10);
+  transform: rotate(-3.5deg);
+}
+.berra-keepsake img {
+  aspect-ratio: 1 / .78;
+  object-fit: cover;
+}
+.berra-tape {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  width: 52px;
+  height: 19px;
+  transform: translateX(-50%) rotate(2deg);
+  background: rgba(207, 189, 154, .55);
+  box-shadow: 0 1px 1px rgba(72, 54, 37, .06);
+}
+.berra-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  font: 9px/1 "Fragment Mono", monospace;
+  letter-spacing: .07em;
+  color: rgba(33, 28, 24, .68);
+}
+.berra-enter svg {
+  width: 16px;
+  transition: transform .25s var(--ease);
+}
+.berra-enter:hover svg {
+  transform: translateX(4px);
+}
+.berra-tease {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 47px;
+  padding: 12px 15px;
+  border-top: 1px solid rgba(59, 48, 40, .20);
+  font: 9px/1.4 "Fragment Mono", monospace;
+  letter-spacing: .025em;
+  color: rgba(33, 28, 24, .72);
+}
+.berra-tease span {
+  font-size: 15px;
+  line-height: 1;
+}
+[data-theme="night"] .berra-hero {
+  background: #e9e1d5;
+  color: #211c18;
+  border-color: rgba(59, 48, 40, .28);
+}
+[data-theme="night"] .berra-kicker,
+[data-theme="night"] .berra-intro-copy > p,
+[data-theme="night"] .berra-enter,
+[data-theme="night"] .berra-tease {
+  color: rgba(33, 28, 24, .72);
+}
+
+@media (max-width: 700px) {
+  .masthead {
+    display: flex;
+    padding: 15px 0 13px;
+  }
+  .wordmark {
+    font-size: 27px;
+  }
+  .berra-hero {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    min-height: 0;
+    margin: 18px 0 44px;
+  }
+  .berra-portrait {
+    grid-column: 1;
+    grid-row: 1;
+    min-height: 0;
+    height: min(92vw, 440px);
+    border-right: 0;
+    border-bottom: 1px solid rgba(59, 48, 40, .20);
+  }
+  .berra-portrait img {
+    object-position: 50% 34%;
+  }
+  .berra-intro-copy {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 28px 25px 23px;
+  }
+  .berra-intro-copy h1 {
+    margin-top: 31px;
+    max-width: 10ch;
+    font-size: clamp(43px, 13vw, 61px);
+  }
+  .berra-intro-copy > p {
+    margin-top: 18px;
+    font-size: 21px;
+  }
+  .berra-keepsake {
+    width: 118px;
+    margin: 34px 0 17px 4px;
+  }
+  .berra-tease {
+    grid-column: 1;
+    grid-row: 3;
+    font-size: 8px;
+  }
+}
