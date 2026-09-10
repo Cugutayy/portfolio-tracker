@@ -13,59 +13,51 @@ export function Navbar({ lang, setLang, dark, setDark, t }: Props) {
   const langs: [string, string][] = [['tr', 'TR'], ['en', 'EN'], ['zh', '中文']]
 
   return (
-    <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'transparent', backdropFilter: 'none', WebkitBackdropFilter: 'none', borderBottom: '1px solid rgba(244,239,230,.16)' }}>
-      <div className="nav-inner" style={{ maxWidth: 1200, margin: '0 auto', height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <nav
+      className="hub-nav"
+      style={{
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+        background: 'transparent', backdropFilter: 'none', WebkitBackdropFilter: 'none',
+      }}
+    >
+      <div className="nav-inner" style={{ maxWidth: 1200, margin: '0 auto', height: 50, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div className="nav-links">
-          <a href="/" className="logo-mark" style={{ marginRight: 6 }}>cs</a>
-          <a href="#projects" className="link-ed mono" style={{ fontSize: '.62rem', color: 'var(--muted)', letterSpacing: '.12em', textTransform: 'uppercase' }}>{t('navP')}</a>
-          <a href="mailto:s.cagatay.sonmez@gmail.com" className="link-ed mono nav-hide-sm" style={{ fontSize: '.62rem', color: 'var(--muted)', letterSpacing: '.12em', textTransform: 'uppercase' }}>{t('navC')}</a>
-          <a href="https://github.com/Cugutayy" target="_blank" lang="en" className="link-ed mono nav-hide-sm" style={{ fontSize: '.62rem', color: 'var(--muted)', letterSpacing: '.12em', textTransform: 'uppercase' }}>github</a>
+          <a href="/" className="logo-mark hub-nav-brand" style={{ marginRight: 6 }}>cs</a>
+          <a href="#projects" className="link-ed mono hub-nav-link" style={{ fontSize: '.66rem', letterSpacing: '.12em', textTransform: 'uppercase' }}>{t('navP')}</a>
+          <a href="mailto:s.cagatay.sonmez@gmail.com" className="link-ed mono nav-hide-sm hub-nav-link" style={{ fontSize: '.66rem', letterSpacing: '.12em', textTransform: 'uppercase' }}>{t('navC')}</a>
+          <a href="https://github.com/Cugutayy" target="_blank" rel="noreferrer" lang="en" className="link-ed mono nav-hide-sm hub-nav-link" style={{ fontSize: '.66rem', letterSpacing: '.12em', textTransform: 'uppercase' }}>github</a>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           {langs.map(([code, label]) => (
             <button
               key={code}
               onClick={() => setLang(code)}
-              className="mono"
+              className="mono hub-lang"
+              aria-pressed={lang === code}
               style={{
-                background: 'none',
-                border: '1px solid',
-                borderColor: lang === code ? 'var(--accent)' : 'var(--rule)',
-                color: lang === code ? 'var(--accent)' : 'var(--muted)',
-                fontSize: '.56rem',
-                letterSpacing: '.1em',
-                padding: '3px 8px',
+                background: 'transparent',
+                border: 0,
+                color: lang === code ? '#f0cf86' : 'rgba(255,250,242,.82)',
+                fontSize: '.59rem',
+                fontWeight: 500,
+                letterSpacing: '.09em',
+                padding: '5px 6px',
                 cursor: 'pointer',
-                opacity: lang === code ? 1 : 0.65,
-                transition: 'all .2s',
+                opacity: lang === code ? 1 : 0.74,
               }}
             >
               {label}
             </button>
           ))}
-          {/* Theme toggle */}
-          <div
+          <button
+            type="button"
             onClick={() => setDark(!dark)}
-            style={{
-              width: 52, height: 26, padding: 3, borderRadius: 99, cursor: 'pointer',
-              border: '1px solid var(--rule)', background: 'var(--bg)',
-              transition: 'all .3s', marginLeft: 6, position: 'relative',
-              display: 'flex', alignItems: 'center',
-            }}
+            className="hub-theme-button"
+            aria-label={dark ? 'Açık temaya geç' : 'Koyu temaya geç'}
             title="Dark/Light"
           >
-            <div style={{
-              width: 18, height: 18, borderRadius: '50%',
-              transition: 'all .3s cubic-bezier(.16,1,.3,1)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              position: 'absolute', left: 3,
-              transform: dark ? 'translateX(26px)' : 'translateX(0)',
-              background: dark ? '#252420' : '#e8e4dc',
-              pointerEvents: 'none',
-            }}>
-              {dark ? <Sun size={11} color="#fbbf24" /> : <Moon size={11} color="#8a8578" />}
-            </div>
-          </div>
+            {dark ? <Sun size={14} color="#f0cf86" /> : <Moon size={14} color="#fffaf2" />}
+          </button>
         </div>
       </div>
     </nav>
