@@ -449,45 +449,18 @@ export default function App() {
                   aria-label={`${featured.title} notunu oku`}
                 >
                   <Picture photo={featured} priority />
-                  <span className="photo-corner">NOT 010</span>
                 </button>
-                <div className="figure-caption">
-                  <span>HAWA MAHAL / MİMARİ</span>
-                  <span>JAIPUR, HİNDİSTAN</span>
-                </div>
               </div>
               <div className="featured-copy">
-                <span className="eyebrow">
-                  <i /> DEFTERDEN BİR SAYFA
-                </span>
-                <span className="feature-kicker">
-                  MİMARİ <span>·</span> BİR FOTOĞRAF NOTU
-                </span>
+                <p className="featured-place">{featured.place}</p>
                 <h2>
-                  Pembenin
-                  <br />
-                  <em>binbir hâli.</em>
+                  <button onClick={() => openNote(featured)}>
+                    {featured.title}
+                  </button>
                 </h2>
                 <p>{featured.summary}</p>
-                <button
-                  className="read-link"
-                  onClick={() => openNote(featured)}
-                >
-                  Notu oku <Arrow />
-                </button>
-                <div className="feature-bottom">
-                  <span className="handwritten">Biraz daha yakından bak.</span>
-                  <span aria-hidden="true">↗</span>
-                </div>
               </div>
             </section>
-            <div className="interlude">
-              <span>ACELE ETMEDEN. MERAKI KAYBETMEDEN.</span>
-              <span className="interlude-star" aria-hidden="true">
-                ✳
-              </span>
-              <span>{photos.length} KARELİK BİR YOL HİKÂYESİ</span>
-            </div>
             <section className="archive" id="archive" ref={archive}>
               <div className="section-heading">
                 <div>

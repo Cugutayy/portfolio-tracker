@@ -321,51 +321,20 @@ em {
   max-height: 370px;
   object-fit: contain;
 }
-.photo-corner {
-  position: absolute;
-  top: 23px;
-  left: 23px;
-  background: var(--paper);
-  padding: 6px 8px;
-  font: 7px "DM Mono";
-  letter-spacing: 0.08em;
-}
-.figure-caption {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 16px;
-  font: 7px "DM Mono";
-  letter-spacing: 0.04em;
-  color: var(--muted);
-}
+
 .featured-copy {
   position: relative;
   padding-right: 20px;
 }
-.featured-copy > .eyebrow {
-  color: var(--accent);
-  font-size: 8px;
-}
-.feature-kicker {
-  display: block;
-  margin-top: 27px;
-  font: 7px "DM Mono";
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-.feature-kicker span {
-  padding: 0 8px;
-}
+
 .featured-copy h2 {
   font:
-    clamp(45px, 4.8vw, 65px) / 0.99 "Instrument Serif",
+    clamp(40px, 4vw, 54px) / 1.08 "Instrument Serif",
     serif;
   letter-spacing: -0.025em;
   margin: 14px 0 20px;
 }
-.featured-copy h2 em {
-  color: var(--accent);
-}
+
 .featured-copy > p {
   font-size: 12px;
   line-height: 1.9;
@@ -383,39 +352,7 @@ em {
   margin-top: 15px;
   min-width: 123px;
 }
-.feature-bottom {
-  margin-top: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 13px;
-  color: var(--accent);
-}
-.handwritten {
-  font:
-    italic 16px "Instrument Serif",
-    serif;
-}
-.feature-bottom > span:last-child {
-  font-size: 25px;
-}
-.interlude {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  padding: 17px 0;
-  font:
-    7px "DM Mono",
-    monospace;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-.interlude-star {
-  font: 20px serif;
-  color: var(--accent);
-}
+
 .archive {
   padding: 65px 0 0;
 }
@@ -1196,7 +1133,7 @@ em {
     padding-right: 0;
   }
   .featured-copy h2 {
-    font-size: 53px;
+    font-size: 46px;
   }
   .featured-copy > p {
     font-size: 11px;
@@ -1346,36 +1283,17 @@ em {
   .featured-photo img {
     max-height: 260px;
   }
-  .photo-corner {
-    top: 18px;
-    left: 18px;
-    font-size: 6px;
-    padding: 5px;
-  }
-  .figure-caption {
-    font-size: 6px;
-    margin-top: 13px;
-  }
+
   .featured-copy {
     padding: 0 8px;
   }
-  .featured-copy > .eyebrow {
-    font-size: 7px;
-  }
-  .feature-kicker {
-    margin-top: 17px;
-    font-size: 6px;
-  }
+
   .featured-copy h2 {
-    font-size: 47px;
+    font-size: 40px;
     margin: 12px 0 15px;
   }
-  .featured-copy h2 br {
-    display: none;
-  }
-  .featured-copy h2 em {
-    display: block;
-  }
+
+
   .featured-copy > p {
     max-width: 100%;
     font-size: 11px;
@@ -1386,24 +1304,7 @@ em {
     padding-top: 10px;
     min-width: 120px;
   }
-  .feature-bottom {
-    margin-top: 15px;
-  }
-  .handwritten {
-    font-size: 15px;
-  }
-  .feature-bottom > span:last-child {
-    font-size: 21px;
-  }
-  .interlude {
-    padding: 15px 0;
-    font-size: 5px;
-    letter-spacing: 0.035em;
-    gap: 10px;
-  }
-  .interlude-star {
-    font-size: 17px;
-  }
+
   .archive {
     padding-top: 40px;
   }
@@ -1862,18 +1763,7 @@ em {
 .featured-copy > p {
   font-size: 14px;
 }
-.featured-copy > .eyebrow {
-  font-size: 9px;
-}
-.feature-kicker {
-  font-size: 9px;
-}
-.figure-caption {
-  font-size: 8px;
-}
-.interlude {
-  font-size: 8px;
-}
+
 .section-heading .eyebrow {
   font-size: 9px;
 }
@@ -1967,18 +1857,7 @@ em {
   .featured-copy > p {
     font-size: 13px;
   }
-  .featured-copy > .eyebrow {
-    font-size: 8px;
-  }
-  .feature-kicker {
-    font-size: 8px;
-  }
-  .figure-caption {
-    font-size: 7px;
-  }
-  .interlude {
-    font-size: 6px;
-  }
+
   .section-heading .eyebrow {
     font-size: 8px;
   }
@@ -2057,3 +1936,7 @@ em {
     font-size: 19px;
   }
 }
+
+.featured-copy h2 button { font: inherit; letter-spacing: inherit; text-align: left; padding: 0; }
+.featured-copy > .featured-place { font-size: 12px; line-height: 1.6; }
+@media (hover:hover) and (pointer:fine) { .featured-copy h2 button:hover { color: var(--accent); } }
