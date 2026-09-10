@@ -153,7 +153,7 @@ export default function App() {
   }, [status]);
   useEffect(() => {
     document.title = selected
-      ? `${selected.title} — Journey Notes`
+      ? `${selected.title} · Journey Notes`
       : "Journey Notes | Berra";
     if (selected) {
       window.scrollTo({ top: 0, behavior: "instant" });
@@ -233,7 +233,7 @@ export default function App() {
         <header className="header">
           <a className="home-link" href="/" aria-label="snmez.xyz ana sayfası">
             <span className="mini-mark">s.</span> SNMEZ.XYZ{" "}
-            <span className="muted">/ BİR YOL DEFTERİ</span>
+            <span className="muted">/ JOURNEY NOTES</span>
           </a>
           <div className="header-tools">
             <a href={instagram} target="_blank" rel="noreferrer">
@@ -258,9 +258,9 @@ export default function App() {
         </header>
         <div className="masthead">
           <span className="masthead-aside">
-            YERLER, HİSLER
+            FOTOĞRAFLAR
             <br />
-            VE KÜÇÜK AYRINTILAR.
+            VE NOTLAR.
           </span>
           <a
             href={location.pathname}
@@ -275,7 +275,7 @@ export default function App() {
             <span className="brand-dot">.</span>
           </a>
           <div className="journal-seal" aria-hidden="true">
-            <span>MERAKIN PEŞİNDE</span>
+            <span>KİŞİSEL ARŞİV</span>
             <svg width="37" height="37" viewBox="0 0 50 50" fill="none">
               <circle
                 cx="25"
@@ -302,7 +302,7 @@ export default function App() {
                 goSection("archive");
               }}
             >
-              Yol defteri <sup>01</sup>
+              Notlar <sup>01</sup>
             </a>
             <a
               href="#collections"
@@ -363,21 +363,13 @@ export default function App() {
                 </figcaption>
               </figure>
               <div className="reader-copy">
-                <span className="eyebrow">KAREDEN KALAN</span>
+                <span className="eyebrow">NOT</span>
                 {(selected.body.length
                   ? selected.body
                   : [selected.summary]
                 ).map((text, i) => (
                   <p key={i}>{text}</p>
                 ))}
-                <div className="reader-note">
-                  <span className="eyebrow">KENAR NOTU</span>
-                  <p>
-                    Bir yere varmak kadar,
-                    <br />
-                    <em>yolda ne gördüğün de önemli.</em>
-                  </p>
-                </div>
                 <div className="reader-actions">
                   <button
                     className="text-button"
@@ -407,7 +399,7 @@ export default function App() {
               </div>
             </div>
             <div className="related">
-              <span className="eyebrow">DEFTERİN BİR SONRAKİ SAYFASI</span>
+              <span className="eyebrow">BENZER KARELER</span>
               {all
                 .filter(
                   (p) =>
@@ -448,7 +440,7 @@ export default function App() {
                   <img src="/journey/archive/010-small.webp" alt="" />
                 </div>
                 <button className="berra-enter" onClick={scrollArchive}>
-                  Deftere göz at <Arrow />
+                  Fotoğraflara bak <Arrow />
                 </button>
               </div>
               <p className="berra-tease">
@@ -458,16 +450,12 @@ export default function App() {
             <section className="archive" id="archive" ref={archive}>
               <div className="section-heading">
                 <div>
-                  <span className="eyebrow">01 / YOL DEFTERİ</span>
+                  <span className="eyebrow">01 / NOTLAR</span>
                   <h2>
-                    Bakınca <em>kalanlar.</em>
+                    Yolda <em>gördüklerim.</em>
                   </h2>
                 </div>
-                <p>
-                  Biriktirmek için değil,
-                  <br />
-                  yeniden hissetmek için.
-                </p>
+                <p>{photos.length} fotoğraf</p>
               </div>
               <div className="toolbar">
                 <div className="filters" role="group" aria-label="Kategori">
@@ -527,7 +515,7 @@ export default function App() {
                       setQuery(e.target.value);
                       setLimit(9);
                     }}
-                    placeholder="Bir renk, bir yer, bir his ara…"
+                    placeholder="Yer veya başlık ara"
                     aria-label="Notlarda ara"
                     onKeyDown={(e) => {
                       if (e.key === "Escape") {
@@ -550,7 +538,7 @@ export default function App() {
               )}
               {onlySaved && (
                 <div className="selection-bar">
-                  <span>Senin küçük seçkin · Bu tarayıcıda saklanır.</span>
+                  <span>Kaydedilenler · Bu tarayıcıda saklanır.</span>
                   <button onClick={() => setOnlySaved(false)}>
                     Bütün notlar <Arrow />
                   </button>
@@ -592,49 +580,14 @@ export default function App() {
                         </button>
                       </div>
                       <div className="story-meta">
-                        <span>{p.category}</span>
+                        <span>{p.place || p.category}</span>
                         <span>№ {p.id}</span>
                       </div>
                       <h3>
                         <button onClick={() => openNote(p)}>{p.title}</button>
                       </h3>
-                      <p>{p.summary}</p>
-                      <button
-                        className="story-read"
-                        onClick={() => openNote(p)}
-                      >
-                        Notu oku <Arrow />
-                      </button>
                     </article>
-                    {i === 4 &&
-                      layout === "journal" &&
-                      filter === "Tümü" &&
-                      !query &&
-                      !onlySaved && (
-                        <aside className="field-note">
-                          <div className="note-head">
-                            <span>CEBİMDEKİ NOTLAR</span>
-                            <span>01</span>
-                          </div>
-                          <span className="note-symbol" aria-hidden="true">
-                            ✳
-                          </span>
-                          <blockquote>
-                            Bazı yerler,
-                            <br />
-                            biraz daha uzun
-                            <br />
-                            <em>bakmanı ister.</em>
-                          </blockquote>
-                          <span className="note-line" />
-                          <p>
-                            Her şeyi anlatmak gerekmiyor.
-                            <br />
-                            Bazen bir kare yeter.
-                          </p>
-                          <span className="note-signature">journey notes.</span>
-                        </aside>
-                      )}
+
                   </Fragment>
                 ))}
               </div>
@@ -672,11 +625,11 @@ export default function App() {
                     className="more-button"
                     onClick={() => setLimit(limit + 9)}
                   >
-                    Defteri biraz daha aç <span>+</span>
+                    Daha fazla <span>+</span>
                   </button>
                 ) : (
                   <span className="end-message">
-                    Şimdilik bu kadar. Yol devam ediyor.
+                    Arşivin sonu.
                   </span>
                 )}
                 <span className="tiny-flower" aria-hidden="true">
@@ -689,31 +642,27 @@ export default function App() {
                 <div>
                   <span className="eyebrow">02 / KOLEKSİYONLAR</span>
                   <h2>
-                    Aynı hissin <em>peşinde.</em>
+                    Üç <em>seçki.</em>
                   </h2>
                 </div>
-                <p>
-                  Yerler değişir.
-                  <br />
-                  Bazı hisler birbirini bulur.
-                </p>
+                <p>Doğa · Sokak · Mimari</p>
               </div>
               <div className="collection-grid">
                 {[
                   {
-                    name: "Yeşile, suya, uzağa.",
+                    name: "Doğa",
                     category: "Doğa",
                     ids: ["020", "012", "050"],
                     no: "I",
                   },
                   {
-                    name: "Şehrin küçük sırları.",
+                    name: "Sokak",
                     category: "Sokak",
                     ids: ["022", "073", "009"],
                     no: "II",
                   },
                   {
-                    name: "Taş, ışık ve zaman.",
+                    name: "Mimari",
                     category: "Mimari",
                     ids: ["010", "103", "032"],
                     no: "III",
@@ -754,19 +703,16 @@ export default function App() {
                   alt="Ağaçların arasından geçen bir yol"
                   loading="lazy"
                 />
-                <span>YOL DEVAM EDİYOR ↗</span>
+                <span>ARŞİVDEN · 107</span>
               </div>
               <div className="about-copy">
-                <span className="eyebrow">03 / BU DEFTER HAKKINDA</span>
+                <span className="eyebrow">03 / HAKKINDA</span>
                 <h2>
-                  Biraz merak.
-                  <br />
-                  <em>Biraz yol.</em>
+                  Merhaba, ben <em>Berra.</em>
                 </h2>
                 <p>
-                  Journey Notes; manzaralara, şehirlere ve küçük ayrıntılara
-                  dönüp bakmak için bir yer. Instagram’da biriken karelerin,
-                  kendi ritminde okunabilen bir defteri.
+                  Journey Notes, gezdiğim yerlerden saklamak istediğim
+                  fotoğrafları ve kısa notları bir araya getirdiğim kişisel arşivim.
                 </p>
                 <a
                   href={instagram}
@@ -788,11 +734,7 @@ export default function App() {
             <a href={location.pathname} className="footer-logo">
               journey <em>notes.</em>
             </a>
-            <p>
-              Bazen bir manzara.
-              <br />
-              Bazen sadece bir his.
-            </p>
+            <p>FOTOĞRAF · SEYAHAT · KİŞİSEL ARŞİV</p>
             <a href="#" aria-label="Sayfanın başına dön" className="back-top">
               ↑
             </a>
