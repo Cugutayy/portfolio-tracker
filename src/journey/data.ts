@@ -1,8 +1,23 @@
-import catalog from './catalog.json';
+import catalog from "./catalog.json";
 export type Photo = {
-  id: string; src: string; thumbnail: string; title: string; summary: string;
-  body: string[]; place: string; category: string; width: number; height: number; smallWidth?: number; largeWidth?: number;
+  id: string;
+  src: string;
+  thumbnail: string;
+  title: string;
+  summary: string;
+  body: string[];
+  place: string;
+  category: string;
+  width: number;
+  height: number;
+  smallWidth?: number;
+  largeWidth?: number;
 };
 export const photos: Photo[] = catalog;
-export const categories = ['Tümü', 'Doğa', 'Mimari', 'Sokak', 'Ayrıntı'];
-export const normalize = (value: string) => value.toLocaleLowerCase('tr').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i');
+export const categories = ["Tümü", "Doğa", "Mimari", "Sokak", "Ayrıntı"];
+export const normalize = (value: string) =>
+  value
+    .toLocaleLowerCase("tr")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ı/g, "i");
