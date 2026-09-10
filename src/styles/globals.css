@@ -81,6 +81,47 @@ a { color: inherit; text-decoration: none; }
   .nav-hide-sm { display: none; }
 }
 
+/* Hub hero navigation: no glass panel or boxed controls, only high-contrast type. */
+.hub-nav {
+  color: #fffaf2;
+  text-shadow: 0 1px 2px rgba(0,0,0,.88), 0 3px 16px rgba(0,0,0,.58);
+}
+.hub-nav .hub-nav-brand,
+.hub-nav .hub-nav-link {
+  color: rgba(255,250,242,.94);
+  opacity: 1;
+}
+.hub-nav .hub-nav-link:hover,
+.hub-nav .hub-nav-brand:hover {
+  color: #fffdf8;
+}
+.hub-lang {
+  text-shadow: 0 1px 2px rgba(0,0,0,.9), 0 3px 14px rgba(0,0,0,.56);
+  transition: opacity .2s ease, color .2s ease, transform .2s ease;
+}
+.hub-lang:hover { opacity: 1 !important; transform: translateY(-1px); }
+.hub-theme-button {
+  width: 30px;
+  height: 30px;
+  margin-left: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #fffaf2;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.88)) drop-shadow(0 3px 10px rgba(0,0,0,.48));
+  transition: transform .2s ease, opacity .2s ease;
+}
+.hub-theme-button:hover { transform: rotate(8deg) scale(1.06); }
+.hub-theme-button:focus-visible,
+.hub-lang:focus-visible {
+  outline: 1px solid rgba(255,250,242,.78);
+  outline-offset: 3px;
+}
+
 /* ── Lead story card responsive ── */
 .lead-left { padding: 28px 30px; border-right: 1px solid var(--rule); }
 .lead-right { padding: 28px 26px; display: flex; flex-direction: column; justify-content: center; gap: 14px; }
