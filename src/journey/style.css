@@ -2668,3 +2668,20 @@ select:focus-visible {
     font-size: clamp(42px, 12vw, 58px);
   }
 }
+
+
+/* V10.4 album nav count */
+.jn-nav-album {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.jn-nav-album small {
+  min-width: 22px;
+  padding: 3px 5px 2px;
+  border: 1px solid rgba(35, 34, 30, .24);
+  border-radius: 999px;
+  font: 500 6px/1 "IBM Plex Mono", monospace;
+  letter-spacing: .04em;
+  text-align: center;
+}
