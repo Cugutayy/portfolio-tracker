@@ -56,7 +56,7 @@ export function ProjectCards({ t }: Props) {
       {/* ── column grid · remaining projects ── */}
       <div className="ed-grid">
         <ScrollReveal delay={90} style={{ height: '100%' }}>
-          <a href="/journey/" className="journey-card" aria-label="Journey Notes">
+          <a href="https://journeynotess.com/" className="journey-card" aria-label="Journey Notes">
             <div className="journey-card-head">
               <span>JOURNEY NOTES</span>
               <span>arifv216</span>
