@@ -41,6 +41,7 @@ type JourneyRow = {
   image_url: string;
   thumbnail_url: string | null;
   original_url?: string | null;
+  original_bucket?: string | null;
   width: number;
   height: number;
   display_width?: number | null;
@@ -323,7 +324,8 @@ function rowToPhoto(row: JourneyRow): Photo {
     id: row.id,
     src: row.image_url,
     thumbnail: row.thumbnail_url || row.image_url,
-    originalSrc: row.original_url || row.image_url,
+    originalSrc: row.original_url || undefined,
+    originalBucket: row.original_bucket || undefined,
     title: row.title || "",
     summary: row.summary || "",
     body: Array.isArray(row.body) ? row.body : [],
@@ -363,7 +365,7 @@ async function rest(path: string, init: RequestInit = {}, accessToken?: string) 
 const journeyPublicSelect =
   "id,title,summary,body,place,category,image_url,thumbnail_url,width,height,display_width,thumbnail_width,position,published,published_at";
 const journeyAdminSelect =
-  `${journeyPublicSelect},original_url,file_hash,storage_path,display_path,thumbnail_path,original_filename,taken_at,mime_type,byte_size,deleted_at`;
+  `${journeyPublicSelect},original_url,original_bucket,file_hash,storage_path,display_path,thumbnail_path,original_filename,taken_at,mime_type,byte_size,deleted_at`;
 
 export async function isJourneyAdmin() {
   const session = await getJourneySession();
