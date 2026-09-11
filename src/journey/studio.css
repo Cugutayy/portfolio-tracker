@@ -287,3 +287,70 @@
     padding: 7px;
   }
 }
+
+
+/* Studio v2 — simple authenticated upload flow */
+.studio-shell { max-width: 920px; padding: 32px 28px 40px; }
+.studio-header h2 {
+  font-family: "Gloock", "Iowan Old Style", serif;
+  font-size: clamp(36px, 4vw, 52px);
+  font-weight: 400;
+}
+.studio-notice {
+  max-width: 560px;
+  padding: 18px 0 22px;
+  font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif);
+  font-size: 12px;
+}
+.studio-actions {
+  margin-bottom: 28px;
+  gap: 8px;
+}
+.studio-actions button {
+  min-height: 40px;
+  border-radius: 10px;
+  padding: 0 16px;
+  font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+}
+.studio-actions .studio-primary {
+  border-radius: 10px;
+}
+.studio-workspace {
+  grid-template-columns: minmax(280px,.8fr) minmax(360px,1.2fr);
+  gap: 26px;
+  padding-top: 24px;
+}
+.studio-drop {
+  min-height: 300px;
+  border-radius: 14px;
+  border-style: solid;
+  background: color-mix(in srgb, var(--sage) 58%, var(--paper) 42%);
+}
+.studio-drop strong {
+  font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif);
+  font-size: 16px;
+  font-weight: 600;
+}
+.studio-thumbs { gap: 10px; }
+.studio-thumbs button { height: 116px; border-radius: 10px; overflow: hidden; }
+.studio-thumbs .add-thumb {
+  font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif);
+  font-size: 10px;
+  font-weight: 600;
+}
+.studio-editor { padding-left: 26px; }
+.studio-editor input,
+.studio-editor textarea,
+.studio-editor select {
+  border-radius: 10px;
+  font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif);
+}
+.editor-empty h3 {
+  font-family: "Gloock", "Iowan Old Style", serif;
+  font-size: 30px;
+}
+@media (max-width:700px) {
+  .studio-workspace { grid-template-columns:1fr; }
+}
