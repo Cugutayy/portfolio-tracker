@@ -594,8 +594,14 @@ export default function App() {
                       dönüp tekrar bakmak istediğim anlardan oluşan kişisel bir
                       görsel arşiv.
                     </p>
-                    <button onClick={openAlbum}>
-                      Albümü aç <Arrow />
+                    <button className="jn-cover-album-cta" onClick={openAlbum}>
+                      <span>
+                        <small>TÜM FOTOĞRAFLAR</small>
+                        <strong>Albümü görüntüle</strong>
+                      </span>
+                      <span className="jn-cover-album-count">
+                        {all.length} kare <Arrow />
+                      </span>
                     </button>
                   </div>
                 </div>
@@ -610,15 +616,55 @@ export default function App() {
               </p>
             </section>
 
+            <section className="jn-album-index" id="album-preview">
+              <div className="jn-album-index-head">
+                <div>
+                  <span className="jn-kicker">ALBÜM · {all.length} KARE</span>
+                  <h2>Tüm fotoğraflar.</h2>
+                </div>
+                <div>
+                  <p>
+                    Bütün arşive tek yerden ulaş. Kategori seçebilir ya da
+                    doğrudan tüm kareleri aynı düzende görebilirsin.
+                  </p>
+                  <button className="jn-album-primary" onClick={openAlbum}>
+                    <span>Albümün tamamını gör</span>
+                    <span>{all.length} <Arrow /></span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="jn-category-strip">
+                {categoryPreviews.map(({ category, photo }) => (
+                  <button
+                    key={category}
+                    onClick={() => chooseCategory(category)}
+                    aria-label={`${category} kategorisini aç`}
+                  >
+                    <div className="jn-category-image">
+                      <Picture
+                        photo={photo}
+                        sizes="(max-width: 760px) 46vw, 24vw"
+                      />
+                    </div>
+                    <span>{category}</span>
+                    <small>
+                      {all.filter((item) => item.category === category).length} kare
+                    </small>
+                  </button>
+                ))}
+              </div>
+            </section>
+
             <section className="jn-exhibition" id="edit">
               <div className="jn-section-head">
                 <div>
-                  <span className="jn-kicker">THE EDIT · 01</span>
+                  <span className="jn-kicker">SERGİ · 02</span>
                   <h2>Seçki.</h2>
                 </div>
                 <p>
-                  Yüksek çözünürlüklü karelerden oluşturduğum, sürekli değişen
-                  bir görsel akış.
+                  Seçtiğim birkaç kare; bazen tek başına, bazen kısa bir notla
+                  birlikte.
                 </p>
               </div>
 
@@ -736,49 +782,11 @@ export default function App() {
               </div>
             </section>
 
-            <section className="jn-album-teaser" id="album-preview">
-              <div className="jn-album-teaser-head">
-                <div>
-                  <span className="jn-kicker">ALBUM · 02</span>
-                  <h2>Bütün kareler.</h2>
-                </div>
-                <div>
-                  <p>
-                    Serginin dışında kalanlar dahil tüm arşiv; aynı ölçüde,
-                    kategorili ve hızlı taranabilir.
-                  </p>
-                  <button onClick={openAlbum}>
-                    Albümü aç <Arrow />
-                  </button>
-                </div>
-              </div>
-
-              <div className="jn-category-strip">
-                {categoryPreviews.map(({ category, photo }) => (
-                  <button
-                    key={category}
-                    onClick={() => chooseCategory(category)}
-                  >
-                    <div className="jn-category-image">
-                      <Picture
-                        photo={photo}
-                        sizes="(max-width: 760px) 46vw, 24vw"
-                      />
-                    </div>
-                    <span>{category}</span>
-                    <small>
-                      {all.filter((item) => item.category === category).length} kare
-                    </small>
-                  </button>
-                ))}
-              </div>
-            </section>
-
             <section className="jn-places" id="places">
               <div className="jn-places-inner">
                 <div className="jn-section-head is-dark">
                   <div>
-                    <span className="jn-kicker">PLACES · 03</span>
+                    <span className="jn-kicker">YERLER · 03</span>
                     <h2>Yerler.</h2>
                   </div>
                   <p>Yalnızca konumundan emin olduğum kareler.</p>
@@ -824,7 +832,7 @@ export default function App() {
                 </figure>
               )}
               <div className="jn-about-copy">
-                <span className="jn-kicker">ABOUT · 04</span>
+                <span className="jn-kicker">HAKKINDA · 04</span>
                 <h2>Biriktirmek için çekiyorum.</h2>
                 <p>
                   Journey Notes, gezdiğim yerlerden saklamak istediğim
