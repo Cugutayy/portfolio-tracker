@@ -855,7 +855,7 @@ export default function App() {
                 <Arrow back /> Geri dön
               </button>
               <div>
-                <span className="jn-kicker">ALBÜM · {all.length} KARE</span>
+                <span className="jn-kicker">ALBÜM · {all.length}</span>
                 <h1>Albüm</h1>
                 <p>
                   Bütün fotoğraflar tek yerde. Kategoriye göre filtrele;
@@ -928,7 +928,7 @@ export default function App() {
             )}
 
             <div className="jn-album-count">
-              <span>{filtered.length} kare</span>
+              <span>{filtered.length} fotoğraf</span>
               {query && <span>“{query}”</span>}
             </div>
 
@@ -958,7 +958,7 @@ export default function App() {
 
             {filtered.length === 0 && (
               <div className="jn-empty">
-                <h3>Bu filtrede bir kare bulamadım.</h3>
+                <h3>Bu filtrede fotoğraf bulamadım.</h3>
                 <button
                   onClick={() => {
                     setFilter("Tümü");
@@ -1069,7 +1069,6 @@ export default function App() {
                       {hasHumanCopy && (
                         <div className="jn-story-copy">
                           <h3>{photo.title || photo.place}</h3>
-                          {photo.summary && <p>{photo.summary}</p>}
                         </div>
                       )}
                     </article>
@@ -1087,7 +1086,6 @@ export default function App() {
                     {(exhibition[4].title || exhibition[4].place) && (
                       <div className="jn-panorama-caption">
                         <strong>{exhibition[4].title || exhibition[4].place}</strong>
-                        {exhibition[4].summary && <p>{exhibition[4].summary}</p>}
                       </div>
                     )}
                   </article>
@@ -1106,8 +1104,7 @@ export default function App() {
                         {(photo.title || photo.place) && (
                           <div className="jn-diptych-copy">
                             <h3>{photo.title || photo.place}</h3>
-                            {photo.summary && <p>{photo.summary}</p>}
-                          </div>
+                            </div>
                         )}
                       </button>
                     </article>
@@ -1140,7 +1137,6 @@ export default function App() {
                     {(exhibition[7].title || exhibition[7].place) && (
                       <div className="jn-story-copy">
                         <h3>{exhibition[7].title || exhibition[7].place}</h3>
-                        {exhibition[7].summary && <p>{exhibition[7].summary}</p>}
                       </div>
                     )}
                   </article>
@@ -1177,7 +1173,7 @@ export default function App() {
                     </div>
                     <span>{category}</span>
                     <small>
-                      {all.filter((item) => item.category === category).length} kare
+                      {all.filter((item) => item.category === category).length} fotoğraf
                     </small>
                   </button>
                 ))}
