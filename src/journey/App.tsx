@@ -39,7 +39,7 @@ function Picture({
       className={className}
       src={photo.src}
       srcSet={
-        photo.thumbnail === photo.src
+        priority || photo.thumbnail === photo.src
           ? undefined
           : `${photo.thumbnail} ${photo.smallWidth || 640}w, ${photo.src} ${photo.largeWidth || Math.min(photo.width, 1440)}w`
       }
@@ -206,7 +206,12 @@ export default function App() {
   );
 
   const hero = all.find((photo) => photo.id === "108") || all[0];
-  const heroPlace = "Frig Vadisi";
+  const heroCity = hero?.place?.split(",")[0]?.trim() || "Varanasi";
+  const heroCountry =
+    hero?.place?.split(",").slice(1).join(",").trim() || "Hindistan";
+  const knownPlaces = Array.from(
+    new Set(all.map((photo) => photo.place.trim()).filter(Boolean)),
+  );
   const editorialIds = ["010", "012", "055"];
   const editorial = editorialIds
     .map((id) => all.find((photo) => photo.id === id))
@@ -251,7 +256,7 @@ export default function App() {
 
   useEffect(() => {
     document.title = selected
-      ? `${selected.title} · Journey Notes`
+      ? `${selected.title || selected.place || "Fotoğraf"} · Journey Notes`
       : "Journey Notes · stalklıyorum";
 
     if (selected) {
@@ -288,6 +293,13 @@ export default function App() {
   const chooseCategory = (category: string) => {
     setFilter(category);
     setQuery("");
+    if (selected) goHome();
+    requestAnimationFrame(scrollToArchive);
+  };
+
+  const choosePlace = (place: string) => {
+    setFilter("Tümü");
+    setQuery(place);
     if (selected) goHome();
     requestAnimationFrame(scrollToArchive);
   };
@@ -342,7 +354,7 @@ export default function App() {
 
         <nav className="jn-nav" aria-label="Journey Notes">
           <a href="#edit">Seçki</a>
-          <a href="#places">Kategoriler</a>
+          <a href="#places">Yerler</a>
           <a href="#archive">Arşiv</a>
           <a href="#about">Hakkında</a>
         </nav>
@@ -402,7 +414,9 @@ export default function App() {
                   .map((photo) => (
                     <button key={photo.id} onClick={() => openNote(photo)}>
                       <Picture photo={photo} />
-                      <span>{photo.title || photo.place || photo.category}</span>
+                      {(photo.title || photo.place) && (
+                        <span>{photo.title || photo.place}</span>
+                      )}
                       <Arrow />
                     </button>
                   ))}
@@ -412,34 +426,36 @@ export default function App() {
         ) : (
           <main>
             {hero && (
-              <section className="jn-hero" aria-labelledby="journey-hero-title">
-                <div className="jn-hero-media">
-                  <img
-                    src="/journey/hero-frig-vadisi.avif"
-                    alt={heroPlace}
-                    width="1600"
-                    height="900"
-                    loading="eager"
-                    fetchPriority="high"
-                    onError={(event) => {
-                      event.currentTarget.onerror = null;
-                      event.currentTarget.src = hero.src;
-                    }}
+              <section className="jn-cover" aria-labelledby="journey-hero-title">
+                <div className="jn-cover-rail" aria-hidden="true">
+                  <span>01</span>
+                  <span>JOURNEY NOTES</span>
+                  <span>FRAME {hero.id}</span>
+                </div>
+
+                <button
+                  className="jn-cover-media"
+                  onClick={() => openNote(hero)}
+                  aria-label={`${heroCity} fotoğrafını aç`}
+                >
+                  <Picture
+                    photo={hero}
+                    priority
+                    sizes="(max-width: 760px) 100vw, 1320px"
                   />
-                </div>
-                <div className="jn-hero-overlay" />
-                <div className="jn-hero-copy">
-                  <span className="jn-kicker">JOURNEY NOTES · 2026</span>
-                  <h1 id="journey-hero-title">{heroPlace}</h1>
-                  <p>
-                    Gezdiğim yerlerden fotoğraflar ve kısa notlar.
-                  </p>
-                  <button onClick={scrollToArchive}>
-                    Arşivi keşfet <Arrow />
-                  </button>
-                </div>
-                <div className="jn-hero-caption">
-                  <span>{heroPlace}</span>
+                </button>
+
+                <div className="jn-cover-caption">
+                  <div>
+                    <span className="jn-kicker">{heroCountry || "JOURNEY NOTES"}</span>
+                    <h1 id="journey-hero-title">{heroCity}</h1>
+                  </div>
+                  <div className="jn-cover-note">
+                    <p>{hero.summary}</p>
+                    <button onClick={() => openNote(hero)}>
+                      Fotoğrafı aç <Arrow />
+                    </button>
+                  </div>
                 </div>
               </section>
             )}
@@ -447,8 +463,8 @@ export default function App() {
             <section className="jn-intro">
               <span className="jn-kicker">JOURNEY NOTES</span>
               <p>
-                Gezdiğim yerlerden seçtiğim kareler. Yerini kesin bildiğim
-                fotoğraflarda yalnızca lokasyon adını kullanıyorum.
+                Şehirler, yollar ve arada kalan sessiz anlar. Fotoğraflar
+                önde; yerini bildiğim karelerde başlık yalnızca o yerin adı.
               </p>
             </section>
 
@@ -481,7 +497,7 @@ export default function App() {
                       <span className="jn-kicker">
                         {photo.place || photo.category}
                       </span>
-                      <h3>{photo.title}</h3>
+                      {photo.title && <h3>{photo.title}</h3>}
                       <p>{photo.summary}</p>
                       <span className="jn-read-more">
                         Notu aç <Arrow />
@@ -496,30 +512,26 @@ export default function App() {
               <div className="jn-places-inner">
                 <div className="jn-section-head is-dark">
                   <div>
-                    <span className="jn-kicker">CATEGORIES · 02</span>
-                    <h2>Kategoriler.</h2>
+                    <span className="jn-kicker">PLACES · 02</span>
+                    <h2>Yerler.</h2>
                   </div>
-                  <p>Arşivi görsel türüne göre daralt.</p>
+                  <p>Yalnızca konumundan emin olduğum kareler.</p>
                 </div>
 
                 <div className="jn-place-list">
-                  {categories.slice(1).map((category, index) => {
-                    const matches = all.filter(
-                      (photo) => photo.category === category,
-                    );
-                    const preview = matches.find(
-                      (photo) => Math.max(photo.width, photo.height) >= 1080,
-                    ) || matches[0];
+                  {knownPlaces.map((place, index) => {
+                    const matches = all.filter((photo) => photo.place === place);
+                    const preview =
+                      matches.find(
+                        (photo) => Math.max(photo.width, photo.height) >= 1080,
+                      ) || matches[0];
 
                     return (
-                      <button
-                        key={category}
-                        onClick={() => chooseCategory(category)}
-                      >
+                      <button key={place} onClick={() => choosePlace(place)}>
                         <span className="jn-place-no">
                           {String(index + 1).padStart(2, "0")}
                         </span>
-                        <span className="jn-place-name">{category}</span>
+                        <span className="jn-place-name">{place}</span>
                         <span className="jn-place-count">
                           {matches.length} kare
                         </span>

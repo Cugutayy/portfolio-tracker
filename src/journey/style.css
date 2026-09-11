@@ -1592,3 +1592,290 @@ select:focus-visible {
     padding: 34px;
   }
 }
+
+
+/* JOURNEY V8 — photobook cover */
+.jn-site {
+  width: min(100%, 1500px);
+  padding-inline: clamp(20px, 2.7vw, 40px);
+}
+
+.jn-header {
+  min-height: 64px;
+}
+
+.jn-nav {
+  min-height: 42px;
+  border-top-color: rgba(35, 34, 30, .18);
+  border-bottom-color: rgba(35, 34, 30, .18);
+}
+
+.jn-cover {
+  position: relative;
+  margin-top: clamp(20px, 2.2vw, 34px);
+  padding-left: clamp(0px, 3.2vw, 46px);
+}
+
+.jn-cover-rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 132px;
+  width: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--muted);
+  font: 500 7px/1 "IBM Plex Mono", monospace;
+  letter-spacing: .13em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.jn-cover-media {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  background: #ddd8ce;
+  aspect-ratio: 3 / 2;
+  max-height: min(78vh, 850px);
+}
+
+.jn-cover-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  transform: translateZ(0);
+}
+
+.jn-cover-caption {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(280px, .45fr);
+  gap: clamp(28px, 5vw, 78px);
+  align-items: end;
+  padding: clamp(22px, 2.4vw, 34px) 0 0;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: clamp(34px, 4vw, 56px);
+}
+
+.jn-cover-caption h1 {
+  margin-top: 8px;
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: clamp(46px, 5.5vw, 84px);
+  font-weight: 400;
+  line-height: .93;
+  letter-spacing: -.045em;
+}
+
+.jn-cover-note {
+  max-width: 34ch;
+  justify-self: end;
+}
+
+.jn-cover-note p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.jn-cover-note button {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid currentColor;
+  font: 500 8px/1 "IBM Plex Mono", monospace;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.jn-intro {
+  max-width: 900px;
+  margin-inline: auto;
+  padding: clamp(72px, 8vw, 118px) 24px;
+  text-align: center;
+}
+
+.jn-intro p {
+  margin-top: 18px;
+  font-size: clamp(27px, 2.8vw, 41px);
+  line-height: 1.12;
+}
+
+.jn-edit-grid {
+  grid-template-columns: minmax(0, 1.42fr) minmax(260px, .58fr);
+  gap: clamp(24px, 3.5vw, 48px);
+}
+
+.jn-feature-image {
+  background: #e1ddd4;
+}
+
+.jn-feature.is-lead .jn-feature-image {
+  aspect-ratio: 4 / 5;
+}
+
+.jn-feature:not(.is-lead) .jn-feature-image {
+  aspect-ratio: 3 / 4;
+}
+
+.jn-feature-image img {
+  object-fit: cover;
+}
+
+.jn-feature .jn-kicker {
+  margin-top: 11px;
+}
+
+.jn-feature h3 {
+  font-size: clamp(19px, 1.55vw, 25px);
+}
+
+.jn-feature p {
+  max-width: 40ch;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.jn-places {
+  margin-inline: calc(50% - 50vw);
+}
+
+.jn-places-inner {
+  width: min(1280px, calc(100% - 80px));
+}
+
+.jn-place-list > button {
+  min-height: 94px;
+}
+
+.jn-place-name {
+  font-size: clamp(25px, 2.6vw, 38px);
+}
+
+.jn-archive-grid {
+  grid-auto-flow: dense;
+  gap: clamp(42px, 4vw, 64px) clamp(18px, 2vw, 28px);
+}
+
+.jn-entry {
+  grid-column: span 4;
+}
+
+.jn-entry:nth-child(7n + 1),
+.jn-entry:nth-child(7n + 5) {
+  grid-column: span 5;
+}
+
+.jn-entry:nth-child(7n + 2),
+.jn-entry:nth-child(7n + 6) {
+  grid-column: span 3;
+  padding-top: clamp(30px, 5vw, 80px);
+}
+
+.jn-entry:nth-child(7n + 3),
+.jn-entry:nth-child(7n + 4),
+.jn-entry:nth-child(7n + 7) {
+  grid-column: span 4;
+}
+
+.jn-entry.is-wide {
+  grid-column: span 7;
+  padding-top: 0;
+}
+
+.jn-entry-image {
+  aspect-ratio: 4 / 5;
+  background: #e2ded5;
+}
+
+.jn-entry.is-wide .jn-entry-image {
+  aspect-ratio: 3 / 2;
+}
+
+.jn-entry h3 {
+  font-size: clamp(17px, 1.2vw, 21px);
+}
+
+.jn-entry.is-lowres {
+  grid-column: span 3 !important;
+  padding-top: clamp(28px, 4vw, 62px);
+}
+
+.jn-entry.is-lowres .jn-entry-image {
+  min-height: 0;
+  aspect-ratio: auto;
+  padding: clamp(30px, 4vw, 58px);
+}
+
+.jn-entry.is-lowres .jn-entry-image img {
+  height: auto;
+  max-height: 380px;
+}
+
+.jn-reader-heading {
+  max-width: 720px;
+}
+
+.jn-reader-heading h1 {
+  font-size: clamp(40px, 4.8vw, 68px);
+}
+
+@media (max-width: 760px) {
+  .jn-cover {
+    padding-left: 0;
+    margin-top: 14px;
+  }
+
+  .jn-cover-rail {
+    display: none;
+  }
+
+  .jn-cover-media {
+    aspect-ratio: 4 / 5;
+    max-height: none;
+  }
+
+  .jn-cover-caption {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding-top: 20px;
+  }
+
+  .jn-cover-caption h1 {
+    font-size: clamp(42px, 13vw, 62px);
+  }
+
+  .jn-cover-note {
+    justify-self: start;
+    max-width: 36ch;
+  }
+
+  .jn-intro {
+    padding: 68px 0 82px;
+  }
+
+  .jn-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .jn-feature.is-lead .jn-feature-image,
+  .jn-feature:not(.is-lead) .jn-feature-image {
+    aspect-ratio: 4 / 5;
+  }
+
+  .jn-places-inner {
+    width: calc(100% - 36px);
+  }
+
+  .jn-entry,
+  .jn-entry.is-wide,
+  .jn-entry:nth-child(n),
+  .jn-entry.is-lowres {
+    grid-column: 1 !important;
+    padding-top: 0;
+  }
+}
