@@ -1184,10 +1184,9 @@ export default function App() {
               <div className="jn-places-inner">
                 <div className="jn-section-head is-dark">
                   <div>
-                    <span className="jn-kicker">YERLER</span>
                     <h2>Yerler.</h2>
                   </div>
-                  <p>Yalnızca konumundan emin olduğum kareler.</p>
+                  <p>Konumunu bildiğim fotoğraflar.</p>
                 </div>
 
                 <div className="jn-place-list">
@@ -1205,7 +1204,7 @@ export default function App() {
                         </span>
                         <span className="jn-place-name">{place}</span>
                         <span className="jn-place-count">
-                          {matches.length} kare
+                          {matches.length} fotoğraf
                         </span>
                         {preview && (
                           <span className="jn-place-preview" aria-hidden="true">
@@ -1230,7 +1229,6 @@ export default function App() {
                 </figure>
               )}
               <div className="jn-about-copy">
-                <span className="jn-kicker">HAKKINDA</span>
                 <h2>Biriktirmek için çekiyorum.</h2>
                 <p>
                   Gezdiğim yerlerden kalan görüntüler. Bir kısmı bir yere,
@@ -1249,7 +1247,6 @@ export default function App() {
             <a className="jn-footer-brand" href={location.pathname}>
               journey <em>notes</em>
             </a>
-            <p>Fotoğraf · seyahat · kişisel arşiv</p>
           </div>
           <div className="jn-footer-links">
             <a href={instagram} target="_blank" rel="noreferrer">
