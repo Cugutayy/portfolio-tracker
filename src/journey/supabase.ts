@@ -360,8 +360,10 @@ async function rest(path: string, init: RequestInit = {}, accessToken?: string) 
   });
 }
 
-const journeySelect =
-  "id,title,summary,body,place,category,image_url,thumbnail_url,original_url,width,height,display_width,thumbnail_width,position,published,file_hash,storage_path,display_path,thumbnail_path,original_filename,taken_at,mime_type,byte_size,published_at,deleted_at";
+const journeyPublicSelect =
+  "id,title,summary,body,place,category,image_url,thumbnail_url,width,height,display_width,thumbnail_width,position,published,published_at";
+const journeyAdminSelect =
+  `${journeyPublicSelect},original_url,file_hash,storage_path,display_path,thumbnail_path,original_filename,taken_at,mime_type,byte_size,deleted_at`;
 
 export async function isJourneyAdmin() {
   const session = await getJourneySession();
@@ -380,7 +382,7 @@ export async function isJourneyAdmin() {
 export async function loadPublishedJourneyPhotos(): Promise<Photo[]> {
   if (!supabaseConfigured) return [];
   const response = await rest(
-    `journey_photos?select=${journeySelect}&published=eq.true&deleted_at=is.null&order=position.asc,created_at.asc`,
+    `journey_photos?select=${journeyPublicSelect}&published=eq.true&deleted_at=is.null&order=position.asc,created_at.asc`,
   );
   if (!response.ok) return [];
   return (await response.json()).map(rowToPhoto);
@@ -390,7 +392,7 @@ export async function loadStudioJourneyPhotos(): Promise<Photo[]> {
   const session = await getJourneySession();
   if (!session) throw new Error("Oturum bulunamadı.");
   const response = await rest(
-    `journey_photos?select=${journeySelect}&deleted_at=is.null&order=position.asc,created_at.asc`,
+    `journey_photos?select=${journeyAdminSelect}&deleted_at=is.null&order=position.asc,created_at.asc`,
     {},
     session.access_token,
   );
