@@ -23,6 +23,7 @@ import {
 } from "./supabase";
 import "./style.css";
 import "./style-v13.css";
+import "./style-v14.css";
 
 const Studio = lazy(() => import("./studio"));
 const instagram = "https://www.instagram.com/journey_notess/";
@@ -526,6 +527,8 @@ export default function App() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    document.documentElement.classList.add("jn-motion-ready");
 
     const elements = Array.from(
       document.querySelectorAll<HTMLElement>("[data-jn-reveal]"),
