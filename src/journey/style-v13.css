@@ -1,0 +1,250 @@
+/* JOURNEY V13 — compact editorial scale + softer album invitation */
+
+@media (min-width: 980px) {
+  .jn-site {
+    width: min(100%, 1820px);
+    padding-inline: clamp(18px, 1.8vw, 30px);
+  }
+
+  .jn-header { min-height: 58px; }
+
+  .jn-wordmark {
+    font-size: clamp(26px, 1.85vw, 32px);
+  }
+
+  .jn-header-actions { font-size: 10.5px; }
+
+  .jn-nav {
+    min-height: 38px;
+    gap: clamp(28px, 3.5vw, 52px);
+    font-size: 9.5px;
+  }
+
+  .jn-nav a,
+  .jn-nav button {
+    padding-block: 12px 11px;
+  }
+
+  .jn-cover { margin-top: 12px !important; }
+
+  .jn-cover-media {
+    aspect-ratio: 2.18 / 1 !important;
+    max-height: 62vh !important;
+  }
+
+  .jn-cover-caption {
+    grid-template-columns: minmax(0, 1.52fr) minmax(250px, .48fr) !important;
+    gap: clamp(28px, 3.4vw, 58px) !important;
+    padding-top: clamp(16px, 1.55vw, 22px) !important;
+    padding-bottom: clamp(28px, 3vw, 44px) !important;
+  }
+
+  .jn-cover-caption h1 {
+    font-size: clamp(34px, 2.9vw, 46px) !important;
+  }
+
+  .jn-cover-note p {
+    font-size: 12px !important;
+    line-height: 1.55 !important;
+  }
+
+  .jn-intro {
+    width: min(620px, 100%);
+    padding: clamp(30px, 3.4vw, 46px) 0 clamp(42px, 4.2vw, 62px);
+  }
+
+  .jn-intro p {
+    font-size: clamp(22px, 1.85vw, 29px);
+    line-height: 1.13;
+  }
+
+  .jn-album-index {
+    padding-top: clamp(44px, 4.3vw, 64px);
+    padding-bottom: clamp(46px, 4.5vw, 68px);
+  }
+
+  .jn-album-index-head {
+    grid-template-columns: minmax(0, 1.24fr) minmax(270px, .46fr);
+    gap: clamp(26px, 3.4vw, 52px);
+    padding-bottom: 18px;
+  }
+
+  .jn-album-index-head h2 {
+    font-size: clamp(34px, 3.2vw, 50px);
+  }
+
+  .jn-album-index-head p {
+    font-size: 11.5px;
+    line-height: 1.55;
+  }
+
+  .jn-category-strip {
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  .jn-category-strip > button > span {
+    margin-top: 7px;
+    font-size: 8.5px;
+  }
+
+  .jn-category-strip small {
+    margin-top: 3px;
+    font-size: 9.5px;
+  }
+
+  .jn-exhibition {
+    padding-top: clamp(56px, 5.4vw, 82px);
+    padding-bottom: clamp(68px, 6vw, 96px);
+  }
+
+  .jn-exhibition-flow {
+    gap: clamp(62px, 6.3vw, 98px);
+  }
+
+  .jn-story {
+    grid-template-columns: minmax(0, 1.72fr) minmax(225px, .4fr);
+    gap: clamp(30px, 4vw, 62px);
+  }
+
+  .jn-story.is-reverse {
+    grid-template-columns: minmax(225px, .4fr) minmax(0, 1.72fr);
+  }
+
+  .jn-story-copy { max-width: 335px; }
+
+  .jn-story-copy h3 {
+    margin-bottom: 10px;
+    font-size: clamp(24px, 2vw, 34px);
+  }
+
+  .jn-story-copy p {
+    font-size: 12px;
+    line-height: 1.58;
+  }
+
+  .jn-story.is-image-only {
+    width: min(100%, 1360px);
+  }
+
+  .jn-story.is-image-only:not(.is-landscape) {
+    width: min(68%, 750px);
+  }
+
+  .jn-diptych {
+    gap: clamp(16px, 2vw, 30px);
+  }
+
+  .jn-diptych article:nth-child(2) {
+    padding-top: clamp(40px, 4vw, 66px);
+  }
+
+  .jn-places-inner {
+    width: min(100%, 1540px);
+    padding: clamp(48px, 5vw, 72px) 0;
+  }
+
+  .jn-about {
+    gap: clamp(38px, 5vw, 76px);
+    padding-top: clamp(58px, 5.5vw, 86px);
+    padding-bottom: clamp(58px, 5.5vw, 86px);
+  }
+
+  .jn-about-copy h2 {
+    font-size: clamp(33px, 3vw, 46px);
+  }
+
+  .jn-about-copy p {
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+
+  .jn-footer {
+    padding-top: 30px;
+    padding-bottom: 30px;
+  }
+}
+
+/* A small editorial invitation instead of the old divider-bar CTA. */
+.jn-cover-album-cta {
+  width: max-content !important;
+  max-width: 100%;
+  margin-top: 17px !important;
+  padding: 2px 0 !important;
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  border: 0 !important;
+  background: transparent !important;
+  text-align: left;
+  transform: rotate(-0.8deg);
+  transform-origin: left center;
+  transition: transform .26s var(--ease), opacity .18s ease;
+}
+
+.jn-cover-album-cta::before,
+.jn-cover-album-cta::after {
+  content: none !important;
+  display: none !important;
+}
+
+.jn-cover-album-cta:hover {
+  transform: rotate(-0.15deg) translateX(2px);
+}
+
+.jn-cover-album-cta:active {
+  transform: rotate(0deg) translateX(1px);
+}
+
+.jn-cover-album-cta > strong {
+  display: inline !important;
+  font-family: "Newsreader", "Iowan Old Style", Georgia, serif !important;
+  font-size: clamp(16px, 1.18vw, 18.5px) !important;
+  font-style: italic;
+  font-weight: 400 !important;
+  letter-spacing: -.01em;
+  line-height: 1;
+  text-transform: none !important;
+  white-space: nowrap;
+}
+
+.jn-cover-album-count {
+  display: inline-flex !important;
+  align-items: center;
+  min-height: 23px;
+  padding: 4px 8px 4px;
+  border: 0 !important;
+  border-radius: 999px;
+  background: #eef0ec;
+  color: #6a6e67;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: 8.5px !important;
+  font-weight: 500;
+  letter-spacing: .005em !important;
+  line-height: 1;
+  text-transform: none !important;
+  white-space: nowrap;
+  transition: background .2s ease, color .2s ease;
+}
+
+.jn-cover-album-cta:hover .jn-cover-album-count {
+  background: #e7eae5;
+  color: #373b36;
+}
+
+@media (max-width: 760px) {
+  .jn-cover-album-cta {
+    margin-top: 15px !important;
+    gap: 9px !important;
+    transform: rotate(-.45deg);
+  }
+
+  .jn-cover-album-cta > strong {
+    font-size: 17px !important;
+  }
+
+  .jn-cover-album-count {
+    min-height: 22px;
+    padding: 4px 7px;
+    font-size: 8.5px !important;
+  }
+}
