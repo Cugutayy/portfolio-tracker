@@ -17,6 +17,7 @@ export type Photo = {
   originalFilename?: string;
   takenAt?: string;
   originalSrc?: string;
+  originalBucket?: string;
   displayPath?: string;
   thumbnailPath?: string;
   mimeType?: string;
