@@ -248,3 +248,46 @@
     font-size: 8.5px !important;
   }
 }
+
+
+/* V13.1 — never crop the Journey hero.
+   "Zoomed out" is achieved by layout scale, not by forcing a new photo ratio. */
+.jn-cover-media {
+  aspect-ratio: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  background: transparent !important;
+}
+
+.jn-cover-media img {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  transform: none !important;
+}
+
+@media (min-width: 980px) {
+  .jn-site {
+    width: min(calc(100% - 48px), 1340px);
+    padding-inline: 0;
+  }
+
+  .jn-cover {
+    width: 100%;
+  }
+}
+
+@media (max-width: 760px) {
+  .jn-cover-media {
+    aspect-ratio: auto !important;
+  }
+
+  .jn-cover-media img {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+}
