@@ -1,51 +1,38 @@
-import { Fragment, lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
-  Moon,
   Search,
-  Sun,
   X,
 } from "lucide-react";
 import { photos, categories, normalize, type Photo } from "./data";
-import { getJourneySession, loadPublishedJourneyPhotos, signInJourney, supabaseConfigured } from "./supabase";
+import {
+  getJourneySession,
+  loadPublishedJourneyPhotos,
+  signInJourney,
+  supabaseConfigured,
+} from "./supabase";
 import "./style.css";
+
 const Studio = lazy(() => import("./studio"));
 const instagram = "https://www.instagram.com/journey_notess/";
+
 function Arrow({ back = false }: { back?: boolean }) {
   const Icon = back ? ChevronLeft : ChevronRight;
-  return <Icon className="jn-icon" size={16} strokeWidth={1.7} aria-hidden="true" />;
-}
-
-function NorthEastMark({ compact = false }: { compact?: boolean }) {
-  return (
-    <ArrowUpRight
-      className={compact ? "jn-icon is-compact" : "jn-icon"}
-      size={compact ? 15 : 17}
-      strokeWidth={1.7}
-      aria-hidden="true"
-    />
-  );
-}
-
-function ThemeDial({ dark }: { dark: boolean }) {
-  const Icon = dark ? Sun : Moon;
-  return <Icon className="jn-icon" size={17} strokeWidth={1.7} aria-hidden="true" />;
-}
-
-function SearchIcon() {
-  return <Search className="jn-icon" size={16} strokeWidth={1.7} aria-hidden="true" />;
+  return <Icon size={17} strokeWidth={1.55} aria-hidden="true" />;
 }
 
 function Picture({
   photo,
   priority = false,
   className = "",
+  sizes = "(max-width: 760px) 92vw, 44vw",
 }: {
   photo: Photo;
   priority?: boolean;
   className?: string;
+  sizes?: string;
 }) {
   return (
     <img
@@ -56,12 +43,12 @@ function Picture({
           ? undefined
           : `${photo.thumbnail} ${photo.smallWidth || 640}w, ${photo.src} ${photo.largeWidth || Math.min(photo.width, 1440)}w`
       }
-      sizes="(max-width: 700px) 94vw, (max-width: 1200px) 46vw, 720px"
+      sizes={sizes}
       alt={photo.title}
       width={photo.width}
       height={photo.height}
       loading={priority ? "eager" : "lazy"}
-      {...{ fetchpriority: priority ? "high" : "auto" }}
+      fetchPriority={priority ? "high" : "auto"}
     />
   );
 }
@@ -71,20 +58,24 @@ function StudioGate({
   onPreview,
 }: {
   onClose: () => void;
-  onPreview: (photos: Photo[]) => void;
+  onPreview: (items: Photo[]) => void;
 }) {
-  const [state, setState] = useState<"checking" | "locked" | "ready" | "error">("checking");
+  const [state, setState] = useState<"checking" | "locked" | "ready" | "error">(
+    "checking",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     let alive = true;
+
     if (!supabaseConfigured) {
       setState("error");
       setMessage("Supabase bağlantısı henüz yapılandırılmadı.");
       return;
     }
+
     getJourneySession()
       .then((session) => {
         if (!alive) return;
@@ -92,9 +83,9 @@ function StudioGate({
         if (session?.user.email) setEmail(session.user.email);
       })
       .catch(() => {
-        if (!alive) return;
-        setState("locked");
+        if (alive) setState("locked");
       });
+
     return () => {
       alive = false;
     };
@@ -114,29 +105,41 @@ function StudioGate({
   }
 
   return (
-    <div className="studio-login" role="dialog" aria-modal="true" aria-labelledby="studio-login-title">
+    <div
+      className="studio-login"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="studio-login-title"
+    >
       <div className="studio-login-card">
-        <button className="studio-login-close" onClick={onClose} aria-label="Yönetimi kapat">
+        <button
+          className="studio-login-close"
+          onClick={onClose}
+          aria-label="Yönetimi kapat"
+        >
           <X size={17} strokeWidth={1.7} />
         </button>
-        <span className="eyebrow">YÖNETİM</span>
+        <span className="jn-kicker">YÖNETİM</span>
         <h2 id="studio-login-title">Fotoğraf ekle.</h2>
         <p>Bu alan Supabase Auth ile yalnızca site yöneticisine açık.</p>
+
         {state === "checking" ? (
           <p className="studio-login-status">Oturum kontrol ediliyor…</p>
         ) : state === "error" ? (
           <p className="studio-login-status is-error">{message}</p>
         ) : (
           <form
-            onSubmit={async (e) => {
-              e.preventDefault();
+            onSubmit={async (event) => {
+              event.preventDefault();
               setMessage("");
               try {
                 await signInJourney(email.trim(), password);
                 setPassword("");
                 setState("ready");
               } catch (error) {
-                setMessage(error instanceof Error ? error.message : "Giriş başarısız.");
+                setMessage(
+                  error instanceof Error ? error.message : "Giriş başarısız.",
+                );
               }
             }}
           >
@@ -146,7 +149,7 @@ function StudioGate({
                 type="email"
                 autoComplete="username"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(event) => setEmail(event.target.value)}
                 required
                 autoFocus
               />
@@ -157,12 +160,16 @@ function StudioGate({
                 type="password"
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(event) => setPassword(event.target.value)}
                 required
               />
             </label>
-            {message && <p className="studio-login-status is-error">{message}</p>}
-            <button type="submit" className="studio-login-submit">Giriş yap</button>
+            {message && (
+              <p className="studio-login-status is-error">{message}</p>
+            )}
+            <button type="submit" className="studio-login-submit">
+              Giriş yap
+            </button>
           </form>
         )}
       </div>
@@ -173,37 +180,41 @@ function StudioGate({
 export default function App() {
   const [filter, setFilter] = useState("Tümü");
   const [query, setQuery] = useState("");
-  const [search, setSearch] = useState(false);
-  const [layout, setLayout] = useState("journal");
-  const [limit, setLimit] = useState(9999);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [route, setRoute] = useState(location.hash);
   const [drafts, setDrafts] = useState<Photo[]>([]);
   const [remotePhotos, setRemotePhotos] = useState<Photo[]>([]);
-  const [dark, setDark] = useState(() => {
-    try {
-      return localStorage.getItem("jn-theme") === "dark";
-    } catch {
-      return false;
-    }
-  });
   const [status, setStatus] = useState("");
+
   const searchInput = useRef<HTMLInputElement>(null);
-  const archive = useRef<HTMLElement>(null);
-  const reader = useRef<HTMLElement>(null);
+  const archiveRef = useRef<HTMLElement>(null);
+  const readerRef = useRef<HTMLElement>(null);
   const returnScroll = useRef(0);
-  const origin = useRef<HTMLElement | null>(null);
-  const originNote = useRef("");
+
   const all = Array.from(
-    new Map([...photos, ...remotePhotos, ...drafts].map((p) => [p.id, p])).values(),
+    new Map([...photos, ...remotePhotos, ...drafts].map((photo) => [photo.id, photo])).values(),
   );
-  const selected = all.find((p) => route === `#note=${p.id}`);
+
+  const selected = all.find((photo) => route === `#note=${photo.id}`);
   const filtered = all.filter(
-    (p) =>
-      (filter === "Tümü" || p.category === filter) &&
-normalize(`${p.title} ${p.summary} ${p.place} ${p.category}`).includes(
-        normalize(query),
-      ),
+    (photo) =>
+      (filter === "Tümü" || photo.category === filter) &&
+      normalize(
+        `${photo.title} ${photo.summary} ${photo.place} ${photo.category}`,
+      ).includes(normalize(query)),
   );
+
+  const hero = all.find((photo) => photo.id === "108") || all[0];
+  const editorialIds = ["010", "012", "055"];
+  const editorial = editorialIds
+    .map((id) => all.find((photo) => photo.id === id))
+    .filter((photo): photo is Photo => Boolean(photo));
+
+  const aboutPhoto =
+    all.find((photo) => photo.id === "107") ||
+    all.find((photo) => photo.category === "Doğa") ||
+    all[0];
+
   useEffect(() => {
     const sync = () => setRoute(location.hash);
     addEventListener("hashchange", sync);
@@ -213,6 +224,7 @@ normalize(`${p.title} ${p.summary} ${p.place} ${p.category}`).includes(
       removeEventListener("popstate", sync);
     };
   }, []);
+
   useEffect(() => {
     let alive = true;
     loadPublishedJourneyPhotos()
@@ -226,537 +238,462 @@ normalize(`${p.title} ${p.summary} ${p.place} ${p.category}`).includes(
   }, []);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = dark ? "night" : "day";
-    try {
-      localStorage.setItem("jn-theme", dark ? "dark" : "light");
-    } catch {}
-  }, [dark]);
-  useEffect(() => {
-    if (search) searchInput.current?.focus();
-  }, [search]);
+    if (searchOpen) searchInput.current?.focus();
+  }, [searchOpen]);
+
   useEffect(() => {
     if (!status) return;
-    const t = setTimeout(() => setStatus(""), 4200);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setStatus(""), 4200);
+    return () => clearTimeout(timer);
   }, [status]);
+
   useEffect(() => {
     document.title = selected
-      ? `${selected.title} · stalklıyorum`
-      : "stalklıyorum";
+      ? `${selected.title} · Journey Notes`
+      : "Journey Notes · stalklıyorum";
+
     if (selected) {
-      window.scrollTo({ top: 0, behavior: "instant" });
-      reader.current?.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: "auto" });
+      readerRef.current?.focus({ preventScroll: true });
     }
   }, [selected?.id]);
-  const openNote = (p: Photo) => {
-    originNote.current = p.id;
+
+  const openNote = (photo: Photo) => {
     returnScroll.current = window.scrollY;
-    origin.current = document.activeElement as HTMLElement;
-    history.pushState(null, "", `#note=${p.id}`);
+    history.pushState(null, "", `#note=${photo.id}`);
     setRoute(location.hash);
   };
+
   const goHome = () => {
     history.replaceState(null, "", location.pathname);
     setRoute("");
     requestAnimationFrame(() => {
-      window.scrollTo({ top: returnScroll.current, behavior: "instant" });
-      (origin.current?.isConnected
-        ? origin.current
-        : document.querySelector<HTMLElement>(
-            `[data-note="${originNote.current}"]`,
-          )
-      )?.focus({ preventScroll: true });
+      window.scrollTo({ top: returnScroll.current, behavior: "auto" });
     });
   };
-  const scrollArchive = () =>
+
+  const scrollToArchive = () => {
     requestAnimationFrame(() =>
-      archive.current?.scrollIntoView({
+      archiveRef.current?.scrollIntoView({
         behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "instant"
+          ? "auto"
           : "smooth",
+        block: "start",
       }),
     );
-  const choose = (category: string) => {
+  };
+
+  const chooseCategory = (category: string) => {
     setFilter(category);
     setQuery("");
-    setLimit(9999);
     if (selected) goHome();
-    scrollArchive();
+    requestAnimationFrame(scrollToArchive);
   };
-  const openSearch = () => {
-    if (selected) goHome();
-    setSearch(true);
-    scrollArchive();
-  };
+
   const openStudio = () => {
     returnScroll.current = window.scrollY;
-    origin.current = document.activeElement as HTMLElement;
     history.pushState(null, "", "#studio");
     setRoute("#studio");
   };
-  const goSection = (id: string) => {
-    history.pushState(null, "", `#${id}`);
-    setRoute(location.hash);
-    requestAnimationFrame(() =>
-      document
-        .getElementById(id)
-        ?.scrollIntoView({
-          behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
-            ? "instant"
-            : "smooth",
-        }),
-    );
+
+  const shareSelected = async () => {
+    try {
+      await navigator.clipboard.writeText(location.href);
+      setStatus("Notun bağlantısı kopyalandı.");
+    } catch {
+      setStatus("Bağlantıyı adres çubuğundan kopyalayabilirsin.");
+    }
   };
+
   return (
     <>
-      <a href="#archive" className="skip">
-        Yol defterine geç
+      <a className="jn-skip" href="#archive">
+        Arşive geç
       </a>
-      <div className="site-shell">
-        <header className="header">
-          <a className="home-link" href={location.pathname} aria-label="stalklıyorum">
-            <span className="mini-mark">s.</span>
-            <span>stalklıyorum</span>
+
+      <div className="jn-site">
+        <header className="jn-header">
+          <a className="jn-small-brand" href={location.pathname}>
+            stalklıyorum
           </a>
-          <div className="header-tools">
-            <a
-              href={instagram}
-              target="_blank"
-              rel="noreferrer"
-              className="jn-instagram-link"
-              aria-label="Journey Notes Instagram hesabını yeni sekmede aç"
-            >
-              <span className="jn-instagram-handle">@journey_notss</span>
+
+          <a className="jn-wordmark" href={location.pathname}>
+            journey <em>notes</em>
+          </a>
+
+          <div className="jn-header-actions">
+            <a href={instagram} target="_blank" rel="noreferrer">
+              @journey_notess
             </a>
-            <span className="tool-divider" />
             <button
-              onClick={() => setDark(!dark)}
-              className="icon-button theme-button"
-              aria-label={dark ? "Açık temaya geç" : "Koyu temaya geç"}
-              aria-pressed={dark}
+              onClick={() => {
+                setSearchOpen(true);
+                if (selected) goHome();
+                requestAnimationFrame(scrollToArchive);
+              }}
+              aria-label="Arşivde ara"
             >
-              <ThemeDial dark={dark} />
-            </button>
-            <button
-              onClick={openSearch}
-              className="icon-button"
-              aria-label="Defterde ara"
-            >
-              <SearchIcon />
+              <Search size={16} strokeWidth={1.6} />
             </button>
           </div>
         </header>
-        <div className="masthead">
-          <span className="masthead-aside">
-            FOTOĞRAFLAR
-            <br />
-            VE NOTLAR.
-          </span>
-          <a
-            href={location.pathname}
-            className="wordmark"
-            aria-label="Journey Notes ana sayfası"
-          >
-            journey{" "} 
-            <em>notes</em>
-            <span className="brand-dot">.</span>
-          </a>
-          <div className="journal-seal" aria-hidden="true">
-            <span className="journal-seal-top">VOL. 01</span>
-            <strong className="journal-seal-mid">JN</strong>
-            <span className="journal-seal-bottom">2026</span>
-          </div>
-        </div>
-        <nav className="nav" aria-label="Ana gezinme">
-          <div>
-            <a
-              href="#archive"
-              onClick={(e) => {
-                e.preventDefault();
-                goSection("archive");
-              }}
-            >
-              Notlar <sup>01</sup>
-            </a>
-            <a
-              href="#collections"
-              onClick={(e) => {
-                e.preventDefault();
-                goSection("collections");
-              }}
-            >
-              Koleksiyonlar <sup>02</sup>
-            </a>
-            <a
-              href="#about"
-              onClick={(e) => {
-                e.preventDefault();
-                goSection("about");
-              }}
-            >
-              Hakkında <sup>03</sup>
-            </a>
-          </div>
+
+        <nav className="jn-nav" aria-label="Journey Notes">
+          <a href="#edit">Seçki</a>
+          <a href="#places">Yerler</a>
+          <a href="#archive">Arşiv</a>
+          <a href="#about">Hakkında</a>
         </nav>
+
         {selected ? (
-          <main className="reader" ref={reader} tabIndex={-1}>
-            <button className="back-link" onClick={goHome}>
+          <main className="jn-reader" ref={readerRef} tabIndex={-1}>
+            <button className="jn-back" onClick={goHome}>
               <Arrow back /> Deftere dön
             </button>
-            <div className="reader-heading">
-              <span className="eyebrow">
-                <i />
-                {selected.category} <span>/</span> NOT {selected.id}
+
+            <header className="jn-reader-heading">
+              <span className="jn-kicker">
+                {selected.category} · NOT {selected.id}
               </span>
               <h1>{selected.title}</h1>
               <p>{selected.summary}</p>
+            </header>
+
+            <figure className="jn-reader-image">
+              <Picture
+                photo={selected}
+                priority
+                sizes="(max-width: 760px) 94vw, 1100px"
+              />
+              <figcaption>
+                <span>{selected.place || "Journey Notes seçkisi"}</span>
+                <span>№ {selected.id}</span>
+              </figcaption>
+            </figure>
+
+            <div className="jn-reader-copy">
+              <span className="jn-kicker">NOT</span>
+              {(selected.body.length ? selected.body : [selected.summary]).map(
+                (paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ),
+              )}
+              <button className="jn-text-link" onClick={shareSelected}>
+                Paylaş <ArrowUpRight size={16} strokeWidth={1.55} />
+              </button>
             </div>
-            <div className="reader-layout">
-              <figure>
-                <Picture photo={selected} priority />
-                <figcaption>
-                  <span>{selected.place || "Journey Notes seçkisi"}</span>
-                  <span>№ {selected.id}</span>
-                </figcaption>
-              </figure>
-              <div className="reader-copy">
-                <span className="eyebrow">NOT</span>
-                {(selected.body.length
-                  ? selected.body
-                  : [selected.summary]
-                ).map((text, i) => (
-                  <p key={i}>{text}</p>
-                ))}
-                <div className="reader-actions">
-                  <button
-                    className="text-button"
-                    onClick={async () => {
-                      try {
-                        await navigator.clipboard.writeText(location.href);
-                        setStatus("Notun bağlantısı kopyalandı.");
-                      } catch {
-                        setStatus(
-                          "Bağlantıyı adres çubuğundan kopyalayabilirsin.",
-                        );
-                      }
-                    }}
-                  >
-                    Paylaş <NorthEastMark compact />
-                  </button>
-                </div>
+
+            <section className="jn-related" aria-labelledby="related-title">
+              <div className="jn-section-head">
+                <span className="jn-kicker" id="related-title">
+                  BENZER KARELER
+                </span>
               </div>
-            </div>
-            <div className="related">
-              <span className="eyebrow">BENZER KARELER</span>
-              {all
-                .filter(
-                  (p) =>
-                    p.category === selected.category && p.id !== selected.id,
-                )
-                .slice(0, 3)
-                .map((p) => (
-                  <button key={p.id} onClick={() => openNote(p)}>
-                    <img src={p.thumbnail} alt="" />
-                    <span>{p.title}</span>
-                    <Arrow />
-                  </button>
-                ))}
-            </div>
+              <div className="jn-related-grid">
+                {all
+                  .filter(
+                    (photo) =>
+                      photo.category === selected.category &&
+                      photo.id !== selected.id,
+                  )
+                  .slice(0, 3)
+                  .map((photo) => (
+                    <button key={photo.id} onClick={() => openNote(photo)}>
+                      <Picture photo={photo} />
+                      <span>{photo.title}</span>
+                      <Arrow />
+                    </button>
+                  ))}
+              </div>
+            </section>
           </main>
         ) : (
           <main>
-            <section className="journey-profile-hero" aria-labelledby="journey-profile-intro-title">
-              <figure className="journey-profile-portrait">
-                <picture>
-                  <source srcSet="/journey/portrait-hq.avif" type="image/avif" />
-                  <img
-                    src="/journey/portrait-hq.avif"
-                    alt="Bulanık portre"
-                    width="800"
-                    height="800"
-                    loading="eager"
-                    fetchPriority="high"
+            {hero && (
+              <section className="jn-hero" aria-labelledby="journey-hero-title">
+                <div className="jn-hero-media">
+                  <Picture
+                    photo={hero}
+                    priority
+                    sizes="(max-width: 760px) 100vw, 1440px"
                   />
-                </picture>
-              </figure>
-              <div className="journey-profile-intro-copy">
-                <span className="journey-profile-kicker">JOURNEY NOTES</span>
-                <h1 id="journey-profile-intro-title">
-                  Merhaba,
-                  <br />
-                  benim adım <em>arifv216.</em>
-                </h1>
-                <p>Bu da benim kişisel blogum.</p>
-                <button className="journey-profile-enter" onClick={scrollArchive}>
-                  <span>Arşivi keşfet</span>
-                  <Arrow />
-                </button>
-              </div>
-              <p className="journey-profile-tease">
-                Stalk yaparken 2. kez yakalandın.
+                </div>
+                <div className="jn-hero-overlay" />
+                <div className="jn-hero-copy">
+                  <span className="jn-kicker">PERSONAL TRAVEL JOURNAL · VOL. 01</span>
+                  <h1 id="journey-hero-title">Yolda birikenler.</h1>
+                  <p>
+                    Gezdiğim yerlerden fotoğraflar, küçük notlar ve tekrar
+                    dönmek istediğim anlar.
+                  </p>
+                  <button onClick={scrollToArchive}>
+                    Arşivi keşfet <Arrow />
+                  </button>
+                </div>
+                <div className="jn-hero-caption">
+                  <span>{hero.place || hero.category}</span>
+                  <span>№ {hero.id}</span>
+                </div>
+              </section>
+            )}
+
+            <section className="jn-intro">
+              <span className="jn-kicker">JOURNEY NOTES</span>
+              <p>
+                Burası bir gezi rehberinden çok, yolda gördüğüm şeylerin kişisel
+                kaydı. Şehirler, sokaklar, mimari, doğa ve bazen yalnızca
+                dönüp tekrar bakmak istediğim bir ayrıntı.
               </p>
             </section>
-            <section className="archive" id="archive" ref={archive}>
-              <div className="section-heading">
+
+            <section className="jn-edit" id="edit">
+              <div className="jn-section-head">
                 <div>
-                  <span className="eyebrow">01 / NOTLAR</span>
-                  <h2>
-                    Yolda <em>gördüklerim.</em>
-                  </h2>
+                  <span className="jn-kicker">THE EDIT · 01</span>
+                  <h2>Seçtiğim üç kare.</h2>
                 </div>
-                <p>{all.length} fotoğraf</p>
+                <p>Son dönemde tekrar dönüp baktıklarım.</p>
               </div>
-              <div className="toolbar">
-                <div className="filters" role="group" aria-label="Kategori">
-                  {categories.map((c) => (
+
+              <div className="jn-edit-grid">
+                {editorial.map((photo, index) => (
+                  <article
+                    className={index === 0 ? "jn-feature is-lead" : "jn-feature"}
+                    key={photo.id}
+                  >
+                    <button onClick={() => openNote(photo)}>
+                      <div className="jn-feature-image">
+                        <Picture
+                          photo={photo}
+                          sizes={
+                            index === 0
+                              ? "(max-width: 760px) 92vw, 820px"
+                              : "(max-width: 760px) 92vw, 480px"
+                          }
+                        />
+                      </div>
+                      <span className="jn-kicker">
+                        {photo.place || photo.category}
+                      </span>
+                      <h3>{photo.title}</h3>
+                      <p>{photo.summary}</p>
+                      <span className="jn-read-more">
+                        Notu aç <Arrow />
+                      </span>
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="jn-places" id="places">
+              <div className="jn-places-inner">
+                <div className="jn-section-head is-dark">
+                  <div>
+                    <span className="jn-kicker">PLACES · 02</span>
+                    <h2>Bir yere göre bak.</h2>
+                  </div>
+                  <p>Arşivi konuya göre daralt.</p>
+                </div>
+
+                <div className="jn-place-list">
+                  {categories.slice(1).map((category, index) => {
+                    const matches = all.filter(
+                      (photo) => photo.category === category,
+                    );
+                    const preview = matches.find(
+                      (photo) => Math.max(photo.width, photo.height) >= 1080,
+                    ) || matches[0];
+
+                    return (
+                      <button
+                        key={category}
+                        onClick={() => chooseCategory(category)}
+                      >
+                        <span className="jn-place-no">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span className="jn-place-name">{category}</span>
+                        <span className="jn-place-count">
+                          {matches.length} kare
+                        </span>
+                        {preview && (
+                          <span className="jn-place-preview" aria-hidden="true">
+                            <Picture photo={preview} />
+                          </span>
+                        )}
+                        <ChevronRight size={20} strokeWidth={1.4} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
+            <section className="jn-archive" id="archive" ref={archiveRef}>
+              <div className="jn-section-head">
+                <div>
+                  <span className="jn-kicker">ARCHIVE · 03</span>
+                  <h2>Yol defteri.</h2>
+                </div>
+                <p>{filtered.length} kare</p>
+              </div>
+
+              <div className="jn-toolbar">
+                <div className="jn-filters" role="group" aria-label="Kategori">
+                  {categories.map((category) => (
                     <button
-                      key={c}
+                      key={category}
+                      aria-pressed={filter === category}
                       onClick={() => {
-                        setFilter(c);
-                        setLimit(9999);
+                        setFilter(category);
+                        setQuery("");
                       }}
-                      aria-pressed={filter === c}
                     >
-                      {c}
-                      <sup>
-                        {
-                          all.filter((p) => c === "Tümü" || p.category === c)
-                            .length
-                        }
-                      </sup>
+                      {category}
                     </button>
                   ))}
                 </div>
-                <div className="view-tools">
-                  <button
-                    className="icon-button"
-                    onClick={() => setSearch(!search)}
-                    aria-label={search ? "Aramayı kapat" : "Fotoğraflarda ara"}
-                    aria-expanded={search}
-                  >
-                    <SearchIcon />
-                  </button>
-                  <button
-                    className="icon-button layout-button"
-                    onClick={() => {
-                      setLayout(layout === "journal" ? "index" : "journal");
-                      setLimit(9999);
-                    }}
-                    aria-label={
-                      layout === "journal"
-                        ? "Kompakt arşiv görünümü"
-                        : "Blog görünümü"
-                    }
-                    aria-pressed={layout === "index"}
-                  >
-                    <span className="layout-mode-label">{layout === "index" ? "INDEX" : "JOURNAL"}</span>
-                  </button>
-                </div>
+                <button
+                  className="jn-search-toggle"
+                  onClick={() => setSearchOpen((value) => !value)}
+                  aria-expanded={searchOpen}
+                >
+                  <Search size={15} strokeWidth={1.6} />
+                  Ara
+                </button>
               </div>
-              {search && (
-                <div className="search-row">
-                  <SearchIcon />
+
+              {searchOpen && (
+                <div className="jn-search-row">
+                  <Search size={17} strokeWidth={1.5} />
                   <input
                     ref={searchInput}
                     type="search"
                     value={query}
-                    onChange={(e) => {
-                      setQuery(e.target.value);
-                      setLimit(9999);
-                    }}
-                    placeholder="Yer veya başlık ara"
-                    aria-label="Notlarda ara"
-                    onKeyDown={(e) => {
-                      if (e.key === "Escape") {
-                        setSearch(false);
-                        setQuery("");
-                      }
-                    }}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Yer, başlık veya kategori ara"
+                    aria-label="Journey Notes aramasında ara"
                   />
-                  <span>{filtered.length} not</span>
+                  <span>{filtered.length} sonuç</span>
                   <button
                     onClick={() => {
-                      setSearch(false);
+                      setSearchOpen(false);
                       setQuery("");
                     }}
-                    aria-label="Aramayı temizle ve kapat"
-                  ><X className="jn-icon" size={16} strokeWidth={1.7} aria-hidden="true" /></button>
-                </div>
-              )}
-              {drafts.length > 0 && (
-                <div className="selection-bar">
-                  <span>
-                    Yerel taslak önizlemesi · Ziyaretçilere yayınlanmadı.
-                  </span>
-                  <button onClick={() => setDrafts([])}>
-                    Önizlemeyi kapat
-                  </button>
-                </div>
-              )}
-              <div className={`stories ${layout}`}>
-                {filtered.map((p, i) => (
-                  <Fragment key={p.id}>
-                    <article className="story">
-                      <div className="story-image">
-                        <button
-                          className="image-link"
-                          data-note={p.id}
-                          onClick={() => openNote(p)}
-                          aria-label={`${p.title} notunu oku`}
-                        >
-                          <Picture photo={p} />
-                          <span className="image-overlay">
-                            <Arrow />
-                          </span>
-                        </button>
-                      </div>
-                      <div className="story-meta">
-                        <span>{p.place || p.category}</span>
-                        <span>№ {p.id}</span>
-                      </div>
-                      <h3>
-                        <button onClick={() => openNote(p)}>{p.title}</button>
-                      </h3>
-                    </article>
-
-                  </Fragment>
-                ))}
-              </div>
-              {filtered.length === 0 && (
-                <div className="empty">
-                  <span className="empty-index">00</span>
-                  <h3>Burada bir not bulamadık.</h3>
-                  <p>Başka bir kelimeyle aramayı deneyebilirsin.</p>
-                  <button
-                    className="read-link"
-                    onClick={() => {
-                                        setFilter("Tümü");
-                      setQuery("");
-                    }}
+                    aria-label="Aramayı kapat"
                   >
-                    Bütün notlara dön <Arrow />
+                    <X size={17} strokeWidth={1.6} />
                   </button>
                 </div>
               )}
-              <div className="archive-end">
-                <span className="eyebrow">
-                  {Math.min(limit, filtered.length)} / {filtered.length} NOT
-                </span>
-                <span className="end-message">Arşivin sonu.</span>
-                <span className="tiny-flower" aria-hidden="true">
-                  
-                </span>
-              </div>
-            </section>
-            <section className="collections" id="collections">
-              <div className="collection-index-head">
-                <span className="eyebrow">02 / KOLEKSİYONLAR</span>
-                <div>
-                  <h2>Koleksiyonlar</h2>
-                  <p>03 KATEGORİ · {photos.length} FOTOĞRAF</p>
+
+              {drafts.length > 0 && (
+                <div className="jn-preview-note">
+                  <span>Yerel taslak önizlemesi açık.</span>
+                  <button onClick={() => setDrafts([])}>Kapat</button>
                 </div>
-              </div>
-              <div className="collection-index">
-                {[
-                  {
-                    name: "Doğa",
-                    category: "Doğa",
-                    ids: ["020", "012", "050"],
-                  },
-                  {
-                    name: "Sokak",
-                    category: "Sokak",
-                    ids: ["022", "073", "009"],
-                  },
-                  {
-                    name: "Mimari",
-                    category: "Mimari",
-                    ids: ["010", "103", "032"],
-                  },
-                ].map((c, index) => {
-                  const count = all.filter((p) => p.category === c.category).length;
+              )}
+
+              <div className="jn-archive-grid">
+                {filtered.map((photo, index) => {
+                  const largeEnough =
+                    photo.width >= 1200 && photo.height >= 900;
+                  const lowResolution =
+                    Math.max(photo.width, photo.height) < 1080;
+                  const wide =
+                    largeEnough && (index % 9 === 0 || index % 9 === 5);
+
                   return (
-                    <button
-                      className="collection-row"
-                      key={c.category}
-                      onClick={() => choose(c.category)}
+                    <article
+                      className={[
+                        "jn-entry",
+                        wide ? "is-wide" : "",
+                        lowResolution ? "is-lowres" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      key={photo.id}
                     >
-                      <span className="collection-no">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      <span className="collection-name">{c.name}</span>
-                      <span className="collection-count">{count} KARE</span>
-                      <span className="collection-preview" aria-hidden="true">
-                        {c.ids.map((id) => (
-                          <img
-                            key={id}
-                            src={photos.find((p) => p.id === id)!.thumbnail}
-                            alt=""
-                            loading="lazy"
+                      <button onClick={() => openNote(photo)}>
+                        <div className="jn-entry-image">
+                          <Picture
+                            photo={photo}
+                            sizes={
+                              wide
+                                ? "(max-width: 760px) 92vw, 820px"
+                                : "(max-width: 760px) 92vw, 420px"
+                            }
                           />
-                        ))}
-                      </span>
-                      <ChevronRight
-                        className="collection-chevron"
-                        size={18}
-                        strokeWidth={1.6}
-                        aria-hidden="true"
-                      />
-                    </button>
+                        </div>
+                        <div className="jn-entry-meta">
+                          <span>{photo.place || photo.category}</span>
+                          <span>№ {photo.id}</span>
+                        </div>
+                        <h3>{photo.title}</h3>
+                      </button>
+                    </article>
                   );
                 })}
               </div>
+
+              {filtered.length === 0 && (
+                <div className="jn-empty">
+                  <h3>Burada bir kare bulamadım.</h3>
+                  <button
+                    onClick={() => {
+                      setFilter("Tümü");
+                      setQuery("");
+                    }}
+                  >
+                    Bütün arşive dön <Arrow />
+                  </button>
+                </div>
+              )}
             </section>
-            <section className="about" id="about">
-              <div className="about-photo">
-                <img
-                  src={photos.find((p) => p.id === "107")!.thumbnail}
-                  alt="Ağaçların arasından geçen bir yol"
-                  loading="lazy"
-                />
-                <span>ARŞİVDEN · 107</span>
-              </div>
-              <div className="about-copy">
-                <span className="eyebrow">03 / HAKKINDA</span>
-                <h2>
-                  Ben <em>arifv216.</em>
-                </h2>
+
+            <section className="jn-about" id="about">
+              {aboutPhoto && (
+                <figure className="jn-about-image">
+                  <Picture
+                    photo={aboutPhoto}
+                    sizes="(max-width: 760px) 92vw, 620px"
+                  />
+                </figure>
+              )}
+              <div className="jn-about-copy">
+                <span className="jn-kicker">ABOUT · 04</span>
+                <h2>Biriktirmek için çekiyorum.</h2>
                 <p>
                   Journey Notes, gezdiğim yerlerden saklamak istediğim
-                  fotoğrafları ve kısa notları bir araya getirdiğim kişisel arşivim.
+                  fotoğrafları ve kısa notları bir araya getirdiğim kişisel
+                  arşiv. Her kare kendi yolculuğumdan.
                 </p>
-                <a
-                  href={instagram}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-button"
-                >
-                  @journey_notss
+                <a href={instagram} target="_blank" rel="noreferrer">
+                  Instagram’da gör <ArrowUpRight size={16} strokeWidth={1.55} />
                 </a>
               </div>
-              <span className="about-flower" aria-hidden="true">
-                
-              </span>
             </section>
           </main>
         )}
-        <footer className="footer">
-          <div className="footer-top">
-            <a href={location.pathname} className="footer-logo">
-              journey <em>notes.</em>
+
+        <footer className="jn-footer">
+          <div>
+            <a className="jn-footer-brand" href={location.pathname}>
+              journey <em>notes</em>
             </a>
-            <p>FOTOĞRAF · SEYAHAT · KİŞİSEL ARŞİV</p>
-            <a href="#" aria-label="Sayfanın başına dön" className="back-top">
-              BAŞA DÖN
+            <p>Fotoğraf · seyahat · kişisel arşiv</p>
+          </div>
+          <div className="jn-footer-links">
+            <a href={instagram} target="_blank" rel="noreferrer">
+              Instagram
             </a>
+            <button onClick={openStudio}>Yönetim</button>
           </div>
-          <div className="footer-bottom">
-            <span>stalklıyorum</span>
-            <span>© {new Date().getFullYear()} JOURNEY NOTES</span>
-            <button onClick={openStudio}>YÖNETİM</button>
-          </div>
+          <span>© {new Date().getFullYear()}</span>
         </footer>
       </div>
+
       {route === "#studio" && (
         <Suspense
           fallback={
@@ -771,13 +708,13 @@ normalize(`${p.title} ${p.summary} ${p.place} ${p.category}`).includes(
               setDrafts(items);
               goHome();
               setFilter("Tümü");
-                        setLimit(9999);
-              scrollArchive();
+              requestAnimationFrame(scrollToArchive);
             }}
           />
         </Suspense>
       )}
-      <div className={`toast ${status ? "visible" : ""}`} role="status">
+
+      <div className={`jn-toast ${status ? "is-visible" : ""}`} role="status">
         {status}
       </div>
     </>
