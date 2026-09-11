@@ -72,10 +72,14 @@ function StudioGate({
 }) {
   const recoveryAtOpen = getJourneyRecoveryState();
   const [state, setState] = useState<"checking" | "locked" | "ready" | "error">(
-    recoveryAtOpen?.mode === "recovery" ? "locked" : "checking",
+    recoveryAtOpen ? "locked" : "checking",
   );
   const [mode, setMode] = useState<"login" | "forgot" | "recovery">(
-    recoveryAtOpen?.mode === "recovery" ? "recovery" : "login",
+    recoveryAtOpen?.mode === "recovery"
+      ? "recovery"
+      : recoveryAtOpen?.mode === "error"
+        ? "forgot"
+        : "login",
   );
   const [email, setEmail] = useState(
     recoveryAtOpen?.mode === "recovery" ? recoveryAtOpen.email || "" : "",
@@ -99,7 +103,7 @@ function StudioGate({
       return;
     }
 
-    if (recoveryAtOpen?.mode === "recovery") {
+    if (recoveryAtOpen) {
       setState("locked");
       return;
     }
