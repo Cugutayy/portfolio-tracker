@@ -384,7 +384,7 @@ export async function isJourneyAdmin() {
 export async function loadPublishedJourneyPhotos(): Promise<Photo[]> {
   if (!supabaseConfigured) return [];
   const response = await rest(
-    `journey_photos?select=${journeyPublicSelect}&published=eq.true&deleted_at=is.null&order=position.asc,created_at.asc`,
+    `journey_photos?select=${journeyPublicSelect}&published=eq.true&order=position.asc`,
   );
   if (!response.ok) return [];
   return (await response.json()).map(rowToPhoto);
