@@ -377,3 +377,20 @@
   border-color: var(--accent) !important;
   color: #fff !important;
 }
+
+
+/* Studio v2.1 — explicit draft/live state */
+.studio-thumbs button > small {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: rgba(244, 241, 233, .9);
+  color: var(--muted);
+  font: 600 6px/1 var(--ui-font, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif);
+  letter-spacing: .08em;
+}
+.studio-thumbs button > small.is-live {
+  color: var(--ink);
+}
