@@ -293,6 +293,20 @@ export default function App() {
   }, [status]);
 
   useEffect(() => {
+    if (!selected || !readerSequence.length) return;
+    const currentIndex = readerIndex >= 0 ? readerIndex : 0;
+    const nearby = [
+      readerSequence[(currentIndex - 1 + readerSequence.length) % readerSequence.length],
+      readerSequence[(currentIndex + 1) % readerSequence.length],
+    ];
+    nearby.forEach((photo) => {
+      if (!photo?.src) return;
+      const image = new Image();
+      image.src = photo.src;
+    });
+  }, [selected?.id, readerIds.join("|"), remotePhotos.length, drafts.length]);
+
+  useEffect(() => {
     if (!selected) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "ArrowRight") {
