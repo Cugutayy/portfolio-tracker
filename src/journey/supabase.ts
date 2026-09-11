@@ -147,6 +147,162 @@ export async function signInJourney(email: string, password: string) {
   return session;
 }
 
+const recoveryStateKey = "jn-password-recovery";
+
+export async function requestJourneyPasswordReset(email: string) {
+  const cleanEmail = email.trim();
+  if (!cleanEmail) throw new Error("E-posta adresini yaz.");
+
+  const response = await authRequest("/recover", {
+    method: "POST",
+    body: JSON.stringify({ email: cleanEmail }),
+  });
+
+  // Supabase intentionally does not reveal whether a user exists for the
+  // address. Keep the UI generic for the same reason.
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(
+      data?.error_description ||
+        data?.msg ||
+        "Sıfırlama e-postası şu anda gönderilemedi.",
+    );
+  }
+
+  return true;
+}
+
+function recoveryMessage(code?: string | null) {
+  if (code === "otp_expired") {
+    return "Bu parola sıfırlama bağlantısının süresi dolmuş. Yeni bir bağlantı iste.";
+  }
+  return "Parola sıfırlama bağlantısı geçersiz veya artık kullanılamıyor.";
+}
+
+export async function consumeJourneyAuthCallback() {
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ""));
+  const type = hash.get("type");
+  const error = hash.get("error");
+  const errorCode = hash.get("error_code");
+
+  if (error) {
+    if (error === "access_denied" || errorCode) {
+      try {
+        sessionStorage.setItem(
+          recoveryStateKey,
+          JSON.stringify({ mode: "error", message: recoveryMessage(errorCode) }),
+        );
+      } catch {}
+      return { handled: true, recovery: false, error: recoveryMessage(errorCode) };
+    }
+    return { handled: false, recovery: false };
+  }
+
+  if (type !== "recovery") {
+    return { handled: false, recovery: false };
+  }
+
+  const accessToken = hash.get("access_token");
+  const refreshToken = hash.get("refresh_token") || "";
+  if (!accessToken) {
+    const message = "Parola sıfırlama oturumu alınamadı. Yeni bir bağlantı iste.";
+    try {
+      sessionStorage.setItem(
+        recoveryStateKey,
+        JSON.stringify({ mode: "error", message }),
+      );
+    } catch {}
+    return { handled: true, recovery: false, error: message };
+  }
+
+  const response = await authRequest("/user", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  const user = await response.json().catch(() => ({}));
+  if (!response.ok || !user?.id) {
+    const message = recoveryMessage(errorCode);
+    try {
+      sessionStorage.setItem(
+        recoveryStateKey,
+        JSON.stringify({ mode: "error", message }),
+      );
+    } catch {}
+    return { handled: true, recovery: false, error: message };
+  }
+
+  const expiresIn = Number(hash.get("expires_in") || 3600);
+  const session: JourneySession = {
+    access_token: accessToken,
+    refresh_token: refreshToken,
+    expires_at: Math.floor(Date.now() / 1000) + expiresIn - 30,
+    user: {
+      id: String(user.id),
+      email: user.email ? String(user.email) : undefined,
+    },
+  };
+
+  saveSession(session);
+  try {
+    sessionStorage.setItem(
+      recoveryStateKey,
+      JSON.stringify({ mode: "recovery", email: session.user.email || "" }),
+    );
+  } catch {}
+
+  return { handled: true, recovery: true, session };
+}
+
+export function getJourneyRecoveryState():
+  | { mode: "recovery"; email?: string }
+  | { mode: "error"; message: string }
+  | null {
+  try {
+    const raw = sessionStorage.getItem(recoveryStateKey);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearJourneyRecoveryState() {
+  try {
+    sessionStorage.removeItem(recoveryStateKey);
+  } catch {}
+}
+
+export async function updateJourneyPassword(password: string) {
+  if (password.length < 12) {
+    throw new Error("Yeni parola en az 12 karakter olmalı.");
+  }
+
+  const session = await getJourneySession();
+  if (!session) {
+    throw new Error("Sıfırlama oturumunun süresi dolmuş. Yeni bağlantı iste.");
+  }
+
+  const response = await authRequest("/user", {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${session.access_token}` },
+    body: JSON.stringify({ password }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data?.msg || data?.error_description || "Parola güncellenemedi.");
+  }
+
+  clearJourneyRecoveryState();
+
+  // The default Supabase logout scope is global. After a password reset this
+  // intentionally revokes refresh tokens on other sessions too.
+  await authRequest("/logout", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  }).catch(() => null);
+  saveSession(null);
+
+  return true;
+}
+
 export async function signOutJourney() {
   const session = readSession();
   if (session && supabaseConfigured) {
