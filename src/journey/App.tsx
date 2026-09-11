@@ -498,7 +498,7 @@ export default function App() {
                     }
                     aria-pressed={layout === "index"}
                   >
-                    <span className="layout-mode-label">{layout === "journal" ? "INDEX" : "JOURNAL"}</span>
+                    <span className="layout-mode-label">{layout === "index" ? "INDEX" : "JOURNAL"}</span>
                   </button>
                 </div>
               </div>
@@ -638,7 +638,7 @@ export default function App() {
                 <span className="eyebrow">02 / KOLEKSİYONLAR</span>
                 <div>
                   <h2>Koleksiyonlar</h2>
-                  <p>Arşivin üç ana hattı.</p>
+                  <p>03 KATEGORİ · {photos.length} FOTOĞRAF</p>
                 </div>
               </div>
               <div className="collection-index">
