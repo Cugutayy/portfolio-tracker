@@ -205,6 +205,7 @@ export default function App() {
   );
 
   const hero = all.find((photo) => photo.id === "108") || all[0];
+  const heroPlace = "Frig Vadisi, Afyonkarahisar";
   const editorialIds = ["010", "012", "055"];
   const editorial = editorialIds
     .map((id) => all.find((photo) => photo.id === id))
@@ -355,7 +356,7 @@ export default function App() {
               <span className="jn-kicker">
                 {selected.category} · NOT {selected.id}
               </span>
-              <h1>{selected.title}</h1>
+              {selected.title && <h1>{selected.title}</h1>}
               <p>{selected.summary}</p>
             </header>
 
@@ -400,7 +401,7 @@ export default function App() {
                   .map((photo) => (
                     <button key={photo.id} onClick={() => openNote(photo)}>
                       <Picture photo={photo} />
-                      <span>{photo.title}</span>
+                      <span>{photo.title || photo.place || photo.category}</span>
                       <Arrow />
                     </button>
                   ))}
@@ -412,27 +413,32 @@ export default function App() {
             {hero && (
               <section className="jn-hero" aria-labelledby="journey-hero-title">
                 <div className="jn-hero-media">
-                  <Picture
-                    photo={hero}
-                    priority
-                    sizes="(max-width: 760px) 100vw, 1440px"
+                  <img
+                    src="/journey/hero-frig-vadisi.avif"
+                    alt={heroPlace}
+                    width="1600"
+                    height="900"
+                    loading="eager"
+                    fetchPriority="high"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = hero.src;
+                    }}
                   />
                 </div>
                 <div className="jn-hero-overlay" />
                 <div className="jn-hero-copy">
-                  <span className="jn-kicker">PERSONAL TRAVEL JOURNAL · VOL. 01</span>
-                  <h1 id="journey-hero-title">Yolda birikenler.</h1>
+                  <span className="jn-kicker">JOURNEY NOTES · 2026</span>
+                  <h1 id="journey-hero-title">{heroPlace}</h1>
                   <p>
-                    Gezdiğim yerlerden fotoğraflar, küçük notlar ve tekrar
-                    dönmek istediğim anlar.
+                    Gezdiğim yerlerden fotoğraflar ve kısa notlar.
                   </p>
                   <button onClick={scrollToArchive}>
                     Arşivi keşfet <Arrow />
                   </button>
                 </div>
                 <div className="jn-hero-caption">
-                  <span>{hero.place || hero.category}</span>
-                  <span>№ {hero.id}</span>
+                  <span>{heroPlace}</span>
                 </div>
               </section>
             )}
@@ -440,9 +446,8 @@ export default function App() {
             <section className="jn-intro">
               <span className="jn-kicker">JOURNEY NOTES</span>
               <p>
-                Burası bir gezi rehberinden çok, yolda gördüğüm şeylerin kişisel
-                kaydı. Şehirler, sokaklar, mimari, doğa ve bazen yalnızca
-                dönüp tekrar bakmak istediğim bir ayrıntı.
+                Gezdiğim yerlerden seçtiğim kareler. Yerini kesin bildiğim
+                fotoğraflarda yalnızca lokasyon adını kullanıyorum.
               </p>
             </section>
 
@@ -450,9 +455,9 @@ export default function App() {
               <div className="jn-section-head">
                 <div>
                   <span className="jn-kicker">THE EDIT · 01</span>
-                  <h2>Seçtiğim üç kare.</h2>
+                  <h2>Seçilen kareler.</h2>
                 </div>
-                <p>Son dönemde tekrar dönüp baktıklarım.</p>
+                <p>Fotoğraf ön planda, metin yalnızca gerektiği kadar.</p>
               </div>
 
               <div className="jn-edit-grid">
@@ -534,7 +539,7 @@ export default function App() {
               <div className="jn-section-head">
                 <div>
                   <span className="jn-kicker">ARCHIVE · 03</span>
-                  <h2>Yol defteri.</h2>
+                  <h2>Arşiv.</h2>
                 </div>
                 <p>{filtered.length} kare</p>
               </div>
@@ -630,7 +635,7 @@ export default function App() {
                           <span>{photo.place || photo.category}</span>
                           <span>№ {photo.id}</span>
                         </div>
-                        <h3>{photo.title}</h3>
+                        {photo.title && <h3>{photo.title}</h3>}
                       </button>
                     </article>
                   );
