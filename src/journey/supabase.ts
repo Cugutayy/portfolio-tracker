@@ -374,12 +374,10 @@ async function uploadBlobResumable(
         lastError = await response.text().catch(() => "");
         if (response.status === 409 || response.status >= 500) {
           const remoteOffset = await tusHead(uploadUrl, session).catch(() => null);
-          if (remoteOffset !== null && remoteOffset >= offset) {
+          if (remoteOffset !== null && remoteOffset > offset) {
             offset = remoteOffset;
-            if (offset >= end) {
-              uploaded = true;
-              break;
-            }
+            uploaded = true;
+            break;
           }
           continue;
         }
@@ -390,10 +388,8 @@ async function uploadBlobResumable(
         const remoteOffset = await tusHead(uploadUrl, session).catch(() => null);
         if (remoteOffset !== null && remoteOffset > offset) {
           offset = remoteOffset;
-          if (offset >= end) {
-            uploaded = true;
-            break;
-          }
+          uploaded = true;
+          break;
         }
       }
     }
