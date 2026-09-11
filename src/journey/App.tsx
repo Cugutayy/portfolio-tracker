@@ -3,6 +3,7 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
+  Instagram,
   Search,
   X,
 } from "lucide-react";
@@ -355,8 +356,15 @@ export default function App() {
           </a>
 
           <div className="jn-header-actions">
-            <a href={instagram} target="_blank" rel="noreferrer">
-              @journey_notess
+            <a
+              className="jn-instagram-link"
+              href={instagram}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Journey Notes Instagram"
+            >
+              <Instagram size={13} strokeWidth={1.55} aria-hidden="true" />
+              <span>@journey_notess</span>
             </a>
             <button
               onClick={() => {
