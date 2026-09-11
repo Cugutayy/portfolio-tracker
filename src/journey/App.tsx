@@ -39,6 +39,11 @@ function Picture({
     <img
       className={className}
       src={photo.src}
+      srcSet={
+        photo.thumbnail && photo.thumbnail !== photo.src
+          ? `${photo.thumbnail} ${photo.smallWidth || 960}w, ${photo.src} ${photo.largeWidth || Math.min(photo.width, 3200)}w`
+          : undefined
+      }
       sizes={sizes}
       alt={photo.title || photo.place || "Seyahat fotoğrafı"}
       width={photo.width}
