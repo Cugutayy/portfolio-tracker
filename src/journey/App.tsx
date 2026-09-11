@@ -183,11 +183,25 @@ export default function App() {
   const [drafts, setDrafts] = useState<Photo[]>([]);
   const [remotePhotos, setRemotePhotos] = useState<Photo[]>([]);
   const [status, setStatus] = useState("");
+  const [albumSize, setAlbumSize] = useState<"compact" | "standard" | "large">(
+    () => {
+      try {
+        const saved = localStorage.getItem("journey-album-size");
+        return saved === "compact" || saved === "large" ? saved : "standard";
+      } catch {
+        return "standard";
+      }
+    },
+  );
+  const [readerIds, setReaderIds] = useState<string[]>([]);
+  const [slideDirection, setSlideDirection] = useState<"next" | "prev" | "">("");
 
   const searchInput = useRef<HTMLInputElement>(null);
   const archiveRef = useRef<HTMLElement>(null);
   const readerRef = useRef<HTMLElement>(null);
   const returnScroll = useRef(0);
+  const returnRoute = useRef("");
+  const touchStartX = useRef<number | null>(null);
 
   const all = Array.from(
     new Map([...photos, ...remotePhotos, ...drafts].map((photo) => [photo.id, photo])).values(),
@@ -195,6 +209,12 @@ export default function App() {
 
   const selected = all.find((photo) => route === `#note=${photo.id}`);
   const albumOpen = route === "#album";
+  const readerSequence = (readerIds.length ? readerIds : all.map((photo) => photo.id))
+    .map((id) => all.find((photo) => photo.id === id))
+    .filter((photo): photo is Photo => Boolean(photo));
+  const readerIndex = selected
+    ? readerSequence.findIndex((photo) => photo.id === selected.id)
+    : -1;
   const filtered = all.filter(
     (photo) =>
       (filter === "Tümü" || photo.category === filter) &&
@@ -261,10 +281,34 @@ export default function App() {
   }, [searchOpen]);
 
   useEffect(() => {
+    try {
+      localStorage.setItem("journey-album-size", albumSize);
+    } catch {}
+  }, [albumSize]);
+
+  useEffect(() => {
     if (!status) return;
     const timer = setTimeout(() => setStatus(""), 4200);
     return () => clearTimeout(timer);
   }, [status]);
+
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        moveReader(1);
+      } else if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        moveReader(-1);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        closeNote();
+      }
+    };
+    addEventListener("keydown", onKey);
+    return () => removeEventListener("keydown", onKey);
+  }, [selected?.id, readerIds.join("|")]);
 
   useEffect(() => {
     document.title = selected
@@ -281,8 +325,11 @@ export default function App() {
     }
   }, [selected?.id, albumOpen]);
 
-  const openNote = (photo: Photo) => {
+  const openNote = (photo: Photo, sequence: Photo[] = all) => {
     returnScroll.current = window.scrollY;
+    returnRoute.current = route;
+    setReaderIds(sequence.map((item) => item.id));
+    setSlideDirection("");
     history.pushState(null, "", `#note=${photo.id}`);
     setRoute(location.hash);
   };
@@ -293,6 +340,29 @@ export default function App() {
     requestAnimationFrame(() => {
       window.scrollTo({ top: returnScroll.current, behavior: "auto" });
     });
+  };
+
+  const closeNote = () => {
+    if (returnRoute.current === "#album") {
+      history.replaceState(null, "", "#album");
+      setRoute("#album");
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: returnScroll.current, behavior: "auto" });
+      });
+      return;
+    }
+    goHome();
+  };
+
+  const moveReader = (step: number) => {
+    if (!selected || !readerSequence.length) return;
+    const currentIndex = readerIndex >= 0 ? readerIndex : 0;
+    const nextIndex =
+      (currentIndex + step + readerSequence.length) % readerSequence.length;
+    const next = readerSequence[nextIndex];
+    setSlideDirection(step > 0 ? "next" : "prev");
+    history.replaceState(null, "", `#note=${next.id}`);
+    setRoute(location.hash);
   };
 
   const scrollToArchive = () => {
@@ -392,7 +462,7 @@ export default function App() {
 
         {selected ? (
           <main className="jn-reader" ref={readerRef} tabIndex={-1}>
-            <button className="jn-back" onClick={goHome}>
+            <button className="jn-back" onClick={closeNote}>
               <Arrow back /> Geri dön
             </button>
 
@@ -405,18 +475,50 @@ export default function App() {
             </header>
 
             <figure
-              className="jn-reader-image"
+              key={selected.id}
+              className={`jn-reader-image ${slideDirection ? `is-slide-${slideDirection}` : ""}`}
               style={{ maxWidth: `${Math.min(selected.width, 1400)}px` }}
+              onTouchStart={(event) => {
+                touchStartX.current = event.touches[0]?.clientX ?? null;
+              }}
+              onTouchEnd={(event) => {
+                if (touchStartX.current === null) return;
+                const endX = event.changedTouches[0]?.clientX ?? touchStartX.current;
+                const delta = endX - touchStartX.current;
+                touchStartX.current = null;
+                if (Math.abs(delta) < 42) return;
+                moveReader(delta < 0 ? 1 : -1);
+              }}
             >
-              <Picture
-                photo={selected}
-                priority
-                sizes="(max-width: 760px) 94vw, 1100px"
-              />
+              <div className="jn-reader-stage">
+                <button
+                  className="jn-reader-nav is-prev"
+                  onClick={() => moveReader(-1)}
+                  aria-label="Önceki fotoğraf"
+                >
+                  <ChevronLeft size={22} strokeWidth={1.35} />
+                </button>
+                <Picture
+                  photo={selected}
+                  priority
+                  sizes="(max-width: 760px) 94vw, 1100px"
+                />
+                <button
+                  className="jn-reader-nav is-next"
+                  onClick={() => moveReader(1)}
+                  aria-label="Sonraki fotoğraf"
+                >
+                  <ChevronRight size={22} strokeWidth={1.35} />
+                </button>
+              </div>
               <figcaption>
                 <span>{selected.place || "Journey Notes seçkisi"}</span>
+                <span className="jn-reader-progress">
+                  {readerIndex >= 0 ? readerIndex + 1 : 1} / {readerSequence.length}
+                </span>
                 <span>№ {selected.id}</span>
               </figcaption>
+              <p className="jn-swipe-hint">Kaydır · ← →</p>
             </figure>
 
             <div className="jn-reader-copy">
@@ -446,7 +548,15 @@ export default function App() {
                   )
                   .slice(0, 3)
                   .map((photo) => (
-                    <button key={photo.id} onClick={() => openNote(photo)}>
+                    <button
+                      key={photo.id}
+                      onClick={() =>
+                        openNote(
+                          photo,
+                          all.filter((item) => item.category === selected.category),
+                        )
+                      }
+                    >
                       <Picture photo={photo} />
                       {(photo.title || photo.place) && (
                         <span>{photo.title || photo.place}</span>
@@ -458,7 +568,7 @@ export default function App() {
             </section>
           </main>
         ) : albumOpen ? (
-          <main className="jn-album-page">
+          <main className={`jn-album-page is-${albumSize}`}>
             <header className="jn-album-head">
               <button className="jn-back" onClick={goHome}>
                 <Arrow back /> Seçkiye dön
@@ -488,14 +598,28 @@ export default function App() {
                   </button>
                 ))}
               </div>
-              <button
-                className="jn-search-toggle"
-                onClick={() => setSearchOpen((value) => !value)}
-                aria-expanded={searchOpen}
-              >
-                <Search size={15} strokeWidth={1.6} />
-                Ara
-              </button>
+              <div className="jn-album-tools">
+                <div className="jn-size-control" role="group" aria-label="Fotoğraf boyutu">
+                  {(["compact", "standard", "large"] as const).map((size) => (
+                    <button
+                      key={size}
+                      className={albumSize === size ? "is-active" : ""}
+                      aria-pressed={albumSize === size}
+                      onClick={() => setAlbumSize(size)}
+                    >
+                      {size === "compact" ? "Küçük" : size === "large" ? "Büyük" : "Orta"}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="jn-search-toggle"
+                  onClick={() => setSearchOpen((value) => !value)}
+                  aria-expanded={searchOpen}
+                >
+                  <Search size={15} strokeWidth={1.6} />
+                  Ara
+                </button>
+              </div>
             </section>
 
             {searchOpen && (
@@ -534,7 +658,7 @@ export default function App() {
             >
               {filtered.map((photo) => (
                 <article className="jn-album-card" key={photo.id}>
-                  <button onClick={() => openNote(photo)}>
+                  <button onClick={() => openNote(photo, filtered)}>
                     <div className="jn-album-image">
                       <Picture
                         photo={photo}
@@ -733,7 +857,7 @@ export default function App() {
                 <div className="jn-diptych">
                   {exhibition.slice(5, 7).map((photo) => (
                     <article key={photo.id}>
-                      <button onClick={() => openNote(photo)}>
+                      <button onClick={() => openNote(photo, exhibition)}>
                         <div className="jn-diptych-image">
                           <Picture
                             photo={photo}
