@@ -741,33 +741,51 @@ export async function saveJourneyPhotos(
     const item = items[index];
     let imageUrl = item.src;
     let thumbnailUrl = item.thumbnail;
-    let originalUrl = item.originalSrc || item.src;
+    let originalUrl = item.originalSrc || "";
+    let originalBucket = item.originalBucket || (item.storagePath ? PUBLIC_MEDIA_BUCKET : "");
     let storagePath = item.storagePath;
     let displayPath = item.displayPath;
     let thumbnailPath = item.thumbnailPath;
 
-    const root = `${session.user.id}/${item.id}`;
+    const privateRoot = `${session.user.id}/${item.id}`;
+    const publicRoot = `media/${item.id}`;
 
     if (originalUrl.startsWith("data:")) {
       const mime =
         item.mimeType ||
         originalUrl.match(/^data:([^;,]+)/)?.[1] ||
         "image/jpeg";
-      storagePath = `${root}/original.${extensionFor(mime)}`;
-      originalUrl = await uploadDataImage(originalUrl, storagePath, session);
+      storagePath = `${privateRoot}/original.${extensionFor(mime)}`;
+      originalBucket = PRIVATE_ORIGINAL_BUCKET;
+      await uploadDataImage(
+        originalUrl,
+        PRIVATE_ORIGINAL_BUCKET,
+        storagePath,
+        session,
+        false,
+      );
+      originalUrl = "";
     }
 
     if (imageUrl.startsWith("data:")) {
-      displayPath = `${root}/display.webp`;
-      imageUrl = await uploadDataImage(imageUrl, displayPath, session);
+      displayPath = `${publicRoot}/display.webp`;
+      imageUrl = await uploadDataImage(
+        imageUrl,
+        PUBLIC_MEDIA_BUCKET,
+        displayPath,
+        session,
+        true,
+      );
     }
 
     if (thumbnailUrl.startsWith("data:")) {
-      thumbnailPath = `${root}/thumb.webp`;
+      thumbnailPath = `${publicRoot}/thumb.webp`;
       thumbnailUrl = await uploadDataImage(
         thumbnailUrl,
+        PUBLIC_MEDIA_BUCKET,
         thumbnailPath,
         session,
+        true,
       );
     }
 
@@ -781,7 +799,8 @@ export async function saveJourneyPhotos(
       category: item.category || "Diğer",
       image_url: imageUrl,
       thumbnail_url: thumbnailUrl || imageUrl,
-      original_url: originalUrl || imageUrl,
+      original_url: originalUrl || null,
+      original_bucket: originalBucket || null,
       width: item.width,
       height: item.height,
       display_width: item.largeWidth || null,
