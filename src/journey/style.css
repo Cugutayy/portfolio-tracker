@@ -2502,3 +2502,15 @@ select:focus-visible {
     font-size: 8px;
   }
 }
+
+
+/* V10.2 Instagram handle */
+.jn-instagram-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.jn-instagram-link svg {
+  flex: 0 0 auto;
+  opacity: .82;
+}
