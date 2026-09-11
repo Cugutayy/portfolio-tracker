@@ -228,7 +228,6 @@ export async function uploadJourneyFile(
         "content-type": file.type || "image/jpeg",
         "x-upsert": "true",
         "cache-control": "31536000",
-        ...(fileHash ? { "x-metadata": JSON.stringify({ sha256: fileHash }) } : {}),
       },
       body: file,
     },
