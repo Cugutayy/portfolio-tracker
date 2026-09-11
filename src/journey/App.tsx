@@ -1,47 +1,53 @@
 import { Fragment, lazy, Suspense, useEffect, useRef, useState } from "react";
+import {
+  ArrowUpRight,
+  Bookmark as BookmarkIcon,
+  ChevronLeft,
+  ChevronRight,
+  Moon,
+  Search,
+  Sun,
+  X,
+} from "lucide-react";
 import { photos, categories, normalize, type Photo } from "./data";
 import "./style.css";
 const Studio = lazy(() => import("./studio"));
 const instagram = "https://www.instagram.com/journey_notess/";
 function Arrow({ back = false }: { back?: boolean }) {
-  return (
-    <span className={back ? "jn-line-arrow is-back" : "jn-line-arrow"} aria-hidden="true">
-      <span className="jn-line-arrow-rail" />
-      <span className="jn-line-arrow-tip" />
-    </span>
-  );
+  const Icon = back ? ChevronLeft : ChevronRight;
+  return <Icon className="jn-icon" size={16} strokeWidth={1.7} aria-hidden="true" />;
 }
 
 function NorthEastMark({ compact = false }: { compact?: boolean }) {
   return (
-    <span className={compact ? "jn-diagonal-mark is-compact" : "jn-diagonal-mark"} aria-hidden="true">
-      <span className="jn-diagonal-rail" />
-      <span className="jn-diagonal-corner" />
-    </span>
+    <ArrowUpRight
+      className={compact ? "jn-icon is-compact" : "jn-icon"}
+      size={compact ? 15 : 17}
+      strokeWidth={1.7}
+      aria-hidden="true"
+    />
   );
 }
 
 function ThemeDial({ dark }: { dark: boolean }) {
-  return (
-    <span className={dark ? "jn-theme-switch is-night" : "jn-theme-switch"} aria-hidden="true">
-      <span className="jn-theme-track" />
-      <span className="jn-theme-knob" />
-      <span className="jn-theme-copy jn-theme-day">LIGHT</span>
-      <span className="jn-theme-copy jn-theme-night">DARK</span>
-    </span>
-  );
+  const Icon = dark ? Sun : Moon;
+  return <Icon className="jn-icon" size={17} strokeWidth={1.7} aria-hidden="true" />;
 }
 
 function Bookmark({ filled = false }: { filled?: boolean }) {
   return (
-    <span className={filled ? "jn-save-mark is-filled" : "jn-save-mark"} aria-hidden="true">
-      <span className="jn-save-fold" />
-    </span>
+    <BookmarkIcon
+      className="jn-icon"
+      size={16}
+      strokeWidth={1.65}
+      fill={filled ? "currentColor" : "none"}
+      aria-hidden="true"
+    />
   );
 }
 
 function SearchIcon() {
-  return <span className="jn-search-type" aria-hidden="true">ARA</span>;
+  return <Search className="jn-icon" size={16} strokeWidth={1.7} aria-hidden="true" />;
 }
 
 function Picture({
@@ -87,8 +93,8 @@ export default function App() {
   const [search, setSearch] = useState(false);
   const [saved, setSaved] = useState<string[]>(getSaved);
   const [onlySaved, setOnlySaved] = useState(false);
-  const [layout, setLayout] = useState("journal");
-  const [limit, setLimit] = useState(9);
+  const [layout, setLayout] = useState("index");
+  const [limit, setLimit] = useState(18);
   const [route, setRoute] = useState(location.hash);
   const [drafts, setDrafts] = useState<Photo[]>([]);
   const [dark, setDark] = useState(() => {
@@ -150,7 +156,7 @@ export default function App() {
   useEffect(() => {
     document.title = selected
       ? `${selected.title} · Journey Notes`
-      : "Journey Notes | Arif";
+      : "Journey Notes | arifv216";
     if (selected) {
       window.scrollTo({ top: 0, behavior: "instant" });
       reader.current?.focus({ preventScroll: true });
@@ -192,7 +198,7 @@ export default function App() {
     setFilter(category);
     setOnlySaved(false);
     setQuery("");
-    setLimit(9);
+    setLimit(layout === "index" ? 18 : 9);
     if (selected) goHome();
     scrollArchive();
   };
@@ -323,7 +329,7 @@ export default function App() {
               setOnlySaved(!onlySaved);
               setFilter("Tümü");
               setQuery("");
-              setLimit(9);
+              setLimit(layout === "index" ? 18 : 9);
               scrollArchive();
             }}
           >
@@ -411,7 +417,7 @@ export default function App() {
             <section className="journey-profile-hero" aria-labelledby="journey-profile-intro-title">
               <figure className="journey-profile-portrait">
                 <picture>
-                  <source srcSet="/journey/journey-profile-hq.avif" type="image/avif" />
+                  <source srcSet="/journey/portrait-hq.avif" type="image/avif" />
                   <img
                     src="/journey/portrait-hq.avif"
                     alt="Bulanık portre"
@@ -427,10 +433,9 @@ export default function App() {
                 <h1 id="journey-profile-intro-title">
                   Merhaba,
                   <br />
-                  benim adım <em>Arif.</em>
+                  benim adım <em>arifv216.</em>
                 </h1>
                 <p>Bu da benim kişisel blogum.</p>
-                <span className="journey-profile-handle">arifv216</span>
                 <button className="journey-profile-enter" onClick={scrollArchive}>
                   <span>Arşivi keşfet</span>
                   <Arrow />
@@ -457,7 +462,7 @@ export default function App() {
                       key={c}
                       onClick={() => {
                         setFilter(c);
-                        setLimit(9);
+                        setLimit(layout === "index" ? 18 : 9);
                       }}
                       aria-pressed={filter === c}
                     >
@@ -506,7 +511,7 @@ export default function App() {
                     value={query}
                     onChange={(e) => {
                       setQuery(e.target.value);
-                      setLimit(9);
+                      setLimit(layout === "index" ? 18 : 9);
                     }}
                     placeholder="Yer veya başlık ara"
                     aria-label="Notlarda ara"
@@ -524,7 +529,7 @@ export default function App() {
                       setQuery("");
                     }}
                     aria-label="Aramayı temizle ve kapat"
-                  >KAPAT</button>
+                  ><X className="jn-icon" size={16} strokeWidth={1.7} aria-hidden="true" /></button>
                 </div>
               )}
               {onlySaved && (
@@ -629,62 +634,62 @@ export default function App() {
               </div>
             </section>
             <section className="collections" id="collections">
-              <div className="section-heading">
+              <div className="collection-index-head">
+                <span className="eyebrow">02 / KOLEKSİYONLAR</span>
                 <div>
-                  <span className="eyebrow">02 / KOLEKSİYONLAR</span>
-                  <h2>
-                    Üç <em>seçki.</em>
-                  </h2>
+                  <h2>Koleksiyonlar</h2>
+                  <p>Arşivin üç ana hattı.</p>
                 </div>
-                <p>Doğa · Sokak · Mimari</p>
               </div>
-              <div className="collection-grid">
+              <div className="collection-index">
                 {[
                   {
                     name: "Doğa",
                     category: "Doğa",
                     ids: ["020", "012", "050"],
-                    no: "I",
                   },
                   {
                     name: "Sokak",
                     category: "Sokak",
                     ids: ["022", "073", "009"],
-                    no: "II",
                   },
                   {
                     name: "Mimari",
                     category: "Mimari",
                     ids: ["010", "103", "032"],
-                    no: "III",
                   },
-                ].map((c) => (
-                  <button
-                    className="collection"
-                    key={c.no}
-                    onClick={() => choose(c.category)}
-                  >
-                    <div className="collection-stack">
-                      {c.ids.map((id) => (
-                        <img
-                          key={id}
-                          src={photos.find((p) => p.id === id)!.thumbnail}
-                          alt=""
-                          loading="lazy"
-                        />
-                      ))}
-                      <span>{c.no}</span>
-                    </div>
-                    <div className="collection-label">
-                      <h3>{c.name}</h3>
-                      <Arrow />
-                    </div>
-                    <span className="eyebrow">
-                      {photos.filter((p) => p.category === c.category).length}{" "}
-                      KARE / {c.category}
-                    </span>
-                  </button>
-                ))}
+                ].map((c, index) => {
+                  const count = photos.filter((p) => p.category === c.category).length;
+                  return (
+                    <button
+                      className="collection-row"
+                      key={c.category}
+                      onClick={() => choose(c.category)}
+                    >
+                      <span className="collection-no">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      <span className="collection-name">{c.name}</span>
+                      <span className="collection-count">{count} KARE</span>
+                      <span className="collection-preview" aria-hidden="true">
+                        {c.ids.map((id) => (
+                          <img
+                            key={id}
+                            src={photos.find((p) => p.id === id)!.thumbnail}
+                            alt=""
+                            loading="lazy"
+                          />
+                        ))}
+                      </span>
+                      <ChevronRight
+                        className="collection-chevron"
+                        size={18}
+                        strokeWidth={1.6}
+                        aria-hidden="true"
+                      />
+                    </button>
+                  );
+                })}
               </div>
             </section>
             <section className="about" id="about">
@@ -699,7 +704,7 @@ export default function App() {
               <div className="about-copy">
                 <span className="eyebrow">03 / HAKKINDA</span>
                 <h2>
-                  Merhaba, ben <em>Arif.</em>
+                  Ben <em>arifv216.</em>
                 </h2>
                 <p>
                   Journey Notes, gezdiğim yerlerden saklamak istediğim
@@ -752,7 +757,7 @@ export default function App() {
               goHome();
               setFilter("Tümü");
               setOnlySaved(false);
-              setLimit(9);
+              setLimit(layout === "index" ? 18 : 9);
               scrollArchive();
             }}
           />

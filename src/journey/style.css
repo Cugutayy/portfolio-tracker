@@ -2759,3 +2759,416 @@ em,
     font-size:6px;
   }
 }
+
+
+/* ═════════════════════════════════════════════════════
+   JOURNEY NOTES / V4 — Apple-system controls + index-first
+   ═════════════════════════════════════════════════════ */
+:root {
+  --ui-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+  --ui-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
+}
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--ui-font);
+}
+
+.jn-icon {
+  display: block;
+  flex: 0 0 auto;
+  color: currentColor;
+}
+.jn-icon.is-compact {
+  vertical-align: -2px;
+}
+
+/* Remove the old handmade-symbol CSS from active controls. */
+.jn-line-arrow,
+.jn-diagonal-mark,
+.jn-theme-switch,
+.jn-save-mark,
+.jn-search-type {
+  display: none !important;
+}
+
+/* Familiar system-style controls */
+.icon-button,
+.theme-button {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 88%, var(--ink) 12%);
+  color: var(--ink);
+  transition:
+    background-color .18s ease,
+    transform .18s ease,
+    border-color .18s ease;
+}
+.icon-button:hover,
+.theme-button:hover {
+  background: color-mix(in srgb, var(--paper) 78%, var(--ink) 22%);
+  border-color: color-mix(in srgb, var(--ink) 28%, transparent);
+}
+.icon-button:active,
+.theme-button:active {
+  transform: scale(.94);
+}
+.theme-button {
+  width: 36px;
+}
+.header-tools {
+  gap: 10px;
+}
+.tool-divider {
+  margin: 0 2px;
+  height: 20px;
+}
+.jn-instagram-link {
+  min-height: 36px;
+  gap: 9px;
+  padding: 0 11px 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--paper) 90%, var(--ink) 10%);
+}
+.jn-instagram-link::after {
+  display: none;
+}
+.jn-instagram-copy {
+  gap: 2px;
+}
+.jn-instagram-copy strong {
+  font-family: var(--ui-font);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.jn-instagram-copy small {
+  font-family: var(--ui-font);
+  font-size: 9px;
+  letter-spacing: 0;
+}
+
+/* Bookmark controls now use the same system symbol family */
+.saved-link {
+  font-family: var(--ui-font);
+  font-size: 10px;
+  letter-spacing: 0;
+}
+.save-photo {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 2px 10px rgba(0,0,0,.04);
+}
+
+/* Hero: readable at every desktop width; no clipping. */
+.journey-profile-hero {
+  grid-template-columns: minmax(0, 61fr) minmax(430px, 39fr);
+  grid-template-rows: minmax(560px, 72vh) auto;
+  overflow: visible;
+}
+.journey-profile-intro-copy {
+  min-width: 0;
+  overflow: visible;
+  padding: clamp(44px, 5.5vw, 72px) clamp(34px, 4vw, 58px) 38px;
+}
+.journey-profile-intro-copy h1 {
+  width: 100%;
+  max-width: 9.7ch;
+  margin: clamp(38px, 6vh, 66px) 0 0;
+  font-family: "Gloock", "Iowan Old Style", Baskerville, serif !important;
+  font-size: clamp(50px, 4.55vw, 72px);
+  line-height: .96;
+  letter-spacing: -.048em;
+  text-wrap: balance;
+  overflow-wrap: normal;
+}
+.journey-profile-intro-copy h1 em {
+  display: inline-block;
+  max-width: 100%;
+  color: var(--accent);
+}
+.journey-profile-intro-copy > p {
+  margin-top: 28px;
+  max-width: 19ch;
+  font-family: var(--ui-font);
+  font-size: clamp(18px, 1.35vw, 22px);
+  line-height: 1.35;
+  letter-spacing: -.018em;
+}
+.journey-profile-enter {
+  margin-top: auto;
+  gap: 8px;
+  padding: 10px 13px 10px 15px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--ui-font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  background: color-mix(in srgb, var(--paper) 90%, var(--ink) 10%);
+}
+.journey-profile-enter:hover {
+  background: color-mix(in srgb, var(--paper) 80%, var(--ink) 20%);
+}
+
+/* Soften portrait blur: identity obscured, image still visually present. */
+.journey-profile-portrait img {
+  filter: blur(17px) saturate(.82) contrast(.96) brightness(.99);
+  transform: scale(1.08);
+}
+
+/* Headings should never crop/overlap. */
+.section-heading {
+  align-items: end;
+}
+.section-heading h2 {
+  font-size: clamp(42px, 4.4vw, 68px);
+  line-height: .98;
+  max-width: 12ch;
+  text-wrap: balance;
+}
+.story h3,
+.stories.index .story h3 {
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.stories.index .story h3 {
+  font-size: clamp(18px, 1.55vw, 24px);
+}
+
+/* Index is now the primary archive mode. */
+.stories.index {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 34px 22px;
+}
+.stories.index .story-image {
+  height: 220px;
+  padding: 11px;
+}
+.layout-button {
+  width: auto;
+  min-width: 68px;
+  padding: 0 12px;
+  border-radius: 999px;
+}
+.layout-mode-label {
+  font-family: var(--ui-font);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+/* Collections: catalog/index, not a templated three-card section. */
+.collections {
+  padding: 76px 0 72px;
+}
+.collection-grid,
+.collection-stack,
+.collection-label {
+  display: none !important;
+}
+.collection-index-head {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 28px;
+  align-items: end;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--ink);
+}
+.collection-index-head > .eyebrow {
+  align-self: start;
+  padding-top: 9px;
+}
+.collection-index-head h2 {
+  margin: 0;
+  font-family: "Gloock", "Iowan Old Style", Baskerville, serif;
+  font-size: clamp(44px, 4vw, 62px);
+  font-weight: 400;
+  line-height: .96;
+  letter-spacing: -.045em;
+}
+.collection-index-head p {
+  margin-top: 10px;
+  font-family: var(--ui-font);
+  font-size: 13px;
+  color: var(--muted);
+}
+.collection-index {
+  display: grid;
+}
+.collection-row {
+  display: grid;
+  grid-template-columns: 70px minmax(180px, .85fr) 110px minmax(260px, 1fr) 30px;
+  align-items: center;
+  min-height: 128px;
+  gap: 18px;
+  width: 100%;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  transition:
+    background-color .18s ease,
+    padding-left .25s var(--ease),
+    padding-right .25s var(--ease);
+}
+.collection-row:hover {
+  padding-left: 12px;
+  padding-right: 12px;
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+}
+.collection-no,
+.collection-count {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: .08em;
+  color: var(--muted);
+}
+.collection-name {
+  font-family: "Gloock", "Iowan Old Style", Baskerville, serif;
+  font-size: clamp(30px, 2.9vw, 46px);
+  line-height: 1;
+  letter-spacing: -.035em;
+}
+.collection-preview {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 84px;
+  overflow: hidden;
+}
+.collection-preview img {
+  width: 78px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 7px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.05);
+  transition: transform .3s var(--ease);
+}
+.collection-preview img + img {
+  margin-left: -10px;
+}
+.collection-row:hover .collection-preview img:nth-child(1) { transform: translateX(-4px); }
+.collection-row:hover .collection-preview img:nth-child(3) { transform: translateX(4px); }
+.collection-chevron {
+  justify-self: end;
+  color: var(--muted);
+  transition: transform .2s var(--ease), color .2s ease;
+}
+.collection-row:hover .collection-chevron {
+  transform: translateX(3px);
+  color: var(--ink);
+}
+
+/* About copy stays consistent with the public handle. */
+.about-copy h2 {
+  line-height: 1;
+  text-wrap: balance;
+}
+
+/* Search close control uses a standard close symbol. */
+.search-row > button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  font-size: 0;
+}
+.search-row > button:hover {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+@media (max-width: 1100px) {
+  .journey-profile-hero {
+    grid-template-columns: minmax(0, 56fr) minmax(380px, 44fr);
+  }
+  .journey-profile-intro-copy h1 {
+    font-size: clamp(46px, 5.1vw, 64px);
+  }
+  .stories.index {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .collection-row {
+    grid-template-columns: 52px minmax(150px, 1fr) 90px minmax(210px, .9fr) 24px;
+  }
+}
+
+@media (max-width: 700px) {
+  .header-tools {
+    gap: 7px;
+  }
+  .jn-instagram-link {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+  .jn-instagram-copy {
+    display: none;
+  }
+  .journey-profile-hero {
+    overflow: hidden;
+  }
+  .journey-profile-portrait img {
+    filter: blur(14px) saturate(.84) contrast(.97);
+    transform: scale(1.07);
+  }
+  .journey-profile-intro-copy h1 {
+    max-width: 9.5ch;
+    font-size: clamp(43px, 12.6vw, 60px);
+    line-height: .98;
+  }
+  .journey-profile-enter {
+    margin-top: 36px;
+  }
+  .stories.index {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 13px;
+  }
+  .stories.index .story-image {
+    height: 180px;
+  }
+  .collection-index-head {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .collection-index-head > .eyebrow {
+    padding-top: 0;
+  }
+  .collection-row {
+    grid-template-columns: 34px 1fr 22px;
+    min-height: 92px;
+    gap: 12px;
+  }
+  .collection-count {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .collection-preview {
+    display: none;
+  }
+  .collection-chevron {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+  .collection-name {
+    font-size: 30px;
+  }
+}
