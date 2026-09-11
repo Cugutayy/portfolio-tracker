@@ -37,17 +37,17 @@ function Picture({
   return (
     <img
       className={className}
-      src={photo.thumbnail}
+      src={photo.src}
       srcSet={
         photo.thumbnail === photo.src
           ? undefined
           : `${photo.thumbnail} ${photo.smallWidth || 640}w, ${photo.src} ${photo.largeWidth || Math.min(photo.width, 1440)}w`
       }
       sizes={sizes}
-      alt={photo.title}
+      alt={photo.title || photo.place || "Seyahat fotoğrafı"}
       width={photo.width}
       height={photo.height}
-      loading={priority ? "eager" : "lazy"}
+      loading={priority ? "eager" : "lazy"}\n      decoding="async"
       fetchPriority={priority ? "high" : "auto"}
     />
   );
@@ -205,7 +205,7 @@ export default function App() {
   );
 
   const hero = all.find((photo) => photo.id === "108") || all[0];
-  const heroPlace = "Frig Vadisi, Afyonkarahisar";
+  const heroPlace = "Frig Vadisi";
   const editorialIds = ["010", "012", "055"];
   const editorial = editorialIds
     .map((id) => all.find((photo) => photo.id === id))
@@ -341,7 +341,7 @@ export default function App() {
 
         <nav className="jn-nav" aria-label="Journey Notes">
           <a href="#edit">Seçki</a>
-          <a href="#places">Yerler</a>
+          <a href="#places">Kategoriler</a>
           <a href="#archive">Arşiv</a>
           <a href="#about">Hakkında</a>
         </nav>
@@ -349,7 +349,7 @@ export default function App() {
         {selected ? (
           <main className="jn-reader" ref={readerRef} tabIndex={-1}>
             <button className="jn-back" onClick={goHome}>
-              <Arrow back /> Deftere dön
+              <Arrow back /> Geri dön
             </button>
 
             <header className="jn-reader-heading">
@@ -495,10 +495,10 @@ export default function App() {
               <div className="jn-places-inner">
                 <div className="jn-section-head is-dark">
                   <div>
-                    <span className="jn-kicker">PLACES · 02</span>
-                    <h2>Bir yere göre bak.</h2>
+                    <span className="jn-kicker">CATEGORIES · 02</span>
+                    <h2>Kategoriler.</h2>
                   </div>
-                  <p>Arşivi konuya göre daralt.</p>
+                  <p>Arşivi görsel türüne göre daralt.</p>
                 </div>
 
                 <div className="jn-place-list">
