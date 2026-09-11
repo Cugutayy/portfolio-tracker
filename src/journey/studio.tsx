@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { categories, type Photo } from "./data";
+import { loadStudioJourneyPhotos, saveJourneyPhotos, signOutJourney } from "./supabase";
 import "./studio.css";
 
 function database(): Promise<IDBDatabase> {
@@ -47,9 +48,11 @@ const fileData = (file: File) =>
 export default function Studio({
   onClose,
   onPreview,
+  onSignedOut,
 }: {
   onClose: () => void;
   onPreview: (photos: Photo[]) => void;
+  onSignedOut: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const picker = useRef<HTMLInputElement>(null);
@@ -69,18 +72,28 @@ export default function Studio({
     const old = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     let alive = true;
-    readDrafts()
-      .then((rows) => {
-        if (alive) {
-          setItems(rows);
-          setSelected(rows[0]?.id || "");
+    loadStudioJourneyPhotos()
+      .then(async (rows) => {
+        if (!alive) return;
+        const next = rows.length ? rows : await readDrafts().catch(() => []);
+        if (!alive) return;
+        setItems(next);
+        setSelected(next[0]?.id || "");
+        if (rows.length) {
+          await writeDrafts(rows).catch(() => {});
+          setMessage("Supabase taslakları yüklendi.");
         }
       })
-      .catch(() => {
-        if (alive)
-          setMessage(
-            "Tarayıcı depolaması açılamadı. Taslaklarını indirme düğmesiyle yedekleyebilirsin.",
-          );
+      .catch(async () => {
+        const local = await readDrafts().catch(() => []);
+        if (!alive) return;
+        setItems(local);
+        setSelected(local[0]?.id || "");
+        setMessage(
+          local.length
+            ? "Bulut taslakları açılamadı; bu cihazdaki yerel kopya yüklendi."
+            : "Bulut taslakları açılamadı.",
+        );
       })
       .finally(() => {
         if (alive) setReady(true);
@@ -107,13 +120,36 @@ export default function Studio({
   const save = async () => {
     setBusy(true);
     try {
-      await writeDrafts(items);
+      const saved = await saveJourneyPhotos(items, false);
+      await writeDrafts(saved).catch(() => {});
+      setItems(saved);
+      setSelected((current) => current || saved[0]?.id || "");
       setDirty(false);
-      setMessage("Taslaklar bu tarayıcıya kaydedildi.");
-    } catch {
+      setMessage("Taslaklar Supabase veritabanına kaydedildi.");
+    } catch (error) {
       setMessage(
-        "Kaydedilemedi. Depolama alanı dolu veya kapalı olabilir; taslaklarını indirerek yedekleyebilirsin.",
+        error instanceof Error
+          ? error.message
+          : "Buluta kaydedilemedi. Yerel taslağı yedek olarak saklıyorum.",
       );
+      await writeDrafts(items).catch(() => {});
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const publish = async () => {
+    if (!items.length) return;
+    setBusy(true);
+    try {
+      const saved = await saveJourneyPhotos(items, true);
+      await writeDrafts(saved).catch(() => {});
+      setItems(saved);
+      setDirty(false);
+      setMessage("Yayınlandı. Fotoğraflar artık Supabase üzerinden sitede görünebilir.");
+      onPreview(saved);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Yayınlama başarısız.");
     } finally {
       setBusy(false);
     }
@@ -258,16 +294,27 @@ export default function Studio({
               Fotoğraf <em>ekle.</em>
             </h2>
           </div>
-          <button
-            disabled={busy}
-            onClick={() => void close()}
-            aria-label="Stüdyoyu kapat"
-          >
-            KAPAT
-          </button>
+          <div className="studio-header-actions">
+            <button
+              disabled={busy}
+              onClick={async () => {
+                await signOutJourney();
+                onSignedOut();
+              }}
+            >
+              ÇIKIŞ
+            </button>
+            <button
+              disabled={busy}
+              onClick={() => void close()}
+              aria-label="Stüdyoyu kapat"
+            >
+              KAPAT
+            </button>
+          </div>
         </header>
         <p className="studio-notice">
-          Fotoğraf seç, bilgilerini ekle ve önizle. Taslaklar yalnızca bu cihazda saklanır.
+          Fotoğraf seç, bilgilerini ekle, Supabase’e kaydet veya yayınla. Yerel kopya sadece yedek olarak tutulur.
         </p>
         <div className="studio-actions">
           <button
@@ -301,6 +348,13 @@ export default function Studio({
             }}
           >
             Önizle
+          </button>
+          <button
+            className="studio-publish"
+            disabled={!ready || busy || !items.length}
+            onClick={() => void publish()}
+          >
+            Yayınla
           </button>
           <input disabled={busy}
             ref={picker}
@@ -492,7 +546,7 @@ export default function Studio({
         )}
         <p className="studio-status" role="status">
           {message ||
-            "Taslaklar bu cihazda saklanır."}
+            "Taslaklar Supabase veritabanında saklanır."}
         </p>
       </div>
     </dialog>
