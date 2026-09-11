@@ -556,39 +556,12 @@ a { color: inherit; text-decoration: none; }
 }
 
 
-/* HUB / readable project index — 2026-09-11
-   Keep Botticelli visible, but give the project area one calm contrast field.
-   This removes the heavy glow/shadow treatment that made the type feel fuzzy. */
+/* HUB / project cards — 2026-09-11
+   Contrast belongs to the cards only; the surrounding Botticelli artwork stays untouched. */
 #projects {
-  position: relative;
-  isolation: isolate;
   --project-ink: #fffdf8;
-  --project-muted: rgba(255, 251, 244, .86);
-  --project-rule: rgba(255, 248, 239, .30);
-}
-
-/* One continuous veil is calmer than putting a heavy glass box behind every card. */
-#projects::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  top: -30px;
-  bottom: -34px;
-  left: 50%;
-  width: 100vw;
-  transform: translateX(-50%);
-  pointer-events: none;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(9, 7, 6, .25) 0%,
-      rgba(9, 7, 6, .50) 9%,
-      rgba(9, 7, 6, .53) 54%,
-      rgba(9, 7, 6, .48) 91%,
-      rgba(9, 7, 6, .24) 100%
-    );
-  backdrop-filter: blur(1.5px) saturate(.86);
-  -webkit-backdrop-filter: blur(1.5px) saturate(.86);
+  --project-muted: rgba(255, 251, 244, .88);
+  --project-rule: rgba(229, 226, 221, .42);
 }
 
 #projects .ed-card,
@@ -597,37 +570,34 @@ a { color: inherit; text-decoration: none; }
   --ink: var(--project-ink);
   --muted: var(--project-muted);
   --rule: var(--project-rule);
-  background: rgba(9, 7, 6, .10) !important;
-  border: 0 !important;
-  border-top: 1px solid var(--project-rule) !important;
-  border-bottom: 1px solid rgba(255, 248, 239, .11) !important;
-  box-shadow: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
+  background: rgba(35, 35, 35, .34) !important;
+  border: 1px solid rgba(220, 220, 220, .26) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .09) !important;
+  backdrop-filter: blur(2px) saturate(.92) !important;
+  -webkit-backdrop-filter: blur(2px) saturate(.92) !important;
 }
 
 #projects .ed-card {
-  padding: 20px 8px 22px !important;
+  padding: 20px 16px 22px !important;
 }
 
 #projects .lead-card {
-  padding: 10px 8px 14px !important;
+  padding: 16px !important;
 }
 
 #projects .journey-card {
-  padding: 14px 6px 18px !important;
+  padding: 14px !important;
 }
 
 #projects .ed-card:hover,
 #projects .lead-card:hover,
 #projects .journey-card:hover {
-  background: rgba(9, 7, 6, .17) !important;
-  border-top-color: rgba(255, 250, 242, .58) !important;
-  border-bottom-color: rgba(255, 250, 242, .20) !important;
-  box-shadow: none !important;
+  background: rgba(35, 35, 35, .44) !important;
+  border-color: rgba(236, 236, 236, .40) !important;
+  box-shadow: 0 11px 28px rgba(0, 0, 0, .13) !important;
 }
 
-/* Crisp type: stable contrast comes from the section veil, not oversized text halos. */
 #projects .ed-card h3,
 #projects .lead-card h3,
 #projects .journey-card-copy h3,
@@ -653,16 +623,16 @@ a { color: inherit; text-decoration: none; }
   color: var(--project-muted) !important;
 }
 
-/* Keep the tiny charts readable without making them glow. */
 #projects .ed-card svg,
 #projects .lead-card svg {
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .18));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .16));
 }
 
-/* Privacy treatment requested for the Journey Notes project-card portrait only. */
+/* Journey Notes card portrait stays intentionally blurred. */
 #projects .journey-card-portrait {
   overflow: hidden;
-  background: rgba(9, 7, 6, .18) !important;
+  background: rgba(20, 20, 20, .24) !important;
+  border-radius: 5px;
 }
 #projects .journey-card-portrait img,
 #projects .journey-card:hover .journey-card-portrait img {
@@ -670,17 +640,17 @@ a { color: inherit; text-decoration: none; }
   transform: scale(1.10) !important;
 }
 
-/* Locked projects remain readable; access state stays a compact editorial badge. */
+/* Restricted projects keep a compact access badge instead of a full-card veil. */
 #projects .ed-card[style*="position: relative"] > div[aria-hidden] {
   filter: none !important;
   opacity: 1 !important;
 }
 
 #projects .ed-card[style*="position: relative"] > div[style*="position: absolute"] {
-  inset: auto 8px 14px auto !important;
+  inset: auto 12px 12px auto !important;
   width: auto !important;
   height: auto !important;
-  max-width: calc(100% - 16px) !important;
+  max-width: calc(100% - 24px) !important;
   flex-direction: row !important;
   align-items: center !important;
   justify-content: flex-end !important;
@@ -718,26 +688,15 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media (max-width: 700px) {
-  #projects::before {
-    background:
-      linear-gradient(
-        180deg,
-        rgba(9, 7, 6, .34) 0%,
-        rgba(9, 7, 6, .58) 10%,
-        rgba(9, 7, 6, .58) 90%,
-        rgba(9, 7, 6, .32) 100%
-      );
-    backdrop-filter: blur(1px) saturate(.84);
-    -webkit-backdrop-filter: blur(1px) saturate(.84);
-  }
-
   #projects .ed-card,
   #projects .lead-card,
   #projects .journey-card {
-    background: rgba(9, 7, 6, .13) !important;
+    background: rgba(35, 35, 35, .40) !important;
+    backdrop-filter: blur(1.5px) saturate(.9) !important;
+    -webkit-backdrop-filter: blur(1.5px) saturate(.9) !important;
   }
 
-  #projects .ed-card { padding-inline: 5px !important; }
-  #projects .lead-card { padding-inline: 5px !important; }
-  #projects .journey-card { padding-inline: 3px !important; }
+  #projects .ed-card { padding: 17px 12px 19px !important; }
+  #projects .lead-card { padding: 13px 12px !important; }
+  #projects .journey-card { padding: 12px !important; }
 }
