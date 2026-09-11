@@ -1062,7 +1062,7 @@ export default function App() {
                           {(photo.title || photo.place) && (
                             <h3>{photo.title || photo.place}</h3>
                           )}
-                          {photo.summary && <p>{photo.summary}</p>
+                          {photo.summary && <p>{photo.summary}</p>}
                         </div>
                       </button>
                     </article>
