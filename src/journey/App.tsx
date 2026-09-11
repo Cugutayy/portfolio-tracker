@@ -194,7 +194,7 @@ export default function App() {
   const origin = useRef<HTMLElement | null>(null);
   const originNote = useRef("");
   const all = Array.from(
-    new Map([...drafts, ...remotePhotos, ...photos].map((p) => [p.id, p])).values(),
+    new Map([...photos, ...remotePhotos, ...drafts].map((p) => [p.id, p])).values(),
   );
   const selected = all.find((p) => route === `#note=${p.id}`);
   const filtered = all.filter(
