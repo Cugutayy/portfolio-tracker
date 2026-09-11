@@ -354,3 +354,26 @@
 @media (max-width:700px) {
   .studio-workspace { grid-template-columns:1fr; }
 }
+
+
+/* Supabase-backed studio controls */
+.studio-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.studio-header-actions button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-family: var(--ui-font, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .08em;
+}
+.studio-publish {
+  background: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: #fff !important;
+}
