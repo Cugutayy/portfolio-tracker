@@ -29,14 +29,23 @@ type JourneyRow = {
   category: string;
   image_url: string;
   thumbnail_url: string | null;
+  original_url?: string | null;
   width: number;
   height: number;
+  display_width?: number | null;
+  thumbnail_width?: number | null;
   position: number;
   published: boolean;
   file_hash?: string | null;
   storage_path?: string | null;
+  display_path?: string | null;
+  thumbnail_path?: string | null;
   original_filename?: string | null;
   taken_at?: string | null;
+  mime_type?: string | null;
+  byte_size?: number | null;
+  published_at?: string | null;
+  deleted_at?: string | null;
 };
 
 function saveSession(session: JourneySession | null) {
@@ -143,17 +152,27 @@ function rowToPhoto(row: JourneyRow): Photo {
     id: row.id,
     src: row.image_url,
     thumbnail: row.thumbnail_url || row.image_url,
-    title: row.title,
+    originalSrc: row.original_url || row.image_url,
+    title: row.title || "",
     summary: row.summary || "",
     body: Array.isArray(row.body) ? row.body : [],
     place: row.place || "",
-    category: row.category || "Doğa",
+    category: row.category || "Diğer",
     width: Number(row.width || 1),
     height: Number(row.height || 1),
+    smallWidth: row.thumbnail_width ? Number(row.thumbnail_width) : undefined,
+    largeWidth: row.display_width ? Number(row.display_width) : undefined,
     fileHash: row.file_hash || undefined,
     storagePath: row.storage_path || undefined,
+    displayPath: row.display_path || undefined,
+    thumbnailPath: row.thumbnail_path || undefined,
     originalFilename: row.original_filename || undefined,
     takenAt: row.taken_at || undefined,
+    mimeType: row.mime_type || undefined,
+    byteSize: row.byte_size == null ? undefined : Number(row.byte_size),
+    published: Boolean(row.published),
+    publishedAt: row.published_at || undefined,
+    deletedAt: row.deleted_at || undefined,
   };
 }
 
@@ -170,10 +189,13 @@ async function rest(path: string, init: RequestInit = {}, accessToken?: string) 
   });
 }
 
+const journeySelect =
+  "id,title,summary,body,place,category,image_url,thumbnail_url,original_url,width,height,display_width,thumbnail_width,position,published,file_hash,storage_path,display_path,thumbnail_path,original_filename,taken_at,mime_type,byte_size,published_at,deleted_at";
+
 export async function loadPublishedJourneyPhotos(): Promise<Photo[]> {
   if (!supabaseConfigured) return [];
   const response = await rest(
-    "journey_photos?select=id,title,summary,body,place,category,image_url,thumbnail_url,width,height,position,published,file_hash,storage_path,original_filename,taken_at&published=eq.true&order=position.asc,created_at.desc",
+    `journey_photos?select=${journeySelect}&published=eq.true&deleted_at=is.null&order=position.asc,created_at.asc`,
   );
   if (!response.ok) return [];
   return (await response.json()).map(rowToPhoto);
@@ -183,7 +205,7 @@ export async function loadStudioJourneyPhotos(): Promise<Photo[]> {
   const session = await getJourneySession();
   if (!session) throw new Error("Oturum bulunamadı.");
   const response = await rest(
-    "journey_photos?select=id,title,summary,body,place,category,image_url,thumbnail_url,width,height,position,published,file_hash,storage_path,original_filename,taken_at&order=position.asc,created_at.asc",
+    `journey_photos?select=${journeySelect}&deleted_at=is.null&order=position.asc,created_at.asc`,
     {},
     session.access_token,
   );
@@ -205,115 +227,182 @@ function extensionFor(mime: string) {
   if (mime === "image/png") return "png";
   if (mime === "image/webp") return "webp";
   if (mime === "image/avif") return "avif";
+  if (mime === "image/heic") return "heic";
+  if (mime === "image/heif") return "heif";
   return "jpg";
 }
 
-export async function uploadJourneyFile(
-  file: File,
+function publicStorageUrl(path: string) {
+  return `${baseUrl}/storage/v1/object/public/journey-photos/${path}`;
+}
+
+async function uploadBlob(
+  blob: Blob,
+  path: string,
+  session: JourneySession,
+  contentType: string,
+) {
+  let lastError = "";
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetch(
+        `${baseUrl}/storage/v1/object/journey-photos/${path}`,
+        {
+          method: "POST",
+          headers: {
+            apikey: anonKey,
+            Authorization: `Bearer ${session.access_token}`,
+            "content-type": contentType,
+            "x-upsert": "true",
+            "cache-control": "31536000",
+          },
+          body: blob,
+        },
+      );
+      if (response.ok) return publicStorageUrl(path);
+
+      const detail = await response.text().catch(() => "");
+      lastError = detail || `Storage HTTP ${response.status}`;
+      if (response.status < 500 && response.status !== 429) break;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : "Ağ hatası";
+    }
+
+    if (attempt < 2) {
+      await new Promise((resolve) => setTimeout(resolve, 900 * 2 ** attempt));
+    }
+  }
+
+  throw new Error(lastError || "Fotoğraf Storage alanına yüklenemedi.");
+}
+
+export async function uploadJourneyAssets(
+  original: File | Blob,
+  display: Blob,
+  thumbnail: Blob,
   photoId: string,
-  fileHash?: string,
+  originalMime: string,
 ) {
   const session = await getJourneySession();
   if (!session) throw new Error("Oturum süresi doldu. Yeniden giriş yap.");
 
-  const ext = extensionFor(file.type || "image/jpeg");
-  const storagePath = `${session.user.id}/${photoId}/original.${ext}`;
-  const response = await fetch(
-    `${baseUrl}/storage/v1/object/journey-photos/${storagePath}`,
-    {
-      method: "POST",
-      headers: {
-        apikey: anonKey,
-        Authorization: `Bearer ${session.access_token}`,
-        "content-type": file.type || "image/jpeg",
-        "x-upsert": "true",
-        "cache-control": "31536000",
-      },
-      body: file,
-    },
+  const root = `${session.user.id}/${photoId}`;
+  const originalPath = `${root}/original.${extensionFor(originalMime)}`;
+  const displayPath = `${root}/display.webp`;
+  const thumbnailPath = `${root}/thumb.webp`;
+
+  const originalUrl = await uploadBlob(
+    original,
+    originalPath,
+    session,
+    originalMime || "image/jpeg",
+  );
+  const imageUrl = await uploadBlob(
+    display,
+    displayPath,
+    session,
+    "image/webp",
+  );
+  const thumbnailUrl = await uploadBlob(
+    thumbnail,
+    thumbnailPath,
+    session,
+    "image/webp",
   );
 
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(detail || "Fotoğraf Storage alanına yüklenemedi.");
-  }
-
   return {
-    url: `${baseUrl}/storage/v1/object/public/journey-photos/${storagePath}`,
-    storagePath,
+    originalUrl,
+    imageUrl,
+    thumbnailUrl,
+    storagePath: originalPath,
+    displayPath,
+    thumbnailPath,
   };
 }
 
-async function uploadDataImage(dataUrl: string, photoId: string, session: JourneySession) {
+async function uploadDataImage(
+  dataUrl: string,
+  path: string,
+  session: JourneySession,
+) {
   const { blob, mime } = dataUrlToBlob(dataUrl);
-  const path = `${session.user.id}/${photoId}.${extensionFor(mime)}`;
-  const response = await fetch(`${baseUrl}/storage/v1/object/journey-photos/${path}`, {
-    method: "POST",
-    headers: {
-      apikey: anonKey,
-      Authorization: `Bearer ${session.access_token}`,
-      "content-type": mime,
-      "x-upsert": "true",
-      "cache-control": "3600",
-    },
-    body: blob,
-  });
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(detail || "Fotoğraf yüklenemedi.");
-  }
-  return `${baseUrl}/storage/v1/object/public/journey-photos/${path}`;
+  return uploadBlob(blob, path, session, mime);
 }
 
-export async function saveJourneyPhotos(items: Photo[], published: boolean) {
+type SaveJourneyOptions = {
+  publishAll?: boolean;
+  removedIds?: string[];
+};
+
+export async function saveJourneyPhotos(
+  items: Photo[],
+  options: SaveJourneyOptions = {},
+) {
   const session = await getJourneySession();
   if (!session) throw new Error("Oturum süresi doldu. Yeniden giriş yap.");
-
-  const existingResponse = await rest(
-    "journey_photos?select=id,storage_path&order=position.asc",
-    {},
-    session.access_token,
-  );
-  const existing = existingResponse.ok
-    ? ((await existingResponse.json()) as Array<{
-        id: string;
-        storage_path?: string | null;
-      }>)
-    : [];
 
   const rows = [];
   for (let index = 0; index < items.length; index += 1) {
     const item = items[index];
     let imageUrl = item.src;
     let thumbnailUrl = item.thumbnail;
+    let originalUrl = item.originalSrc || item.src;
     let storagePath = item.storagePath;
+    let displayPath = item.displayPath;
+    let thumbnailPath = item.thumbnailPath;
 
-    if (item.src.startsWith("data:")) {
-      imageUrl = await uploadDataImage(item.src, item.id, session);
-      thumbnailUrl = imageUrl;
-      storagePath = `${session.user.id}/${item.id}.${extensionFor(
-        item.src.match(/^data:([^;,]+)/)?.[1] || "image/jpeg",
-      )}`;
+    const root = `${session.user.id}/${item.id}`;
+
+    if (originalUrl.startsWith("data:")) {
+      const mime =
+        item.mimeType ||
+        originalUrl.match(/^data:([^;,]+)/)?.[1] ||
+        "image/jpeg";
+      storagePath = `${root}/original.${extensionFor(mime)}`;
+      originalUrl = await uploadDataImage(originalUrl, storagePath, session);
+    }
+
+    if (imageUrl.startsWith("data:")) {
+      displayPath = `${root}/display.webp`;
+      imageUrl = await uploadDataImage(imageUrl, displayPath, session);
+    }
+
+    if (thumbnailUrl.startsWith("data:")) {
+      thumbnailPath = `${root}/thumb.webp`;
+      thumbnailUrl = await uploadDataImage(
+        thumbnailUrl,
+        thumbnailPath,
+        session,
+      );
     }
 
     rows.push({
       id: item.id,
       owner_id: session.user.id,
-      title: item.title.trim(),
+      title: (item.title || "").trim(),
       summary: item.summary || "",
       body: item.body || [],
       place: item.place || "",
       category: item.category || "Diğer",
       image_url: imageUrl,
       thumbnail_url: thumbnailUrl || imageUrl,
+      original_url: originalUrl || imageUrl,
       width: item.width,
       height: item.height,
+      display_width: item.largeWidth || null,
+      thumbnail_width: item.smallWidth || null,
       position: index,
-      published,
+      published: options.publishAll ? true : Boolean(item.published),
       file_hash: item.fileHash || null,
       storage_path: storagePath || null,
+      display_path: displayPath || null,
+      thumbnail_path: thumbnailPath || null,
       original_filename: item.originalFilename || null,
       taken_at: item.takenAt || null,
+      mime_type: item.mimeType || null,
+      byte_size: item.byteSize ?? null,
+      processing_version: 2,
+      deleted_at: null,
       updated_at: new Date().toISOString(),
     });
   }
@@ -324,7 +413,9 @@ export async function saveJourneyPhotos(items: Photo[], published: boolean) {
       "journey_photos?on_conflict=id",
       {
         method: "POST",
-        headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+        headers: {
+          Prefer: "resolution=merge-duplicates,return=representation",
+        },
         body: JSON.stringify(rows),
       },
       session.access_token,
@@ -338,30 +429,20 @@ export async function saveJourneyPhotos(items: Photo[], published: boolean) {
     savedRows = data as JourneyRow[];
   }
 
-  const keep = new Set(items.map((item) => item.id));
-  const removed = existing.filter((row) => !keep.has(row.id));
-
-  for (const row of removed) {
+  for (const id of Array.from(new Set(options.removedIds || []))) {
     const response = await rest(
-      `journey_photos?id=eq.${encodeURIComponent(row.id)}`,
-      { method: "DELETE" },
+      `journey_photos?id=eq.${encodeURIComponent(id)}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          deleted_at: new Date().toISOString(),
+          published: false,
+        }),
+      },
       session.access_token,
     );
     if (!response.ok) {
-      throw new Error("Silinen fotoğraf veritabanından kaldırılamadı.");
-    }
-
-    if (row.storage_path) {
-      await fetch(
-        `${baseUrl}/storage/v1/object/journey-photos/${row.storage_path}`,
-        {
-          method: "DELETE",
-          headers: {
-            apikey: anonKey,
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        },
-      ).catch(() => null);
+      throw new Error("Silinen fotoğraf güvenli çöp alanına taşınamadı.");
     }
   }
 
