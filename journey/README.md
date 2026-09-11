@@ -15,11 +15,20 @@ Warm paper, terracotta accents and sage note cards; Instrument Serif headlines w
 - The first 18 titles and short notes are editorial draft copy written for this design, not quotations from Instagram captions. Other entries use neutral archive numbers. Capture dates, camera metadata and unverified place names are not invented.
 - `smallWidth` and `largeWidth` record actual derivative widths for correct `srcset` descriptors.
 
-## Draft studio
+## Studio / Supabase
 
-The footer opens a local draft studio. It supports multiple JPG/PNG/WebP files, title/category/place/summary/body editing, ordering, removal with undo, IndexedDB persistence, JSON backup with embedded images and a local blog preview. Limits are 20 files, 25 MB per file, 50 megapixels per file and 100 MB of combined source data.
+The footer opens a private photo studio protected by Supabase email/password authentication. The studio supports multiple JPG/PNG/WebP files, title/category/place/summary/body editing, ordering, removal with undo, preview, cloud draft saving and publishing. IndexedDB remains only as a local recovery copy.
 
-**The studio does not publish to the server.** Its scope is deliberately explained in the UI. Browser storage is device and origin specific. JSON backup is currently export only. Server publishing, authentication, asset storage and an import/restore workflow are subsequent work, not implemented features.
+Persistent content lives in the `journey_photos` table and uploaded assets in the `journey-photos` Storage bucket. Row Level Security restricts writes to the authenticated owner while anonymous visitors can read only rows marked `published = true`. The migration is in `supabase/migrations/20260911_journey_studio.sql`.
+
+Required Vite environment variables:
+
+```sh
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+```
+
+Use the public/anon key only. Never expose a Supabase `service_role` key in the browser bundle. Create the administrator account in Supabase Auth and keep public sign-up disabled if this is intended as a single-owner studio.
 
 ## Development
 
