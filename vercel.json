@@ -1,0 +1,37 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/journey/",
+      "has": [
+        {
+          "type": "host",
+          "value": "journeynotess.com"
+        }
+      ]
+    },
+    {
+      "source": "/",
+      "destination": "/journey/",
+      "has": [
+        {
+          "type": "host",
+          "value": "www.journeynotess.com"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "destination": "https://journeynotess.com/$1",
+      "permanent": true,
+      "has": [
+        {
+          "type": "host",
+          "value": "www.journeynotess.com"
+        }
+      ]
+    }
+  ]
+}
