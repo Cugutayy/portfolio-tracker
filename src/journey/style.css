@@ -2012,3 +2012,464 @@ select:focus-visible {
     gap: 38px !important;
   }
 }
+
+
+/* JOURNEY V10 — exhibition + album architecture */
+.jn-exhibition {
+  padding: 0 0 clamp(105px, 10vw, 150px);
+}
+
+.jn-exhibition-flow {
+  display: grid;
+  gap: clamp(92px, 11vw, 170px);
+  margin-top: clamp(42px, 5vw, 72px);
+}
+
+.jn-story {
+  display: grid;
+  grid-template-columns: minmax(0, 1.38fr) minmax(300px, .62fr);
+  gap: clamp(46px, 7vw, 110px);
+  align-items: center;
+}
+
+.jn-story.is-reverse {
+  grid-template-columns: minmax(300px, .62fr) minmax(0, 1.38fr);
+}
+
+.jn-story.is-reverse .jn-story-media {
+  order: 2;
+}
+
+.jn-story.is-reverse .jn-story-copy {
+  order: 1;
+}
+
+.jn-story-media {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #ded9cf;
+}
+
+.jn-story.is-landscape .jn-story-media {
+  aspect-ratio: 4 / 3;
+}
+
+.jn-story-media img,
+.jn-panorama img,
+.jn-diptych-image img,
+.jn-category-image img,
+.jn-album-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .7s var(--ease), filter .3s ease;
+}
+
+.jn-story-media:hover img,
+.jn-panorama button:hover img,
+.jn-diptych button:hover img,
+.jn-category-strip button:hover img,
+.jn-album-card button:hover img {
+  transform: scale(1.012);
+  filter: saturate(.985) contrast(1.01);
+}
+
+.jn-story-copy {
+  max-width: 460px;
+}
+
+.jn-story-copy .jn-kicker {
+  color: var(--accent);
+}
+
+.jn-story-copy h3 {
+  margin-top: 15px;
+  font: 400 clamp(38px, 4.2vw, 64px)/.98 "Source Serif 4", Georgia, serif;
+  letter-spacing: -.038em;
+}
+
+.jn-story-copy p {
+  margin-top: 18px;
+  max-width: 36ch;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.72;
+}
+
+.jn-story-copy p.is-titleless {
+  margin-top: 20px;
+  color: var(--ink);
+  font: 400 clamp(28px, 3vw, 43px)/1.08 "Source Serif 4", Georgia, serif;
+  letter-spacing: -.025em;
+}
+
+.jn-story-copy .jn-text-link {
+  margin-top: 24px;
+  font: 500 8px/1 "IBM Plex Mono", monospace;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.jn-panorama > button {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #ded9cf;
+}
+
+.jn-panorama-caption {
+  display: grid;
+  grid-template-columns: 1fr minmax(260px, .48fr);
+  gap: 32px;
+  padding-top: 14px;
+  border-top: 1px solid transparent;
+}
+
+.jn-panorama-caption p {
+  justify-self: end;
+  max-width: 38ch;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.jn-diptych {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(24px, 3.2vw, 50px);
+  align-items: start;
+}
+
+.jn-diptych article:nth-child(2) {
+  padding-top: clamp(70px, 8vw, 120px);
+}
+
+.jn-diptych button {
+  width: 100%;
+  text-align: left;
+}
+
+.jn-diptych-image {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #ded9cf;
+}
+
+.jn-diptych-copy {
+  padding-top: 13px;
+}
+
+.jn-diptych-copy .jn-kicker {
+  color: var(--muted);
+}
+
+.jn-diptych-copy h3 {
+  margin-top: 9px;
+  font: 400 clamp(25px, 2.4vw, 36px)/1 "Source Serif 4", Georgia, serif;
+  letter-spacing: -.03em;
+}
+
+.jn-diptych-copy p {
+  margin-top: 8px;
+  max-width: 42ch;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.jn-album-teaser {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding: clamp(86px, 9vw, 132px) max(24px, calc((100vw - 1380px) / 2));
+  background: #e8e2d7;
+}
+
+.jn-album-teaser-head {
+  display: grid;
+  grid-template-columns: 1fr minmax(280px, .48fr);
+  gap: 42px;
+  align-items: end;
+  padding-bottom: 26px;
+  border-bottom: 1px solid var(--ink);
+}
+
+.jn-album-teaser-head h2 {
+  margin-top: 11px;
+  font: 400 clamp(42px, 4.5vw, 68px)/.96 "Source Serif 4", Georgia, serif;
+  letter-spacing: -.04em;
+}
+
+.jn-album-teaser-head > div:last-child {
+  justify-self: end;
+  max-width: 38ch;
+}
+
+.jn-album-teaser-head p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.jn-album-teaser-head button {
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid currentColor;
+  font: 500 8px/1 "IBM Plex Mono", monospace;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.jn-category-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 34px;
+}
+
+.jn-category-strip > button {
+  text-align: left;
+}
+
+.jn-category-image {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #d6d0c5;
+}
+
+.jn-category-strip > button > span {
+  display: block;
+  margin-top: 11px;
+  font: 500 10px/1 "IBM Plex Mono", monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.jn-category-strip small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.jn-album-page {
+  padding: clamp(48px, 6vw, 82px) 0 120px;
+}
+
+.jn-album-head {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 36px;
+  align-items: start;
+  padding-bottom: clamp(44px, 6vw, 76px);
+  border-bottom: 1px solid var(--ink);
+}
+
+.jn-album-head > div {
+  max-width: 760px;
+}
+
+.jn-album-head h1 {
+  margin-top: 15px;
+  font: 400 clamp(64px, 7vw, 108px)/.88 "Source Serif 4", Georgia, serif;
+  letter-spacing: -.055em;
+}
+
+.jn-album-head p {
+  margin-top: 22px;
+  max-width: 48ch;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.jn-album-controls {
+  min-height: 74px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.jn-album-count {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 0 4px;
+  color: var(--muted);
+  font: 500 8px/1 "IBM Plex Mono", monospace;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+
+.jn-album-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 42px 20px;
+  margin-top: 28px;
+}
+
+.jn-album-card {
+  min-width: 0;
+  content-visibility: auto;
+  contain-intrinsic-size: 420px 560px;
+}
+
+.jn-album-card > button {
+  width: 100%;
+  text-align: left;
+}
+
+.jn-album-image {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: #dfdad0;
+}
+
+.jn-album-meta {
+  margin-top: 9px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font: 500 7px/1.25 "IBM Plex Mono", monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.jn-album-card h2 {
+  margin-top: 7px;
+  font: 400 clamp(17px, 1.3vw, 22px)/1.03 "Source Serif 4", Georgia, serif;
+  letter-spacing: -.025em;
+}
+
+.jn-reader-image {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 1080px) {
+  .jn-story,
+  .jn-story.is-reverse {
+    grid-template-columns: minmax(0, 1.18fr) minmax(270px, .82fr);
+    gap: 48px;
+  }
+
+  .jn-category-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 34px 18px;
+  }
+
+  .jn-album-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .jn-exhibition-flow {
+    gap: 82px;
+  }
+
+  .jn-story,
+  .jn-story.is-reverse {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .jn-story.is-reverse .jn-story-media,
+  .jn-story.is-reverse .jn-story-copy {
+    order: initial;
+  }
+
+  .jn-story-media,
+  .jn-story.is-landscape .jn-story-media {
+    aspect-ratio: 4 / 5;
+  }
+
+  .jn-story-copy {
+    max-width: none;
+  }
+
+  .jn-story-copy h3 {
+    font-size: clamp(36px, 11vw, 52px);
+  }
+
+  .jn-panorama > button {
+    aspect-ratio: 4 / 5;
+  }
+
+  .jn-panorama-caption {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .jn-panorama-caption p {
+    justify-self: start;
+  }
+
+  .jn-diptych {
+    grid-template-columns: 1fr;
+    gap: 56px;
+  }
+
+  .jn-diptych article:nth-child(2) {
+    padding-top: 0;
+  }
+
+  .jn-album-teaser {
+    padding-inline: 18px;
+  }
+
+  .jn-album-teaser-head {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .jn-album-teaser-head > div:last-child {
+    justify-self: start;
+  }
+
+  .jn-album-head {
+    grid-template-columns: 1fr;
+    gap: 42px;
+  }
+
+  .jn-album-head h1 {
+    font-size: clamp(58px, 17vw, 84px);
+  }
+
+  .jn-album-controls {
+    min-height: 96px;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .jn-album-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 12px;
+  }
+
+  .jn-album-card h2 {
+    font-size: 17px;
+  }
+}
+
+@media (max-width: 440px) {
+  .jn-category-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .jn-album-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .jn-album-meta {
+    font-size: 6px;
+  }
+}
