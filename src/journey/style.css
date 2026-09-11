@@ -1879,3 +1879,136 @@ select:focus-visible {
     padding-top: 0;
   }
 }
+
+
+/* JOURNEY V9 — aligned archive grid */
+/* Uniform photo rhythm: every preview uses the same 4:5 frame.
+   Clicking a card still opens the full-resolution reader view. */
+.jn-edit-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 44px 22px !important;
+}
+
+.jn-feature,
+.jn-feature.is-lead,
+.jn-feature:nth-child(n) {
+  grid-column: auto !important;
+  grid-row: auto !important;
+  padding-top: 0 !important;
+  border-top: 0 !important;
+}
+
+.jn-feature-image,
+.jn-feature.is-lead .jn-feature-image,
+.jn-feature:not(.is-lead) .jn-feature-image {
+  aspect-ratio: 4 / 5 !important;
+}
+
+.jn-feature-image img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.jn-archive-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-auto-flow: row !important;
+  gap: 48px 22px !important;
+}
+
+.jn-entry,
+.jn-entry.is-wide,
+.jn-entry:nth-child(n),
+.jn-entry.is-lowres {
+  grid-column: auto !important;
+  padding-top: 0 !important;
+  align-self: start !important;
+}
+
+.jn-entry-image,
+.jn-entry.is-wide .jn-entry-image,
+.jn-entry.is-lowres .jn-entry-image {
+  width: 100% !important;
+  aspect-ratio: 4 / 5 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  background: #e2ded5 !important;
+}
+
+.jn-entry-image img,
+.jn-entry.is-lowres .jn-entry-image img {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  object-fit: cover !important;
+}
+
+/* Hero remains a wide, high-quality photograph with all text below it. */
+.jn-cover {
+  padding-left: 0 !important;
+  margin-top: clamp(18px, 2vw, 28px) !important;
+}
+
+.jn-cover-rail {
+  display: none !important;
+}
+
+.jn-cover-media {
+  display: block !important;
+  width: 100% !important;
+  max-height: none !important;
+  aspect-ratio: 16 / 9 !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  background: #ddd8cf !important;
+}
+
+.jn-cover-media img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+}
+
+.jn-cover-caption {
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr) !important;
+  padding-top: 24px !important;
+  padding-bottom: 42px !important;
+}
+
+.jn-cover-caption h1 {
+  font-size: clamp(38px, 4.2vw, 62px) !important;
+}
+
+.jn-cover-note p {
+  font-size: 13px !important;
+  line-height: 1.7 !important;
+}
+
+@media (max-width: 900px) {
+  .jn-edit-grid,
+  .jn-archive-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .jn-cover-media {
+    aspect-ratio: 4 / 5 !important;
+  }
+
+  .jn-cover-caption {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .jn-edit-grid,
+  .jn-archive-grid {
+    grid-template-columns: 1fr !important;
+    gap: 38px !important;
+  }
+}
