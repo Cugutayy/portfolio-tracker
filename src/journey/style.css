@@ -1286,3 +1286,190 @@ select:focus-visible {
     animation-iteration-count: 1 !important;
   }
 }
+
+
+/* JOURNEY V6 — quieter editorial scale */
+:root {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.jn-wordmark,
+.jn-footer-brand,
+.jn-hero-copy h1,
+.jn-intro p,
+.jn-section-head h2,
+.jn-feature h3,
+.jn-place-name,
+.jn-entry h3,
+.jn-about-copy h2,
+.jn-reader-heading h1,
+.jn-related-grid span,
+.studio-login-card h2 {
+  font-family: "Source Serif 4", Georgia, serif !important;
+  letter-spacing: -.025em !important;
+}
+
+.jn-wordmark { font-size: clamp(27px, 2.3vw, 36px); }
+.jn-header { min-height: 72px; }
+.jn-nav { min-height: 44px; }
+
+.jn-hero {
+  min-height: min(68vh, 690px);
+  margin-top: 22px;
+}
+
+.jn-hero-copy {
+  max-width: 520px;
+  left: clamp(24px, 4.2vw, 58px);
+  bottom: clamp(42px, 5.2vw, 68px);
+}
+
+.jn-hero-copy h1 {
+  margin-top: 13px;
+  max-width: 11ch;
+  font-size: clamp(44px, 5.2vw, 78px);
+  line-height: .96;
+}
+
+.jn-hero-copy p {
+  margin-top: 16px;
+  max-width: 34ch;
+  font-size: clamp(14px, 1.05vw, 16px);
+  line-height: 1.55;
+}
+
+.jn-hero-copy button { margin-top: 20px; }
+
+.jn-intro {
+  max-width: 840px;
+  padding: clamp(68px, 8vw, 108px) 24px;
+}
+
+.jn-intro p {
+  margin-top: 20px;
+  font-size: clamp(28px, 3vw, 45px);
+  line-height: 1.08;
+}
+
+.jn-section-head {
+  padding-bottom: 18px;
+}
+
+.jn-section-head h2 {
+  margin-top: 9px;
+  font-size: clamp(34px, 3.5vw, 52px);
+  line-height: 1;
+}
+
+.jn-section-head > p {
+  font-size: 13px;
+}
+
+.jn-edit {
+  padding-bottom: clamp(76px, 8vw, 110px);
+}
+
+.jn-edit-grid {
+  margin-top: 28px;
+  gap: 26px;
+}
+
+.jn-feature h3 {
+  margin-top: 7px;
+  font-size: clamp(22px, 2vw, 32px);
+  line-height: 1.06;
+}
+
+.jn-feature:not(.is-lead) h3 {
+  font-size: clamp(20px, 1.7vw, 27px);
+}
+
+.jn-feature p {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.jn-places-inner {
+  padding: clamp(68px, 7vw, 96px) 0;
+}
+
+.jn-place-list > button {
+  min-height: 104px;
+}
+
+.jn-place-name {
+  font-size: clamp(31px, 3.1vw, 46px);
+  line-height: 1;
+}
+
+.jn-archive {
+  padding: clamp(78px, 8vw, 110px) 0 100px;
+}
+
+.jn-archive-grid {
+  gap: 54px 24px;
+  margin-top: 32px;
+}
+
+.jn-entry h3 {
+  margin-top: 7px;
+  font-size: clamp(19px, 1.45vw, 25px);
+  line-height: 1.08;
+}
+
+.jn-entry.is-wide h3 {
+  font-size: clamp(22px, 1.8vw, 30px);
+}
+
+.jn-entry-meta {
+  margin-top: 10px;
+}
+
+.jn-about {
+  gap: clamp(34px, 5vw, 72px);
+  padding-bottom: clamp(90px, 9vw, 128px);
+}
+
+.jn-about-image {
+  min-height: 560px;
+}
+
+.jn-about-copy h2 {
+  font-size: clamp(36px, 3.8vw, 54px);
+  line-height: 1;
+}
+
+.jn-about-copy p {
+  margin-top: 18px;
+  font-size: 14px;
+}
+
+.jn-reader-heading {
+  max-width: 760px;
+  margin: 62px auto 42px;
+}
+
+.jn-reader-heading h1 {
+  font-size: clamp(42px, 5.2vw, 74px);
+  line-height: .98;
+}
+
+.jn-reader-heading p,
+.jn-reader-copy p {
+  font-size: 15px;
+}
+
+.jn-entry.is-lowres .jn-entry-image {
+  padding: clamp(24px, 3vw, 46px);
+}
+
+@media (max-width: 760px) {
+  .jn-hero { min-height: 62svh; }
+  .jn-hero-copy h1 { font-size: clamp(39px, 11vw, 56px); }
+  .jn-intro p { font-size: clamp(28px, 8.5vw, 40px); }
+  .jn-section-head h2 { font-size: clamp(34px, 9vw, 44px); }
+  .jn-place-name { font-size: 31px; }
+  .jn-archive-grid { gap: 42px; }
+  .jn-about-copy h2 { font-size: clamp(35px, 10vw, 47px); }
+  .jn-reader-heading h1 { font-size: clamp(38px, 11vw, 56px); }
+}
