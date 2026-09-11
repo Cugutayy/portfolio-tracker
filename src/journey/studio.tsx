@@ -451,10 +451,10 @@ export default function Studio({
           </button>
           <button
             className="studio-publish"
-            disabled={!ready || busy || !items.length}
+            disabled={!ready || busy || !items.some((p) => !p.published)}
             onClick={() => void publish()}
           >
-            Yayınla
+            {items.some((p) => !p.published) ? "Taslakları yayınla" : "Yayında"}
           </button>
           <input
             disabled={busy}
@@ -523,6 +523,9 @@ export default function Studio({
                       alt={p.title || p.place || "Taslak fotoğraf"}
                     />
                     <span>{String(i + 1).padStart(2, "0")}</span>
+                    <small className={p.published ? "is-live" : "is-draft"}>
+                      {p.published ? "YAYINDA" : "TASLAK"}
+                    </small>
                   </button>
                 ))}
                 <button
