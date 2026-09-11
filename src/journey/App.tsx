@@ -1,7 +1,6 @@
 import { Fragment, lazy, Suspense, useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
-  Bookmark as BookmarkIcon,
   ChevronLeft,
   ChevronRight,
   Moon,
@@ -32,18 +31,6 @@ function NorthEastMark({ compact = false }: { compact?: boolean }) {
 function ThemeDial({ dark }: { dark: boolean }) {
   const Icon = dark ? Sun : Moon;
   return <Icon className="jn-icon" size={17} strokeWidth={1.7} aria-hidden="true" />;
-}
-
-function Bookmark({ filled = false }: { filled?: boolean }) {
-  return (
-    <BookmarkIcon
-      className="jn-icon"
-      size={16}
-      strokeWidth={1.65}
-      fill={filled ? "currentColor" : "none"}
-      aria-hidden="true"
-    />
-  );
 }
 
 function SearchIcon() {
@@ -77,24 +64,96 @@ function Picture({
     />
   );
 }
-function getSaved(): string[] {
-  try {
-    const data = JSON.parse(localStorage.getItem("jn-saved") || "[]");
-    return Array.isArray(data)
-      ? data.filter((v: unknown) => typeof v === "string")
-      : [];
-  } catch {
-    return [];
+
+function StudioGate({
+  onClose,
+  onPreview,
+}: {
+  onClose: () => void;
+  onPreview: (photos: Photo[]) => void;
+}) {
+  const [state, setState] = useState<"checking" | "locked" | "ready" | "error">("checking");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    fetch("/api/journey-studio-auth", { credentials: "same-origin" })
+      .then(async (r) => {
+        if (r.ok) setState("ready");
+        else if (r.status === 401) setState("locked");
+        else {
+          setState("error");
+          setMessage((await r.json().catch(() => null))?.error || "Yönetim erişimi yapılandırılmamış.");
+        }
+      })
+      .catch(() => {
+        setState("error");
+        setMessage("Yönetim servisine ulaşılamadı.");
+      });
+  }, []);
+
+  if (state === "ready") {
+    return <Studio onClose={onClose} onPreview={onPreview} />;
   }
+
+  return (
+    <div className="studio-login" role="dialog" aria-modal="true" aria-labelledby="studio-login-title">
+      <div className="studio-login-card">
+        <button className="studio-login-close" onClick={onClose} aria-label="Yönetimi kapat">
+          <X size={17} strokeWidth={1.7} />
+        </button>
+        <span className="eyebrow">YÖNETİM</span>
+        <h2 id="studio-login-title">Fotoğraf ekle.</h2>
+        <p>Bu alan yalnızca site yöneticisine açık.</p>
+        {state === "checking" ? (
+          <p className="studio-login-status">Kontrol ediliyor…</p>
+        ) : state === "error" ? (
+          <p className="studio-login-status is-error">{message}</p>
+        ) : (
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setMessage("");
+              const r = await fetch("/api/journey-studio-auth", {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify({ password }),
+              }).catch(() => null);
+              if (r?.ok) {
+                setPassword("");
+                setState("ready");
+              } else {
+                const data = await r?.json().catch(() => null);
+                setMessage(data?.error || "Giriş başarısız.");
+              }
+            }}
+          >
+            <label>
+              <span>PAROLA</span>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+              />
+            </label>
+            {message && <p className="studio-login-status is-error">{message}</p>}
+            <button type="submit" className="studio-login-submit">Giriş yap</button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
 }
+
 export default function App() {
   const [filter, setFilter] = useState("Tümü");
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState(false);
-  const [saved, setSaved] = useState<string[]>(getSaved);
-  const [onlySaved, setOnlySaved] = useState(false);
-  const [layout, setLayout] = useState("index");
-  const [limit, setLimit] = useState(18);
+  const [layout, setLayout] = useState("journal");
+  const [limit, setLimit] = useState(9999);
   const [route, setRoute] = useState(location.hash);
   const [drafts, setDrafts] = useState<Photo[]>([]);
   const [dark, setDark] = useState(() => {
@@ -116,8 +175,7 @@ export default function App() {
   const filtered = all.filter(
     (p) =>
       (filter === "Tümü" || p.category === filter) &&
-      (!onlySaved || saved.includes(p.id)) &&
-      normalize(`${p.title} ${p.summary} ${p.place} ${p.category}`).includes(
+normalize(`${p.title} ${p.summary} ${p.place} ${p.category}`).includes(
         normalize(query),
       ),
   );
@@ -137,15 +195,6 @@ export default function App() {
     } catch {}
   }, [dark]);
   useEffect(() => {
-    try {
-      localStorage.setItem("jn-saved", JSON.stringify(saved));
-    } catch {
-      setStatus(
-        "Tarayıcı kaydetmeye izin vermedi; bu seçim yalnızca açık oturumda kalacak.",
-      );
-    }
-  }, [saved]);
-  useEffect(() => {
     if (search) searchInput.current?.focus();
   }, [search]);
   useEffect(() => {
@@ -156,16 +205,12 @@ export default function App() {
   useEffect(() => {
     document.title = selected
       ? `${selected.title} · Journey Notes`
-      : "Journey Notes | arifv216";
+      : "stalklıyorum";
     if (selected) {
       window.scrollTo({ top: 0, behavior: "instant" });
       reader.current?.focus({ preventScroll: true });
     }
   }, [selected?.id]);
-  const toggleSave = (id: string) =>
-    setSaved((prev) =>
-      prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id],
-    );
   const openNote = (p: Photo) => {
     originNote.current = p.id;
     returnScroll.current = window.scrollY;
@@ -196,9 +241,8 @@ export default function App() {
     );
   const choose = (category: string) => {
     setFilter(category);
-    setOnlySaved(false);
     setQuery("");
-    setLimit(layout === "index" ? 18 : 9);
+    setLimit(9999);
     if (selected) goHome();
     scrollArchive();
   };
@@ -233,9 +277,9 @@ export default function App() {
       </a>
       <div className="site-shell">
         <header className="header">
-          <a className="home-link" href="/" aria-label="snmez.xyz ana sayfası">
-            <span className="mini-mark">s.</span> SNMEZ.XYZ{" "}
-            <span className="muted">/ JOURNEY NOTES</span>
+          <a className="home-link" href={location.pathname} aria-label="stalklıyorum">
+            <span className="mini-mark">s.</span>
+            <span>stalklıyorum</span>
           </a>
           <div className="header-tools">
             <a
@@ -245,11 +289,7 @@ export default function App() {
               className="jn-instagram-link"
               aria-label="Journey Notes Instagram hesabını yeni sekmede aç"
             >
-              <span className="jn-instagram-copy">
-                <strong>Instagram</strong>
-                <small>@journey_notess</small>
-              </span>
-              <NorthEastMark />
+              <span className="jn-instagram-handle">@journey_notss</span>
             </a>
             <span className="tool-divider" />
             <button
@@ -320,23 +360,6 @@ export default function App() {
               Hakkında <sup>03</sup>
             </a>
           </div>
-          <button
-            aria-label="Kaydettiklerim"
-            className={onlySaved ? "saved-link active" : "saved-link"}
-            aria-pressed={onlySaved}
-            onClick={() => {
-              if (selected) goHome();
-              setOnlySaved(!onlySaved);
-              setFilter("Tümü");
-              setQuery("");
-              setLimit(layout === "index" ? 18 : 9);
-              scrollArchive();
-            }}
-          >
-            <Bookmark filled={onlySaved} />
-            <span>Kaydettiklerim</span>
-            <sup>{saved.length.toString().padStart(2, "0")}</sup>
-          </button>
         </nav>
         {selected ? (
           <main className="reader" ref={reader} tabIndex={-1}>
@@ -368,15 +391,6 @@ export default function App() {
                   <p key={i}>{text}</p>
                 ))}
                 <div className="reader-actions">
-                  <button
-                    className="text-button"
-                    onClick={() => toggleSave(selected.id)}
-                  >
-                    <Bookmark filled={saved.includes(selected.id)} />
-                    {saved.includes(selected.id)
-                      ? "Kaydedildi"
-                      : "Bu notu sakla"}
-                  </button>
                   <button
                     className="text-button"
                     onClick={async () => {
@@ -462,7 +476,7 @@ export default function App() {
                       key={c}
                       onClick={() => {
                         setFilter(c);
-                        setLimit(layout === "index" ? 18 : 9);
+                        setLimit(9999);
                       }}
                       aria-pressed={filter === c}
                     >
@@ -489,7 +503,7 @@ export default function App() {
                     className="icon-button layout-button"
                     onClick={() => {
                       setLayout(layout === "journal" ? "index" : "journal");
-                      setLimit(18);
+                      setLimit(9999);
                     }}
                     aria-label={
                       layout === "journal"
@@ -511,7 +525,7 @@ export default function App() {
                     value={query}
                     onChange={(e) => {
                       setQuery(e.target.value);
-                      setLimit(layout === "index" ? 18 : 9);
+                      setLimit(9999);
                     }}
                     placeholder="Yer veya başlık ara"
                     aria-label="Notlarda ara"
@@ -532,14 +546,6 @@ export default function App() {
                   ><X className="jn-icon" size={16} strokeWidth={1.7} aria-hidden="true" /></button>
                 </div>
               )}
-              {onlySaved && (
-                <div className="selection-bar">
-                  <span>Kaydedilenler · Bu tarayıcıda saklanır.</span>
-                  <button onClick={() => setOnlySaved(false)}>
-                    Bütün notlar <Arrow />
-                  </button>
-                </div>
-              )}
               {drafts.length > 0 && (
                 <div className="selection-bar">
                   <span>
@@ -551,7 +557,7 @@ export default function App() {
                 </div>
               )}
               <div className={`stories ${layout}`}>
-                {filtered.slice(0, limit).map((p, i) => (
+                {filtered.map((p, i) => (
                   <Fragment key={p.id}>
                     <article className="story">
                       <div className="story-image">
@@ -565,14 +571,6 @@ export default function App() {
                           <span className="image-overlay">
                             <Arrow />
                           </span>
-                        </button>
-                        <button
-                          className="save-photo"
-                          onClick={() => toggleSave(p.id)}
-                          aria-label={`${p.title}: ${saved.includes(p.id) ? "Kaydedilenlerden çıkar" : "Kaydet"}`}
-                          aria-pressed={saved.includes(p.id)}
-                        >
-                          <Bookmark filled={saved.includes(p.id)} />
                         </button>
                       </div>
                       <div className="story-meta">
@@ -590,21 +588,12 @@ export default function App() {
               {filtered.length === 0 && (
                 <div className="empty">
                   <span className="empty-index">00</span>
-                  <h3>
-                    {onlySaved
-                      ? "Bu sayfa henüz boş."
-                      : "Burada bir not bulamadık."}
-                  </h3>
-                  <p>
-                    {onlySaved
-                      ? "Fotoğraflardaki ayraç simgesine dokunarak kendi seçkini oluşturabilirsin."
-                      : "Başka bir kelimeyle aramayı deneyebilirsin."}
-                  </p>
+                  <h3>Burada bir not bulamadık.</h3>
+                  <p>Başka bir kelimeyle aramayı deneyebilirsin.</p>
                   <button
                     className="read-link"
                     onClick={() => {
-                      setOnlySaved(false);
-                      setFilter("Tümü");
+                                        setFilter("Tümü");
                       setQuery("");
                     }}
                   >
@@ -616,18 +605,7 @@ export default function App() {
                 <span className="eyebrow">
                   {Math.min(limit, filtered.length)} / {filtered.length} NOT
                 </span>
-                {limit < filtered.length ? (
-                  <button
-                    className="more-button"
-                    onClick={() => setLimit(limit + 9)}
-                  >
-                    Daha fazla
-                  </button>
-                ) : (
-                  <span className="end-message">
-                    Arşivin sonu.
-                  </span>
-                )}
+                <span className="end-message">Arşivin sonu.</span>
                 <span className="tiny-flower" aria-hidden="true">
                   
                 </span>
@@ -716,7 +694,7 @@ export default function App() {
                   rel="noreferrer"
                   className="text-button"
                 >
-                  @journey_notess <Arrow />
+                  @journey_notss
                 </a>
               </div>
               <span className="about-flower" aria-hidden="true">
@@ -736,9 +714,9 @@ export default function App() {
             </a>
           </div>
           <div className="footer-bottom">
-            <a href="/">SNMEZ.XYZ / ANA SAYFA</a>
+            <span>stalklıyorum</span>
             <span>© {new Date().getFullYear()} JOURNEY NOTES</span>
-            <button onClick={openStudio}>TASLAK STÜDYOSU</button>
+            <button onClick={openStudio}>YÖNETİM</button>
           </div>
         </footer>
       </div>
@@ -750,14 +728,13 @@ export default function App() {
             </div>
           }
         >
-          <Studio
+          <StudioGate
             onClose={goHome}
             onPreview={(items) => {
               setDrafts(items);
               goHome();
               setFilter("Tümü");
-              setOnlySaved(false);
-              setLimit(layout === "index" ? 18 : 9);
+                        setLimit(9999);
               scrollArchive();
             }}
           />

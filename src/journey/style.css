@@ -3172,3 +3172,136 @@ textarea {
     font-size: 30px;
   }
 }
+
+
+/* JOURNEY V5 — public archive + locked management */
+.jn-instagram-link {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  min-height: auto;
+}
+.jn-instagram-handle {
+  font: 500 11px/1 var(--ui-font);
+  letter-spacing: 0;
+}
+.jn-instagram-link:hover .jn-instagram-handle { text-decoration: underline; text-underline-offset: 3px; }
+.home-link {
+  gap: 10px;
+  font-family: var(--ui-font);
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.home-link .mini-mark {
+  font-family: "Gloock", serif;
+  font-size: 26px;
+}
+.nav { justify-content: flex-start; }
+
+/* Public archive defaults to large, continuous browsing. */
+.stories.journal {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 64px 36px;
+}
+.stories.journal .story-image {
+  height: clamp(380px, 36vw, 560px);
+  padding: 18px;
+}
+.stories.journal .image-link img {
+  max-width: 100%;
+  max-height: 100%;
+}
+.stories.journal .story h3 {
+  font-size: clamp(28px, 2.6vw, 40px);
+  line-height: 1.05;
+}
+.archive-end {
+  justify-content: space-between;
+}
+.more-button,
+.saved-link,
+.save-photo { display: none !important; }
+
+/* Auth gate for the private studio. */
+.studio-login {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(17,17,15,.58);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.studio-login-card {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 34px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--paper);
+  box-shadow: 0 24px 70px rgba(0,0,0,.18);
+}
+.studio-login-card h2 {
+  margin: 18px 0 8px;
+  font: 400 42px/1 "Gloock", serif;
+  letter-spacing: -.04em;
+}
+.studio-login-card > p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.studio-login-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+}
+.studio-login form { margin-top: 28px; }
+.studio-login label span {
+  display: block;
+  margin-bottom: 8px;
+  font: 500 8px/1 "IBM Plex Mono", monospace;
+  letter-spacing: .12em;
+  color: var(--muted);
+}
+.studio-login input {
+  width: 100%;
+  height: 46px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  outline: none;
+}
+.studio-login input:focus { border-color: var(--ink); }
+.studio-login-submit {
+  width: 100%;
+  height: 44px;
+  margin-top: 12px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+}
+.studio-login-status {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.studio-login-status.is-error { color: #a33b2e; }
+
+@media (max-width: 700px) {
+  .jn-instagram-handle { font-size: 10px; }
+  .stories.journal { grid-template-columns: 1fr; gap: 46px; }
+  .stories.journal .story-image { height: min(112vw, 520px); padding: 12px; }
+}
