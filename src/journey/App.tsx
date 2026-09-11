@@ -268,13 +268,17 @@ export default function App() {
   useEffect(() => {
     document.title = selected
       ? `${selected.title || selected.place || "Fotoğraf"} · Journey Notes`
-      : "Journey Notes · stalklıyorum";
+      : albumOpen
+        ? "Albüm · Journey Notes"
+        : "Journey Notes · stalklıyorum";
 
     if (selected) {
       window.scrollTo({ top: 0, behavior: "auto" });
       readerRef.current?.focus({ preventScroll: true });
+    } else if (albumOpen) {
+      window.scrollTo({ top: 0, behavior: "auto" });
     }
-  }, [selected?.id]);
+  }, [selected?.id, albumOpen]);
 
   const openNote = (photo: Photo) => {
     returnScroll.current = window.scrollY;
@@ -336,8 +340,8 @@ export default function App() {
 
   return (
     <>
-      <a className="jn-skip" href="#archive">
-        Arşive geç
+      <a className="jn-skip" href={albumOpen ? "#album-grid" : "#edit"}>
+        İçeriğe geç
       </a>
 
       <div className="jn-site">
@@ -370,7 +374,7 @@ export default function App() {
 
         <nav className="jn-nav" aria-label="Journey Notes">
           <a href="#edit">Seçki</a>
-          <a href="#album">Albüm</a>
+          <button type="button" onClick={openAlbum}>Albüm</button>
           <a href="#places">Yerler</a>
           <a href="#about">Hakkında</a>
         </nav>
@@ -512,7 +516,11 @@ export default function App() {
               {query && <span>“{query}”</span>}
             </div>
 
-            <section className="jn-album-grid" aria-label="Fotoğraf albümü">
+            <section
+              className="jn-album-grid"
+              id="album-grid"
+              aria-label="Fotoğraf albümü"
+            >
               {filtered.map((photo) => (
                 <article className="jn-album-card" key={photo.id}>
                   <button onClick={() => openNote(photo)}>
