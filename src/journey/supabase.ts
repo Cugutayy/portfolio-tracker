@@ -359,6 +359,20 @@ async function rest(path: string, init: RequestInit = {}, accessToken?: string) 
 const journeySelect =
   "id,title,summary,body,place,category,image_url,thumbnail_url,original_url,width,height,display_width,thumbnail_width,position,published,file_hash,storage_path,display_path,thumbnail_path,original_filename,taken_at,mime_type,byte_size,published_at,deleted_at";
 
+export async function isJourneyAdmin() {
+  const session = await getJourneySession();
+  if (!session) return false;
+
+  const response = await rest(
+    `journey_admins?select=user_id&user_id=eq.${encodeURIComponent(session.user.id)}&limit=1`,
+    {},
+    session.access_token,
+  );
+  if (!response.ok) return false;
+  const rows = await response.json().catch(() => []);
+  return Array.isArray(rows) && rows.length === 1;
+}
+
 export async function loadPublishedJourneyPhotos(): Promise<Photo[]> {
   if (!supabaseConfigured) return [];
   const response = await rest(
