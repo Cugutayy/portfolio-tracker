@@ -2125,8 +2125,9 @@ em {
   height: 100%;
   object-fit: cover;
   object-position: 50% 38%;
-  filter: saturate(.92) contrast(1.025);
-  transform: scale(1.001);
+  filter: saturate(.96) contrast(1.015);
+  image-rendering: auto;
+  transform: none;
 }
 .berra-intro-copy {
   grid-column: 2;
