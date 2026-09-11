@@ -206,7 +206,7 @@ export default function App() {
   );
 
   const hero = all.find((photo) => photo.id === "108") || all[0];
-  const heroAsset = "/journey/hero-snow.avif";
+  const heroAsset = "/journey/hero-snow.webp";
   const knownPlaces = Array.from(
     new Set(all.map((photo) => photo.place.trim()).filter(Boolean)),
   );
