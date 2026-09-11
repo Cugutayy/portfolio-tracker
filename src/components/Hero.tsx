@@ -64,10 +64,10 @@ export function Hero({ lang }: { lang: string }) {
       {/* ── small top-right identity cluster ── */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', maxWidth: 460 }}>
         <h1 className="font-display" style={{
-          fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(1.5rem, 3.4vw, 2.5rem)', lineHeight: 1,
+          fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(1.72rem, 3.7vw, 2.82rem)', lineHeight: 1,
           letterSpacing: '-0.02em', margin: 0, display: 'flex', flexWrap: 'nowrap', whiteSpace: 'nowrap',
           justifyContent: 'flex-end', columnGap: '0.24em',
-          textShadow: '0 1px 2px rgba(0,0,0,.92), 0 4px 24px rgba(0,0,0,.78)',
+          textShadow: '0 1px 1px rgba(0,0,0,.98), 0 3px 12px rgba(0,0,0,.86), 0 9px 34px rgba(0,0,0,.58)',
         }}>
           {name.map((w, i) => (
             <span key={i} className="hw" style={{ animationDelay: `${0.18 + i * 0.13}s`, color: i === 2 ? '#f0cf86' : '#fdf8ee' }}>{w}</span>
@@ -75,9 +75,9 @@ export function Hero({ lang }: { lang: string }) {
         </h1>
 
         <div className="hf" style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 12, flexWrap: 'wrap', justifyContent: 'flex-end', animationDelay: '.62s' }}>
-          <span className="font-display" style={{ fontStyle: 'italic', fontSize: '1.05rem', color: '#fffaf2', lineHeight: 1, textShadow: '0 1px 2px rgba(0,0,0,.92), 0 3px 16px rgba(0,0,0,.72)' }}>{clock || '··:··'}</span>
+          <span className="font-display" style={{ fontStyle: 'italic', fontSize: '1.08rem', color: '#fffaf2', lineHeight: 1, textShadow: '0 1px 2px rgba(0,0,0,.92), 0 3px 16px rgba(0,0,0,.72)' }}>{clock || '··:··'}</span>
           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(244,239,230,0.4)' }} />
-          <a href="mailto:s.cagatay.sonmez@gmail.com" style={{ fontSize: '.78rem', fontWeight: 500, color: '#fffaf2', textDecoration: 'none', borderBottom: '1px solid rgba(255,250,242,.58)', paddingBottom: 2, textShadow: '0 1px 2px rgba(0,0,0,.94), 0 3px 16px rgba(0,0,0,.74)' }}>{t.contact}</a>
+          <a href="mailto:s.cagatay.sonmez@gmail.com" style={{ fontSize: '.8rem', fontWeight: 600, color: '#fffaf2', textDecoration: 'none', borderBottom: '1px solid rgba(255,250,242,.58)', paddingBottom: 2, textShadow: '0 1px 2px rgba(0,0,0,.94), 0 3px 16px rgba(0,0,0,.74)' }}>{t.contact}</a>
         </div>
       </div>
 
