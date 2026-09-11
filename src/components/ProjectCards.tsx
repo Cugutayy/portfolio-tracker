@@ -59,7 +59,7 @@ export function ProjectCards({ t }: Props) {
           <a href="/journey/" className="journey-card" aria-label="Journey Notes">
             <div className="journey-card-head">
               <span>JOURNEY NOTES</span>
-              <span>13</span>
+              <span>arifv216</span>
             </div>
             <figure className="journey-card-portrait" aria-hidden="true">
               <picture>
@@ -75,7 +75,7 @@ export function ProjectCards({ t }: Props) {
             </figure>
             <div className="journey-card-copy">
               <h3>Journey <em>Notes</em></h3>
-              <span>Stalk yaparken 2. kez yakalandın. ♡</span>
+              <span>Stalk yaparken 2. kez yakalandın.</span>
             </div>
           </a>
         </ScrollReveal>
