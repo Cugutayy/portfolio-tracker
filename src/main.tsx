@@ -4,6 +4,7 @@ import App from './App'
 import { KediDexGuard } from './components/KediDexGuard'
 import './styles/globals.css'
 import './styles/hub-visibility.css'
+import './journeyHubLock'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
