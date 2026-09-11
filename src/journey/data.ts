@@ -16,6 +16,14 @@ export type Photo = {
   storagePath?: string;
   originalFilename?: string;
   takenAt?: string;
+  originalSrc?: string;
+  displayPath?: string;
+  thumbnailPath?: string;
+  mimeType?: string;
+  byteSize?: number;
+  published?: boolean;
+  publishedAt?: string;
+  deletedAt?: string;
 };
 export const photos: Photo[] = catalog;
 export const categories = ["Tümü", "Doğa", "Mimari", "Sokak", "Ayrıntı", "Diğer"];
