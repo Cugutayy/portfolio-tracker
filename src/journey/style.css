@@ -2872,3 +2872,9 @@ select:focus-visible {
     animation: none !important;
   }
 }
+
+
+/* V10.6 reader caption alignment */
+.jn-reader-image figcaption {
+  display: grid;
+}
