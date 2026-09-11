@@ -206,9 +206,7 @@ export default function App() {
   );
 
   const hero = all.find((photo) => photo.id === "108") || all[0];
-  const heroCity = hero?.place?.split(",")[0]?.trim() || "Varanasi";
-  const heroCountry =
-    hero?.place?.split(",").slice(1).join(",").trim() || "Hindistan";
+  const heroAsset = "/journey/hero-snow.avif";
   const knownPlaces = Array.from(
     new Set(all.map((photo) => photo.place.trim()).filter(Boolean)),
   );
@@ -427,33 +425,35 @@ export default function App() {
           <main>
             {hero && (
               <section className="jn-cover" aria-labelledby="journey-hero-title">
-                <div className="jn-cover-rail" aria-hidden="true">
-                  <span>01</span>
-                  <span>JOURNEY NOTES</span>
-                  <span>FRAME {hero.id}</span>
-                </div>
-
-                <button
-                  className="jn-cover-media"
-                  onClick={() => openNote(hero)}
-                  aria-label={`${heroCity} fotoğrafını aç`}
-                >
-                  <Picture
-                    photo={hero}
-                    priority
-                    sizes="(max-width: 760px) 100vw, 1320px"
+                <div className="jn-cover-media" aria-label="Journey Notes giriş fotoğrafı">
+                  <img
+                    src={heroAsset}
+                    alt="Karlı kayalıklar önünde kış manzarası"
+                    width="1672"
+                    height="941"
+                    loading="eager"
+                    decoding="async"
+                    fetchPriority="high"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = hero.src;
+                    }}
                   />
-                </button>
+                </div>
 
                 <div className="jn-cover-caption">
                   <div>
-                    <span className="jn-kicker">{heroCountry || "JOURNEY NOTES"}</span>
-                    <h1 id="journey-hero-title">{heroCity}</h1>
+                    <span className="jn-kicker">PERSONAL TRAVEL JOURNAL · 2026</span>
+                    <h1 id="journey-hero-title">Journey Notes</h1>
                   </div>
                   <div className="jn-cover-note">
-                    <p>{hero.summary}</p>
-                    <button onClick={() => openNote(hero)}>
-                      Fotoğrafı aç <Arrow />
+                    <p>
+                      Gezdiğim yerlerden seçtiğim fotoğraflar, kısa notlar ve
+                      dönüp tekrar bakmak istediğim anlardan oluşan kişisel bir
+                      görsel arşiv.
+                    </p>
+                    <button onClick={scrollToArchive}>
+                      Fotoğraflara geç <Arrow />
                     </button>
                   </div>
                 </div>
@@ -463,8 +463,9 @@ export default function App() {
             <section className="jn-intro">
               <span className="jn-kicker">JOURNEY NOTES</span>
               <p>
-                Şehirler, yollar ve arada kalan sessiz anlar. Fotoğraflar
-                önde; yerini bildiğim karelerde başlık yalnızca o yerin adı.
+                Fotoğraf burada ana karakter. Yerini kesin bildiğim karelerde
+                yalnızca lokasyon adını kullanıyorum; bilmediğim yerde görüntü
+                kendi başına kalıyor.
               </p>
             </section>
 
@@ -552,7 +553,7 @@ export default function App() {
               <div className="jn-section-head">
                 <div>
                   <span className="jn-kicker">ARCHIVE · 03</span>
-                  <h2>Arşiv.</h2>
+                  <h2>Fotoğraflar.</h2>
                 </div>
                 <p>{filtered.length} kare</p>
               </div>
