@@ -408,13 +408,13 @@ export default function App() {
           </main>
         ) : (
           <main>
-            <section className="berra-hero" aria-labelledby="berra-intro-title">
-              <figure className="berra-portrait">
+            <section className="journey-profile-hero" aria-labelledby="journey-profile-intro-title">
+              <figure className="journey-profile-portrait">
                 <picture>
-                  <source srcSet="/journey/berra-hq.avif" type="image/avif" />
+                  <source srcSet="/journey/journey-profile-hq.avif" type="image/avif" />
                   <img
-                    src="/journey/berra.jpg"
-                    alt="Berra portresi"
+                    src="/journey/portrait-hq.avif"
+                    alt="Bulanık portre"
                     width="800"
                     height="800"
                     loading="eager"
@@ -422,22 +422,22 @@ export default function App() {
                   />
                 </picture>
               </figure>
-              <div className="berra-intro-copy">
-                <span className="berra-kicker">JOURNEY NOTES</span>
-                <h1 id="berra-intro-title">
+              <div className="journey-profile-intro-copy">
+                <span className="journey-profile-kicker">JOURNEY NOTES</span>
+                <h1 id="journey-profile-intro-title">
                   Merhaba,
                   <br />
                   benim adım <em>Arif.</em>
                 </h1>
                 <p>Bu da benim kişisel blogum.</p>
-                <span className="berra-handle">arifv216</span>
-                <button className="berra-enter" onClick={scrollArchive}>
+                <span className="journey-profile-handle">arifv216</span>
+                <button className="journey-profile-enter" onClick={scrollArchive}>
                   <span>Arşivi keşfet</span>
                   <Arrow />
                 </button>
               </div>
-              <p className="berra-tease">
-                Stalk yaparken 2. kez yakalandın. <span aria-hidden="true">♡</span>
+              <p className="journey-profile-tease">
+                Stalk yaparken 2. kez yakalandın.
               </p>
             </section>
             <section className="archive" id="archive" ref={archive}>
@@ -524,9 +524,7 @@ export default function App() {
                       setQuery("");
                     }}
                     aria-label="Aramayı temizle ve kapat"
-                  >
-                    ×
-                  </button>
+                  >KAPAT</button>
                 </div>
               )}
               {onlySaved && (
@@ -543,7 +541,7 @@ export default function App() {
                     Yerel taslak önizlemesi · Ziyaretçilere yayınlanmadı.
                   </span>
                   <button onClick={() => setDrafts([])}>
-                    Önizlemeyi kapat ×
+                    Önizlemeyi kapat
                   </button>
                 </div>
               )}
@@ -618,7 +616,7 @@ export default function App() {
                     className="more-button"
                     onClick={() => setLimit(limit + 9)}
                   >
-                    Daha fazla <span>+</span>
+                    Daha fazla
                   </button>
                 ) : (
                   <span className="end-message">

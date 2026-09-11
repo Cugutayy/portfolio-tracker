@@ -63,9 +63,9 @@ export function ProjectCards({ t }: Props) {
             </div>
             <figure className="journey-card-portrait" aria-hidden="true">
               <picture>
-                <source srcSet="/journey/berra-hq.avif" type="image/avif" />
+                <source srcSet="/journey/portrait-hq.avif" type="image/avif" />
                 <img
-                  src="/journey/berra.jpg"
+                  src="/journey/portrait-hq.avif"
                   alt=""
                   loading="lazy"
                   width="800"

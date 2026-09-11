@@ -263,7 +263,7 @@ export default function Studio({
             onClick={() => void close()}
             aria-label="Stüdyoyu kapat"
           >
-            Kapat ×
+            KAPAT
           </button>
         </header>
         <p className="studio-notice">
@@ -276,7 +276,7 @@ export default function Studio({
             className="studio-primary"
             onClick={() => picker.current?.click()}
           >
-            Fotoğraf ekle +
+            Fotoğraf ekle
           </button>
           <button
             disabled={!ready || busy || !items.length}
@@ -285,7 +285,7 @@ export default function Studio({
             {busy ? "İşleniyor…" : dirty ? "Taslağı kaydet" : "Kaydedildi"}
           </button>
           <button disabled={busy || !items.length} onClick={exportDrafts}>
-            Taslağı indir ↓
+            Taslağı indir
           </button>
           <button
             disabled={busy || !items.length}
@@ -304,7 +304,7 @@ export default function Studio({
               }
             }}
           >
-            Blogda önizle ↗
+            Blogda önizle
           </button>
           <input disabled={busy}
             ref={picker}
@@ -387,7 +387,7 @@ export default function Studio({
                       onClick={() => move(-1)}
                       aria-label="Fotoğrafı önceye taşı"
                     >
-                      ←
+                      ÖNCE
                     </button>
                     <button
                       disabled={
@@ -396,7 +396,7 @@ export default function Studio({
                       onClick={() => move(1)}
                       aria-label="Fotoğrafı sonraya taşı"
                     >
-                      →
+                      SONRA
                     </button>
                   </div>
                 </div>
@@ -467,7 +467,7 @@ export default function Studio({
               </>
             ) : (
               <div className="editor-empty">
-                <span>✳</span>
+                <span>00</span>
                 <h3>Bir fotoğrafla başlar.</h3>
                 <p>
                   Görselini seç, birkaç kelime ekle.

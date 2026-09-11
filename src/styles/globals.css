@@ -485,12 +485,12 @@ a { color: inherit; text-decoration: none; }
 
 /* Journey card privacy / visual treatment */
 .journey-card-portrait img {
-  filter: blur(18px) saturate(.72) contrast(.94) brightness(.98) !important;
-  transform: scale(1.10) !important;
+  filter: blur(24px) saturate(.68) contrast(.92) brightness(.98) !important;
+  transform: scale(1.14) !important;
 }
 .journey-card:hover .journey-card-portrait img {
-  filter: blur(17px) saturate(.76) contrast(.96) brightness(.99) !important;
-  transform: scale(1.115) !important;
+  filter: blur(23px) saturate(.72) contrast(.94) brightness(.99) !important;
+  transform: scale(1.15) !important;
 }
 .journey-card-head {
   font-family: "IBM Plex Mono", ui-monospace, monospace !important;
