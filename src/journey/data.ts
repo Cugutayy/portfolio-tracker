@@ -12,9 +12,13 @@ export type Photo = {
   height: number;
   smallWidth?: number;
   largeWidth?: number;
+  fileHash?: string;
+  storagePath?: string;
+  originalFilename?: string;
+  takenAt?: string;
 };
 export const photos: Photo[] = catalog;
-export const categories = ["Tümü", "Doğa", "Mimari", "Sokak", "Ayrıntı"];
+export const categories = ["Tümü", "Doğa", "Mimari", "Sokak", "Ayrıntı", "Diğer"];
 export const normalize = (value: string) =>
   value
     .toLocaleLowerCase("tr")
