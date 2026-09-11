@@ -2878,3 +2878,583 @@ select:focus-visible {
 .jn-reader-image figcaption {
   display: grid;
 }
+
+
+/* JOURNEY V12 — quiet photographic journal
+   Near-white canvas, monochrome controls, fewer template labels, native mobile swipe. */
+:root {
+  --paper: #fbfbf8;
+  --paper-2: #f1f2ef;
+  --ink: #141614;
+  --muted: #73766f;
+  --line: rgba(20, 22, 20, .14);
+  --accent: #315d73;
+  --dark: #171917;
+  --dark-muted: rgba(255,255,255,.68);
+}
+
+body {
+  background: var(--paper);
+}
+
+::selection {
+  background: #d9e5ea;
+  color: #111;
+}
+
+.jn-site {
+  width: min(100%, 1540px);
+  padding-inline: clamp(18px, 2.8vw, 44px);
+}
+
+.jn-header {
+  min-height: 76px;
+  border-bottom-color: rgba(20,22,20,.1);
+}
+
+.jn-header-spacer {
+  width: 1px;
+  height: 1px;
+}
+
+.jn-wordmark,
+.jn-footer-brand {
+  letter-spacing: -.047em;
+}
+
+.jn-wordmark {
+  font-size: clamp(30px, 2.6vw, 39px);
+}
+
+.jn-wordmark em,
+.jn-footer-brand em {
+  color: inherit;
+}
+
+.jn-header-actions {
+  gap: 14px;
+  color: #252725;
+  font-size: 12px;
+}
+
+.jn-header-actions button {
+  border-color: rgba(20,22,20,.12);
+  background: rgba(255,255,255,.34);
+}
+
+.jn-header-actions button:hover {
+  background: #f0f1ee;
+}
+
+.jn-nav {
+  min-height: 50px;
+  justify-content: center;
+  gap: clamp(34px, 5vw, 74px);
+  border-bottom-color: rgba(20,22,20,.1);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .055em;
+  text-transform: none;
+}
+
+.jn-nav a,
+.jn-nav button {
+  padding-block: 18px 16px;
+}
+
+.jn-nav-album small {
+  min-width: 26px;
+  padding: 3px 6px;
+  border-color: rgba(20,22,20,.15);
+  background: #f1f2ef;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 9px;
+  letter-spacing: 0;
+}
+
+.jn-kicker {
+  color: var(--muted);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+}
+
+.jn-cover {
+  margin-top: clamp(18px, 2.4vw, 34px) !important;
+}
+
+.jn-cover-media {
+  background: #eceeeb !important;
+}
+
+.jn-cover-caption {
+  padding-top: clamp(24px, 3vw, 40px) !important;
+  padding-bottom: clamp(52px, 6vw, 86px) !important;
+  border-bottom: 0;
+}
+
+.jn-cover-caption h1 {
+  font-family: "Gloock", "Iowan Old Style", Georgia, serif !important;
+  font-size: clamp(43px, 4.3vw, 66px) !important;
+  letter-spacing: -.045em;
+}
+
+.jn-cover-note p {
+  color: #575a55;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px !important;
+  line-height: 1.65 !important;
+}
+
+.jn-cover-album-cta {
+  margin-top: 26px;
+  padding: 14px 0;
+  border-color: rgba(20,22,20,.25);
+}
+
+.jn-cover-album-cta small,
+.jn-cover-album-count {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: .04em;
+}
+
+.jn-cover-album-cta strong {
+  font-family: "Gloock", "Iowan Old Style", Georgia, serif;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+.jn-cover-album-cta:hover strong {
+  font-style: normal;
+}
+
+.jn-intro {
+  width: min(760px, 100%);
+  padding: clamp(50px, 6vw, 82px) 0 clamp(70px, 8vw, 110px);
+}
+
+.jn-intro p {
+  margin: 0;
+  color: #313431;
+  font-family: "Gloock", "Iowan Old Style", Georgia, serif;
+  font-size: clamp(28px, 3vw, 43px);
+  line-height: 1.12;
+  letter-spacing: -.035em;
+}
+
+.jn-album-index {
+  background: #f1f2ef;
+  border-color: rgba(20,22,20,.09);
+}
+
+.jn-album-index-head {
+  border-bottom-color: rgba(20,22,20,.2);
+}
+
+.jn-album-index-head h2,
+.jn-album-head h1 {
+  font-family: "Gloock", "Iowan Old Style", Georgia, serif;
+  font-weight: 400;
+}
+
+.jn-album-index-head p,
+.jn-album-head p,
+.jn-category-strip small {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+
+.jn-album-primary,
+.jn-category-strip > button > span,
+.jn-album-meta,
+.jn-size-control button,
+.jn-swipe-hint {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: .035em;
+}
+
+.jn-category-image,
+.jn-album-image,
+.jn-story-media,
+.jn-panorama > button,
+.jn-diptych-image,
+.jn-reader-stage {
+  background: #eceeeb;
+}
+
+.jn-exhibition {
+  padding-top: clamp(90px, 10vw, 150px);
+}
+
+.jn-exhibition-flow {
+  margin-top: 0;
+}
+
+.jn-story {
+  grid-template-columns: minmax(0, 1.55fr) minmax(260px, .45fr);
+  gap: clamp(46px, 7vw, 112px);
+}
+
+.jn-story.is-reverse {
+  grid-template-columns: minmax(260px, .45fr) minmax(0, 1.55fr);
+}
+
+.jn-story-copy {
+  max-width: 410px;
+}
+
+.jn-story-copy h3,
+.jn-diptych-copy h3 {
+  font-family: "Gloock", "Iowan Old Style", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -.025em;
+}
+
+.jn-story-copy h3 {
+  margin: 0 0 15px;
+  font-size: clamp(29px, 3vw, 46px);
+  line-height: 1.02;
+}
+
+.jn-story-copy p {
+  margin-top: 0;
+  color: #666963;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.jn-panorama-caption {
+  border-top-color: rgba(20,22,20,.11);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+
+.jn-panorama-caption strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.jn-diptych-copy p {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+
+.jn-places {
+  background: #171917;
+}
+
+.jn-place-list > button,
+.jn-about-copy p,
+.jn-footer,
+.jn-reader-copy,
+.jn-reader-image figcaption {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+
+.jn-about {
+  background: var(--paper);
+}
+
+.jn-about-copy h2 {
+  font-family: "Gloock", "Iowan Old Style", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -.035em;
+}
+
+.jn-reader-heading .jn-kicker {
+  color: var(--muted);
+}
+
+.jn-reader-heading h1 {
+  font-family: "Gloock", "Iowan Old Style", Georgia, serif;
+  font-weight: 400;
+}
+
+.jn-reader-image figcaption {
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.jn-reader-nav {
+  border-color: rgba(20,22,20,.12);
+  background: rgba(250,250,248,.82);
+  box-shadow: 0 4px 22px rgba(0,0,0,.07);
+}
+
+.jn-mobile-reel {
+  display: none;
+}
+
+.studio-login {
+  background: rgba(245,246,243,.74);
+  backdrop-filter: blur(24px) saturate(110%);
+  -webkit-backdrop-filter: blur(24px) saturate(110%);
+}
+
+.studio-login-card {
+  width: min(440px, 100%);
+  padding: 38px;
+  background: rgba(255,255,253,.96);
+  border-color: rgba(20,22,20,.12);
+  box-shadow: 0 24px 70px rgba(22,24,22,.11);
+}
+
+.studio-login-card h2 {
+  margin: 18px 0 10px;
+  color: var(--ink);
+  font-family: "Gloock", "Iowan Old Style", Georgia, serif;
+  font-size: 44px;
+  letter-spacing: -.04em;
+}
+
+.studio-login label span {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 10px;
+  letter-spacing: .045em;
+}
+
+.studio-login input {
+  height: 48px;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.studio-login-submit {
+  height: 48px;
+  border-radius: 8px;
+  background: #171917;
+  color: #fff;
+}
+
+.studio-login-secondary {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 0;
+  color: #61645f;
+  font-size: 12px;
+}
+
+.studio-login-secondary:hover {
+  color: #151715;
+}
+
+.studio-login-status.is-success {
+  color: #356244;
+}
+
+@media (max-width: 760px) {
+  .jn-site {
+    padding-inline: 14px;
+  }
+
+  .jn-header {
+    min-height: 66px;
+    grid-template-columns: 1fr auto;
+  }
+
+  .jn-header-spacer {
+    display: none;
+  }
+
+  .jn-wordmark {
+    justify-self: start;
+    font-size: 29px;
+  }
+
+  .jn-header-actions > a {
+    display: none;
+  }
+
+  .jn-nav {
+    justify-content: flex-start;
+    gap: 28px;
+    min-height: 46px;
+    padding-left: 1px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .jn-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .jn-nav a,
+  .jn-nav button {
+    flex: 0 0 auto;
+    font-size: 11px;
+  }
+
+  .jn-cover {
+    margin-top: 12px !important;
+  }
+
+  .jn-cover-media {
+    aspect-ratio: 4 / 5 !important;
+  }
+
+  .jn-cover-caption {
+    gap: 20px !important;
+    padding: 20px 3px 46px !important;
+  }
+
+  .jn-cover-caption h1 {
+    font-size: clamp(38px, 12vw, 54px) !important;
+  }
+
+  .jn-cover-note {
+    max-width: 100%;
+  }
+
+  .jn-cover-album-cta {
+    margin-top: 20px;
+  }
+
+  .jn-intro {
+    padding: 48px 2px 58px;
+  }
+
+  .jn-intro p {
+    font-size: clamp(28px, 9vw, 39px);
+  }
+
+  .jn-mobile-reel {
+    display: block;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    padding: 8px 0 68px;
+    overflow: hidden;
+  }
+
+  .jn-mobile-reel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 18px 14px;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .jn-mobile-reel-head button {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .jn-mobile-reel-track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 82vw;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 0 18px 8px;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 18px;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .jn-mobile-reel-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .jn-mobile-reel-card {
+    position: relative;
+    height: min(72svh, 620px);
+    overflow: hidden;
+    scroll-snap-align: start;
+    background: #eceeeb;
+  }
+
+  .jn-mobile-reel-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .jn-mobile-reel-card > span {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    min-width: 29px;
+    padding: 6px 8px;
+    border-radius: 999px;
+    background: rgba(250,250,248,.88);
+    color: #202220;
+    font: 600 10px/1 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    backdrop-filter: blur(10px);
+  }
+
+  .jn-album-index {
+    padding-top: 62px;
+    padding-bottom: 72px;
+  }
+
+  .jn-album-index-head h2 {
+    font-size: 43px;
+  }
+
+  .jn-exhibition {
+    padding-top: 88px;
+  }
+
+  .jn-exhibition-flow {
+    gap: 86px;
+  }
+
+  .jn-story,
+  .jn-story.is-reverse {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .jn-story.is-reverse .jn-story-media,
+  .jn-story.is-reverse .jn-story-copy {
+    order: initial;
+  }
+
+  .jn-story-copy h3 {
+    font-size: 31px;
+  }
+
+  .jn-story-copy p {
+    max-width: 34ch;
+    font-size: 14px;
+  }
+
+  .jn-reader {
+    padding-top: 24px;
+  }
+
+  .jn-reader-heading {
+    margin-top: 42px;
+  }
+
+  .jn-reader-image {
+    width: calc(100vw - 28px);
+  }
+
+  .jn-reader-nav {
+    width: 36px;
+    height: 36px;
+  }
+
+  .jn-swipe-hint {
+    display: block;
+    margin-top: 10px;
+    font-size: 10px;
+    letter-spacing: .03em;
+    text-transform: none;
+  }
+
+  .studio-login-card {
+    padding: 30px 22px 24px;
+    border-radius: 14px;
+  }
+
+  .studio-login-card h2 {
+    font-size: 39px;
+  }
+}
