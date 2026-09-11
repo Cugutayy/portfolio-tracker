@@ -1043,7 +1043,7 @@ export default function App() {
                       {(exhibition[4].title || exhibition[4].place) && (
                         <strong>{exhibition[4].title || exhibition[4].place}</strong>
                       )}
-                      {exhibition[4].summary && <p>{exhibition[4].summary}</p>
+                      {exhibition[4].summary && <p>{exhibition[4].summary}</p>}
                     </div>
                   </article>
                 )}
