@@ -1,7 +1,12 @@
 import type { Photo } from "./data";
 
-const rawUrl = String(import.meta.env.VITE_SUPABASE_URL || "").trim();
-const anonKey = String(import.meta.env.VITE_SUPABASE_ANON_KEY || "").trim();
+const defaultUrl = "https://xwznjvreglbkpchuimem.supabase.co";
+const defaultPublishableKey = "sb_publishable_RHQ8CqEgzr7UslYb9EYV8Q_Ueqe6Z7C";
+
+const rawUrl = String(import.meta.env.VITE_SUPABASE_URL || defaultUrl).trim();
+const anonKey = String(
+  import.meta.env.VITE_SUPABASE_ANON_KEY || defaultPublishableKey,
+).trim();
 const baseUrl = rawUrl.replace(/\/$/, "");
 const sessionKey = "jn-supabase-session";
 
@@ -28,6 +33,10 @@ type JourneyRow = {
   height: number;
   position: number;
   published: boolean;
+  file_hash?: string | null;
+  storage_path?: string | null;
+  original_filename?: string | null;
+  taken_at?: string | null;
 };
 
 function saveSession(session: JourneySession | null) {
@@ -141,6 +150,10 @@ function rowToPhoto(row: JourneyRow): Photo {
     category: row.category || "Doğa",
     width: Number(row.width || 1),
     height: Number(row.height || 1),
+    fileHash: row.file_hash || undefined,
+    storagePath: row.storage_path || undefined,
+    originalFilename: row.original_filename || undefined,
+    takenAt: row.taken_at || undefined,
   };
 }
 
@@ -160,7 +173,7 @@ async function rest(path: string, init: RequestInit = {}, accessToken?: string) 
 export async function loadPublishedJourneyPhotos(): Promise<Photo[]> {
   if (!supabaseConfigured) return [];
   const response = await rest(
-    "journey_photos?select=id,title,summary,body,place,category,image_url,thumbnail_url,width,height,position,published&published=eq.true&order=position.asc,created_at.desc",
+    "journey_photos?select=id,title,summary,body,place,category,image_url,thumbnail_url,width,height,position,published,file_hash,storage_path,original_filename,taken_at&published=eq.true&order=position.asc,created_at.desc",
   );
   if (!response.ok) return [];
   return (await response.json()).map(rowToPhoto);
@@ -170,7 +183,7 @@ export async function loadStudioJourneyPhotos(): Promise<Photo[]> {
   const session = await getJourneySession();
   if (!session) throw new Error("Oturum bulunamadı.");
   const response = await rest(
-    "journey_photos?select=id,title,summary,body,place,category,image_url,thumbnail_url,width,height,position,published&order=position.asc,created_at.asc",
+    "journey_photos?select=id,title,summary,body,place,category,image_url,thumbnail_url,width,height,position,published,file_hash,storage_path,original_filename,taken_at&order=position.asc,created_at.asc",
     {},
     session.access_token,
   );
@@ -191,7 +204,45 @@ function dataUrlToBlob(value: string) {
 function extensionFor(mime: string) {
   if (mime === "image/png") return "png";
   if (mime === "image/webp") return "webp";
+  if (mime === "image/avif") return "avif";
   return "jpg";
+}
+
+export async function uploadJourneyFile(
+  file: File,
+  photoId: string,
+  fileHash?: string,
+) {
+  const session = await getJourneySession();
+  if (!session) throw new Error("Oturum süresi doldu. Yeniden giriş yap.");
+
+  const ext = extensionFor(file.type || "image/jpeg");
+  const storagePath = `${session.user.id}/${photoId}/original.${ext}`;
+  const response = await fetch(
+    `${baseUrl}/storage/v1/object/journey-photos/${storagePath}`,
+    {
+      method: "POST",
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${session.access_token}`,
+        "content-type": file.type || "image/jpeg",
+        "x-upsert": "true",
+        "cache-control": "31536000",
+        ...(fileHash ? { "x-metadata": JSON.stringify({ sha256: fileHash }) } : {}),
+      },
+      body: file,
+    },
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(detail || "Fotoğraf Storage alanına yüklenemedi.");
+  }
+
+  return {
+    url: `${baseUrl}/storage/v1/object/public/journey-photos/${storagePath}`,
+    storagePath,
+  };
 }
 
 async function uploadDataImage(dataUrl: string, photoId: string, session: JourneySession) {
@@ -231,17 +282,21 @@ export async function saveJourneyPhotos(items: Photo[], published: boolean) {
     rows.push({
       id: item.id,
       owner_id: session.user.id,
-      title: item.title.trim() || "Adsız kare",
+      title: item.title.trim(),
       summary: item.summary || "",
       body: item.body || [],
       place: item.place || "",
-      category: item.category || "Doğa",
+      category: item.category || "Diğer",
       image_url: imageUrl,
       thumbnail_url: thumbnailUrl || imageUrl,
       width: item.width,
       height: item.height,
       position: index,
       published,
+      file_hash: item.fileHash || null,
+      storage_path: item.storagePath || null,
+      original_filename: item.originalFilename || null,
+      taken_at: item.takenAt || null,
       updated_at: new Date().toISOString(),
     });
   }
