@@ -3458,3 +3458,45 @@ body {
     font-size: 39px;
   }
 }
+
+
+/* JOURNEY V12.1 — image-first editorial rhythm */
+.jn-story.is-image-only {
+  display: block;
+  width: min(100%, 1160px);
+}
+
+.jn-story.is-image-only.is-reverse {
+  margin-left: auto;
+}
+
+.jn-story.is-image-only.is-landscape .jn-story-media {
+  aspect-ratio: 16 / 10;
+}
+
+.jn-story.is-image-only:not(.is-landscape) {
+  width: min(78%, 820px);
+}
+
+.jn-story.is-image-only:not(.is-landscape).is-reverse {
+  margin-left: auto;
+}
+
+.jn-cover-album-cta > strong {
+  display: block;
+}
+
+.jn-album-index-head h2 {
+  margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  .jn-story.is-image-only,
+  .jn-story.is-image-only:not(.is-landscape) {
+    width: 100%;
+  }
+
+  .jn-story.is-image-only.is-landscape .jn-story-media {
+    aspect-ratio: 4 / 3;
+  }
+}
