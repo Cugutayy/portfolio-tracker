@@ -945,7 +945,7 @@ export default function App() {
                     <button className="jn-cover-album-cta" onClick={openAlbum}>
                       <strong>Albümü aç</strong>
                       <span className="jn-cover-album-count">
-                        {all.length} fotoğraf <Arrow />
+                        {all.length} fotoğraf
                       </span>
                     </button>
                   </div>
