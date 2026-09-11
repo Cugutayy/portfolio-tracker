@@ -5,82 +5,45 @@ const Studio = lazy(() => import("./studio"));
 const instagram = "https://www.instagram.com/journey_notess/";
 function Arrow({ back = false }: { back?: boolean }) {
   return (
-    <svg
-      width="19"
-      height="19"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-      style={{ transform: back ? "rotate(180deg)" : undefined }}
-    >
-      <path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.3" />
-    </svg>
+    <span className={back ? "jn-line-arrow is-back" : "jn-line-arrow"} aria-hidden="true">
+      <span className="jn-line-arrow-rail" />
+      <span className="jn-line-arrow-tip" />
+    </span>
   );
 }
 
 function NorthEastMark({ compact = false }: { compact?: boolean }) {
   return (
-    <svg
-      className={compact ? "jn-ne-mark is-compact" : "jn-ne-mark"}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path className="jn-ne-rail" d="M5 19 19 5" />
-      <path className="jn-ne-corner" d="M10 5h9v9" />
-      <circle className="jn-ne-dot" cx="5" cy="19" r="1.15" />
-    </svg>
+    <span className={compact ? "jn-diagonal-mark is-compact" : "jn-diagonal-mark"} aria-hidden="true">
+      <span className="jn-diagonal-rail" />
+      <span className="jn-diagonal-corner" />
+    </span>
   );
 }
 
 function ThemeDial({ dark }: { dark: boolean }) {
   return (
-    <svg
-      className={dark ? "jn-theme-dial is-night" : "jn-theme-dial"}
-      viewBox="0 0 30 30"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle className="jn-theme-orbit" cx="15" cy="15" r="10.2" />
-      <path
-        className="jn-theme-phase"
-        d="M15 4.8a10.2 10.2 0 1 0 0 20.4c-3.15-1.82-4.9-5.43-4.9-10.2S11.85 6.62 15 4.8Z"
-      />
-      <circle className="jn-theme-star" cx="22.4" cy="7.5" r="1.35" />
-    </svg>
+    <span className={dark ? "jn-theme-switch is-night" : "jn-theme-switch"} aria-hidden="true">
+      <span className="jn-theme-track" />
+      <span className="jn-theme-knob" />
+      <span className="jn-theme-copy jn-theme-day">LIGHT</span>
+      <span className="jn-theme-copy jn-theme-night">DARK</span>
+    </span>
   );
 }
+
 function Bookmark({ filled = false }: { filled?: boolean }) {
   return (
-    <svg
-      width="17"
-      height="19"
-      viewBox="0 0 20 24"
-      fill={filled ? "currentColor" : "none"}
-      aria-hidden="true"
-    >
-      <path
-        d="M4 3h12v18l-6-4-6 4V3Z"
-        stroke="currentColor"
-        strokeWidth="1.3"
-      />
-    </svg>
+    <span className={filled ? "jn-save-mark is-filled" : "jn-save-mark"} aria-hidden="true">
+      <span className="jn-save-fold" />
+    </span>
   );
 }
+
 function SearchIcon() {
-  return (
-    <svg
-      width="19"
-      height="19"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle cx="10" cy="10" r="6" stroke="currentColor" strokeWidth="1.3" />
-      <path d="m15 15 5 5" stroke="currentColor" strokeWidth="1.3" />
-    </svg>
-  );
+  return <span className="jn-search-type" aria-hidden="true">ARA</span>;
 }
+
 function Picture({
   photo,
   priority = false,
@@ -276,7 +239,10 @@ export default function App() {
               className="jn-instagram-link"
               aria-label="Journey Notes Instagram hesabını yeni sekmede aç"
             >
-              <span>Instagram</span>
+              <span className="jn-instagram-copy">
+                <strong>Instagram</strong>
+                <small>@journey_notess</small>
+              </span>
               <NorthEastMark />
             </a>
             <span className="tool-divider" />
@@ -308,30 +274,14 @@ export default function App() {
             className="wordmark"
             aria-label="Journey Notes ana sayfası"
           >
-            journey{" "}
-            <span className="brand-flower" aria-hidden="true">
-              ✳
-            </span>{" "}
+            journey{" "} 
             <em>notes</em>
             <span className="brand-dot">.</span>
           </a>
           <div className="journal-seal" aria-hidden="true">
-            <span>KİŞİSEL ARŞİV</span>
-            <svg width="37" height="37" viewBox="0 0 50 50" fill="none">
-              <circle
-                cx="25"
-                cy="25"
-                r="19"
-                stroke="currentColor"
-                strokeWidth=".7"
-              />
-              <path
-                d="m25 6 5 14 14 5-14 5-5 14-5-14-14-5 14-5 5-14Z"
-                stroke="currentColor"
-              />
-              <path d="m25 14 3 11-3 11-3-11 3-11Z" fill="currentColor" />
-            </svg>
-            <span>JOURNEY NOTES</span>
+            <span className="journal-seal-top">VOL. 01</span>
+            <strong className="journal-seal-mid">JN</strong>
+            <span className="journal-seal-bottom">2026</span>
           </div>
         </div>
         <nav className="nav" aria-label="Ana gezinme">
@@ -480,12 +430,10 @@ export default function App() {
                   benim adım <em>Arif.</em>
                 </h1>
                 <p>Bu da benim kişisel blogum.</p>
-                <div className="berra-keepsake" aria-hidden="true">
-                  <span className="berra-tape" />
-                  <img src="/journey/archive/010-small.webp" alt="" />
-                </div>
+                <span className="berra-handle">arifv216</span>
                 <button className="berra-enter" onClick={scrollArchive}>
-                  Fotoğraflara bak <Arrow />
+                  <span>Arşivi keşfet</span>
+                  <Arrow />
                 </button>
               </div>
               <p className="berra-tease">
@@ -545,7 +493,7 @@ export default function App() {
                     }
                     aria-pressed={layout === "index"}
                   >
-                    {layout === "journal" ? "▦" : "▤"}
+                    <span className="layout-mode-label">{layout === "journal" ? "INDEX" : "JOURNAL"}</span>
                   </button>
                 </div>
               </div>
@@ -638,7 +586,7 @@ export default function App() {
               </div>
               {filtered.length === 0 && (
                 <div className="empty">
-                  <span>✳</span>
+                  <span className="empty-index">00</span>
                   <h3>
                     {onlySaved
                       ? "Bu sayfa henüz boş."
@@ -678,7 +626,7 @@ export default function App() {
                   </span>
                 )}
                 <span className="tiny-flower" aria-hidden="true">
-                  ✳
+                  
                 </span>
               </div>
             </section>
@@ -769,7 +717,7 @@ export default function App() {
                 </a>
               </div>
               <span className="about-flower" aria-hidden="true">
-                ✳
+                
               </span>
             </section>
           </main>
@@ -781,13 +729,13 @@ export default function App() {
             </a>
             <p>FOTOĞRAF · SEYAHAT · KİŞİSEL ARŞİV</p>
             <a href="#" aria-label="Sayfanın başına dön" className="back-top">
-              ↑
+              BAŞA DÖN
             </a>
           </div>
           <div className="footer-bottom">
-            <a href="/">SNMEZ.XYZ'NİN BİR PARÇASI ↗</a>
+            <a href="/">SNMEZ.XYZ / ANA SAYFA</a>
             <span>© {new Date().getFullYear()} JOURNEY NOTES</span>
-            <button onClick={openStudio}>TASLAK STÜDYOSU ↗</button>
+            <button onClick={openStudio}>TASLAK STÜDYOSU</button>
           </div>
         </footer>
       </div>

@@ -481,3 +481,20 @@ a { color: inherit; text-decoration: none; }
   .petal, .stalk-grow, .leaf { transform: none; }
   .root { stroke-dashoffset: 0; }
 }
+
+
+/* Journey card privacy / visual treatment */
+.journey-card-portrait img {
+  filter: blur(18px) saturate(.72) contrast(.94) brightness(.98) !important;
+  transform: scale(1.10) !important;
+}
+.journey-card:hover .journey-card-portrait img {
+  filter: blur(17px) saturate(.76) contrast(.96) brightness(.99) !important;
+  transform: scale(1.115) !important;
+}
+.journey-card-head {
+  font-family: "IBM Plex Mono", ui-monospace, monospace !important;
+}
+.journey-card-copy h3 {
+  font-family: "Gloock", "Iowan Old Style", Baskerville, serif !important;
+}
