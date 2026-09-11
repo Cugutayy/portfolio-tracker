@@ -2473,3 +2473,32 @@ select:focus-visible {
     font-size: 6px;
   }
 }
+
+
+/* V10.1 nav parity */
+.jn-nav button {
+  position: relative;
+  padding: 19px 0 17px;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+.jn-nav button::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: 11px;
+  height: 1px;
+  background: currentColor;
+  transition: right .25s var(--ease);
+}
+.jn-nav button:hover::after { right: 0; }
+
+@media (max-width: 760px) {
+  .jn-nav button {
+    flex: 0 0 auto;
+    font-size: 8px;
+  }
+}
