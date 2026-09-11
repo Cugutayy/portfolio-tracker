@@ -1,0 +1,8 @@
+/* Hub-only visibility overrides.
+ * Journey now lives at journeynotess.com, so keep its implementation intact
+ * while removing the duplicate entry point from the snmez.xyz project grid.
+ */
+.ed-grid > *:has(> .journey-card),
+.ed-grid > *:has(.journey-card) {
+  display: none !important;
+}
