@@ -62,13 +62,16 @@ export function ProjectCards({ t }: Props) {
               <span>13</span>
             </div>
             <figure className="journey-card-portrait" aria-hidden="true">
-              <img
-                src="/journey/berra-4k.webp"
-                alt=""
-                loading="lazy"
-                width="4096"
-                height="4096"
-              />
+              <picture>
+                <source srcSet="/journey/berra-4k.avif" type="image/avif" />
+                <img
+                  src="/journey/berra.jpg"
+                  alt=""
+                  loading="lazy"
+                  width="4096"
+                  height="4096"
+                />
+              </picture>
             </figure>
             <div className="journey-card-copy">
               <h3>Journey <em>Notes</em></h3>
