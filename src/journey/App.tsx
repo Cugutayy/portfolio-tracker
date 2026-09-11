@@ -13,9 +13,11 @@ import {
   consumeJourneyAuthCallback,
   getJourneyRecoveryState,
   getJourneySession,
+  isJourneyAdmin,
   loadPublishedJourneyPhotos,
   requestJourneyPasswordReset,
   signInJourney,
+  signOutJourney,
   supabaseConfigured,
   updateJourneyPassword,
 } from "./supabase";
@@ -103,10 +105,23 @@ function StudioGate({
     }
 
     getJourneySession()
-      .then((session) => {
+      .then(async (session) => {
         if (!alive) return;
-        setState(session ? "ready" : "locked");
-        if (session?.user.email) setEmail(session.user.email);
+        if (!session) {
+          setState("locked");
+          return;
+        }
+        if (session.user.email) setEmail(session.user.email);
+        const allowed = await isJourneyAdmin();
+        if (!alive) return;
+        if (!allowed) {
+          await signOutJourney().catch(() => null);
+          setMessageTone("error");
+          setMessage("Bu hesap Journey Notes yönetimine yetkili değil.");
+          setState("locked");
+          return;
+        }
+        setState("ready");
       })
       .catch(() => {
         if (alive) setState("locked");
@@ -291,6 +306,11 @@ function StudioGate({
               setMessage("");
               try {
                 await signInJourney(email.trim(), password);
+                const allowed = await isJourneyAdmin();
+                if (!allowed) {
+                  await signOutJourney().catch(() => null);
+                  throw new Error("Bu hesap Journey Notes yönetimine yetkili değil.");
+                }
                 setPassword("");
                 setState("ready");
               } catch (error) {
