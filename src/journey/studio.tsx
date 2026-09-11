@@ -236,6 +236,7 @@ export default function Studio({
           let src = "";
           let thumbnail = "";
           let originalSrc = "";
+          let originalBucket = "";
           let storagePath = "";
           let displayPath = "";
           let thumbnailPath = "";
@@ -251,6 +252,7 @@ export default function Studio({
             src = uploaded.imageUrl;
             thumbnail = uploaded.thumbnailUrl;
             originalSrc = uploaded.originalUrl;
+            originalBucket = uploaded.originalBucket;
             storagePath = uploaded.storagePath;
             displayPath = uploaded.displayPath;
             thumbnailPath = uploaded.thumbnailPath;
@@ -268,6 +270,7 @@ export default function Studio({
             src,
             thumbnail,
             originalSrc,
+            originalBucket: originalBucket || undefined,
             width: prepared.width,
             height: prepared.height,
             smallWidth: prepared.thumbnailWidth,
