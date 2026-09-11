@@ -37,13 +37,13 @@ export function Navbar({ lang, setLang, dark, setDark, t }: Props) {
               style={{
                 background: 'transparent',
                 border: 0,
-                color: lang === code ? '#f0cf86' : 'rgba(255,250,242,.82)',
+                color: lang === code ? '#f0cf86' : 'rgba(255,250,242,.94)',
                 fontSize: '.59rem',
-                fontWeight: 500,
+                fontWeight: 600,
                 letterSpacing: '.09em',
                 padding: '5px 6px',
                 cursor: 'pointer',
-                opacity: lang === code ? 1 : 0.74,
+                opacity: lang === code ? 1 : 0.9,
               }}
             >
               {label}
