@@ -556,11 +556,39 @@ a { color: inherit; text-decoration: none; }
 }
 
 
-/* HUB / unboxed project index — 2026-09-11 */
+/* HUB / readable project index — 2026-09-11
+   Keep Botticelli visible, but give the project area one calm contrast field.
+   This removes the heavy glow/shadow treatment that made the type feel fuzzy. */
 #projects {
-  --project-ink: #fffaf2;
-  --project-muted: rgba(255, 248, 239, .82);
-  --project-rule: rgba(255, 248, 239, .34);
+  position: relative;
+  isolation: isolate;
+  --project-ink: #fffdf8;
+  --project-muted: rgba(255, 251, 244, .86);
+  --project-rule: rgba(255, 248, 239, .30);
+}
+
+/* One continuous veil is calmer than putting a heavy glass box behind every card. */
+#projects::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -30px;
+  bottom: -34px;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(9, 7, 6, .25) 0%,
+      rgba(9, 7, 6, .50) 9%,
+      rgba(9, 7, 6, .53) 54%,
+      rgba(9, 7, 6, .48) 91%,
+      rgba(9, 7, 6, .24) 100%
+    );
+  backdrop-filter: blur(1.5px) saturate(.86);
+  -webkit-backdrop-filter: blur(1.5px) saturate(.86);
 }
 
 #projects .ed-card,
@@ -569,43 +597,53 @@ a { color: inherit; text-decoration: none; }
   --ink: var(--project-ink);
   --muted: var(--project-muted);
   --rule: var(--project-rule);
-  background: transparent !important;
+  background: rgba(9, 7, 6, .10) !important;
   border: 0 !important;
   border-top: 1px solid var(--project-rule) !important;
-  border-bottom: 1px solid rgba(255, 248, 239, .12) !important;
+  border-bottom: 1px solid rgba(255, 248, 239, .11) !important;
   box-shadow: none !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
 
 #projects .ed-card {
-  padding: 20px 4px 22px !important;
+  padding: 20px 8px 22px !important;
 }
 
 #projects .lead-card {
-  padding: 0 !important;
+  padding: 10px 8px 14px !important;
 }
 
 #projects .journey-card {
-  padding: 14px 2px 18px !important;
+  padding: 14px 6px 18px !important;
 }
 
 #projects .ed-card:hover,
 #projects .lead-card:hover,
 #projects .journey-card:hover {
-  background: transparent !important;
-  border-top-color: rgba(255, 250, 242, .72) !important;
-  border-bottom-color: rgba(255, 250, 242, .24) !important;
+  background: rgba(9, 7, 6, .17) !important;
+  border-top-color: rgba(255, 250, 242, .58) !important;
+  border-bottom-color: rgba(255, 250, 242, .20) !important;
   box-shadow: none !important;
+}
+
+/* Crisp type: stable contrast comes from the section veil, not oversized text halos. */
+#projects .ed-card h3,
+#projects .lead-card h3,
+#projects .journey-card-copy h3,
+#projects .ed-card p,
+#projects .lead-card p,
+#projects .journey-card-head,
+#projects .journey-card-copy > span,
+#projects .ed-card .mono,
+#projects .lead-card .mono {
+  text-shadow: none !important;
 }
 
 #projects .ed-card h3,
 #projects .lead-card h3,
 #projects .journey-card-copy h3 {
   color: var(--project-ink) !important;
-  text-shadow:
-    0 1px 2px rgba(0, 0, 0, .9),
-    0 4px 18px rgba(0, 0, 0, .62);
 }
 
 #projects .ed-card p,
@@ -613,57 +651,46 @@ a { color: inherit; text-decoration: none; }
 #projects .journey-card-head,
 #projects .journey-card-copy > span {
   color: var(--project-muted) !important;
-  text-shadow:
-    0 1px 2px rgba(0, 0, 0, .92),
-    0 3px 13px rgba(0, 0, 0, .66);
 }
 
-#projects .ed-card .mono,
-#projects .lead-card .mono {
-  text-shadow:
-    0 1px 2px rgba(0, 0, 0, .92),
-    0 3px 11px rgba(0, 0, 0, .58);
-}
-
-/* Keep each project's visual language crisp instead of dimming it behind a dark card. */
+/* Keep the tiny charts readable without making them glow. */
 #projects .ed-card svg,
 #projects .lead-card svg {
-  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .22));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .18));
 }
 
-/* Journey portrait should read as an actual image on the hub. */
+/* Privacy treatment requested for the Journey Notes project-card portrait only. */
 #projects .journey-card-portrait {
-  background: transparent !important;
+  overflow: hidden;
+  background: rgba(9, 7, 6, .18) !important;
 }
 #projects .journey-card-portrait img,
 #projects .journey-card:hover .journey-card-portrait img {
-  filter: saturate(.98) contrast(1.025) brightness(1.01) !important;
-  transform: none !important;
+  filter: blur(18px) saturate(.72) contrast(.92) brightness(.88) !important;
+  transform: scale(1.10) !important;
 }
 
-/* Locked projects stay restricted, but the access state is no longer a black slab. */
+/* Locked projects remain readable; access state stays a compact editorial badge. */
 #projects .ed-card[style*="position: relative"] > div[aria-hidden] {
   filter: none !important;
   opacity: 1 !important;
 }
 
-/* Restricted cards remain readable: access state is a small editorial badge,
-   not a full-card veil. */
 #projects .ed-card[style*="position: relative"] > div[style*="position: absolute"] {
-  inset: auto 4px 14px auto !important;
+  inset: auto 8px 14px auto !important;
   width: auto !important;
   height: auto !important;
-  max-width: calc(100% - 8px) !important;
+  max-width: calc(100% - 16px) !important;
   flex-direction: row !important;
   align-items: center !important;
   justify-content: flex-end !important;
   gap: 7px !important;
   padding: 6px 9px !important;
-  border: 1px solid rgba(255, 248, 239, .52) !important;
+  border: 1px solid rgba(255, 248, 239, .50) !important;
   border-radius: 999px !important;
-  background: rgba(248, 241, 230, .93) !important;
+  background: rgba(248, 241, 230, .95) !important;
   color: #201b17 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, .16) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .14) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -691,11 +718,26 @@ a { color: inherit; text-decoration: none; }
 }
 
 @media (max-width: 700px) {
+  #projects::before {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(9, 7, 6, .34) 0%,
+        rgba(9, 7, 6, .58) 10%,
+        rgba(9, 7, 6, .58) 90%,
+        rgba(9, 7, 6, .32) 100%
+      );
+    backdrop-filter: blur(1px) saturate(.84);
+    -webkit-backdrop-filter: blur(1px) saturate(.84);
+  }
+
   #projects .ed-card,
   #projects .lead-card,
   #projects .journey-card {
-    background: transparent !important;
+    background: rgba(9, 7, 6, .13) !important;
   }
-  #projects .ed-card { padding-inline: 2px !important; }
-  #projects .journey-card { padding-inline: 0 !important; }
+
+  #projects .ed-card { padding-inline: 5px !important; }
+  #projects .lead-card { padding-inline: 5px !important; }
+  #projects .journey-card { padding-inline: 3px !important; }
 }
