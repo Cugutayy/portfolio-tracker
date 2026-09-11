@@ -421,18 +421,20 @@ function extensionFor(mime: string) {
   return "jpg";
 }
 
-function publicStorageUrl(path: string) {
-  return `${baseUrl}/storage/v1/object/public/journey-photos/${path}`;
-}
-
+const PUBLIC_MEDIA_BUCKET = "journey-photos";
+const PRIVATE_ORIGINAL_BUCKET = "journey-originals";
 const TUS_CHUNK_SIZE = 6 * 1024 * 1024;
+
+function publicStorageUrl(bucket: string, path: string) {
+  return `${baseUrl}/storage/v1/object/public/${bucket}/${path}`;
+}
 
 function tusMetadata(value: string) {
   return btoa(value);
 }
 
-function tusResumeKey(path: string) {
-  return `jn-tus:${path}`;
+function tusResumeKey(bucket: string, path: string) {
+  return `jn-tus:${bucket}:${path}`;
 }
 
 async function tusHead(url: string, session: JourneySession) {
@@ -450,6 +452,7 @@ async function tusHead(url: string, session: JourneySession) {
 
 async function createTusUpload(
   blob: Blob,
+  bucket: string,
   path: string,
   session: JourneySession,
   contentType: string,
@@ -464,7 +467,7 @@ async function createTusUpload(
         "Tus-Resumable": "1.0.0",
         "Upload-Length": String(blob.size),
         "Upload-Metadata": [
-          `bucketName ${tusMetadata("journey-photos")}`,
+          `bucketName ${tusMetadata(bucket)}`,
           `objectName ${tusMetadata(path)}`,
           `contentType ${tusMetadata(contentType)}`,
           `cacheControl ${tusMetadata("31536000")}`,
@@ -485,11 +488,13 @@ async function createTusUpload(
 
 async function uploadBlobResumable(
   blob: Blob,
+  bucket: string,
   path: string,
   session: JourneySession,
   contentType: string,
+  publicRead: boolean,
 ) {
-  const resumeKey = tusResumeKey(path);
+  const resumeKey = tusResumeKey(bucket, path);
   let uploadUrl = "";
   let offset = 0;
 
@@ -512,7 +517,7 @@ async function uploadBlobResumable(
   } catch {}
 
   if (!uploadUrl) {
-    uploadUrl = await createTusUpload(blob, path, session, contentType);
+    uploadUrl = await createTusUpload(blob, bucket, path, session, contentType);
     try {
       localStorage.setItem(
         resumeKey,
@@ -581,20 +586,22 @@ async function uploadBlobResumable(
     localStorage.removeItem(resumeKey);
   } catch {}
 
-  return publicStorageUrl(path);
+  return publicRead ? publicStorageUrl(bucket, path) : "";
 }
 
 async function uploadBlobStandard(
   blob: Blob,
+  bucket: string,
   path: string,
   session: JourneySession,
   contentType: string,
+  publicRead: boolean,
 ) {
   let lastError = "";
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
       const response = await fetch(
-        `${baseUrl}/storage/v1/object/journey-photos/${path}`,
+        `${baseUrl}/storage/v1/object/${bucket}/${path}`,
         {
           method: "POST",
           headers: {
@@ -607,7 +614,9 @@ async function uploadBlobStandard(
           body: blob,
         },
       );
-      if (response.ok) return publicStorageUrl(path);
+      if (response.ok) {
+        return publicRead ? publicStorageUrl(bucket, path) : "";
+      }
 
       const detail = await response.text().catch(() => "");
       lastError = detail || `Storage HTTP ${response.status}`;
@@ -626,14 +635,30 @@ async function uploadBlobStandard(
 
 async function uploadBlob(
   blob: Blob,
+  bucket: string,
   path: string,
   session: JourneySession,
   contentType: string,
+  publicRead: boolean,
 ) {
   if (blob.size > TUS_CHUNK_SIZE) {
-    return uploadBlobResumable(blob, path, session, contentType);
+    return uploadBlobResumable(
+      blob,
+      bucket,
+      path,
+      session,
+      contentType,
+      publicRead,
+    );
   }
-  return uploadBlobStandard(blob, path, session, contentType);
+  return uploadBlobStandard(
+    blob,
+    bucket,
+    path,
+    session,
+    contentType,
+    publicRead,
+  );
 }
 
 export async function uploadJourneyAssets(
@@ -646,32 +671,40 @@ export async function uploadJourneyAssets(
   const session = await getJourneySession();
   if (!session) throw new Error("Oturum süresi doldu. Yeniden giriş yap.");
 
-  const root = `${session.user.id}/${photoId}`;
-  const originalPath = `${root}/original.${extensionFor(originalMime)}`;
-  const displayPath = `${root}/display.webp`;
-  const thumbnailPath = `${root}/thumb.webp`;
+  const originalRoot = `${session.user.id}/${photoId}`;
+  const publicRoot = `media/${photoId}`;
+  const originalPath = `${originalRoot}/original.${extensionFor(originalMime)}`;
+  const displayPath = `${publicRoot}/display.webp`;
+  const thumbnailPath = `${publicRoot}/thumb.webp`;
 
-  const originalUrl = await uploadBlob(
+  await uploadBlob(
     original,
+    PRIVATE_ORIGINAL_BUCKET,
     originalPath,
     session,
     originalMime || "image/jpeg",
+    false,
   );
   const imageUrl = await uploadBlob(
     display,
+    PUBLIC_MEDIA_BUCKET,
     displayPath,
     session,
     "image/webp",
+    true,
   );
   const thumbnailUrl = await uploadBlob(
     thumbnail,
+    PUBLIC_MEDIA_BUCKET,
     thumbnailPath,
     session,
     "image/webp",
+    true,
   );
 
   return {
-    originalUrl,
+    originalUrl: "",
+    originalBucket: PRIVATE_ORIGINAL_BUCKET,
     imageUrl,
     thumbnailUrl,
     storagePath: originalPath,
@@ -682,11 +715,13 @@ export async function uploadJourneyAssets(
 
 async function uploadDataImage(
   dataUrl: string,
+  bucket: string,
   path: string,
   session: JourneySession,
+  publicRead: boolean,
 ) {
   const { blob, mime } = dataUrlToBlob(dataUrl);
-  return uploadBlob(blob, path, session, mime);
+  return uploadBlob(blob, bucket, path, session, mime, publicRead);
 }
 
 type SaveJourneyOptions = {
