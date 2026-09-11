@@ -270,15 +270,33 @@ export async function saveJourneyPhotos(items: Photo[], published: boolean) {
   const session = await getJourneySession();
   if (!session) throw new Error("Oturum süresi doldu. Yeniden giriş yap.");
 
+  const existingResponse = await rest(
+    "journey_photos?select=id,storage_path&order=position.asc",
+    {},
+    session.access_token,
+  );
+  const existing = existingResponse.ok
+    ? ((await existingResponse.json()) as Array<{
+        id: string;
+        storage_path?: string | null;
+      }>)
+    : [];
+
   const rows = [];
   for (let index = 0; index < items.length; index += 1) {
     const item = items[index];
     let imageUrl = item.src;
     let thumbnailUrl = item.thumbnail;
+    let storagePath = item.storagePath;
+
     if (item.src.startsWith("data:")) {
       imageUrl = await uploadDataImage(item.src, item.id, session);
       thumbnailUrl = imageUrl;
+      storagePath = `${session.user.id}/${item.id}.${extensionFor(
+        item.src.match(/^data:([^;,]+)/)?.[1] || "image/jpeg",
+      )}`;
     }
+
     rows.push({
       id: item.id,
       owner_id: session.user.id,
@@ -294,21 +312,59 @@ export async function saveJourneyPhotos(items: Photo[], published: boolean) {
       position: index,
       published,
       file_hash: item.fileHash || null,
-      storage_path: item.storagePath || null,
+      storage_path: storagePath || null,
       original_filename: item.originalFilename || null,
       taken_at: item.takenAt || null,
       updated_at: new Date().toISOString(),
     });
   }
 
-  const response = await rest("journey_photos?on_conflict=id", {
-    method: "POST",
-    headers: { Prefer: "resolution=merge-duplicates,return=representation" },
-    body: JSON.stringify(rows),
-  }, session.access_token);
-  const data = await response.json().catch(() => []);
-  if (!response.ok) {
-    throw new Error(data?.message || data?.hint || "Veritabanına kaydedilemedi.");
+  let savedRows: JourneyRow[] = [];
+  if (rows.length) {
+    const response = await rest(
+      "journey_photos?on_conflict=id",
+      {
+        method: "POST",
+        headers: { Prefer: "resolution=merge-duplicates,return=representation" },
+        body: JSON.stringify(rows),
+      },
+      session.access_token,
+    );
+    const data = await response.json().catch(() => []);
+    if (!response.ok) {
+      throw new Error(
+        data?.message || data?.hint || "Veritabanına kaydedilemedi.",
+      );
+    }
+    savedRows = data as JourneyRow[];
   }
-  return (data as JourneyRow[]).map(rowToPhoto);
+
+  const keep = new Set(items.map((item) => item.id));
+  const removed = existing.filter((row) => !keep.has(row.id));
+
+  for (const row of removed) {
+    const response = await rest(
+      `journey_photos?id=eq.${encodeURIComponent(row.id)}`,
+      { method: "DELETE" },
+      session.access_token,
+    );
+    if (!response.ok) {
+      throw new Error("Silinen fotoğraf veritabanından kaldırılamadı.");
+    }
+
+    if (row.storage_path) {
+      await fetch(
+        `${baseUrl}/storage/v1/object/journey-photos/${row.storage_path}`,
+        {
+          method: "DELETE",
+          headers: {
+            apikey: anonKey,
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        },
+      ).catch(() => null);
+    }
+  }
+
+  return savedRows.map(rowToPhoto);
 }
