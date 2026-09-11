@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { photos, categories, normalize, type Photo } from "./data";
+import { getJourneySession, loadPublishedJourneyPhotos, signInJourney, supabaseConfigured } from "./supabase";
 import "./style.css";
 const Studio = lazy(() => import("./studio"));
 const instagram = "https://www.instagram.com/journey_notess/";
@@ -73,27 +74,43 @@ function StudioGate({
   onPreview: (photos: Photo[]) => void;
 }) {
   const [state, setState] = useState<"checking" | "locked" | "ready" | "error">("checking");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    fetch("/api/journey-studio-auth", { credentials: "same-origin" })
-      .then(async (r) => {
-        if (r.ok) setState("ready");
-        else if (r.status === 401) setState("locked");
-        else {
-          setState("error");
-          setMessage((await r.json().catch(() => null))?.error || "Yönetim erişimi yapılandırılmamış.");
-        }
+    let alive = true;
+    if (!supabaseConfigured) {
+      setState("error");
+      setMessage("Supabase bağlantısı henüz yapılandırılmadı.");
+      return;
+    }
+    getJourneySession()
+      .then((session) => {
+        if (!alive) return;
+        setState(session ? "ready" : "locked");
+        if (session?.user.email) setEmail(session.user.email);
       })
       .catch(() => {
-        setState("error");
-        setMessage("Yönetim servisine ulaşılamadı.");
+        if (!alive) return;
+        setState("locked");
       });
+    return () => {
+      alive = false;
+    };
   }, []);
 
   if (state === "ready") {
-    return <Studio onClose={onClose} onPreview={onPreview} />;
+    return (
+      <Studio
+        onClose={onClose}
+        onPreview={onPreview}
+        onSignedOut={() => {
+          setPassword("");
+          setState("locked");
+        }}
+      />
+    );
   }
 
   return (
@@ -104,9 +121,9 @@ function StudioGate({
         </button>
         <span className="eyebrow">YÖNETİM</span>
         <h2 id="studio-login-title">Fotoğraf ekle.</h2>
-        <p>Bu alan yalnızca site yöneticisine açık.</p>
+        <p>Bu alan Supabase Auth ile yalnızca site yöneticisine açık.</p>
         {state === "checking" ? (
-          <p className="studio-login-status">Kontrol ediliyor…</p>
+          <p className="studio-login-status">Oturum kontrol ediliyor…</p>
         ) : state === "error" ? (
           <p className="studio-login-status is-error">{message}</p>
         ) : (
@@ -114,21 +131,26 @@ function StudioGate({
             onSubmit={async (e) => {
               e.preventDefault();
               setMessage("");
-              const r = await fetch("/api/journey-studio-auth", {
-                method: "POST",
-                headers: { "content-type": "application/json" },
-                credentials: "same-origin",
-                body: JSON.stringify({ password }),
-              }).catch(() => null);
-              if (r?.ok) {
+              try {
+                await signInJourney(email.trim(), password);
                 setPassword("");
                 setState("ready");
-              } else {
-                const data = await r?.json().catch(() => null);
-                setMessage(data?.error || "Giriş başarısız.");
+              } catch (error) {
+                setMessage(error instanceof Error ? error.message : "Giriş başarısız.");
               }
             }}
           >
+            <label>
+              <span>E-POSTA</span>
+              <input
+                type="email"
+                autoComplete="username"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoFocus
+              />
+            </label>
             <label>
               <span>PAROLA</span>
               <input
@@ -136,7 +158,7 @@ function StudioGate({
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                autoFocus
+                required
               />
             </label>
             {message && <p className="studio-login-status is-error">{message}</p>}
@@ -156,6 +178,7 @@ export default function App() {
   const [limit, setLimit] = useState(9999);
   const [route, setRoute] = useState(location.hash);
   const [drafts, setDrafts] = useState<Photo[]>([]);
+  const [remotePhotos, setRemotePhotos] = useState<Photo[]>([]);
   const [dark, setDark] = useState(() => {
     try {
       return localStorage.getItem("jn-theme") === "dark";
@@ -170,7 +193,9 @@ export default function App() {
   const returnScroll = useRef(0);
   const origin = useRef<HTMLElement | null>(null);
   const originNote = useRef("");
-  const all = [...drafts, ...photos.slice(1), photos[0]];
+  const all = Array.from(
+    new Map([...drafts, ...remotePhotos, ...photos].map((p) => [p.id, p])).values(),
+  );
   const selected = all.find((p) => route === `#note=${p.id}`);
   const filtered = all.filter(
     (p) =>
@@ -188,6 +213,18 @@ normalize(`${p.title} ${p.summary} ${p.place} ${p.category}`).includes(
       removeEventListener("popstate", sync);
     };
   }, []);
+  useEffect(() => {
+    let alive = true;
+    loadPublishedJourneyPhotos()
+      .then((rows) => {
+        if (alive) setRemotePhotos(rows);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? "night" : "day";
     try {
@@ -467,7 +504,7 @@ normalize(`${p.title} ${p.summary} ${p.place} ${p.category}`).includes(
                     Yolda <em>gördüklerim.</em>
                   </h2>
                 </div>
-                <p>{photos.length} fotoğraf</p>
+                <p>{all.length} fotoğraf</p>
               </div>
               <div className="toolbar">
                 <div className="filters" role="group" aria-label="Kategori">
@@ -637,7 +674,7 @@ normalize(`${p.title} ${p.summary} ${p.place} ${p.category}`).includes(
                     ids: ["010", "103", "032"],
                   },
                 ].map((c, index) => {
-                  const count = photos.filter((p) => p.category === c.category).length;
+                  const count = all.filter((p) => p.category === c.category).length;
                   return (
                     <button
                       className="collection-row"
