@@ -3266,6 +3266,8 @@ textarea {
   border-radius: 999px;
 }
 .studio-login form { margin-top: 28px; }
+.studio-login form label { display: block; }
+.studio-login form label + label { margin-top: 14px; }
 .studio-login label span {
   display: block;
   margin-bottom: 8px;
