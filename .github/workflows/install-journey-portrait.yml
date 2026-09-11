@@ -1,0 +1,70 @@
+name: Install Journey portrait
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/install-journey-portrait.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Assemble and verify portrait
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat             public/journey/berra-avif-upload/00.b64             public/journey/berra-avif-upload/01.b64             public/journey/berra-avif-upload/02.b64             public/journey/berra-avif-upload/03.b64             public/journey/berra-avif-upload/04.b64             public/journey/berra-avif-upload/05a.b64             public/journey/berra-avif-upload/05b1.b64             public/journey/berra-avif-upload/05b2.b64             public/journey/berra-avif-upload/06.b64             public/journey/berra-avif-upload/07a.b64             public/journey/berra-avif-upload/07b.b64             | tr -d '\n\r' | base64 -d > public/journey/berra-hq.avif
+
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("public/journey/berra-hq.avif").read_bytes()
+          assert len(p) == 39808, f"unexpected size: {len(p)}"
+          assert p[4:12] == b"ftypavif", p[4:12]
+          print("portrait verified:", len(p), p[4:12])
+          PY
+
+      - name: Point Journey at verified portrait
+        shell: python
+        run: |
+          from pathlib import Path
+
+          for name in ("src/components/ProjectCards.tsx", "src/journey/App.tsx"):
+              path = Path(name)
+              text = path.read_text()
+              old = '<source srcSet="/journey/berra-4k.webp" type="image/webp" />'
+              new = '<source srcSet="/journey/berra-hq.avif" type="image/avif" />'
+              assert old in text, f"missing expected portrait source in {name}"
+              text = text.replace(old, new)
+              path.write_text(text)
+
+          path = Path("journey/index.html")
+          text = path.read_text()
+          old = 'href="/journey/berra-4k.webp" type="image/webp"'
+          new = 'href="/journey/berra-hq.avif" type="image/avif"'
+          assert old in text, "missing expected preload"
+          path.write_text(text.replace(old, new))
+
+      - name: Remove failed upload artifacts
+        shell: bash
+        run: |
+          rm -rf public/journey/berra-avif-upload
+          rm -rf public/journey/berra-upload
+          rm -f public/journey/berra-4k.webp
+          rm -f .github/workflows/install-journey-portrait.yml
+
+      - name: Commit verified portrait
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "assets: install verified Journey portrait"
+          git push
