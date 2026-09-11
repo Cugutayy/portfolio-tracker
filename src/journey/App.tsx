@@ -22,6 +22,7 @@ import {
   updateJourneyPassword,
 } from "./supabase";
 import "./style.css";
+import "./style-v13.css";
 
 const Studio = lazy(() => import("./studio"));
 const instagram = "https://www.instagram.com/journey_notess/";
