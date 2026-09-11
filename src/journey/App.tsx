@@ -55,7 +55,7 @@ function Picture({
           ? undefined
           : `${photo.thumbnail} ${photo.smallWidth || 640}w, ${photo.src} ${photo.largeWidth || Math.min(photo.width, 1440)}w`
       }
-      sizes="(max-width: 640px) 78vw, (max-width: 1000px) 40vw, 490px"
+      sizes="(max-width: 700px) 94vw, (max-width: 1200px) 46vw, 720px"
       alt={photo.title}
       width={photo.width}
       height={photo.height}
@@ -204,7 +204,7 @@ normalize(`${p.title} ${p.summary} ${p.place} ${p.category}`).includes(
   }, [status]);
   useEffect(() => {
     document.title = selected
-      ? `${selected.title} · Journey Notes`
+      ? `${selected.title} · stalklıyorum`
       : "stalklıyorum";
     if (selected) {
       window.scrollTo({ top: 0, behavior: "instant" });

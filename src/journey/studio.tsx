@@ -253,9 +253,9 @@ export default function Studio({
       <div className="studio-shell">
         <header className="studio-header">
           <div>
-            <span className="eyebrow">JOURNEY NOTES / TASLAK STÜDYOSU</span>
+            <span className="eyebrow">YÖNETİM</span>
             <h2 id="studio-title">
-              Bir sonraki <em>not.</em>
+              Fotoğraf <em>ekle.</em>
             </h2>
           </div>
           <button
@@ -267,8 +267,7 @@ export default function Studio({
           </button>
         </header>
         <p className="studio-notice">
-          Bu tasarım önizlemesinde taslaklar cihazında saklanır. Buraya eklenen
-          fotoğraflar siteye yayınlanmaz.
+          Fotoğraf seç, bilgilerini ekle ve önizle. Taslaklar yalnızca bu cihazda saklanır.
         </p>
         <div className="studio-actions">
           <button
@@ -283,9 +282,6 @@ export default function Studio({
             onClick={() => void save()}
           >
             {busy ? "İşleniyor…" : dirty ? "Taslağı kaydet" : "Kaydedildi"}
-          </button>
-          <button disabled={busy || !items.length} onClick={exportDrafts}>
-            Taslağı indir
           </button>
           <button
             disabled={busy || !items.length}
@@ -304,7 +300,7 @@ export default function Studio({
               }
             }}
           >
-            Blogda önizle
+            Önizle
           </button>
           <input disabled={busy}
             ref={picker}
@@ -339,16 +335,13 @@ export default function Studio({
                 disabled={busy || !ready}
                 onClick={() => picker.current?.click()}
               >
-                <span>+</span>
-                <strong>
+                 <strong>
                   {ready
-                    ? "Fotoğraflarını buraya bırak"
-                    : "Taslaklar yükleniyor…"}
+                    ? "Fotoğraf seç"
+                    : "Hazırlanıyor…"}
                 </strong>
                 <small>
-                  veya dosya seç
-                  <br />
-                  JPG, PNG, WebP · Görsel başına en fazla 25 MB
+                  JPG, PNG veya WebP · en fazla 25 MB
                 </small>
               </button>
             ) : (
@@ -369,7 +362,7 @@ export default function Studio({
                   onClick={() => picker.current?.click()}
                   aria-label="Daha fazla fotoğraf ekle"
                 >
-                  +
+                  EKLE
                 </button>
               </div>
             )}
@@ -470,9 +463,7 @@ export default function Studio({
                 <span>00</span>
                 <h3>Bir fotoğrafla başlar.</h3>
                 <p>
-                  Görselini seç, birkaç kelime ekle.
-                  <br />
-                  Defterde nasıl görüneceğini hemen gör.
+                  Soldan bir fotoğraf seç. Başlık, yer ve kısa not ekle.
                 </p>
               </div>
             )}
@@ -501,7 +492,7 @@ export default function Studio({
         )}
         <p className="studio-status" role="status">
           {message ||
-            "Orijinal görseller korunur. Tarayıcı verilerini temizlemeden önce taslaklarını indir."}
+            "Taslaklar bu cihazda saklanır."}
         </p>
       </div>
     </dialog>
