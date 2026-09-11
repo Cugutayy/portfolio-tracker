@@ -554,3 +554,113 @@ a { color: inherit; text-decoration: none; }
     background: linear-gradient(135deg, rgba(12,10,8,.22), rgba(12,10,8,.08)) !important;
   }
 }
+
+
+/* HUB / unboxed project index — 2026-09-11 */
+#projects {
+  --project-ink: #fffaf2;
+  --project-muted: rgba(255, 248, 239, .82);
+  --project-rule: rgba(255, 248, 239, .34);
+}
+
+#projects .ed-card,
+#projects .lead-card,
+#projects .journey-card {
+  --ink: var(--project-ink);
+  --muted: var(--project-muted);
+  --rule: var(--project-rule);
+  background: transparent !important;
+  border: 0 !important;
+  border-top: 1px solid var(--project-rule) !important;
+  border-bottom: 1px solid rgba(255, 248, 239, .12) !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+#projects .ed-card {
+  padding: 20px 4px 22px !important;
+}
+
+#projects .lead-card {
+  padding: 0 !important;
+}
+
+#projects .journey-card {
+  padding: 14px 2px 18px !important;
+}
+
+#projects .ed-card:hover,
+#projects .lead-card:hover,
+#projects .journey-card:hover {
+  background: transparent !important;
+  border-top-color: rgba(255, 250, 242, .72) !important;
+  border-bottom-color: rgba(255, 250, 242, .24) !important;
+  box-shadow: none !important;
+}
+
+#projects .ed-card h3,
+#projects .lead-card h3,
+#projects .journey-card-copy h3 {
+  color: var(--project-ink) !important;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, .9),
+    0 4px 18px rgba(0, 0, 0, .62);
+}
+
+#projects .ed-card p,
+#projects .lead-card p,
+#projects .journey-card-head,
+#projects .journey-card-copy > span {
+  color: var(--project-muted) !important;
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, .92),
+    0 3px 13px rgba(0, 0, 0, .66);
+}
+
+#projects .ed-card .mono,
+#projects .lead-card .mono {
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, .92),
+    0 3px 11px rgba(0, 0, 0, .58);
+}
+
+/* Keep each project's visual language crisp instead of dimming it behind a dark card. */
+#projects .ed-card svg,
+#projects .lead-card svg {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, .22));
+}
+
+/* Journey portrait should read as an actual image on the hub. */
+#projects .journey-card-portrait {
+  background: transparent !important;
+}
+#projects .journey-card-portrait img,
+#projects .journey-card:hover .journey-card-portrait img {
+  filter: saturate(.98) contrast(1.025) brightness(1.01) !important;
+  transform: none !important;
+}
+
+/* Locked projects stay restricted, but the access state is no longer a black slab. */
+#projects .ed-card[style*="position: relative"] > div[aria-hidden] {
+  opacity: .46 !important;
+}
+#projects .ed-card[style*="position: relative"] > div[style*="position: absolute"] {
+  background: linear-gradient(
+    180deg,
+    rgba(248, 241, 230, .05),
+    rgba(248, 241, 230, .11)
+  ) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@media (max-width: 700px) {
+  #projects .ed-card,
+  #projects .lead-card,
+  #projects .journey-card {
+    background: transparent !important;
+  }
+  #projects .ed-card { padding-inline: 2px !important; }
+  #projects .journey-card { padding-inline: 0 !important; }
+}
