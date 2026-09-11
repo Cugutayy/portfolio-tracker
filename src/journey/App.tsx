@@ -382,7 +382,10 @@ export default function App() {
 
         <nav className="jn-nav" aria-label="Journey Notes">
           <a href="#edit">Seçki</a>
-          <button type="button" onClick={openAlbum}>Albüm</button>
+          <button className="jn-nav-album" type="button" onClick={openAlbum}>
+            <span>Albüm</span>
+            <small>{all.length}</small>
+          </button>
           <a href="#places">Yerler</a>
           <a href="#about">Hakkında</a>
         </nav>
