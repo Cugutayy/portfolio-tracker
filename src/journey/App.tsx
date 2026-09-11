@@ -753,7 +753,7 @@ export default function App() {
               <div className="about-copy">
                 <span className="eyebrow">03 / HAKKINDA</span>
                 <h2>
-                  Merhaba, ben <em>Berra.</em>
+                  Merhaba, ben <em>Arif.</em>
                 </h2>
                 <p>
                   Journey Notes, gezdiğim yerlerden saklamak istediğim
