@@ -47,7 +47,8 @@ function Picture({
       alt={photo.title || photo.place || "Seyahat fotoğrafı"}
       width={photo.width}
       height={photo.height}
-      loading={priority ? "eager" : "lazy"}\n      decoding="async"
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
       fetchPriority={priority ? "high" : "auto"}
     />
   );
