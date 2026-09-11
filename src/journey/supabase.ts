@@ -153,10 +153,14 @@ export async function requestJourneyPasswordReset(email: string) {
   const cleanEmail = email.trim();
   if (!cleanEmail) throw new Error("E-posta adresini yaz.");
 
-  const response = await authRequest("/recover", {
-    method: "POST",
-    body: JSON.stringify({ email: cleanEmail }),
-  });
+  const redirectTo = `${location.origin}/`;
+  const response = await authRequest(
+    `/recover?redirect_to=${encodeURIComponent(redirectTo)}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ email: cleanEmail }),
+    },
+  );
 
   // Supabase intentionally does not reveal whether a user exists for the
   // address. Keep the UI generic for the same reason.
