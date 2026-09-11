@@ -4,8 +4,14 @@ import {
   loadStudioJourneyPhotos,
   saveJourneyPhotos,
   signOutJourney,
-  uploadJourneyFile,
+  uploadJourneyAssets,
 } from "./supabase";
+import {
+  JOURNEY_MAX_UPLOAD_BYTES,
+  journeyAcceptedTypes,
+  journeyMimeType,
+  prepareJourneyMedia,
+} from "./media";
 import "./studio.css";
 
 function database(): Promise<IDBDatabase> {
@@ -42,7 +48,7 @@ async function writeDrafts(items: Photo[]) {
     db.close();
   }
 }
-const fileData = (file: File) =>
+const fileData = (file: Blob) =>
   new Promise<string>((resolve, reject) => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result));
@@ -50,13 +56,6 @@ const fileData = (file: File) =>
     r.readAsDataURL(file);
   });
 
-async function sha256(file: File) {
-  const bytes = await file.arrayBuffer();
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((value) => value.toString(16).padStart(2, "0"))
-    .join("");
-}
 
 export default function Studio({
   onClose,
@@ -77,6 +76,7 @@ export default function Studio({
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [removedIds, setRemovedIds] = useState<string[]>([]);
   const [removed, setRemoved] = useState<{ item: Photo; index: number } | null>(
     null,
   );
@@ -134,12 +134,16 @@ export default function Studio({
   const save = async () => {
     setBusy(true);
     try {
-      const saved = await saveJourneyPhotos(items, false);
+      const saved = await saveJourneyPhotos(items, {
+        publishAll: false,
+        removedIds,
+      });
       await writeDrafts(saved).catch(() => {});
       setItems(saved);
       setSelected((current) => current || saved[0]?.id || "");
+      setRemovedIds([]);
       setDirty(false);
-      setMessage("Taslaklar Supabase veritabanına kaydedildi.");
+      setMessage("Taslaklar Supabase veritabanına güvenli biçimde kaydedildi.");
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -156,11 +160,15 @@ export default function Studio({
     if (!items.length) return;
     setBusy(true);
     try {
-      const saved = await saveJourneyPhotos(items, true);
+      const saved = await saveJourneyPhotos(items, {
+        publishAll: true,
+        removedIds,
+      });
       await writeDrafts(saved).catch(() => {});
       setItems(saved);
+      setRemovedIds([]);
       setDirty(false);
-      setMessage("Yayınlandı. Fotoğraflar artık Supabase üzerinden sitede görünebilir.");
+      setMessage("Yayınlandı. Taslaklar korunarak yalnız bu koleksiyon güncellendi.");
       onPreview(saved);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Yayınlama başarısız.");
@@ -188,82 +196,101 @@ export default function Studio({
 
     const incoming: Photo[] = [];
     const skipped: string[] = [];
-    const orderedFiles = [...files].sort(
+    const batch = files.slice(0, 50);
+    if (files.length > batch.length) {
+      skipped.push("Tek seferde en fazla 50 fotoğraf işlenir; kalanları ikinci grupta ekle.");
+    }
+
+    const orderedFiles = [...batch].sort(
       (a, b) => (a.lastModified || 0) - (b.lastModified || 0),
     );
 
     try {
       for (const file of orderedFiles) {
-        if (items.length + incoming.length >= 200) {
-          skipped.push("Tek yönetim oturumunda en fazla 200 fotoğraf işlenebilir.");
-          break;
-        }
-
+        const mimeType = journeyMimeType(file);
         if (
-          !["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type) ||
-          file.size > 25 * 1024 * 1024
+          !journeyAcceptedTypes.includes(mimeType) ||
+          !file.size ||
+          file.size > JOURNEY_MAX_UPLOAD_BYTES
         ) {
           skipped.push(
-            `${file.name}: JPG, PNG, WebP veya AVIF ve en fazla 25 MB olmalı.`,
+            `${file.name}: JPG, PNG, WebP, AVIF, HEIC/HEIF ve en fazla 50 MB olmalı.`,
           );
           continue;
         }
 
         try {
-          const fileHash = await sha256(file);
+          const prepared = await prepareJourneyMedia(file);
+
           if (
             [...items, ...incoming].some(
-              (photo) => photo.fileHash && photo.fileHash === fileHash,
+              (photo) =>
+                photo.fileHash && photo.fileHash === prepared.fileHash,
             )
           ) {
             skipped.push(`${file.name}: Bu fotoğraf zaten taslakta.`);
             continue;
           }
 
-          const bitmap = await createImageBitmap(file);
-          const width = bitmap.width;
-          const height = bitmap.height;
-          bitmap.close();
-
-          if (width * height > 50000000) {
-            skipped.push(`${file.name}: En fazla 50 megapiksel destekleniyor.`);
-            continue;
-          }
-
           const id = `upload-${crypto.randomUUID()}`;
           let src = "";
+          let thumbnail = "";
+          let originalSrc = "";
           let storagePath = "";
+          let displayPath = "";
+          let thumbnailPath = "";
 
           try {
-            const uploaded = await uploadJourneyFile(file, id, fileHash);
-            src = uploaded.url;
+            const uploaded = await uploadJourneyAssets(
+              prepared.original,
+              prepared.display,
+              prepared.thumbnail,
+              id,
+              prepared.mimeType,
+            );
+            src = uploaded.imageUrl;
+            thumbnail = uploaded.thumbnailUrl;
+            originalSrc = uploaded.originalUrl;
             storagePath = uploaded.storagePath;
+            displayPath = uploaded.displayPath;
+            thumbnailPath = uploaded.thumbnailPath;
           } catch {
-            // Network/storage failure does not destroy the draft. Keep a local
-            // copy and let the normal save flow retry the upload later.
-            src = await fileData(file);
+            // Ağ kesilirse hiçbir byte kaybolmasın: orijinal + iki optimize
+            // edilmiş sürüm IndexedDB taslağına alınır ve sonraki kayıtta
+            // Storage'a tekrar gönderilir.
+            src = await fileData(prepared.display);
+            thumbnail = await fileData(prepared.thumbnail);
+            originalSrc = await fileData(prepared.original);
           }
 
           incoming.push({
             id,
             src,
-            thumbnail: src,
-            width,
-            height,
+            thumbnail,
+            originalSrc,
+            width: prepared.width,
+            height: prepared.height,
+            smallWidth: prepared.thumbnailWidth,
+            largeWidth: prepared.displayWidth,
             title: "",
             summary: "",
             body: [],
             category: "Diğer",
             place: "",
-            fileHash,
+            fileHash: prepared.fileHash,
             storagePath: storagePath || undefined,
+            displayPath: displayPath || undefined,
+            thumbnailPath: thumbnailPath || undefined,
             originalFilename: file.name,
-            takenAt: file.lastModified
-              ? new Date(file.lastModified).toISOString()
-              : undefined,
+            takenAt: prepared.takenAt,
+            mimeType: prepared.mimeType,
+            byteSize: prepared.byteSize,
+            published: false,
           });
-        } catch {
-          skipped.push(`${file.name}: Görsel okunamadı.`);
+        } catch (error) {
+          skipped.push(
+            `${file.name}: ${error instanceof Error ? error.message : "Görsel işlenemedi."}`,
+          );
         }
       }
 
@@ -278,13 +305,17 @@ export default function Studio({
       setDirty(true);
 
       try {
-        const saved = await saveJourneyPhotos(nextItems, false);
+        const saved = await saveJourneyPhotos(nextItems, {
+          publishAll: false,
+          removedIds,
+        });
         await writeDrafts(saved).catch(() => {});
         setItems(saved);
+        setRemovedIds([]);
         setDirty(false);
         setMessage(
           [
-            `${incoming.length} fotoğraf yüklendi ve taslak olarak otomatik kaydedildi.`,
+            `${incoming.length} fotoğraf işlendi, optimize edildi ve taslak olarak kaydedildi.`,
             ...skipped,
           ]
             .filter(Boolean)
@@ -294,7 +325,7 @@ export default function Studio({
         await writeDrafts(nextItems).catch(() => {});
         setMessage(
           [
-            `${incoming.length} fotoğraf yerel taslağa eklendi.`,
+            `${incoming.length} fotoğraf yerel güvenli taslağa eklendi.`,
             error instanceof Error ? error.message : "Bulut kaydı tekrar denenecek.",
             ...skipped,
           ]
@@ -377,7 +408,7 @@ export default function Studio({
           </div>
         </header>
         <p className="studio-notice">
-          Fotoğraf eklediğinde dosya Supabase Storage’a yüklenir ve taslak otomatik kaydedilir. Başlık, yer ve açıklama isteğe bağlıdır; yayınlama yine senin kontrolündedir.
+          Orijinal dosya saklanır; ayrıca 3200 px ekran sürümü ve 960 px albüm önizlemesi otomatik üretilir. Ağ kesilirse taslak cihazda korunur. Başlık, yer ve açıklama isteğe bağlıdır.
         </p>
         <div className="studio-actions">
           <button
@@ -429,7 +460,7 @@ export default function Studio({
             disabled={busy}
             ref={picker}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/avif"
+            accept="image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,.heic,.heif"
             multiple
             onChange={(e) => void add(Array.from(e.target.files || []))}
             hidden
@@ -474,7 +505,7 @@ export default function Studio({
                     : "Hazırlanıyor…"}
                 </strong>
                 <small>
-                  JPG, PNG, WebP veya AVIF · en fazla 25 MB
+                  JPG, PNG, WebP, AVIF, HEIC/HEIF · en fazla 50 MB
                 </small>
               </button>
             ) : (
@@ -583,6 +614,9 @@ export default function Studio({
                   onClick={() => {
                     const i = items.findIndex((p) => p.id === selected);
                     setRemoved({ item: current, index: i });
+                    setRemovedIds((prev) =>
+                      prev.includes(current.id) ? prev : [...prev, current.id],
+                    );
                     setItems(items.filter((p) => p.id !== selected));
                     setSelected(items.find((p) => p.id !== selected)?.id || "");
                     setDirty(true);
@@ -615,6 +649,9 @@ export default function Studio({
                 );
                 setItems(copy);
                 setSelected(removed.item.id);
+                setRemovedIds((prev) =>
+                  prev.filter((id) => id !== removed.item.id),
+                );
                 setRemoved(null);
                 setDirty(true);
               }}
@@ -625,7 +662,7 @@ export default function Studio({
         )}
         <p className="studio-status" role="status">
           {message ||
-            "Taslaklar Supabase veritabanında saklanır."}
+            "Orijinal + optimize edilmiş sürümler Supabase üzerinde saklanır."}
         </p>
       </div>
     </dialog>
