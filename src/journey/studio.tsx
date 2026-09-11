@@ -492,7 +492,9 @@ export default function Studio({
           }}
         >
           <div className="studio-gallery">
-            <span className="eyebrow">{items.length} FOTOĞRAF</span>
+            <span className="eyebrow">
+              {items.length} FOTOĞRAF · {items.filter((p) => !p.published).length} TASLAK
+            </span>
             {!items.length ? (
               <button
                 className="studio-drop"
@@ -516,7 +518,10 @@ export default function Studio({
                     aria-pressed={selected === p.id}
                     onClick={() => setSelected(p.id)}
                   >
-                    <img src={p.src} alt={p.title || p.place || "Taslak fotoğraf"} />
+                    <img
+                      src={p.thumbnail || p.src}
+                      alt={p.title || p.place || "Taslak fotoğraf"}
+                    />
                     <span>{String(i + 1).padStart(2, "0")}</span>
                   </button>
                 ))}
