@@ -943,12 +943,9 @@ export default function App() {
                       Yolda çektiğim ve kaybolmasını istemediğim fotoğraflar.
                     </p>
                     <button className="jn-cover-album-cta" onClick={openAlbum}>
-                      <span>
-                        <small>TÜM FOTOĞRAFLAR</small>
-                        <strong>Albümü görüntüle</strong>
-                      </span>
+                      <strong>Albümü aç</strong>
                       <span className="jn-cover-album-count">
-                        {all.length} kare <Arrow />
+                        {all.length} fotoğraf <Arrow />
                       </span>
                     </button>
                   </div>
@@ -985,16 +982,12 @@ export default function App() {
             <section className="jn-album-index" id="album-preview">
               <div className="jn-album-index-head">
                 <div>
-                  <span className="jn-kicker">ALBÜM · {all.length} KARE</span>
-                  <h2>Tüm fotoğraflar.</h2>
+                  <h2>Albüm.</h2>
                 </div>
                 <div>
-                  <p>
-                    Bütün arşive tek yerden ulaş. Kategori seçebilir ya da
-                    doğrudan tüm kareleri aynı düzende görebilirsin.
-                  </p>
+                  <p>{all.length} fotoğraf. Kategorilere göre bakabilir ya da hepsini birlikte açabilirsin.</p>
                   <button className="jn-album-primary" onClick={openAlbum}>
-                    <span>Albümün tamamını gör</span>
+                    <span>Tümünü aç</span>
                     <span>{all.length} <Arrow /></span>
                   </button>
                 </div>
@@ -1024,36 +1017,40 @@ export default function App() {
 
             <section className="jn-exhibition" id="edit" aria-label="Journey Notes">
               <div className="jn-exhibition-flow">
-                {exhibition.slice(0, 4).map((photo, index) => (
-                  <article
-                    className={[
-                      "jn-story",
-                      index % 2 ? "is-reverse" : "",
-                      photo.width > photo.height ? "is-landscape" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    key={photo.id}
-                  >
-                    <button
-                      className="jn-story-media"
-                      onClick={() => openNote(photo)}
-                      aria-label="Fotoğrafı büyük aç"
+                {exhibition.slice(0, 4).map((photo, index) => {
+                  const hasHumanCopy = Boolean(photo.title || photo.place);
+                  return (
+                    <article
+                      className={[
+                        "jn-story",
+                        index % 2 ? "is-reverse" : "",
+                        photo.width > photo.height ? "is-landscape" : "",
+                        !hasHumanCopy ? "is-image-only" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                      key={photo.id}
                     >
-                      <Picture
-                        photo={photo}
-                        priority={index === 0}
-                        sizes="(max-width: 760px) 94vw, 760px"
-                      />
-                    </button>
-                    <div className="jn-story-copy">
-                      {(photo.title || photo.place) && (
-                        <h3>{photo.title || photo.place}</h3>
+                      <button
+                        className="jn-story-media"
+                        onClick={() => openNote(photo)}
+                        aria-label="Fotoğrafı aç"
+                      >
+                        <Picture
+                          photo={photo}
+                          priority={index === 0}
+                          sizes="(max-width: 760px) 94vw, 980px"
+                        />
+                      </button>
+                      {hasHumanCopy && (
+                        <div className="jn-story-copy">
+                          <h3>{photo.title || photo.place}</h3>
+                          {photo.summary && <p>{photo.summary}</p>}
+                        </div>
                       )}
-                      {photo.summary && <p>{photo.summary}</p>}
-                    </div>
-                  </article>
-                ))}
+                    </article>
+                  );
+                })}
 
                 {exhibition[4] && (
                   <article className="jn-panorama">
@@ -1063,12 +1060,12 @@ export default function App() {
                         sizes="(max-width: 760px) 94vw, 1320px"
                       />
                     </button>
-                    <div className="jn-panorama-caption">
-                      {(exhibition[4].title || exhibition[4].place) && (
+                    {(exhibition[4].title || exhibition[4].place) && (
+                      <div className="jn-panorama-caption">
                         <strong>{exhibition[4].title || exhibition[4].place}</strong>
-                      )}
-                      {exhibition[4].summary && <p>{exhibition[4].summary}</p>}
-                    </div>
+                        {exhibition[4].summary && <p>{exhibition[4].summary}</p>}
+                      </div>
+                    )}
                   </article>
                 )}
 
@@ -1082,35 +1079,45 @@ export default function App() {
                             sizes="(max-width: 760px) 94vw, 620px"
                           />
                         </div>
-                        <div className="jn-diptych-copy">
-                          {(photo.title || photo.place) && (
+                        {(photo.title || photo.place) && (
+                          <div className="jn-diptych-copy">
                             <h3>{photo.title || photo.place}</h3>
-                          )}
-                          {photo.summary && <p>{photo.summary}</p>}
-                        </div>
+                            {photo.summary && <p>{photo.summary}</p>}
+                          </div>
+                        )}
                       </button>
                     </article>
                   ))}
                 </div>
 
                 {exhibition[7] && (
-                  <article className="jn-story is-reverse">
+                  <article
+                    className={[
+                      "jn-story",
+                      "is-reverse",
+                      !(exhibition[7].title || exhibition[7].place)
+                        ? "is-image-only"
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
                     <button
                       className="jn-story-media"
                       onClick={() => openNote(exhibition[7])}
-                      aria-label="Fotoğrafı büyük aç"
+                      aria-label="Fotoğrafı aç"
                     >
                       <Picture
                         photo={exhibition[7]}
-                        sizes="(max-width: 760px) 94vw, 760px"
+                        sizes="(max-width: 760px) 94vw, 980px"
                       />
                     </button>
-                    <div className="jn-story-copy">
-                      {(exhibition[7].title || exhibition[7].place) && (
+                    {(exhibition[7].title || exhibition[7].place) && (
+                      <div className="jn-story-copy">
                         <h3>{exhibition[7].title || exhibition[7].place}</h3>
-                      )}
-                      {exhibition[7].summary && <p>{exhibition[7].summary}</p>}
-                    </div>
+                        {exhibition[7].summary && <p>{exhibition[7].summary}</p>}
+                      </div>
+                    )}
                   </article>
                 )}
               </div>
