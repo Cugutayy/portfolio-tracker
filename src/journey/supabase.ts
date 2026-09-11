@@ -8,6 +8,17 @@ const anonKey = String(
   import.meta.env.VITE_SUPABASE_ANON_KEY || defaultPublishableKey,
 ).trim();
 const baseUrl = rawUrl.replace(/\/$/, "");
+const storageUploadBaseUrl = (() => {
+  try {
+    const url = new URL(baseUrl);
+    if (url.hostname.endsWith(".supabase.co")) {
+      url.hostname = url.hostname.replace(".supabase.co", ".storage.supabase.co");
+    }
+    return url.origin;
+  } catch {
+    return baseUrl;
+  }
+})();
 const sessionKey = "jn-supabase-session";
 
 export const supabaseConfigured = Boolean(baseUrl && anonKey);
@@ -236,7 +247,170 @@ function publicStorageUrl(path: string) {
   return `${baseUrl}/storage/v1/object/public/journey-photos/${path}`;
 }
 
-async function uploadBlob(
+const TUS_CHUNK_SIZE = 6 * 1024 * 1024;
+
+function tusMetadata(value: string) {
+  return btoa(value);
+}
+
+function tusResumeKey(path: string) {
+  return `jn-tus:${path}`;
+}
+
+async function tusHead(url: string, session: JourneySession) {
+  const response = await fetch(url, {
+    method: "HEAD",
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${session.access_token}`,
+      "Tus-Resumable": "1.0.0",
+    },
+  });
+  if (!response.ok) return null;
+  return Number(response.headers.get("Upload-Offset") || "0");
+}
+
+async function createTusUpload(
+  blob: Blob,
+  path: string,
+  session: JourneySession,
+  contentType: string,
+) {
+  const response = await fetch(
+    `${storageUploadBaseUrl}/storage/v1/upload/resumable`,
+    {
+      method: "POST",
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${session.access_token}`,
+        "Tus-Resumable": "1.0.0",
+        "Upload-Length": String(blob.size),
+        "Upload-Metadata": [
+          `bucketName ${tusMetadata("journey-photos")}`,
+          `objectName ${tusMetadata(path)}`,
+          `contentType ${tusMetadata(contentType)}`,
+          `cacheControl ${tusMetadata("31536000")}`,
+        ].join(","),
+        "x-upsert": "true",
+      },
+    },
+  );
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(detail || "Büyük dosya yüklemesi başlatılamadı.");
+  }
+
+  const location = response.headers.get("Location");
+  if (!location) throw new Error("Resumable upload adresi alınamadı.");
+  return new URL(location, storageUploadBaseUrl).toString();
+}
+
+async function uploadBlobResumable(
+  blob: Blob,
+  path: string,
+  session: JourneySession,
+  contentType: string,
+) {
+  const resumeKey = tusResumeKey(path);
+  let uploadUrl = "";
+  let offset = 0;
+
+  try {
+    const saved = localStorage.getItem(resumeKey);
+    if (saved) {
+      const parsed = JSON.parse(saved) as { url?: string; createdAt?: number };
+      if (
+        parsed.url &&
+        parsed.createdAt &&
+        Date.now() - parsed.createdAt < 23 * 60 * 60 * 1000
+      ) {
+        const previousOffset = await tusHead(parsed.url, session).catch(() => null);
+        if (previousOffset !== null && previousOffset <= blob.size) {
+          uploadUrl = parsed.url;
+          offset = previousOffset;
+        }
+      }
+    }
+  } catch {}
+
+  if (!uploadUrl) {
+    uploadUrl = await createTusUpload(blob, path, session, contentType);
+    try {
+      localStorage.setItem(
+        resumeKey,
+        JSON.stringify({ url: uploadUrl, createdAt: Date.now() }),
+      );
+    } catch {}
+  }
+
+  while (offset < blob.size) {
+    const end = Math.min(offset + TUS_CHUNK_SIZE, blob.size);
+    const chunk = blob.slice(offset, end);
+    let uploaded = false;
+    let lastError = "";
+
+    for (const delay of [0, 1200, 3000, 6000, 10000]) {
+      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+
+      try {
+        const response = await fetch(uploadUrl, {
+          method: "PATCH",
+          headers: {
+            apikey: anonKey,
+            Authorization: `Bearer ${session.access_token}`,
+            "Tus-Resumable": "1.0.0",
+            "Upload-Offset": String(offset),
+            "Content-Type": "application/offset+octet-stream",
+          },
+          body: chunk,
+        });
+
+        if (response.ok) {
+          offset = Number(response.headers.get("Upload-Offset") || end);
+          uploaded = true;
+          break;
+        }
+
+        lastError = await response.text().catch(() => "");
+        if (response.status === 409 || response.status >= 500) {
+          const remoteOffset = await tusHead(uploadUrl, session).catch(() => null);
+          if (remoteOffset !== null && remoteOffset >= offset) {
+            offset = remoteOffset;
+            if (offset >= end) {
+              uploaded = true;
+              break;
+            }
+          }
+          continue;
+        }
+
+        throw new Error(lastError || `Upload HTTP ${response.status}`);
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : "Ağ hatası";
+        const remoteOffset = await tusHead(uploadUrl, session).catch(() => null);
+        if (remoteOffset !== null && remoteOffset > offset) {
+          offset = remoteOffset;
+          if (offset >= end) {
+            uploaded = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!uploaded) {
+      throw new Error(lastError || "Büyük dosya yüklemesi kesildi.");
+    }
+  }
+
+  try {
+    localStorage.removeItem(resumeKey);
+  } catch {}
+
+  return publicStorageUrl(path);
+}
+
+async function uploadBlobStandard(
   blob: Blob,
   path: string,
   session: JourneySession,
@@ -274,6 +448,18 @@ async function uploadBlob(
   }
 
   throw new Error(lastError || "Fotoğraf Storage alanına yüklenemedi.");
+}
+
+async function uploadBlob(
+  blob: Blob,
+  path: string,
+  session: JourneySession,
+  contentType: string,
+) {
+  if (blob.size > TUS_CHUNK_SIZE) {
+    return uploadBlobResumable(blob, path, session, contentType);
+  }
+  return uploadBlobStandard(blob, path, session, contentType);
 }
 
 export async function uploadJourneyAssets(
