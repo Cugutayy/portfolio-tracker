@@ -464,7 +464,7 @@ export default function App() {
                 <Arrow back /> Seçkiye dön
               </button>
               <div>
-                <span className="jn-kicker">ALBUM · {all.length} FRAME</span>
+                <span className="jn-kicker">ALBÜM · {all.length} KARE</span>
                 <h1>Albüm</h1>
                 <p>
                   Bütün fotoğraflar tek yerde. Kategoriye göre filtrele;
