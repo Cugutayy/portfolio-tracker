@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { categories, type Photo } from "./data";
-import { loadStudioJourneyPhotos, saveJourneyPhotos, signOutJourney } from "./supabase";
+import {
+  loadStudioJourneyPhotos,
+  saveJourneyPhotos,
+  signOutJourney,
+  uploadJourneyFile,
+} from "./supabase";
 import "./studio.css";
 
 function database(): Promise<IDBDatabase> {
@@ -45,6 +50,14 @@ const fileData = (file: File) =>
     r.readAsDataURL(file);
   });
 
+async function sha256(file: File) {
+  const bytes = await file.arrayBuffer();
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export default function Studio({
   onClose,
   onPreview,
@@ -56,6 +69,7 @@ export default function Studio({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const picker = useRef<HTMLInputElement>(null);
+  const camera = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<Photo[]>([]);
   const [selected, setSelected] = useState("");
   const [message, setMessage] = useState("");
@@ -169,80 +183,129 @@ export default function Studio({
     } else onClose();
   };
   const add = async (files: File[]) => {
-    if (busy || !ready) return;
+    if (busy || !ready || !files.length) return;
     setBusy(true);
+
     const incoming: Photo[] = [];
     const skipped: string[] = [];
+    const orderedFiles = [...files].sort(
+      (a, b) => (a.lastModified || 0) - (b.lastModified || 0),
+    );
+
     try {
-      for (const file of files) {
-        if (items.length + incoming.length >= 20) {
-          skipped.push("Bir taslakta en fazla 20 fotoğraf bulunabilir.");
+      for (const file of orderedFiles) {
+        if (items.length + incoming.length >= 200) {
+          skipped.push("Tek yönetim oturumunda en fazla 200 fotoğraf işlenebilir.");
           break;
         }
+
         if (
-          [...items, ...incoming].reduce(
-            (total, p) => total + p.src.length * 0.75,
-            0,
-          ) +
-            file.size >
-          100 * 1024 * 1024
-        ) {
-          skipped.push("Taslak toplamı en fazla 100 MB olabilir.");
-          break;
-        }
-        if (
-          !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+          !["image/jpeg", "image/png", "image/webp", "image/avif"].includes(file.type) ||
           file.size > 25 * 1024 * 1024
         ) {
           skipped.push(
-            `${file.name}: JPG, PNG veya WebP ve en fazla 25 MB olmalı.`,
+            `${file.name}: JPG, PNG, WebP veya AVIF ve en fazla 25 MB olmalı.`,
           );
           continue;
         }
+
         try {
+          const fileHash = await sha256(file);
+          if (
+            [...items, ...incoming].some(
+              (photo) => photo.fileHash && photo.fileHash === fileHash,
+            )
+          ) {
+            skipped.push(`${file.name}: Bu fotoğraf zaten taslakta.`);
+            continue;
+          }
+
           const bitmap = await createImageBitmap(file);
-          const width = bitmap.width,
-            height = bitmap.height;
+          const width = bitmap.width;
+          const height = bitmap.height;
           bitmap.close();
+
           if (width * height > 50000000) {
             skipped.push(`${file.name}: En fazla 50 megapiksel destekleniyor.`);
             continue;
           }
-          const src = await fileData(file);
+
+          const id = `upload-${crypto.randomUUID()}`;
+          let src = "";
+          let storagePath = "";
+
+          try {
+            const uploaded = await uploadJourneyFile(file, id, fileHash);
+            src = uploaded.url;
+            storagePath = uploaded.storagePath;
+          } catch {
+            // Network/storage failure does not destroy the draft. Keep a local
+            // copy and let the normal save flow retry the upload later.
+            src = await fileData(file);
+          }
+
           incoming.push({
-            id: `draft-${crypto.randomUUID()}`,
+            id,
             src,
             thumbnail: src,
             width,
             height,
-            title: file.name.replace(/\.[^.]+$/, "").replace(/[_-]/g, " "),
+            title: "",
             summary: "",
             body: [],
-            category: "Doğa",
+            category: "Diğer",
             place: "",
+            fileHash,
+            storagePath: storagePath || undefined,
+            originalFilename: file.name,
+            takenAt: file.lastModified
+              ? new Date(file.lastModified).toISOString()
+              : undefined,
           });
         } catch {
           skipped.push(`${file.name}: Görsel okunamadı.`);
         }
       }
-      if (incoming.length) {
-        setItems((prev) => [...prev, ...incoming]);
-        setSelected(incoming[0].id);
-        setDirty(true);
+
+      if (!incoming.length) {
+        setMessage(skipped.filter(Boolean).join(" ") || "Fotoğraf eklenmedi.");
+        return;
       }
-      setMessage(
-        [
-          incoming.length
-            ? `${incoming.length} görsel eklendi. Başlık ve notlarını düzenleyebilirsin.`
-            : "",
-          ...skipped,
-        ]
-          .filter(Boolean)
-          .join(" "),
-      );
+
+      const nextItems = [...items, ...incoming];
+      setItems(nextItems);
+      setSelected(incoming[0].id);
+      setDirty(true);
+
+      try {
+        const saved = await saveJourneyPhotos(nextItems, false);
+        await writeDrafts(saved).catch(() => {});
+        setItems(saved);
+        setDirty(false);
+        setMessage(
+          [
+            `${incoming.length} fotoğraf yüklendi ve taslak olarak otomatik kaydedildi.`,
+            ...skipped,
+          ]
+            .filter(Boolean)
+            .join(" "),
+        );
+      } catch (error) {
+        await writeDrafts(nextItems).catch(() => {});
+        setMessage(
+          [
+            `${incoming.length} fotoğraf yerel taslağa eklendi.`,
+            error instanceof Error ? error.message : "Bulut kaydı tekrar denenecek.",
+            ...skipped,
+          ]
+            .filter(Boolean)
+            .join(" "),
+        );
+      }
     } finally {
       setBusy(false);
       if (picker.current) picker.current.value = "";
+      if (camera.current) camera.current.value = "";
     }
   };
   const exportDrafts = () => {
@@ -314,7 +377,7 @@ export default function Studio({
           </div>
         </header>
         <p className="studio-notice">
-          Fotoğraf seç, bilgilerini ekle, Supabase’e kaydet veya yayınla. Yerel kopya sadece yedek olarak tutulur.
+          Fotoğraf eklediğinde dosya Supabase Storage’a yüklenir ve taslak otomatik kaydedilir. Başlık, yer ve açıklama isteğe bağlıdır; yayınlama yine senin kontrolündedir.
         </p>
         <div className="studio-actions">
           <button
@@ -323,6 +386,12 @@ export default function Studio({
             onClick={() => picker.current?.click()}
           >
             Fotoğraf ekle
+          </button>
+          <button
+            disabled={!ready || busy}
+            onClick={() => camera.current?.click()}
+          >
+            Kamerayla çek
           </button>
           <button
             disabled={!ready || busy || !items.length}
@@ -356,11 +425,21 @@ export default function Studio({
           >
             Yayınla
           </button>
-          <input disabled={busy}
+          <input
+            disabled={busy}
             ref={picker}
             type="file"
-            accept="image/jpeg,image/png,image/webp"
+            accept="image/jpeg,image/png,image/webp,image/avif"
             multiple
+            onChange={(e) => void add(Array.from(e.target.files || []))}
+            hidden
+          />
+          <input
+            disabled={busy}
+            ref={camera}
+            type="file"
+            accept="image/*"
+            capture="environment"
             onChange={(e) => void add(Array.from(e.target.files || []))}
             hidden
           />
@@ -382,7 +461,7 @@ export default function Studio({
           }}
         >
           <div className="studio-gallery">
-            <span className="eyebrow">{items.length} / 20 FOTOĞRAF</span>
+            <span className="eyebrow">{items.length} FOTOĞRAF</span>
             {!items.length ? (
               <button
                 className="studio-drop"
@@ -395,7 +474,7 @@ export default function Studio({
                     : "Hazırlanıyor…"}
                 </strong>
                 <small>
-                  JPG, PNG veya WebP · en fazla 25 MB
+                  JPG, PNG, WebP veya AVIF · en fazla 25 MB
                 </small>
               </button>
             ) : (
@@ -406,7 +485,7 @@ export default function Studio({
                     aria-pressed={selected === p.id}
                     onClick={() => setSelected(p.id)}
                   >
-                    <img src={p.src} alt={p.title} />
+                    <img src={p.src} alt={p.title || p.place || "Taslak fotoğraf"} />
                     <span>{String(i + 1).padStart(2, "0")}</span>
                   </button>
                 ))}
@@ -448,7 +527,7 @@ export default function Studio({
                   </div>
                 </div>
                 <label>
-                  Başlık
+                  Başlık <span>(isteğe bağlı)</span>
                   <input disabled={busy}
                     value={current.title}
                     maxLength={110}
@@ -459,7 +538,7 @@ export default function Studio({
                   <label>
                     Koleksiyon
                     <select disabled={busy}
-                      value={current.category}
+                      value={current.category || "Diğer"}
                       onChange={(e) => update({ category: e.target.value })}
                     >
                       {categories.slice(1).map((c) => (
