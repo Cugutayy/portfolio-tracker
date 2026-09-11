@@ -394,3 +394,232 @@
 .studio-thumbs button > small.is-live {
   color: var(--ink);
 }
+
+
+/* Studio v3 — neutral working surface, no decorative accenting */
+.studio {
+  background: #fbfbf8;
+  color: #141614;
+}
+
+.studio::backdrop {
+  background: rgba(245,246,243,.82);
+}
+
+.studio-shell {
+  max-width: 1120px;
+  padding: 42px 34px 46px;
+}
+
+.studio-header {
+  padding-bottom: 26px;
+  border-bottom-color: rgba(20,22,20,.12);
+}
+
+.studio-header .eyebrow,
+.studio-gallery > .eyebrow,
+.editor-meta .eyebrow {
+  color: #73766f;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .055em;
+}
+
+.studio-header h2 {
+  margin-top: 10px;
+  color: #141614;
+  font-family: "Gloock", "Iowan Old Style", Georgia, serif;
+  font-size: clamp(40px, 4.5vw, 58px);
+  font-weight: 400;
+  letter-spacing: -.04em;
+}
+
+.studio-header h2 em {
+  color: inherit;
+  font-style: normal;
+}
+
+.studio-header-actions button {
+  min-height: 38px;
+  border-color: rgba(20,22,20,.13);
+  border-radius: 8px;
+  background: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 10px;
+  letter-spacing: .045em;
+}
+
+.studio-notice {
+  max-width: 700px;
+  padding: 22px 0 24px;
+  color: #666963;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.studio-actions {
+  gap: 8px;
+  margin-bottom: 30px;
+}
+
+.studio-actions button {
+  min-height: 42px;
+  padding-inline: 16px;
+  border: 1px solid rgba(20,22,20,.13);
+  border-radius: 8px;
+  background: #fff;
+  color: #202220;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.studio-actions .studio-primary,
+.studio-actions .studio-publish {
+  background: #171917 !important;
+  border-color: #171917 !important;
+  color: #fff !important;
+}
+
+.studio-actions .studio-publish:disabled {
+  background: #eef0ed !important;
+  border-color: #e2e4e0 !important;
+  color: #9a9d97 !important;
+}
+
+.studio-workspace {
+  grid-template-columns: minmax(300px,.82fr) minmax(420px,1.18fr);
+  gap: 32px;
+  padding-top: 30px;
+  border-top-color: rgba(20,22,20,.12);
+}
+
+.studio-workspace.is-dragging {
+  outline-color: #7f949f;
+}
+
+.studio-thumbs {
+  gap: 10px;
+}
+
+.studio-thumbs button {
+  height: 124px;
+  padding: 5px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #f0f1ee;
+}
+
+.studio-thumbs button[aria-pressed="true"] {
+  outline: 1px solid #141614;
+  outline-offset: 2px;
+}
+
+.studio-thumbs img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.studio-thumbs .add-thumb {
+  border-color: rgba(20,22,20,.15);
+  border-style: dashed;
+  background: transparent;
+  color: #5f625d;
+}
+
+.studio-editor {
+  padding-left: 32px;
+  border-left-color: rgba(20,22,20,.12);
+}
+
+.editor-meta button {
+  color: #5f625d;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+}
+
+.studio-editor label {
+  margin-bottom: 18px;
+  color: #242624;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.studio-editor label > span {
+  color: #8a8d86;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.studio-editor input,
+.studio-editor textarea,
+.studio-editor select {
+  margin-top: 8px;
+  border-color: rgba(20,22,20,.14);
+  border-radius: 8px;
+  background: #fff;
+  color: #171917;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 13px;
+}
+
+.studio-editor input:focus,
+.studio-editor textarea:focus,
+.studio-editor select:focus {
+  border-color: #6e7d84;
+  outline: 2px solid rgba(85,113,126,.12);
+  outline-offset: 0;
+}
+
+.remove-draft {
+  color: #6a6d67;
+  border-bottom-color: rgba(20,22,20,.15);
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+}
+
+.studio-status {
+  color: #747770;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  font-size: 11px;
+}
+
+.studio-undo {
+  border-radius: 8px;
+  background: #f0f1ee;
+}
+
+@media (max-width: 700px) {
+  .studio-shell {
+    padding: 24px 18px 34px;
+  }
+
+  .studio-header h2 {
+    font-size: 42px;
+  }
+
+  .studio-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .studio-actions button {
+    width: 100%;
+  }
+
+  .studio-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .studio-editor {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .studio-thumbs {
+    grid-template-columns: repeat(3, minmax(0,1fr));
+  }
+}
