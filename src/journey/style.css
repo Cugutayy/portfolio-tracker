@@ -2097,7 +2097,7 @@ em {
   border-top: 1px solid var(--line);
 }
 
-.berra-hero {
+.journey-profile-hero {
   display: grid;
   grid-template-columns: minmax(0, 1.18fr) minmax(320px, .82fr);
   grid-template-rows: minmax(560px, 72vh) auto;
@@ -2108,19 +2108,19 @@ em {
   background: transparent;
   color: var(--ink);
 }
-.berra-portrait {
+.journey-profile-portrait {
   grid-column: 1;
   grid-row: 1;
   min-width: 0;
   overflow: hidden;
   background: #cbb8a7;
 }
-.berra-portrait picture {
+.journey-profile-portrait picture {
   display: block;
   width: 100%;
   height: 100%;
 }
-.berra-portrait img {
+.journey-profile-portrait img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -2129,7 +2129,7 @@ em {
   image-rendering: auto;
   transform: none;
 }
-.berra-intro-copy {
+.journey-profile-intro-copy {
   grid-column: 2;
   grid-row: 1;
   min-width: 0;
@@ -2139,31 +2139,31 @@ em {
   padding: clamp(42px, 6vw, 78px) clamp(30px, 4.6vw, 62px) 34px;
   border-left: 1px solid var(--line);
 }
-.berra-kicker {
+.journey-profile-kicker {
   font: 500 9px/1.4 "Azeret Mono", ui-monospace, monospace;
   letter-spacing: .17em;
   color: var(--muted);
 }
-.berra-intro-copy h1 {
+.journey-profile-intro-copy h1 {
   margin: clamp(46px, 8vh, 88px) 0 0;
   max-width: 8.6ch;
   font: 500 clamp(52px, 5.8vw, 82px)/.91 "Bodoni Moda", Didot, serif;
   letter-spacing: -.055em;
 }
-.berra-intro-copy h1 em {
+.journey-profile-intro-copy h1 em {
   font-family: inherit;
   font-style: italic;
   font-weight: 400;
   color: var(--accent);
 }
-.berra-intro-copy > p {
+.journey-profile-intro-copy > p {
   margin-top: 25px;
   max-width: 15ch;
   font: 400 clamp(18px, 1.8vw, 25px)/1.25 "Bodoni Moda", Didot, serif;
   letter-spacing: -.025em;
   color: var(--ink);
 }
-.berra-keepsake {
+.journey-profile-keepsake {
   position: relative;
   width: 128px;
   margin: auto 0 24px 5px;
@@ -2172,11 +2172,11 @@ em {
   box-shadow: 0 10px 24px rgba(69, 49, 34, .09);
   transform: rotate(-2.6deg);
 }
-.berra-keepsake img {
+.journey-profile-keepsake img {
   aspect-ratio: 1 / .79;
   object-fit: cover;
 }
-.berra-tape {
+.journey-profile-tape {
   position: absolute;
   top: -9px;
   left: 50%;
@@ -2185,7 +2185,7 @@ em {
   transform: translateX(-50%) rotate(1deg);
   background: rgba(202, 184, 151, .52);
 }
-.berra-enter {
+.journey-profile-enter {
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -2195,12 +2195,12 @@ em {
   letter-spacing: .06em;
   color: var(--muted);
 }
-.berra-enter svg {
+.journey-profile-enter svg {
   width: 15px;
   transition: transform .25s var(--ease);
 }
-.berra-enter:hover svg { transform: translateX(4px); }
-.berra-tease {
+.journey-profile-enter:hover svg { transform: translateX(4px); }
+.journey-profile-tease {
   grid-column: 1 / -1;
   grid-row: 2;
   display: flex;
@@ -2214,19 +2214,19 @@ em {
   letter-spacing: .02em;
   color: var(--muted);
 }
-.berra-tease span {
+.journey-profile-tease span {
   font-family: "Bodoni Moda", serif;
   font-size: 18px;
   line-height: 1;
   color: var(--accent);
 }
-[data-theme="night"] .berra-hero {
+[data-theme="night"] .journey-profile-hero {
   background: transparent;
   color: var(--ink);
 }
-[data-theme="night"] .berra-kicker,
-[data-theme="night"] .berra-enter,
-[data-theme="night"] .berra-tease {
+[data-theme="night"] .journey-profile-kicker,
+[data-theme="night"] .journey-profile-enter,
+[data-theme="night"] .journey-profile-tease {
   color: var(--muted);
 }
 
@@ -2236,37 +2236,37 @@ em {
     padding: 15px 0 13px;
   }
   .wordmark { font-size: 30px; }
-  .berra-hero {
+  .journey-profile-hero {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
     margin: 18px 0 50px;
   }
-  .berra-portrait {
+  .journey-profile-portrait {
     grid-column: 1;
     grid-row: 1;
     height: min(112vw, 560px);
   }
-  .berra-portrait img { object-position: 50% 35%; }
-  .berra-intro-copy {
+  .journey-profile-portrait img { object-position: 50% 35%; }
+  .journey-profile-intro-copy {
     grid-column: 1;
     grid-row: 2;
     padding: 30px 0 26px;
     border-left: 0;
   }
-  .berra-intro-copy h1 {
+  .journey-profile-intro-copy h1 {
     margin-top: 28px;
     max-width: 9ch;
     font-size: clamp(46px, 14vw, 64px);
   }
-  .berra-intro-copy > p {
+  .journey-profile-intro-copy > p {
     margin-top: 17px;
     font-size: 22px;
   }
-  .berra-keepsake {
+  .journey-profile-keepsake {
     width: 112px;
     margin: 35px 0 19px 4px;
   }
-  .berra-tease {
+  .journey-profile-tease {
     grid-column: 1;
     grid-row: 3;
     font-size: 8px;
@@ -2305,7 +2305,7 @@ body {
 }
 em,
 .wordmark,
-.berra-intro-copy h1,
+.journey-profile-intro-copy h1,
 .section-heading h2,
 .reader-heading h1,
 .about-copy h2,
@@ -2318,9 +2318,9 @@ em,
 .eyebrow,
 .home-link,
 .nav sup,
-.berra-kicker,
-.berra-handle,
-.berra-tease,
+.journey-profile-kicker,
+.journey-profile-handle,
+.journey-profile-tease,
 .story-meta,
 .note-head,
 .reader-layout figcaption,
@@ -2575,18 +2575,18 @@ em,
 .jn-save-mark::before { left:-1px; transform:rotate(32deg); transform-origin:left; }
 .jn-save-mark::after { right:-1px; transform:rotate(-32deg); transform-origin:right; }
 .jn-save-mark.is-filled { background: currentColor; }
-.berra-hero {
+.journey-profile-hero {
   grid-template-columns: minmax(0, 1.28fr) minmax(320px, .72fr);
   grid-template-rows: minmax(590px, 76vh) auto;
   margin: 28px 0 82px;
   border-top: 0;
   border-bottom: 1px solid var(--line);
 }
-.berra-portrait {
+.journey-profile-portrait {
   position:relative;
   background:#a58f7e;
 }
-.berra-portrait::after {
+.journey-profile-portrait::after {
   content:"";
   position:absolute;
   inset:0;
@@ -2595,23 +2595,23 @@ em,
     linear-gradient(180deg, rgba(18,13,10,.02), rgba(18,13,10,.08)),
     radial-gradient(circle at 50% 45%, transparent 45%, rgba(18,13,10,.08) 100%);
 }
-.berra-portrait img {
+.journey-profile-portrait img {
   object-position: 50% 37%;
-  filter: blur(28px) saturate(.72) contrast(.94) brightness(.98);
-  transform: scale(1.12);
+  filter: blur(36px) saturate(.68) contrast(.92) brightness(.98);
+  transform: scale(1.16);
   image-rendering:auto;
 }
-.berra-intro-copy {
+.journey-profile-intro-copy {
   padding: clamp(48px, 7vw, 88px) clamp(34px, 5vw, 68px) 42px;
   border-left:1px solid var(--line);
 }
-.berra-kicker {
+.journey-profile-kicker {
   font-size:7px;
   font-weight:500;
   letter-spacing:.24em;
   text-transform:uppercase;
 }
-.berra-intro-copy h1 {
+.journey-profile-intro-copy h1 {
   margin: clamp(48px, 8vh, 96px) 0 0;
   max-width: 7.3ch;
   font-family:"Gloock", serif !important;
@@ -2620,25 +2620,25 @@ em,
   line-height:.89;
   letter-spacing:-.061em;
 }
-.berra-intro-copy h1 em {
+.journey-profile-intro-copy h1 em {
   font-family:inherit !important;
   font-style:italic;
   color:var(--accent);
 }
-.berra-intro-copy > p {
+.journey-profile-intro-copy > p {
   margin-top:31px;
   max-width:18ch;
   font:400 clamp(18px,1.55vw,23px)/1.35 "IBM Plex Sans Condensed", sans-serif;
   letter-spacing:-.025em;
   color:var(--muted);
 }
-.berra-handle {
+.journey-profile-handle {
   margin-top:18px;
   font:500 8px/1 "IBM Plex Mono", monospace;
   letter-spacing:.18em;
   color:var(--ink);
 }
-.berra-enter {
+.journey-profile-enter {
   margin-top:auto;
   gap:17px;
   padding:13px 0 10px;
@@ -2677,20 +2677,20 @@ em,
   transition:transform .42s var(--ease);
 }
 .jn-line-arrow.is-back { transform:rotate(180deg); }
-.berra-enter:hover .jn-line-arrow-rail,
+.journey-profile-enter:hover .jn-line-arrow-rail,
 .related button:hover .jn-line-arrow-rail { transform:scaleX(.78); }
-.berra-enter:hover .jn-line-arrow-tip,
+.journey-profile-enter:hover .jn-line-arrow-tip,
 .related button:hover .jn-line-arrow-tip {
   transform:translateX(3px) rotate(45deg);
 }
-.berra-tease {
+.journey-profile-tease {
   min-height:52px;
   padding:14px 0;
   font-size:7px;
   letter-spacing:.14em;
   text-transform:uppercase;
 }
-.berra-tease span { display:none; }
+.journey-profile-tease span { display:none; }
 .view-tools { gap:14px; }
 .view-tools .icon-button {
   min-width:auto;
@@ -2725,35 +2725,35 @@ em,
   .journal-seal { display:none; }
   .nav > div { gap:18px; }
   .nav { font-size:9px; }
-  .berra-hero {
+  .journey-profile-hero {
     grid-template-columns:1fr;
     grid-template-rows:auto auto auto;
     margin:18px 0 58px;
   }
-  .berra-portrait { height:min(114vw,590px); }
-  .berra-portrait img {
+  .journey-profile-portrait { height:min(114vw,590px); }
+  .journey-profile-portrait img {
     object-position:50% 35%;
-    filter: blur(24px) saturate(.72) contrast(.94);
-    transform:scale(1.14);
+    filter: blur(32px) saturate(.68) contrast(.92);
+    transform:scale(1.18);
   }
-  .berra-intro-copy {
+  .journey-profile-intro-copy {
     grid-column:1;
     grid-row:2;
     padding:34px 0 31px;
     border-left:0;
   }
-  .berra-intro-copy h1 {
+  .journey-profile-intro-copy h1 {
     margin-top:34px;
     max-width:7.7ch;
     font-size:clamp(48px,14.5vw,70px);
   }
-  .berra-intro-copy > p {
+  .journey-profile-intro-copy > p {
     margin-top:23px;
     font-size:18px;
   }
-  .berra-handle { margin-top:16px; }
-  .berra-enter { margin-top:42px; }
-  .berra-tease {
+  .journey-profile-handle { margin-top:16px; }
+  .journey-profile-enter { margin-top:42px; }
+  .journey-profile-tease {
     grid-column:1;
     grid-row:3;
     font-size:6px;
