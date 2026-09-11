@@ -461,7 +461,7 @@ export default function App() {
             <section className="berra-hero" aria-labelledby="berra-intro-title">
               <figure className="berra-portrait">
                 <picture>
-                  <source srcSet="/journey/berra-4k.avif" type="image/avif" />
+                  <source srcSet="/journey/berra-4k.webp" type="image/webp" />
                   <img
                     src="/journey/berra.jpg"
                     alt="Berra portresi"
