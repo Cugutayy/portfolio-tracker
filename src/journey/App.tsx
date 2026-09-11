@@ -9,10 +9,15 @@ import {
 } from "lucide-react";
 import { photos, categories, normalize, type Photo } from "./data";
 import {
+  clearJourneyRecoveryState,
+  consumeJourneyAuthCallback,
+  getJourneyRecoveryState,
   getJourneySession,
   loadPublishedJourneyPhotos,
+  requestJourneyPasswordReset,
   signInJourney,
   supabaseConfigured,
+  updateJourneyPassword,
 } from "./supabase";
 import "./style.css";
 
@@ -63,19 +68,37 @@ function StudioGate({
   onClose: () => void;
   onPreview: (items: Photo[]) => void;
 }) {
+  const recoveryAtOpen = getJourneyRecoveryState();
   const [state, setState] = useState<"checking" | "locked" | "ready" | "error">(
-    "checking",
+    recoveryAtOpen?.mode === "recovery" ? "locked" : "checking",
   );
-  const [email, setEmail] = useState("");
+  const [mode, setMode] = useState<"login" | "forgot" | "recovery">(
+    recoveryAtOpen?.mode === "recovery" ? "recovery" : "login",
+  );
+  const [email, setEmail] = useState(
+    recoveryAtOpen?.mode === "recovery" ? recoveryAtOpen.email || "" : "",
+  );
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [passwordAgain, setPasswordAgain] = useState("");
+  const [message, setMessage] = useState(
+    recoveryAtOpen?.mode === "error" ? recoveryAtOpen.message : "",
+  );
+  const [messageTone, setMessageTone] = useState<"error" | "success">(
+    recoveryAtOpen?.mode === "error" ? "error" : "success",
+  );
 
   useEffect(() => {
     let alive = true;
 
     if (!supabaseConfigured) {
       setState("error");
+      setMessageTone("error");
       setMessage("Supabase bağlantısı henüz yapılandırılmadı.");
+      return;
+    }
+
+    if (recoveryAtOpen?.mode === "recovery") {
+      setState("locked");
       return;
     }
 
@@ -102,10 +125,20 @@ function StudioGate({
         onSignedOut={() => {
           setPassword("");
           setState("locked");
+          setMode("login");
         }}
       />
     );
   }
+
+  const showLogin = () => {
+    clearJourneyRecoveryState();
+    setMode("login");
+    setPassword("");
+    setPasswordAgain("");
+    setMessage("");
+    setMessageTone("success");
+  };
 
   return (
     <div
@@ -122,14 +155,135 @@ function StudioGate({
         >
           <X size={17} strokeWidth={1.7} />
         </button>
+
         <span className="jn-kicker">YÖNETİM</span>
-        <h2 id="studio-login-title">Fotoğraf ekle.</h2>
-        <p>Bu alan Supabase Auth ile yalnızca site yöneticisine açık.</p>
+        <h2 id="studio-login-title">
+          {mode === "recovery"
+            ? "Yeni parola"
+            : mode === "forgot"
+              ? "Parolanı yenile"
+              : "Yönetim"}
+        </h2>
+        <p>
+          {mode === "recovery"
+            ? "Yeni parolanı belirle. İşlem bittiğinde bütün eski oturumlar kapatılır."
+            : mode === "forgot"
+              ? "E-posta adresini yaz; geçerliyse sıfırlama bağlantısı gönderilir."
+              : "Fotoğraf ekleme ve yayınlama alanı."}
+        </p>
 
         {state === "checking" ? (
           <p className="studio-login-status">Oturum kontrol ediliyor…</p>
         ) : state === "error" ? (
           <p className="studio-login-status is-error">{message}</p>
+        ) : mode === "recovery" ? (
+          <form
+            onSubmit={async (event) => {
+              event.preventDefault();
+              setMessage("");
+              if (password !== passwordAgain) {
+                setMessageTone("error");
+                setMessage("Parolalar aynı değil.");
+                return;
+              }
+              try {
+                await updateJourneyPassword(password);
+                setPassword("");
+                setPasswordAgain("");
+                setState("locked");
+                setMode("login");
+                setMessageTone("success");
+                setMessage("Parola güncellendi. Yeni parolanla giriş yap.");
+              } catch (error) {
+                setMessageTone("error");
+                setMessage(
+                  error instanceof Error
+                    ? error.message
+                    : "Parola güncellenemedi.",
+                );
+              }
+            }}
+          >
+            <label>
+              <span>YENİ PAROLA</span>
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                minLength={12}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                autoFocus
+              />
+            </label>
+            <label>
+              <span>YENİ PAROLA · TEKRAR</span>
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={passwordAgain}
+                minLength={12}
+                onChange={(event) => setPasswordAgain(event.target.value)}
+                required
+              />
+            </label>
+            {message && (
+              <p
+                className={`studio-login-status ${messageTone === "error" ? "is-error" : "is-success"}`}
+              >
+                {message}
+              </p>
+            )}
+            <button type="submit" className="studio-login-submit">
+              Parolayı güncelle
+            </button>
+          </form>
+        ) : mode === "forgot" ? (
+          <form
+            onSubmit={async (event) => {
+              event.preventDefault();
+              setMessage("");
+              try {
+                await requestJourneyPasswordReset(email);
+                setMessageTone("success");
+                setMessage(
+                  "Adres kayıtlıysa sıfırlama bağlantısı gönderildi. Bağlantıyı bu cihazda açabilirsin.",
+                );
+              } catch (error) {
+                setMessageTone("error");
+                setMessage(
+                  error instanceof Error
+                    ? error.message
+                    : "Sıfırlama e-postası gönderilemedi.",
+                );
+              }
+            }}
+          >
+            <label>
+              <span>E-POSTA</span>
+              <input
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                required
+                autoFocus
+              />
+            </label>
+            {message && (
+              <p
+                className={`studio-login-status ${messageTone === "error" ? "is-error" : "is-success"}`}
+              >
+                {message}
+              </p>
+            )}
+            <button type="submit" className="studio-login-submit">
+              Sıfırlama bağlantısı gönder
+            </button>
+            <button type="button" className="studio-login-secondary" onClick={showLogin}>
+              Girişe dön
+            </button>
+          </form>
         ) : (
           <form
             onSubmit={async (event) => {
@@ -140,6 +294,7 @@ function StudioGate({
                 setPassword("");
                 setState("ready");
               } catch (error) {
+                setMessageTone("error");
                 setMessage(
                   error instanceof Error ? error.message : "Giriş başarısız.",
                 );
@@ -168,10 +323,25 @@ function StudioGate({
               />
             </label>
             {message && (
-              <p className="studio-login-status is-error">{message}</p>
+              <p
+                className={`studio-login-status ${messageTone === "error" ? "is-error" : "is-success"}`}
+              >
+                {message}
+              </p>
             )}
             <button type="submit" className="studio-login-submit">
               Giriş yap
+            </button>
+            <button
+              type="button"
+              className="studio-login-secondary"
+              onClick={() => {
+                setMode("forgot");
+                setMessage("");
+                setPassword("");
+              }}
+            >
+              Parolamı unuttum
             </button>
           </form>
         )}
@@ -260,6 +430,20 @@ export default function App() {
     all[0];
 
   useEffect(() => {
+    let alive = true;
+    consumeJourneyAuthCallback()
+      .then((result) => {
+        if (!alive || !result.handled) return;
+        history.replaceState(null, "", `${location.pathname}#studio`);
+        setRoute("#studio");
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  useEffect(() => {
     const sync = () => setRoute(location.hash);
     addEventListener("hashchange", sync);
     addEventListener("popstate", sync);
@@ -334,7 +518,7 @@ export default function App() {
       ? `${selected.title || selected.place || "Fotoğraf"} · Journey Notes`
       : albumOpen
         ? "Albüm · Journey Notes"
-        : "Journey Notes · stalklıyorum";
+        : "Journey Notes";
 
     if (selected) {
       window.scrollTo({ top: 0, behavior: "auto" });
@@ -436,9 +620,7 @@ export default function App() {
 
       <div className="jn-site">
         <header className="jn-header">
-          <a className="jn-small-brand" href={location.pathname}>
-            stalklıyorum
-          </a>
+          <span className="jn-header-spacer" aria-hidden="true" />
 
           <a className="jn-wordmark" href={location.pathname}>
             journey <em>notes</em>
@@ -470,7 +652,6 @@ export default function App() {
         </header>
 
         <nav className="jn-nav" aria-label="Journey Notes">
-          <a href="#edit">Seçki</a>
           <button className="jn-nav-album" type="button" onClick={openAlbum}>
             <span>Albüm</span>
             <small>{all.length}</small>
@@ -487,7 +668,7 @@ export default function App() {
 
             <header className="jn-reader-heading">
               <span className="jn-kicker">
-                {selected.category} · NOT {selected.id}
+                {selected.place || selected.category}
               </span>
               {selected.title && <h1>{selected.title}</h1>}
               <p>{selected.summary}</p>
@@ -531,7 +712,7 @@ export default function App() {
                 </button>
               </div>
               <figcaption>
-                <span>{selected.place || "Journey Notes seçkisi"}</span>
+                <span>{selected.place || selected.category}</span>
                 <span className="jn-reader-progress">
                   {readerIndex >= 0 ? readerIndex + 1 : 1} / {readerSequence.length}
                 </span>
@@ -590,7 +771,7 @@ export default function App() {
           <main className={`jn-album-page is-${albumSize}`}>
             <header className="jn-album-head">
               <button className="jn-back" onClick={goHome}>
-                <Arrow back /> Seçkiye dön
+                <Arrow back /> Geri dön
               </button>
               <div>
                 <span className="jn-kicker">ALBÜM · {all.length} KARE</span>
@@ -731,14 +912,11 @@ export default function App() {
 
                 <div className="jn-cover-caption">
                   <div>
-                    <span className="jn-kicker">PERSONAL TRAVEL JOURNAL · 2026</span>
                     <h1 id="journey-hero-title">Journey Notes</h1>
                   </div>
                   <div className="jn-cover-note">
                     <p>
-                      Gezdiğim yerlerden seçtiğim fotoğraflar, kısa notlar ve
-                      dönüp tekrar bakmak istediğim anlardan oluşan kişisel bir
-                      görsel arşiv.
+                      Yolda çektiğim ve kaybolmasını istemediğim fotoğraflar.
                     </p>
                     <button className="jn-cover-album-cta" onClick={openAlbum}>
                       <span>
@@ -755,11 +933,29 @@ export default function App() {
             )}
 
             <section className="jn-intro">
-              <span className="jn-kicker">JOURNEY NOTES</span>
-              <p>
-                Bir albümden çok, kaydırdıkça değişen küçük bir sergi.
-                Bazı kareler tek başına; bazıları yanındaki notla birlikte.
-              </p>
+              <p>Buraya dönüp bakmak istediğim kareleri bırakıyorum.</p>
+            </section>
+
+            <section className="jn-mobile-reel" aria-label="Kaydırılabilir fotoğraf albümü">
+              <div className="jn-mobile-reel-head">
+                <span>Albüm</span>
+                <button onClick={openAlbum}>Tümünü gör</button>
+              </div>
+              <div className="jn-mobile-reel-track">
+                {all
+                  .filter((photo) => Math.max(photo.width, photo.height) >= 1000)
+                  .slice(0, 12)
+                  .map((photo, index) => (
+                    <button
+                      key={photo.id}
+                      className="jn-mobile-reel-card"
+                      onClick={() => openNote(photo, all)}
+                    >
+                      <Picture photo={photo} sizes="82vw" />
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                    </button>
+                  ))}
+              </div>
             </section>
 
             <section className="jn-album-index" id="album-preview">
@@ -802,18 +998,7 @@ export default function App() {
               </div>
             </section>
 
-            <section className="jn-exhibition" id="edit">
-              <div className="jn-section-head">
-                <div>
-                  <span className="jn-kicker">SERGİ · 02</span>
-                  <h2>Seçki.</h2>
-                </div>
-                <p>
-                  Seçtiğim birkaç kare; bazen tek başına, bazen kısa bir notla
-                  birlikte.
-                </p>
-              </div>
-
+            <section className="jn-exhibition" id="edit" aria-label="Journey Notes">
               <div className="jn-exhibition-flow">
                 {exhibition.slice(0, 4).map((photo, index) => (
                   <article
@@ -838,19 +1023,10 @@ export default function App() {
                       />
                     </button>
                     <div className="jn-story-copy">
-                      <span className="jn-kicker">
-                        {photo.place || photo.category} · FRAME {photo.id}
-                      </span>
-                      {photo.title && <h3>{photo.title}</h3>}
-                      <p className={photo.title ? "" : "is-titleless"}>
-                        {photo.summary}
-                      </p>
-                      <button
-                        className="jn-text-link"
-                        onClick={() => openNote(photo)}
-                      >
-                        Büyük gör <Arrow />
-                      </button>
+                      {(photo.title || photo.place) && (
+                        <h3>{photo.title || photo.place}</h3>
+                      )}
+                      {photo.summary && <p>{photo.summary}</p>}
                     </div>
                   </article>
                 ))}
@@ -864,11 +1040,10 @@ export default function App() {
                       />
                     </button>
                     <div className="jn-panorama-caption">
-                      <span className="jn-kicker">
-                        {exhibition[4].place || exhibition[4].category} · FRAME{" "}
-                        {exhibition[4].id}
-                      </span>
-                      <p>{exhibition[4].summary}</p>
+                      {(exhibition[4].title || exhibition[4].place) && (
+                        <strong>{exhibition[4].title || exhibition[4].place}</strong>
+                      )}
+                      {exhibition[4].summary && <p>{exhibition[4].summary}</p>
                     </div>
                   </article>
                 )}
@@ -884,11 +1059,10 @@ export default function App() {
                           />
                         </div>
                         <div className="jn-diptych-copy">
-                          <span className="jn-kicker">
-                            {photo.place || photo.category} · FRAME {photo.id}
-                          </span>
-                          {photo.title && <h3>{photo.title}</h3>}
-                          <p>{photo.summary}</p>
+                          {(photo.title || photo.place) && (
+                            <h3>{photo.title || photo.place}</h3>
+                          )}
+                          {photo.summary && <p>{photo.summary}</p>
                         </div>
                       </button>
                     </article>
@@ -908,20 +1082,10 @@ export default function App() {
                       />
                     </button>
                     <div className="jn-story-copy">
-                      <span className="jn-kicker">
-                        {exhibition[7].place || exhibition[7].category} · FRAME{" "}
-                        {exhibition[7].id}
-                      </span>
-                      {exhibition[7].title && <h3>{exhibition[7].title}</h3>}
-                      <p className={exhibition[7].title ? "" : "is-titleless"}>
-                        {exhibition[7].summary}
-                      </p>
-                      <button
-                        className="jn-text-link"
-                        onClick={() => openNote(exhibition[7])}
-                      >
-                        Büyük gör <Arrow />
-                      </button>
+                      {(exhibition[7].title || exhibition[7].place) && (
+                        <h3>{exhibition[7].title || exhibition[7].place}</h3>
+                      )}
+                      {exhibition[7].summary && <p>{exhibition[7].summary}</p>}
                     </div>
                   </article>
                 )}
@@ -932,7 +1096,7 @@ export default function App() {
               <div className="jn-places-inner">
                 <div className="jn-section-head is-dark">
                   <div>
-                    <span className="jn-kicker">YERLER · 03</span>
+                    <span className="jn-kicker">YERLER</span>
                     <h2>Yerler.</h2>
                   </div>
                   <p>Yalnızca konumundan emin olduğum kareler.</p>
@@ -978,13 +1142,11 @@ export default function App() {
                 </figure>
               )}
               <div className="jn-about-copy">
-                <span className="jn-kicker">HAKKINDA · 04</span>
+                <span className="jn-kicker">HAKKINDA</span>
                 <h2>Biriktirmek için çekiyorum.</h2>
                 <p>
-                  Journey Notes, gezdiğim yerlerden saklamak istediğim
-                  fotoğrafları ve kısa notları bir araya getirdiğim kişisel
-                  görsel arşiv. Sergi kısmı seçilmiş kareleri büyütüyor;
-                  Albüm ise hiçbirini kaybetmeden hepsini bir arada tutuyor.
+                  Gezdiğim yerlerden kalan görüntüler. Bir kısmı bir yere,
+                  bir kısmı yalnızca o güne ait.
                 </p>
                 <a href={instagram} target="_blank" rel="noreferrer">
                   Instagram’da gör <ArrowUpRight size={16} strokeWidth={1.55} />
