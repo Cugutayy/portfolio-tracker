@@ -17,6 +17,39 @@ function Arrow({ back = false }: { back?: boolean }) {
     </svg>
   );
 }
+
+function NorthEastMark({ compact = false }: { compact?: boolean }) {
+  return (
+    <svg
+      className={compact ? "jn-ne-mark is-compact" : "jn-ne-mark"}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path className="jn-ne-rail" d="M5 19 19 5" />
+      <path className="jn-ne-corner" d="M10 5h9v9" />
+      <circle className="jn-ne-dot" cx="5" cy="19" r="1.15" />
+    </svg>
+  );
+}
+
+function ThemeDial({ dark }: { dark: boolean }) {
+  return (
+    <svg
+      className={dark ? "jn-theme-dial is-night" : "jn-theme-dial"}
+      viewBox="0 0 30 30"
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle className="jn-theme-orbit" cx="15" cy="15" r="10.2" />
+      <path
+        className="jn-theme-phase"
+        d="M15 4.8a10.2 10.2 0 1 0 0 20.4c-3.15-1.82-4.9-5.43-4.9-10.2S11.85 6.62 15 4.8Z"
+      />
+      <circle className="jn-theme-star" cx="22.4" cy="7.5" r="1.35" />
+    </svg>
+  );
+}
 function Bookmark({ filled = false }: { filled?: boolean }) {
   return (
     <svg
@@ -154,7 +187,7 @@ export default function App() {
   useEffect(() => {
     document.title = selected
       ? `${selected.title} · Journey Notes`
-      : "Journey Notes | Berra";
+      : "Journey Notes | Arif";
     if (selected) {
       window.scrollTo({ top: 0, behavior: "instant" });
       reader.current?.focus({ preventScroll: true });
@@ -236,16 +269,24 @@ export default function App() {
             <span className="muted">/ JOURNEY NOTES</span>
           </a>
           <div className="header-tools">
-            <a href={instagram} target="_blank" rel="noreferrer">
-              Instagram ↗
+            <a
+              href={instagram}
+              target="_blank"
+              rel="noreferrer"
+              className="jn-instagram-link"
+              aria-label="Journey Notes Instagram hesabını yeni sekmede aç"
+            >
+              <span>Instagram</span>
+              <NorthEastMark />
             </a>
             <span className="tool-divider" />
             <button
               onClick={() => setDark(!dark)}
               className="icon-button theme-button"
               aria-label={dark ? "Açık temaya geç" : "Koyu temaya geç"}
+              aria-pressed={dark}
             >
-              {dark ? "◐" : "◑"}
+              <ThemeDial dark={dark} />
             </button>
             <button
               onClick={openSearch}
@@ -393,7 +434,7 @@ export default function App() {
                       }
                     }}
                   >
-                    Paylaş ↗
+                    Paylaş <NorthEastMark compact />
                   </button>
                 </div>
               </div>
@@ -419,14 +460,17 @@ export default function App() {
           <main>
             <section className="berra-hero" aria-labelledby="berra-intro-title">
               <figure className="berra-portrait">
-                <img
-                  src="/journey/berra-4k.webp"
-                  alt="Journey Notes portresi"
-                  width="4096"
-                  height="4096"
-                  loading="eager"
-                  fetchPriority="high"
-                />
+                <picture>
+                  <source srcSet="/journey/berra-4k.avif" type="image/avif" />
+                  <img
+                    src="/journey/berra.jpg"
+                    alt="Berra portresi"
+                    width="4096"
+                    height="4096"
+                    loading="eager"
+                    fetchPriority="high"
+                  />
+                </picture>
               </figure>
               <div className="berra-intro-copy">
                 <span className="berra-kicker">JOURNEY NOTES</span>
