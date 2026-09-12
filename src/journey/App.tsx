@@ -497,7 +497,8 @@ export default function App() {
       category,
       count: all.filter((photo) => photo.category === category).length,
       color: categoryColors[index % categoryColors.length],
-    }));
+    }))
+    .filter((item) => item.count > 0);
   const categoryTotal = Math.max(
     1,
     categoryStats.reduce((sum, item) => sum + item.count, 0),
@@ -1115,11 +1116,54 @@ export default function App() {
                   </div>
                 </div>
                 <div className="jn-v15-globe" aria-label="Journey Notes konum haritası">
-                  <span className="jn-v15-map-arc is-a" />
-                  <span className="jn-v15-map-arc is-b" />
-                  <span className="jn-v15-map-dot is-belgrade" title="Belgrad" />
-                  <span className="jn-v15-map-dot is-jaipur" title="Jaipur" />
-                  <span className="jn-v15-map-dot is-varanasi" title="Varanasi" />
+                  <svg
+                    className="jn-v15-world-map"
+                    viewBox="0 0 800 420"
+                    role="img"
+                    aria-label="Belgrad, Jaipur ve Varanasi konumlarını gösteren dünya haritası"
+                  >
+                    <ellipse className="gridline" cx="400" cy="210" rx="355" ry="162" />
+                    <path className="gridline" d="M55 210 H745" />
+                    <path className="gridline" d="M400 48 C340 94 320 150 320 210 C320 270 340 326 400 372" />
+                    <path className="gridline" d="M400 48 C460 94 480 150 480 210 C480 270 460 326 400 372" />
+                    <path className="gridline" d="M82 145 C230 175 570 175 718 145" />
+                    <path className="gridline" d="M82 275 C230 245 570 245 718 275" />
+
+                    <path
+                      className="land"
+                      d="M72 120 C96 82 135 62 180 67 L214 82 240 105 224 126 197 131 177 153 147 159 130 184 106 178 94 151 74 143 72 120 Z"
+                    />
+                    <path
+                      className="land"
+                      d="M191 187 C220 182 249 200 257 225 257 252 246 286 231 315 220 338 205 354 194 339 182 315 172 285 179 260 187 238 177 214 191 187 Z"
+                    />
+                    <path
+                      className="land"
+                      d="M350 115 C369 101 398 98 421 107 L437 124 427 140 407 140 396 151 374 145 360 133 350 115 Z"
+                    />
+                    <path
+                      className="land"
+                      d="M389 149 C416 143 443 153 453 178 459 208 448 245 437 278 427 307 408 331 392 308 378 284 370 250 373 216 374 183 377 163 389 149 Z"
+                    />
+                    <path
+                      className="land"
+                      d="M427 116 C463 91 516 85 559 96 L598 111 632 128 664 151 651 171 617 172 594 190 563 183 542 166 514 166 493 149 462 151 445 136 427 116 Z"
+                    />
+                    <path
+                      className="land"
+                      d="M647 271 C673 260 705 266 720 286 724 307 708 326 680 328 658 320 644 301 647 271 Z"
+                    />
+                    <path
+                      className="land"
+                      d="M275 73 C290 57 312 55 325 67 L318 88 295 94 278 86 275 73 Z"
+                    />
+
+                    <path className="route" d="M421 130 Q500 115 575 177" />
+                    <path className="route" d="M421 130 Q514 137 598 178" />
+                    <circle className="pin pin-belgrade" cx="421" cy="130" r="6" />
+                    <circle className="pin pin-jaipur" cx="575" cy="177" r="6" />
+                    <circle className="pin pin-varanasi" cx="598" cy="178" r="6" />
+                  </svg>
                   <p className="jn-v15-world-note">
                     Her nokta, konumu arşivde doğrulanmış bir Journey kaydı.
                   </p>
@@ -1314,9 +1358,13 @@ export default function App() {
             onClose={goHome}
             onPreview={(items) => {
               setDrafts(items);
-              goHome();
               setFilter("Tümü");
-              requestAnimationFrame(scrollToArchive);
+              setQuery("");
+              history.replaceState(null, "", "#album");
+              setRoute("#album");
+              requestAnimationFrame(() =>
+                window.scrollTo({ top: 0, behavior: "auto" }),
+              );
             }}
           />
         </Suspense>
