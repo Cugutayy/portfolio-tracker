@@ -1604,3 +1604,54 @@ body {
     transform: none !important;
   }
 }
+
+
+/* V15.1 — hand-drawn geographic silhouette under the verified location network */
+.jn-v15-world-map {
+  position: absolute;
+  inset: 2% 1%;
+  width: 98%;
+  height: 96%;
+  overflow: visible;
+  opacity: .72;
+}
+
+.jn-v15-world-map .land {
+  fill: rgba(255,255,255,.075);
+  stroke: rgba(255,255,255,.11);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.jn-v15-world-map .gridline {
+  fill: none;
+  stroke: rgba(255,255,255,.055);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.jn-v15-world-map .route {
+  fill: none;
+  stroke: rgba(255,255,255,.18);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.jn-v15-world-map .pin {
+  stroke: #0d0f0e;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.jn-v15-world-map .pin-belgrade { fill: var(--jn15-aqua); }
+.jn-v15-world-map .pin-jaipur { fill: var(--jn15-coral); }
+.jn-v15-world-map .pin-varanasi { fill: var(--jn15-sun); }
+
+.jn-v15-globe::before {
+  opacity: .42;
+}
+
+.jn-v15-map-arc,
+.jn-v15-map-dot {
+  display: none;
+}
