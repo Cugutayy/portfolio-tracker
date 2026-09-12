@@ -1196,7 +1196,7 @@ export default function App() {
                       <blockquote>“Daha iyi şeyler, merak ettiğinde başlar.”</blockquote>
                       <span>— JOURNEY NOTES</span>
                     </div>
-                    <small>01 / 04</small>
+                    <small>01 / 03</small>
                   </article>
                 )}
 
@@ -1218,39 +1218,8 @@ export default function App() {
                   <small>A MORE CURIOUS WORLD</small>
                 </article>
 
-                <article className="jn-v16-deck-card is-map">
-                  <div className="jn-v16-deck-eyebrow">
-                    <span>A WIDER PERSPECTIVE</span>
-                    <span>03 / 04</span>
-                  </div>
-                  <svg
-                    className="jn-v16-map"
-                    viewBox="0 0 800 420"
-                    role="img"
-                    aria-label="Belgrad, Jaipur ve Varanasi"
-                  >
-                    <path className="land" d="M72 120 C96 82 135 62 180 67 L214 82 240 105 224 126 197 131 177 153 147 159 130 184 106 178 94 151 74 143 72 120 Z"/>
-                    <path className="land" d="M191 187 C220 182 249 200 257 225 257 252 246 286 231 315 220 338 205 354 194 339 182 315 172 285 179 260 187 238 177 214 191 187 Z"/>
-                    <path className="land" d="M350 115 C369 101 398 98 421 107 L437 124 427 140 407 140 396 151 374 145 360 133 350 115 Z"/>
-                    <path className="land" d="M389 149 C416 143 443 153 453 178 459 208 448 245 437 278 427 307 408 331 392 308 378 284 370 250 373 216 374 183 377 163 389 149 Z"/>
-                    <path className="land" d="M427 116 C463 91 516 85 559 96 L598 111 632 128 664 151 651 171 617 172 594 190 563 183 542 166 514 166 493 149 462 151 445 136 427 116 Z"/>
-                    <path className="land" d="M647 271 C673 260 705 266 720 286 724 307 708 326 680 328 658 320 644 301 647 271 Z"/>
-                    <path className="route" d="M421 130 Q500 115 575 177"/>
-                    <path className="route" d="M421 130 Q514 137 598 178"/>
-                    <circle className="pin is-a" cx="421" cy="130" r="7"/>
-                    <circle className="pin is-b" cx="575" cy="177" r="7"/>
-                    <circle className="pin is-c" cx="598" cy="178" r="7"/>
-                    <text x="430" y="118">Belgrad</text>
-                    <text x="544" y="161">Jaipur</text>
-                    <text x="609" y="170">Varanasi</text>
-                  </svg>
-                  <div className="jn-v16-map-foot">
-                    <span className="jn-v16-verified-dot" />
-                    <span>Verified locations</span>
-                  </div>
-                </article>
-
                 <article className="jn-v16-deck-card is-menu">
+                  <span className="jn-v16-menu-index">03 / 03</span>
                   <div className="jn-v16-menu-copy">
                     <a className="jn-site-mark" href={location.pathname} aria-label="Journey Notes">
                       <span /><span /><span /><span />
