@@ -575,3 +575,288 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* V14.2 — chromatic editorial polish.
+   Colour is used as navigation / location signal rather than decorative AI-style blobs. */
+:root {
+  --jn-paper: #f8f7f2;
+  --jn-ink: #171a17;
+  --jn-muted: #697069;
+  --jn-soft: #eceee8;
+  --jn-blue: #526cf6;
+  --jn-aqua: #55bba8;
+  --jn-aqua-ink: #287d70;
+  --jn-sun: #e7c452;
+  --jn-coral: #ee7c64;
+  --jn-coral-ink: #bd5946;
+}
+
+body {
+  background: var(--jn-paper) !important;
+}
+
+.jn-header {
+  position: relative;
+}
+
+.jn-site-mark {
+  position: relative;
+  justify-self: start;
+  width: 27px;
+  height: 27px;
+  display: block;
+  border-radius: 50%;
+  transform: rotate(10deg);
+  transition: transform .38s var(--jn-ease-out);
+}
+
+.jn-site-mark:hover {
+  transform: rotate(22deg) scale(1.04);
+}
+
+.jn-site-mark > span {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+}
+
+.jn-site-mark > span:nth-child(1) {
+  width: 5px;
+  height: 10px;
+  left: 11px;
+  top: 1px;
+  background: var(--jn-blue);
+}
+
+.jn-site-mark > span:nth-child(2) {
+  width: 10px;
+  height: 5px;
+  right: 1px;
+  top: 11px;
+  background: var(--jn-coral);
+}
+
+.jn-site-mark > span:nth-child(3) {
+  width: 5px;
+  height: 10px;
+  left: 11px;
+  bottom: 1px;
+  background: var(--jn-sun);
+}
+
+.jn-site-mark > span:nth-child(4) {
+  width: 10px;
+  height: 5px;
+  left: 1px;
+  top: 11px;
+  background: var(--jn-aqua);
+}
+
+.jn-site-mark::after {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(23, 26, 23, .72);
+  border-radius: 50%;
+  background: var(--jn-paper);
+}
+
+.jn-wordmark em,
+.jn-footer-brand em {
+  color: var(--jn-coral-ink) !important;
+}
+
+/* Each primary destination gets one consistent chromatic cue. */
+.jn-nav > :is(a, button) {
+  position: relative;
+  transition: color .18s ease;
+}
+
+.jn-nav .jn-nav-album::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: 7px;
+  height: 2px;
+  background: var(--jn-blue);
+  transition: right .26s var(--jn-ease-ui);
+}
+
+.jn-nav .jn-nav-album:hover {
+  color: #3f55ca;
+}
+
+.jn-nav .jn-nav-album:hover::after {
+  right: 0;
+}
+
+.jn-nav > a[href="#places"]::after {
+  background: var(--jn-aqua) !important;
+  height: 2px !important;
+}
+
+.jn-nav > a[href="#places"]:hover {
+  color: var(--jn-aqua-ink);
+}
+
+.jn-nav > a[href="#about"]::after {
+  background: var(--jn-coral) !important;
+  height: 2px !important;
+}
+
+.jn-nav > a[href="#about"]:hover {
+  color: var(--jn-coral-ink);
+}
+
+/* A tiny registration strip gives section titles an authored print-system detail. */
+.jn-section-head > div::after {
+  content: "";
+  display: block;
+  width: 58px;
+  height: 3px;
+  margin-top: 15px;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      90deg,
+      var(--jn-blue) 0 25%,
+      var(--jn-aqua) 25% 50%,
+      var(--jn-sun) 50% 75%,
+      var(--jn-coral) 75% 100%
+    );
+}
+
+/* Full-bleed Places, but with a real optical gutter.
+   This fixes serif overhang (the clipped Y in "Yerler.") at the viewport edge. */
+.jn-places {
+  width: 100vw !important;
+  width: 100dvw !important;
+  max-width: none !important;
+  margin-left: calc(50% - 50vw) !important;
+  margin-left: calc(50% - 50dvw) !important;
+  overflow: clip;
+  background: #191c19 !important;
+}
+
+.jn-places-inner {
+  width: min(calc(100% - clamp(52px, 6vw, 108px)), 1540px) !important;
+  margin-inline: auto !important;
+  padding: clamp(52px, 5.5vw, 80px) 0 !important;
+}
+
+.jn-section-head.is-dark h2 {
+  padding-left: .055em;
+  margin-left: -.01em;
+  overflow: visible;
+  text-rendering: optimizeLegibility;
+}
+
+.jn-section-head.is-dark > div::after {
+  opacity: .95;
+}
+
+.jn-place-list > button {
+  --jn-place-accent: var(--jn-blue);
+  isolation: isolate;
+}
+
+.jn-place-list > button:nth-child(3n + 2) {
+  --jn-place-accent: var(--jn-aqua);
+}
+
+.jn-place-list > button:nth-child(3n + 3) {
+  --jn-place-accent: var(--jn-coral);
+}
+
+.jn-place-list > button::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: 999px;
+  background: var(--jn-place-accent);
+  transform: translateY(-50%);
+  transition: height .28s var(--jn-ease-out), opacity .2s ease;
+  opacity: .78;
+}
+
+.jn-place-list > button:hover::before,
+.jn-place-list > button:focus-visible::before {
+  height: 42%;
+}
+
+.jn-place-list > button:hover {
+  background: rgba(255, 255, 255, .028) !important;
+}
+
+.jn-place-no {
+  color: var(--jn-place-accent) !important;
+  opacity: .92;
+}
+
+.jn-place-preview {
+  border: 1px solid rgba(255, 255, 255, .13);
+  border-radius: 2px;
+  opacity: .88 !important;
+}
+
+.jn-place-name {
+  letter-spacing: -.038em !important;
+}
+
+@media (max-width: 760px) {
+  .jn-site-mark {
+    width: 24px;
+    height: 24px;
+  }
+
+  .jn-site-mark > span:nth-child(1) {
+    left: 9.5px;
+    height: 9px;
+  }
+
+  .jn-site-mark > span:nth-child(2) {
+    width: 9px;
+    top: 9.5px;
+  }
+
+  .jn-site-mark > span:nth-child(3) {
+    left: 9.5px;
+    height: 9px;
+  }
+
+  .jn-site-mark > span:nth-child(4) {
+    width: 9px;
+    top: 9.5px;
+  }
+
+  .jn-site-mark::after {
+    inset: 9px;
+  }
+
+  .jn-places-inner {
+    width: calc(100% - 32px) !important;
+    padding: 48px 0 58px !important;
+  }
+
+  .jn-section-head.is-dark h2 {
+    padding-left: .04em;
+  }
+
+  .jn-section-head > div::after {
+    width: 50px;
+    margin-top: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jn-site-mark,
+  .jn-site-mark:hover {
+    transform: rotate(10deg) !important;
+    transition: none !important;
+  }
+}
