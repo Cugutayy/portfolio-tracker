@@ -479,6 +479,15 @@ export default function App() {
   const filmMoments = ["073", "107", "012", "103", "009"]
     .map((id) => photoById(id))
     .filter((photo): photo is Photo => Boolean(photo));
+  const placeCards = [
+    { place: "Jaipur, Hindistan", photo: photoById("010") },
+    { place: "Varanasi, Hindistan", photo: photoById("108") },
+    { place: "Belgrad, Sırbistan", photo: photoById("009") },
+  ].filter(
+    (item): item is { place: string; photo: Photo } => Boolean(item.photo),
+  );
+  const deckBackdrop = photoById("045") || photoById("012") || aboutPhoto;
+  const deckSlice = photoById("010") || photoById("073") || aboutPhoto;
   const aboutPhoto =
     photoById("107") ||
     all.find((photo) => photo.category === "Doğa") ||
@@ -739,7 +748,7 @@ export default function App() {
         İçeriğe geç
       </a>
 
-      <div className="jn-site">
+      <div className={`jn-site ${albumOpen ? "is-album-route" : selected ? "is-reader-route" : ""}`}>
         <header className="jn-header">
           <a
             className="jn-site-mark"
@@ -1096,81 +1105,6 @@ export default function App() {
               </div>
             </section>
 
-            <section className="jn-v15-world" data-jn-reveal="section">
-              <div className="jn-v15-world-inner">
-                <div className="jn-v15-world-copy">
-                  <h2>Dünya üzerinde.</h2>
-                  <div className="jn-v15-world-stats">
-                    <div className="jn-v15-world-stat">
-                      <strong>{knownCountries.length}</strong>
-                      <span>Ülke</span>
-                    </div>
-                    <div className="jn-v15-world-stat">
-                      <strong>{knownPlaces.length}</strong>
-                      <span>Şehir</span>
-                    </div>
-                    <div className="jn-v15-world-stat">
-                      <strong>{all.length}</strong>
-                      <span>Fotoğraf</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="jn-v15-globe" aria-label="Journey Notes konum haritası">
-                  <svg
-                    className="jn-v15-world-map"
-                    viewBox="0 0 800 420"
-                    role="img"
-                    aria-label="Belgrad, Jaipur ve Varanasi konumlarını gösteren dünya haritası"
-                  >
-                    <ellipse className="gridline" cx="400" cy="210" rx="355" ry="162" />
-                    <path className="gridline" d="M55 210 H745" />
-                    <path className="gridline" d="M400 48 C340 94 320 150 320 210 C320 270 340 326 400 372" />
-                    <path className="gridline" d="M400 48 C460 94 480 150 480 210 C480 270 460 326 400 372" />
-                    <path className="gridline" d="M82 145 C230 175 570 175 718 145" />
-                    <path className="gridline" d="M82 275 C230 245 570 245 718 275" />
-
-                    <path
-                      className="land"
-                      d="M72 120 C96 82 135 62 180 67 L214 82 240 105 224 126 197 131 177 153 147 159 130 184 106 178 94 151 74 143 72 120 Z"
-                    />
-                    <path
-                      className="land"
-                      d="M191 187 C220 182 249 200 257 225 257 252 246 286 231 315 220 338 205 354 194 339 182 315 172 285 179 260 187 238 177 214 191 187 Z"
-                    />
-                    <path
-                      className="land"
-                      d="M350 115 C369 101 398 98 421 107 L437 124 427 140 407 140 396 151 374 145 360 133 350 115 Z"
-                    />
-                    <path
-                      className="land"
-                      d="M389 149 C416 143 443 153 453 178 459 208 448 245 437 278 427 307 408 331 392 308 378 284 370 250 373 216 374 183 377 163 389 149 Z"
-                    />
-                    <path
-                      className="land"
-                      d="M427 116 C463 91 516 85 559 96 L598 111 632 128 664 151 651 171 617 172 594 190 563 183 542 166 514 166 493 149 462 151 445 136 427 116 Z"
-                    />
-                    <path
-                      className="land"
-                      d="M647 271 C673 260 705 266 720 286 724 307 708 326 680 328 658 320 644 301 647 271 Z"
-                    />
-                    <path
-                      className="land"
-                      d="M275 73 C290 57 312 55 325 67 L318 88 295 94 278 86 275 73 Z"
-                    />
-
-                    <path className="route" d="M421 130 Q500 115 575 177" />
-                    <path className="route" d="M421 130 Q514 137 598 178" />
-                    <circle className="pin pin-belgrade" cx="421" cy="130" r="6" />
-                    <circle className="pin pin-jaipur" cx="575" cy="177" r="6" />
-                    <circle className="pin pin-varanasi" cx="598" cy="178" r="6" />
-                  </svg>
-                  <p className="jn-v15-world-note">
-                    Her nokta, konumu arşivde doğrulanmış bir Journey kaydı.
-                  </p>
-                </div>
-              </div>
-            </section>
-
             {jaipurFeature && (
               <section className="jn-v15-feature" data-jn-reveal="section">
                 <div className="jn-v15-feature-copy">
@@ -1245,63 +1179,141 @@ export default function App() {
               </div>
             </section>
 
-            <section className="jn-v15-data" data-jn-reveal="section">
-              <div className="jn-v15-data-copy">
-                <h2>Arşivin ritmi.</h2>
-                <p>
-                  Bu grafik dekor değil; arşivdeki {all.length} fotoğrafın gerçek
-                  kategori dağılımını gösteriyor.
-                </p>
+            <section className="jn-v16-deck" data-jn-reveal="section" aria-label="Journey özeti">
+              <div className="jn-v16-deck-head">
+                <span>JOURNEY</span>
+                <span>PLACES&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;PEOPLE&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;STORIES</span>
               </div>
-              <div className="jn-v15-data-viz">
-                <div className="jn-v15-orbit" style={{ background: categoryConic }}>
-                  <div className="jn-v15-orbit-center">
-                    <strong>{all.length}</strong>
-                    <span>kare</span>
-                  </div>
-                </div>
-                <div className="jn-v15-data-legend">
-                  {categoryStats.map((item) => (
-                    <div className="jn-v15-data-row" key={item.category}>
-                      <i style={{ background: item.color }} />
-                      <span>{item.category}</span>
-                      <small>{item.count}</small>
+
+              <div className="jn-v16-deck-grid">
+                {sunsetFeature && (
+                  <article className="jn-v16-deck-card is-quote">
+                    <Picture photo={sunsetFeature} sizes="(max-width: 760px) 84vw, 28vw" />
+                    <div className="jn-v16-deck-shade" />
+                    <div className="jn-v16-deck-copy">
+                      <blockquote>“Daha iyi şeyler, merak ettiğinde başlar.”</blockquote>
+                      <span>— JOURNEY NOTES</span>
                     </div>
-                  ))}
-                </div>
+                    <small>01 / 04</small>
+                  </article>
+                )}
+
+                <article className="jn-v16-deck-card is-stats">
+                  {deckBackdrop && (
+                    <Picture photo={deckBackdrop} sizes="(max-width: 760px) 84vw, 28vw" />
+                  )}
+                  <div className="jn-v16-deck-shade is-heavy" />
+                  <div className="jn-v16-deck-eyebrow">
+                    <span>THE NUMBERS<br />SO FAR</span>
+                    <span>JOURNEY<br />EST. 2024</span>
+                  </div>
+                  <div className="jn-v16-stats-row">
+                    <div><strong>{all.length}</strong><em>Fotoğraf</em></div>
+                    <div><strong>{knownPlaces.length}</strong><em>Yer</em></div>
+                    <div><strong>{knownCountries.length}</strong><em>Ülke</em></div>
+                    <div><strong>∞</strong><em>Devam</em></div>
+                  </div>
+                  <small>A MORE CURIOUS WORLD</small>
+                </article>
+
+                <article className="jn-v16-deck-card is-map">
+                  <div className="jn-v16-deck-eyebrow">
+                    <span>A WIDER PERSPECTIVE</span>
+                    <span>03 / 04</span>
+                  </div>
+                  <svg
+                    className="jn-v16-map"
+                    viewBox="0 0 800 420"
+                    role="img"
+                    aria-label="Belgrad, Jaipur ve Varanasi"
+                  >
+                    <path className="land" d="M72 120 C96 82 135 62 180 67 L214 82 240 105 224 126 197 131 177 153 147 159 130 184 106 178 94 151 74 143 72 120 Z"/>
+                    <path className="land" d="M191 187 C220 182 249 200 257 225 257 252 246 286 231 315 220 338 205 354 194 339 182 315 172 285 179 260 187 238 177 214 191 187 Z"/>
+                    <path className="land" d="M350 115 C369 101 398 98 421 107 L437 124 427 140 407 140 396 151 374 145 360 133 350 115 Z"/>
+                    <path className="land" d="M389 149 C416 143 443 153 453 178 459 208 448 245 437 278 427 307 408 331 392 308 378 284 370 250 373 216 374 183 377 163 389 149 Z"/>
+                    <path className="land" d="M427 116 C463 91 516 85 559 96 L598 111 632 128 664 151 651 171 617 172 594 190 563 183 542 166 514 166 493 149 462 151 445 136 427 116 Z"/>
+                    <path className="land" d="M647 271 C673 260 705 266 720 286 724 307 708 326 680 328 658 320 644 301 647 271 Z"/>
+                    <path className="route" d="M421 130 Q500 115 575 177"/>
+                    <path className="route" d="M421 130 Q514 137 598 178"/>
+                    <circle className="pin is-a" cx="421" cy="130" r="7"/>
+                    <circle className="pin is-b" cx="575" cy="177" r="7"/>
+                    <circle className="pin is-c" cx="598" cy="178" r="7"/>
+                    <text x="430" y="118">Belgrad</text>
+                    <text x="544" y="161">Jaipur</text>
+                    <text x="609" y="170">Varanasi</text>
+                  </svg>
+                  <div className="jn-v16-map-foot">
+                    <span className="jn-v16-verified-dot" />
+                    <span>Verified locations</span>
+                  </div>
+                </article>
+
+                <article className="jn-v16-deck-card is-menu">
+                  <div className="jn-v16-menu-copy">
+                    <a className="jn-site-mark" href={location.pathname} aria-label="Journey Notes">
+                      <span /><span /><span /><span />
+                    </a>
+                    <nav aria-label="Journey hızlı menü">
+                      <button onClick={openAlbum}>Albüm</button>
+                      <a href="#places">Yerler</a>
+                      <a href="#about">Hakkında</a>
+                    </nav>
+                    <p>Aynı yerler.<br />Daha derin bir bakış.</p>
+                  </div>
+                  {deckSlice && (
+                    <button
+                      className="jn-v16-menu-image"
+                      onClick={() => openNote(deckSlice)}
+                      aria-label="Fotoğrafı aç"
+                    >
+                      <Picture photo={deckSlice} sizes="16vw" />
+                    </button>
+                  )}
+                </article>
               </div>
             </section>
 
-            <section className="jn-v15-places" id="places" data-jn-reveal="section">
-              <div className="jn-v15-section-title">
-                <h2>Yerler.</h2>
-                <p>Konumu arşivde kayıtlı fotoğraflar.</p>
-              </div>
-              <div className="jn-v15-places-grid">
-                {knownPlaces.map((place) => {
-                  const matches = all.filter((photo) => photo.place === place);
-                  const preview =
-                    matches.find((photo) => Math.max(photo.width, photo.height) >= 1080) ||
-                    matches[0];
+            <section className="jn-v16-places" id="places" data-jn-reveal="section">
+              <header className="jn-v16-places-head">
+                <div className="jn-v16-places-title">
+                  <h2>Yerler.</h2>
+                  <span>({String(placeCards.length).padStart(2, "0")})</span>
+                </div>
+                <div className="jn-v16-places-note">
+                  <em>Farklı ufuklar,<br />aynı merak.</em>
+                  <button onClick={openAlbum}>Albümü aç</button>
+                </div>
+              </header>
+
+              <div className="jn-v16-places-grid">
+                {placeCards.map(({ place, photo }) => {
+                  const [city, country = ""] = place.split(",").map((part) => part.trim());
+                  const count = all.filter((item) => item.place === place).length;
                   return (
                     <button
-                      className="jn-v15-place-card"
+                      className="jn-v16-place-card"
                       key={place}
                       onClick={() => choosePlace(place)}
                     >
-                      {preview && (
-                        <div className="jn-v15-place-image">
-                          <Picture photo={preview} sizes="(max-width: 760px) 94vw, 31vw" />
-                        </div>
-                      )}
-                      <h3>{place}</h3>
-                      <p>
-                        <span>{matches.length} fotoğraf</span>
-                        <span>Albümde aç</span>
-                      </p>
+                      <div className="jn-v16-place-image">
+                        <Picture photo={photo} sizes="(max-width: 760px) 88vw, 31vw" />
+                      </div>
+                      <h3>{city}</h3>
+                      <em>{country}</em>
+                      <small>{count} FOTOĞRAF</small>
                     </button>
                   );
                 })}
+              </div>
+
+              <div className="jn-v16-places-foot">
+                <em>“Merak ettiğin yerde hikâye başlar.”</em>
+                <div>
+                  <span><strong>{knownCountries.length}</strong> ülke</span>
+                  <span><strong>{all.length}</strong> fotoğraf</span>
+                  <span><strong>∞</strong> keşifler</span>
+                </div>
+                <span>JOURNEY · EST. 2024</span>
               </div>
             </section>
 
