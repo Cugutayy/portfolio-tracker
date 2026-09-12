@@ -486,8 +486,8 @@ export default function App() {
   ].filter(
     (item): item is { place: string; photo: Photo } => Boolean(item.photo),
   );
-  const deckBackdrop = photoById("045") || photoById("012") || aboutPhoto;
-  const deckSlice = photoById("010") || photoById("073") || aboutPhoto;
+  const deckBackdrop = photoById("045") || photoById("012") || all[0];
+  const deckSlice = photoById("010") || photoById("073") || all[0];
   const aboutPhoto =
     photoById("107") ||
     all.find((photo) => photo.category === "Doğa") ||
@@ -905,7 +905,7 @@ export default function App() {
                 <button className="jn-back" onClick={goHome}>
                   <Arrow back /> Geri
                 </button>
-                <h1>Albüm.</h1>
+                <h1>Albüm. <small>({all.length})</small></h1>
                 <div className="jn-album-filter-v15" role="group" aria-label="Kategori">
                   {categories.map((category) => {
                     const count =
