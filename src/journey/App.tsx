@@ -701,7 +701,16 @@ export default function App() {
 
       <div className="jn-site">
         <header className="jn-header">
-          <span className="jn-header-spacer" aria-hidden="true" />
+          <a
+            className="jn-site-mark"
+            href={location.pathname}
+            aria-label="Journey Notes ana sayfa"
+          >
+            <span />
+            <span />
+            <span />
+            <span />
+          </a>
 
           <a className="jn-wordmark" href={location.pathname}>
             journey <em>notes</em>
