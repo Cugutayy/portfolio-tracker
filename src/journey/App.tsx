@@ -24,6 +24,7 @@ import {
 import "./style.css";
 import "./style-v13.css";
 import "./style-v14.css";
+import "./style-v15.css";
 
 const Studio = lazy(() => import("./studio"));
 const instagram = "https://www.instagram.com/journey_notess/";
@@ -468,10 +469,48 @@ export default function App() {
       (item): item is { category: string; photo: Photo } => Boolean(item.photo),
     );
 
+  const photoById = (id: string) => all.find((photo) => photo.id === id);
+  const archiveSpotlight = ["073", "020", "103", "010", "055", "009"]
+    .map((id) => photoById(id))
+    .filter((photo): photo is Photo => Boolean(photo));
+  const jaipurFeature = photoById("010");
+  const waterFeature = photoById("020");
+  const sunsetFeature = photoById("055");
+  const filmMoments = ["073", "107", "012", "103", "009"]
+    .map((id) => photoById(id))
+    .filter((photo): photo is Photo => Boolean(photo));
   const aboutPhoto =
-    all.find((photo) => photo.id === "107") ||
+    photoById("107") ||
     all.find((photo) => photo.category === "Doğa") ||
     all[0];
+  const knownCountries = Array.from(
+    new Set(
+      knownPlaces
+        .map((place) => place.split(",").at(-1)?.trim())
+        .filter((country): country is string => Boolean(country)),
+    ),
+  );
+  const categoryColors = ["#277fb8", "#53b9a9", "#e1b84a", "#ec735a"];
+  const categoryStats = categories
+    .filter((category) => category !== "Tümü")
+    .map((category, index) => ({
+      category,
+      count: all.filter((photo) => photo.category === category).length,
+      color: categoryColors[index % categoryColors.length],
+    }));
+  const categoryTotal = Math.max(
+    1,
+    categoryStats.reduce((sum, item) => sum + item.count, 0),
+  );
+  let categoryCursor = 0;
+  const categoryConic = `conic-gradient(from -18deg, ${categoryStats
+    .map((item) => {
+      const start = (categoryCursor / categoryTotal) * 100;
+      categoryCursor += item.count;
+      const end = (categoryCursor / categoryTotal) * 100;
+      return `${item.color} ${start.toFixed(2)}% ${end.toFixed(2)}%`;
+    })
+    .join(", ")})`;
 
   useEffect(() => {
     let alive = true;
@@ -751,239 +790,222 @@ export default function App() {
         </nav>
 
         {selected ? (
-          <main className="jn-reader" ref={readerRef} tabIndex={-1}>
-            <button className="jn-back" onClick={closeNote}>
-              <Arrow back /> Geri dön
-            </button>
-
-            <header className="jn-reader-heading">
-              <span className="jn-kicker">
-                {selected.place || selected.category}
+          <main className="jn-reader-v15" ref={readerRef} tabIndex={-1}>
+            <div className="jn-reader-top-v15">
+              <button className="jn-back" onClick={closeNote}>
+                <Arrow back /> Geri
+              </button>
+              <span>
+                {readerIndex >= 0 ? readerIndex + 1 : 1} / {readerSequence.length}
               </span>
-              {selected.title && <h1>{selected.title}</h1>}
-              <p>{selected.summary}</p>
-            </header>
+            </div>
 
-            <figure
-              key={selected.id}
-              className={`jn-reader-image ${slideDirection ? `is-slide-${slideDirection}` : ""}`}
-              style={{ maxWidth: `${Math.min(selected.width, 1400)}px` }}
-              onTouchStart={(event) => {
-                touchStartX.current = event.touches[0]?.clientX ?? null;
-              }}
-              onTouchEnd={(event) => {
-                if (touchStartX.current === null) return;
-                const endX = event.changedTouches[0]?.clientX ?? touchStartX.current;
-                const delta = endX - touchStartX.current;
-                touchStartX.current = null;
-                if (Math.abs(delta) < 42) return;
-                moveReader(delta < 0 ? 1 : -1);
-              }}
-            >
-              <div className="jn-reader-stage">
+            <div className="jn-reader-layout-v15">
+              <section
+                className={`jn-reader-stage-v15 ${slideDirection ? `is-slide-${slideDirection}` : ""}`}
+                onTouchStart={(event) => {
+                  touchStartX.current = event.touches[0]?.clientX ?? null;
+                }}
+                onTouchEnd={(event) => {
+                  if (touchStartX.current === null) return;
+                  const endX = event.changedTouches[0]?.clientX ?? touchStartX.current;
+                  const delta = endX - touchStartX.current;
+                  touchStartX.current = null;
+                  if (Math.abs(delta) < 42) return;
+                  moveReader(delta < 0 ? 1 : -1);
+                }}
+              >
                 <button
                   className="jn-reader-nav is-prev"
                   onClick={() => moveReader(-1)}
                   aria-label="Önceki fotoğraf"
                 >
-                  <ChevronLeft size={22} strokeWidth={1.35} />
+                  <ChevronLeft size={21} strokeWidth={1.25} />
                 </button>
                 <Picture
                   photo={selected}
                   priority
-                  sizes="(max-width: 760px) 94vw, 1100px"
+                  sizes="(max-width: 760px) 94vw, 72vw"
                 />
                 <button
                   className="jn-reader-nav is-next"
                   onClick={() => moveReader(1)}
                   aria-label="Sonraki fotoğraf"
                 >
-                  <ChevronRight size={22} strokeWidth={1.35} />
+                  <ChevronRight size={21} strokeWidth={1.25} />
                 </button>
-              </div>
-              <figcaption>
-                <span>{selected.place || selected.category}</span>
-                <span className="jn-reader-progress">
-                  {readerIndex >= 0 ? readerIndex + 1 : 1} / {readerSequence.length}
-                </span>
-                <span>№ {selected.id}</span>
-              </figcaption>
-              <p className="jn-swipe-hint">Kaydır · ← →</p>
-            </figure>
+              </section>
 
-            <div className="jn-reader-copy">
-              <span className="jn-kicker">NOT</span>
-              {(selected.body.length ? selected.body : [selected.summary]).map(
-                (paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ),
-              )}
-              <button className="jn-text-link" onClick={shareSelected}>
-                Paylaş <ArrowUpRight size={16} strokeWidth={1.55} />
-              </button>
+              <aside className="jn-reader-panel-v15">
+                <span className="jn-kicker">
+                  {selected.place || selected.category}
+                </span>
+                <h1>{selected.title || selected.place || selected.category}</h1>
+                <p className="jn-reader-summary-v15">{selected.summary}</p>
+
+                <div className="jn-reader-meta-v15">
+                  <span>№ {selected.id}</span>
+                  <span>{selected.category}</span>
+                  {selected.place && <span>{selected.place}</span>}
+                  <span>{selected.width} × {selected.height}</span>
+                </div>
+
+                <div className="jn-reader-body-v15">
+                  {(selected.body.length ? selected.body : [selected.summary]).map(
+                    (paragraph, index) => (
+                      <p key={index}>{paragraph}</p>
+                    ),
+                  )}
+                </div>
+
+                <button className="jn-reader-share-v15" onClick={shareSelected}>
+                  Bağlantıyı kopyala
+                </button>
+
+                <div className="jn-reader-related-v15" aria-label="Benzer kareler">
+                  {all
+                    .filter(
+                      (photo) =>
+                        photo.category === selected.category &&
+                        photo.id !== selected.id,
+                    )
+                    .slice(0, 3)
+                    .map((photo) => (
+                      <button
+                        key={photo.id}
+                        onClick={() =>
+                          openNote(
+                            photo,
+                            all.filter((item) => item.category === selected.category),
+                          )
+                        }
+                        aria-label={photo.title || photo.place || photo.category}
+                      >
+                        <Picture photo={photo} sizes="110px" />
+                      </button>
+                    ))}
+                </div>
+              </aside>
             </div>
-
-            <section className="jn-related" aria-labelledby="related-title">
-              <div className="jn-section-head">
-                <span className="jn-kicker" id="related-title">
-                  BENZER KARELER
-                </span>
-              </div>
-              <div className="jn-related-grid">
-                {all
-                  .filter(
-                    (photo) =>
-                      photo.category === selected.category &&
-                      photo.id !== selected.id,
-                  )
-                  .slice(0, 3)
-                  .map((photo) => (
-                    <button
-                      key={photo.id}
-                      onClick={() =>
-                        openNote(
-                          photo,
-                          all.filter((item) => item.category === selected.category),
-                        )
-                      }
-                    >
-                      <Picture photo={photo} />
-                      {(photo.title || photo.place) && (
-                        <span>{photo.title || photo.place}</span>
-                      )}
-                      <Arrow />
-                    </button>
-                  ))}
-              </div>
-            </section>
           </main>
         ) : albumOpen ? (
           <main className={`jn-album-page is-${albumSize}`}>
-            <header className="jn-album-head">
-              <button className="jn-back" onClick={goHome}>
-                <Arrow back /> Geri dön
-              </button>
-              <div>
-                <span className="jn-kicker">ALBÜM · {all.length}</span>
-                <h1>Albüm</h1>
-                <p>
-                  Bütün fotoğraflar tek yerde. Kategoriye göre filtrele;
-                  bir kareye dokunduğunda büyük/orijinal görüntüsünü aç.
-                </p>
-              </div>
-            </header>
-
-            <section className="jn-album-controls" ref={archiveRef}>
-              <div className="jn-filters" role="group" aria-label="Kategori">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    aria-pressed={filter === category}
-                    onClick={() => {
-                      setFilter(category);
-                      setQuery("");
-                    }}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-              <div className="jn-album-tools">
-                <div className="jn-size-control" role="group" aria-label="Fotoğraf boyutu">
-                  {(["compact", "standard", "large"] as const).map((size) => (
-                    <button
-                      key={size}
-                      className={albumSize === size ? "is-active" : ""}
-                      aria-pressed={albumSize === size}
-                      onClick={() => setAlbumSize(size)}
-                    >
-                      {size === "compact" ? "Küçük" : size === "large" ? "Büyük" : "Orta"}
-                    </button>
-                  ))}
+            <div className="jn-album-shell-v15">
+              <aside className="jn-album-sidebar-v15">
+                <button className="jn-back" onClick={goHome}>
+                  <Arrow back /> Geri
+                </button>
+                <h1>Albüm.</h1>
+                <div className="jn-album-filter-v15" role="group" aria-label="Kategori">
+                  {categories.map((category) => {
+                    const count =
+                      category === "Tümü"
+                        ? all.length
+                        : all.filter((photo) => photo.category === category).length;
+                    return (
+                      <button
+                        key={category}
+                        aria-pressed={filter === category}
+                        onClick={() => {
+                          setFilter(category);
+                          setQuery("");
+                        }}
+                      >
+                        <span>{category}</span>
+                        <small>{count}</small>
+                      </button>
+                    );
+                  })}
                 </div>
-                <button
-                  className="jn-search-toggle"
-                  onClick={() => setSearchOpen((value) => !value)}
-                  aria-expanded={searchOpen}
-                >
-                  <Search size={15} strokeWidth={1.6} />
-                  Ara
-                </button>
-              </div>
-            </section>
+              </aside>
 
-            {searchOpen && (
-              <div className="jn-search-row">
-                <Search size={17} strokeWidth={1.5} />
-                <input
-                  ref={searchInput}
-                  type="search"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Yer, başlık veya kategori ara"
-                  aria-label="Journey Notes albümünde ara"
-                />
-                <span>{filtered.length} sonuç</span>
-                <button
-                  onClick={() => {
-                    setSearchOpen(false);
-                    setQuery("");
-                  }}
-                  aria-label="Aramayı kapat"
-                >
-                  <X size={17} strokeWidth={1.6} />
-                </button>
-              </div>
-            )}
-
-            <div className="jn-album-count">
-              <span>{filtered.length} fotoğraf</span>
-              {query && <span>“{query}”</span>}
-            </div>
-
-            <section
-              className="jn-album-grid"
-              id="album-grid"
-              aria-label="Fotoğraf albümü"
-            >
-              {filtered.map((photo) => (
-                <article className="jn-album-card" key={photo.id}>
-                  <button onClick={() => openNote(photo, filtered)}>
-                    <div className="jn-album-image">
-                      <Picture
-                        photo={photo}
-                        sizes="(max-width: 560px) 46vw, (max-width: 900px) 31vw, 23vw"
-                      />
-                    </div>
-                    <div className="jn-album-meta">
-                      <span>{photo.place || photo.category}</span>
-                      <span>№ {photo.id}</span>
-                    </div>
-                    {photo.title && <h2>{photo.title}</h2>}
+              <section className="jn-album-content-v15" ref={archiveRef}>
+                <header className="jn-album-content-head-v15">
+                  <div>
+                    <h2>Biriktirdiğim kareler.</h2>
+                    <span>{filtered.length} / {all.length} fotoğraf</span>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSearchOpen((value) => !value);
+                      requestAnimationFrame(() => searchInput.current?.focus());
+                    }}
+                    aria-expanded={searchOpen}
+                  >
+                    <Search size={14} strokeWidth={1.5} />
+                    Ara
                   </button>
-                </article>
-              ))}
-            </section>
+                </header>
 
-            {filtered.length === 0 && (
-              <div className="jn-empty">
-                <h3>Bu filtrede fotoğraf bulamadım.</h3>
-                <button
-                  onClick={() => {
-                    setFilter("Tümü");
-                    setQuery("");
-                  }}
+                {searchOpen && (
+                  <div className="jn-search-row">
+                    <Search size={16} strokeWidth={1.45} />
+                    <input
+                      ref={searchInput}
+                      type="search"
+                      value={query}
+                      onChange={(event) => setQuery(event.target.value)}
+                      placeholder="Yer, başlık veya kategori ara"
+                      aria-label="Journey Notes albümünde ara"
+                    />
+                    <span>{filtered.length} sonuç</span>
+                    <button
+                      onClick={() => {
+                        setSearchOpen(false);
+                        setQuery("");
+                      }}
+                      aria-label="Aramayı kapat"
+                    >
+                      <X size={16} strokeWidth={1.5} />
+                    </button>
+                  </div>
+                )}
+
+                <section
+                  className="jn-album-grid"
+                  id="album-grid"
+                  aria-label="Fotoğraf albümü"
                 >
-                  Bütün albümü göster <Arrow />
-                </button>
-              </div>
-            )}
+                  {filtered.map((photo) => (
+                    <article className="jn-album-card" key={photo.id}>
+                      <button onClick={() => openNote(photo, filtered)}>
+                        <div className="jn-album-image">
+                          <Picture
+                            photo={photo}
+                            sizes="(max-width: 560px) 46vw, (max-width: 980px) 31vw, 20vw"
+                          />
+                        </div>
+                        <div className="jn-album-meta">
+                          <span>{photo.place || photo.category}</span>
+                          <span>№ {photo.id}</span>
+                        </div>
+                        {photo.title && <h2>{photo.title}</h2>}
+                      </button>
+                    </article>
+                  ))}
+                </section>
+
+                {filtered.length === 0 && (
+                  <div className="jn-empty">
+                    <h3>Bu filtrede fotoğraf yok.</h3>
+                    <button
+                      onClick={() => {
+                        setFilter("Tümü");
+                        setQuery("");
+                      }}
+                    >
+                      Bütün albümü göster <Arrow />
+                    </button>
+                  </div>
+                )}
+              </section>
+            </div>
           </main>
         ) : (
-          <main>
+          <main className="jn-home-v15">
             {hero && (
-              <section className="jn-cover" aria-labelledby="journey-hero-title">
-                <div className="jn-cover-media" aria-label="Journey Notes giriş fotoğrafı">
+              <section className="jn-v15-hero" aria-labelledby="journey-hero-title">
+                <div className="jn-v15-hero-media">
                   <img
                     src={heroAsset}
                     alt="Karlı kayalıklar önünde kış manzarası"
@@ -998,30 +1020,21 @@ export default function App() {
                       event.currentTarget.src = hero.src;
                     }}
                   />
-                </div>
-
-                <div className="jn-cover-caption">
-                  <div>
-                    <h1 id="journey-hero-title">Journey Notes</h1>
+                  <div className="jn-v15-hero-shade" aria-hidden="true" />
+                  <div className="jn-v15-hero-copy">
+                    <span className="jn-v15-eyebrow">TRAVEL · PHOTOGRAPHY · NOTES</span>
+                    <h1 id="journey-hero-title">Yerler, insanlar, hikâyeler.</h1>
                   </div>
-                  <div className="jn-cover-note">
-                    <p>
-                      Yolda çektiğim ve kaybolmasını istemediğim fotoğraflar.
-                    </p>
-                    <button className="jn-cover-album-cta" onClick={openAlbum}>
-                      <strong>Albümü aç</strong>
-                      <span className="jn-cover-album-count">
-                        {all.length} fotoğraf
-                      </span>
+                  <div className="jn-v15-hero-bottom">
+                    <p>Yolda çektiğim ve kaybolmasını istemediğim fotoğraflar.</p>
+                    <button className="jn-v15-hero-cta" onClick={openAlbum}>
+                      <span>Albümü aç</span>
+                      <span>{all.length}</span>
                     </button>
                   </div>
                 </div>
               </section>
             )}
-
-            <section className="jn-intro" data-jn-reveal="copy">
-              <p>Buraya dönüp bakmak istediğim kareleri bırakıyorum.</p>
-            </section>
 
             <section className="jn-mobile-reel" aria-label="Kaydırılabilir fotoğraf albümü">
               <div className="jn-mobile-reel-head">
@@ -1047,205 +1060,227 @@ export default function App() {
               </div>
             </section>
 
-            <section className="jn-exhibition" id="edit" aria-label="Journey Notes">
-              <div className="jn-exhibition-flow">
-                {exhibition.slice(0, 4).map((photo, index) => {
-                  const hasHumanCopy = Boolean(photo.title || photo.place);
-                  return (
-                    <article
-                      className={[
-                        "jn-story",
-                        index % 2 ? "is-reverse" : "",
-                        photo.width > photo.height ? "is-landscape" : "",
-                        !hasHumanCopy ? "is-image-only" : "",
-                        `is-slot-${index + 1}`,
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                      key={photo.id}
-                      data-jn-reveal="media"
-                    >
-                      <button
-                        className="jn-story-media"
-                        onClick={() => openNote(photo)}
-                        aria-label="Fotoğrafı aç"
-                      >
+            <section className="jn-v15-archive" data-jn-reveal="section">
+              <aside className="jn-v15-archive-rail">
+                <h2>Albüm.</h2>
+                <ul>
+                  {categoryStats.map((item) => (
+                    <li key={item.category}>
+                      <button onClick={() => chooseCategory(item.category)}>
+                        <span>{item.category}</span>
+                        <small>{item.count}</small>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </aside>
+
+              <div className="jn-v15-archive-grid">
+                {archiveSpotlight.map((photo) => (
+                  <article className="jn-v15-archive-card" key={photo.id}>
+                    <button onClick={() => openNote(photo, archiveSpotlight)}>
+                      <div className="jn-v15-archive-image">
                         <Picture
                           photo={photo}
-                          sizes="(max-width: 760px) 94vw, 1280px"
+                          sizes="(max-width: 760px) 46vw, 32vw"
                         />
-                      </button>
-                      {hasHumanCopy && (
-                        <div className="jn-story-copy">
-                          <h3>{photo.title || photo.place}</h3>
-                        </div>
-                      )}
-                    </article>
-                  );
-                })}
-
-                {exhibition[4] && (
-                  <article className="jn-panorama" data-jn-reveal="media">
-                    <button onClick={() => openNote(exhibition[4])}>
-                      <Picture
-                        photo={exhibition[4]}
-                        sizes="(max-width: 760px) 94vw, 1320px"
-                      />
-                    </button>
-                    {(exhibition[4].title || exhibition[4].place) && (
-                      <div className="jn-panorama-caption">
-                        <strong>{exhibition[4].title || exhibition[4].place}</strong>
                       </div>
-                    )}
-                  </article>
-                )}
-
-                <div className="jn-diptych" data-jn-reveal="media">
-                  {exhibition.slice(5, 7).map((photo) => (
-                    <article key={photo.id}>
-                      <button onClick={() => openNote(photo, exhibition)}>
-                        <div className="jn-diptych-image">
-                          <Picture
-                            photo={photo}
-                            sizes="(max-width: 760px) 94vw, 620px"
-                          />
-                        </div>
-                        {(photo.title || photo.place) && (
-                          <div className="jn-diptych-copy">
-                            <h3>{photo.title || photo.place}</h3>
-                            </div>
-                        )}
-                      </button>
-                    </article>
-                  ))}
-                </div>
-
-                {exhibition[7] && (
-                  <article
-                    data-jn-reveal="media"
-                    className={[
-                      "jn-story",
-                      "is-reverse",
-                      !(exhibition[7].title || exhibition[7].place)
-                        ? "is-image-only"
-                        : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    <button
-                      className="jn-story-media"
-                      onClick={() => openNote(exhibition[7])}
-                      aria-label="Fotoğrafı aç"
-                    >
-                      <Picture
-                        photo={exhibition[7]}
-                        sizes="(max-width: 760px) 94vw, 980px"
-                      />
-                    </button>
-                    {(exhibition[7].title || exhibition[7].place) && (
-                      <div className="jn-story-copy">
-                        <h3>{exhibition[7].title || exhibition[7].place}</h3>
+                      <div className="jn-v15-archive-meta">
+                        <span>{photo.title || photo.place || photo.category}</span>
+                        <span>№ {photo.id}</span>
                       </div>
-                    )}
+                    </button>
                   </article>
-                )}
-              </div>
-            </section>
-
-            <section className="jn-album-index" id="album-preview" data-jn-reveal="section">
-              <div className="jn-album-index-head">
-                <div>
-                  <h2>Albüm.</h2>
-                </div>
-                <div>
-                  <p>{all.length} fotoğraf. Kategorilere göre bakabilir ya da hepsini birlikte açabilirsin.</p>
-                  <button className="jn-album-primary" onClick={openAlbum}>
-                    <span>Tümünü aç</span>
-                    <span>{all.length} <Arrow /></span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="jn-category-strip">
-                {categoryPreviews.map(({ category, photo }) => (
-                  <button
-                    key={category}
-                    onClick={() => chooseCategory(category)}
-                    aria-label={`${category} kategorisini aç`}
-                  >
-                    <div className="jn-category-image">
-                      <Picture
-                        photo={photo}
-                        sizes="(max-width: 760px) 46vw, 24vw"
-                      />
-                    </div>
-                    <span>{category}</span>
-                    <small>
-                      {all.filter((item) => item.category === category).length} fotoğraf
-                    </small>
-                  </button>
                 ))}
               </div>
             </section>
 
-            <section className="jn-places" id="places" data-jn-reveal="section">
-              <div className="jn-places-inner">
-                <div className="jn-section-head is-dark">
-                  <div>
-                    <h2>Yerler.</h2>
+            <section className="jn-v15-world" data-jn-reveal="section">
+              <div className="jn-v15-world-inner">
+                <div className="jn-v15-world-copy">
+                  <h2>Dünya üzerinde.</h2>
+                  <div className="jn-v15-world-stats">
+                    <div className="jn-v15-world-stat">
+                      <strong>{knownCountries.length}</strong>
+                      <span>Ülke</span>
+                    </div>
+                    <div className="jn-v15-world-stat">
+                      <strong>{knownPlaces.length}</strong>
+                      <span>Şehir</span>
+                    </div>
+                    <div className="jn-v15-world-stat">
+                      <strong>{all.length}</strong>
+                      <span>Fotoğraf</span>
+                    </div>
                   </div>
-                  <p>Konumunu bildiğim fotoğraflar.</p>
                 </div>
-
-                <div className="jn-place-list">
-                  {knownPlaces.map((place, index) => {
-                    const matches = all.filter((photo) => photo.place === place);
-                    const preview =
-                      matches.find(
-                        (photo) => Math.max(photo.width, photo.height) >= 1080,
-                      ) || matches[0];
-
-                    return (
-                      <button key={place} onClick={() => choosePlace(place)}>
-                        <span className="jn-place-no">
-                          {String(index + 1).padStart(2, "0")}
-                        </span>
-                        <span className="jn-place-name">{place}</span>
-                        <span className="jn-place-count">
-                          {matches.length} fotoğraf
-                        </span>
-                        {preview && (
-                          <span className="jn-place-preview" aria-hidden="true">
-                            <Picture photo={preview} />
-                          </span>
-                        )}
-                        <ChevronRight size={20} strokeWidth={1.4} />
-                      </button>
-                    );
-                  })}
+                <div className="jn-v15-globe" aria-label="Journey Notes konum haritası">
+                  <span className="jn-v15-map-arc is-a" />
+                  <span className="jn-v15-map-arc is-b" />
+                  <span className="jn-v15-map-dot is-belgrade" title="Belgrad" />
+                  <span className="jn-v15-map-dot is-jaipur" title="Jaipur" />
+                  <span className="jn-v15-map-dot is-varanasi" title="Varanasi" />
+                  <p className="jn-v15-world-note">
+                    Her nokta, konumu arşivde doğrulanmış bir Journey kaydı.
+                  </p>
                 </div>
               </div>
             </section>
 
-            <section className="jn-about" id="about" data-jn-reveal="section">
-              {aboutPhoto && (
-                <figure className="jn-about-image">
-                  <Picture
-                    photo={aboutPhoto}
-                    sizes="(max-width: 760px) 94vw, 720px"
-                  />
+            {jaipurFeature && (
+              <section className="jn-v15-feature" data-jn-reveal="section">
+                <div className="jn-v15-feature-copy">
+                  <span className="jn-v15-index">JOURNEY NOTES · 001</span>
+                  <h2>Jaipur,<em>Hindistan</em></h2>
+                  <p>{jaipurFeature.summary}</p>
+                  <div className="jn-v15-feature-meta">
+                    <span>Mimari</span>
+                    <span>26.9124° N · 75.7873° E</span>
+                  </div>
+                </div>
+                <figure className="jn-v15-feature-media">
+                  <button onClick={() => openNote(jaipurFeature)}>
+                    <Picture
+                      photo={jaipurFeature}
+                      sizes="(max-width: 760px) 94vw, 62vw"
+                    />
+                  </button>
                 </figure>
-              )}
-              <div className="jn-about-copy">
-                <h2>Biriktirmek için çekiyorum.</h2>
+              </section>
+            )}
+
+            {waterFeature && (
+              <section className="jn-v15-dark-feature" data-jn-reveal="section">
+                <div className="jn-v15-dark-feature-inner">
+                  <div className="jn-v15-dark-head">
+                    <span>Journey Notes · Doğa</span>
+                    <span>№ {waterFeature.id}</span>
+                  </div>
+                  <div className="jn-v15-dark-stage">
+                    <button onClick={() => openNote(waterFeature)}>
+                      <Picture
+                        photo={waterFeature}
+                        sizes="(max-width: 760px) 94vw, 960px"
+                      />
+                    </button>
+                  </div>
+                  <div className="jn-v15-dark-caption">
+                    <span>{waterFeature.summary}</span>
+                    <span>Fotoğrafı aç</span>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {sunsetFeature && (
+              <section className="jn-v15-quote" data-jn-reveal="section">
+                <Picture photo={sunsetFeature} sizes="100vw" />
+                <div className="jn-v15-quote-copy">
+                  <blockquote>“Bazı yerler insanda kalır.”</blockquote>
+                  <small>Journey Notes · № {sunsetFeature.id}</small>
+                </div>
+              </section>
+            )}
+
+            <section className="jn-v15-moments" data-jn-reveal="section">
+              <div className="jn-v15-section-title">
+                <h2>Anlar.</h2>
+                <p>Birbirinden farklı kareler, aynı arşivin içinde aynı ritimde.</p>
+              </div>
+              <div className="jn-v15-film">
+                {filmMoments.map((photo) => (
+                  <article className="jn-v15-film-card" key={photo.id}>
+                    <button onClick={() => openNote(photo, filmMoments)}>
+                      <div className="jn-v15-film-image">
+                        <Picture photo={photo} sizes="(max-width: 760px) 62vw, 20vw" />
+                      </div>
+                      <small>№ {photo.id} · {photo.category}</small>
+                    </button>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="jn-v15-data" data-jn-reveal="section">
+              <div className="jn-v15-data-copy">
+                <h2>Arşivin ritmi.</h2>
                 <p>
-                  Gezdiğim yerlerden kalan görüntüler. Bir kısmı bir yere,
-                  bir kısmı yalnızca o güne ait.
+                  Bu grafik dekor değil; arşivdeki {all.length} fotoğrafın gerçek
+                  kategori dağılımını gösteriyor.
                 </p>
-                <a href={instagram} target="_blank" rel="noreferrer">
-                  Instagram’da gör <ArrowUpRight size={16} strokeWidth={1.55} />
-                </a>
+              </div>
+              <div className="jn-v15-data-viz">
+                <div className="jn-v15-orbit" style={{ background: categoryConic }}>
+                  <div className="jn-v15-orbit-center">
+                    <strong>{all.length}</strong>
+                    <span>kare</span>
+                  </div>
+                </div>
+                <div className="jn-v15-data-legend">
+                  {categoryStats.map((item) => (
+                    <div className="jn-v15-data-row" key={item.category}>
+                      <i style={{ background: item.color }} />
+                      <span>{item.category}</span>
+                      <small>{item.count}</small>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <section className="jn-v15-places" id="places" data-jn-reveal="section">
+              <div className="jn-v15-section-title">
+                <h2>Yerler.</h2>
+                <p>Konumu arşivde kayıtlı fotoğraflar.</p>
+              </div>
+              <div className="jn-v15-places-grid">
+                {knownPlaces.map((place) => {
+                  const matches = all.filter((photo) => photo.place === place);
+                  const preview =
+                    matches.find((photo) => Math.max(photo.width, photo.height) >= 1080) ||
+                    matches[0];
+                  return (
+                    <button
+                      className="jn-v15-place-card"
+                      key={place}
+                      onClick={() => choosePlace(place)}
+                    >
+                      {preview && (
+                        <div className="jn-v15-place-image">
+                          <Picture photo={preview} sizes="(max-width: 760px) 94vw, 31vw" />
+                        </div>
+                      )}
+                      <h3>{place}</h3>
+                      <p>
+                        <span>{matches.length} fotoğraf</span>
+                        <span>Albümde aç</span>
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="jn-v15-about" id="about" data-jn-reveal="section">
+              <div className="jn-v15-about-inner">
+                {aboutPhoto && (
+                  <figure className="jn-v15-about-image">
+                    <Picture
+                      photo={aboutPhoto}
+                      sizes="(max-width: 760px) 82vw, 48vw"
+                    />
+                  </figure>
+                )}
+                <div className="jn-v15-about-copy">
+                  <h2>Aynı yerler. Başka bir bakış.</h2>
+                  <p>
+                    Journey Notes, gezdiğim yerlerden kalan kişisel bir görsel
+                    arşiv. Fotoğraflar önce geliyor; metin yalnızca gerektiği kadar.
+                  </p>
+                  <a href={instagram} target="_blank" rel="noreferrer">
+                    @journey_notess
+                  </a>
+                </div>
               </div>
             </section>
           </main>
