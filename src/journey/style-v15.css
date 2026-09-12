@@ -2059,7 +2059,7 @@ body {
   width: min(100%, var(--jn15-shell));
   margin-inline: auto;
   display: grid;
-  grid-template-columns: 1.02fr 1.12fr .95fr .86fr;
+  grid-template-columns: 1.02fr 1.16fr .90fr;
   gap: clamp(10px, 1vw, 16px);
 }
 
@@ -2195,69 +2195,20 @@ body {
   letter-spacing: .18em;
 }
 
-.jn-v16-deck-card.is-map {
-  background:
-    radial-gradient(circle at 54% 46%, rgba(76,93,86,.15), transparent 34%),
-    #0a0c0b;
-}
-
-.jn-v16-map {
-  position: absolute;
-  inset: 14% 4% 12%;
-  width: 92%;
-  height: 74%;
-}
-
-.jn-v16-map .land {
-  fill: rgba(255,255,255,.055);
-  stroke: rgba(255,255,255,.075);
-  stroke-width: 1;
-}
-
-.jn-v16-map .route {
-  fill: none;
-  stroke: rgba(244,238,217,.55);
-  stroke-width: 1.5;
-  stroke-dasharray: 5 5;
-}
-
-.jn-v16-map .pin {
-  stroke: #f7e8bd;
-  stroke-width: 2;
-  fill: #0d0f0e;
-}
-
-.jn-v16-map .is-a { fill: var(--jn15-aqua); }
-.jn-v16-map .is-b { fill: var(--jn15-coral); }
-.jn-v16-map .is-c { fill: var(--jn15-sun); }
-
-.jn-v16-map text {
-  fill: rgba(255,255,255,.80);
-  font: 400 22px var(--jn15-serif);
-}
-
-.jn-v16-map-foot {
-  position: absolute;
-  left: 24px;
-  bottom: 24px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  color: rgba(255,255,255,.48);
-  font: 400 10px/1 var(--jn15-serif);
-}
-
-.jn-v16-verified-dot {
-  width: 8px;
-  height: 8px;
-  border: 1px solid #f7e9bd;
-  border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(247,233,189,.08);
-}
-
 .jn-v16-deck-card.is-menu {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(84px, .8fr);
+}
+
+.jn-v16-menu-index {
+  position: absolute;
+  z-index: 5;
+  top: 24px;
+  right: 22px;
+  color: rgba(255,255,255,.50);
+  font: 500 7px/1 var(--jn15-mono);
+  letter-spacing: .18em;
+  pointer-events: none;
 }
 
 .jn-v16-menu-copy {
