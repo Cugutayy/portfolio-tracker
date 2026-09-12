@@ -411,6 +411,7 @@ export default function App() {
 
   const selected = all.find((photo) => route === `#note=${photo.id}`);
   const albumOpen = route === "#album";
+  const readerOpen = Boolean(selected);
   const readerSequence = (readerIds.length ? readerIds : all.map((photo) => photo.id))
     .map((id) => all.find((photo) => photo.id === id))
     .filter((photo): photo is Photo => Boolean(photo));
@@ -649,14 +650,15 @@ export default function App() {
       : albumOpen
         ? "Albüm · Journey Notes"
         : "Journey Notes";
-
-    if (selected) {
-      window.scrollTo({ top: 0, behavior: "auto" });
-      readerRef.current?.focus({ preventScroll: true });
-    } else if (albumOpen) {
-      window.scrollTo({ top: 0, behavior: "auto" });
-    }
   }, [selected?.id, albumOpen]);
+
+  // Only reset scroll when entering the reader. Changing photos inside an
+  // already-open reader must preserve the visitor's current viewport.
+  useEffect(() => {
+    if (!readerOpen) return;
+    window.scrollTo({ top: 0, behavior: "auto" });
+    readerRef.current?.focus({ preventScroll: true });
+  }, [readerOpen]);
 
   const openNote = (photo: Photo, sequence: Photo[] = all) => {
     returnScroll.current = window.scrollY;
