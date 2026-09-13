@@ -3315,3 +3315,40 @@ body {
     transform: none !important;
   }
 }
+
+
+/* ---------- View transitions: quiet editorial crossfade ---------- */
+@supports (view-transition-name: root) {
+  ::view-transition-old(root) {
+    animation: jn-vt-out 160ms ease both;
+  }
+
+  ::view-transition-new(root) {
+    animation: jn-vt-in 240ms cubic-bezier(.22,1,.36,1) both;
+  }
+
+  .jn-wordmark {
+    view-transition-name: journey-wordmark;
+  }
+}
+
+@keyframes jn-vt-out {
+  to {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes jn-vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
