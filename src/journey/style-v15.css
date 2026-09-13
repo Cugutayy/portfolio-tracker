@@ -2870,3 +2870,293 @@ body {
     font-size: 20px !important;
   }
 }
+
+
+/* ==========================================================================
+   V18 — airy dense gallery system
+   Keep the approved editorial density while removing page-wide black fields.
+   ========================================================================== */
+
+/* 1) "Anlar." becomes a strict equal-height editorial grid. */
+.jn-v15-film {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: clamp(12px, 1.15vw, 18px) !important;
+  align-items: start !important;
+}
+
+.jn-v15-film-card:nth-child(n) .jn-v15-film-image {
+  aspect-ratio: 4 / 5 !important;
+  background: #e8e4da !important;
+}
+
+.jn-v15-film-card:nth-child(n) .jn-v15-film-image img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  background: transparent !important;
+}
+
+.jn-v15-film-card small {
+  margin-top: 9px !important;
+  color: var(--jn15-muted) !important;
+}
+
+/* 2) Keep the cinematic cards, remove the page-wide black field around them. */
+.jn-v16-deck {
+  background: var(--jn15-paper) !important;
+  color: var(--jn15-ink) !important;
+  border-top: 1px solid var(--jn15-line);
+  border-bottom: 1px solid var(--jn15-line);
+}
+
+.jn-v16-deck-head {
+  color: var(--jn15-muted) !important;
+}
+
+.jn-v16-deck-head::after {
+  background: var(--jn15-line) !important;
+}
+
+.jn-v16-deck-grid {
+  gap: clamp(12px, 1.1vw, 18px) !important;
+}
+
+.jn-v16-deck-card {
+  min-height: clamp(340px, 27vw, 430px) !important;
+  box-shadow: 0 12px 36px rgba(23,26,23,.06);
+}
+
+/* 3) About / closing section is now ivory instead of full black. */
+.jn-v15-about {
+  background: var(--jn15-paper) !important;
+  color: var(--jn15-ink) !important;
+  border-top: 1px solid var(--jn15-line);
+}
+
+.jn-v15-about-inner {
+  padding-top: clamp(82px, 8vw, 122px) !important;
+  padding-bottom: clamp(82px, 8vw, 122px) !important;
+}
+
+.jn-v15-about-image {
+  width: min(72%, 680px) !important;
+}
+
+.jn-v15-about-image img {
+  filter: none !important;
+  background: #e8e4da !important;
+}
+
+.jn-v15-about-copy p {
+  color: var(--jn15-muted) !important;
+}
+
+.jn-v15-about-copy a {
+  color: var(--jn15-ink) !important;
+  border-bottom-color: var(--jn15-line) !important;
+}
+
+/* 4) The action is a real control now, not static caption text. */
+.jn-v15-dark-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--jn15-ink);
+  font: 500 9px/1 var(--jn15-sans);
+  white-space: nowrap;
+  transition: gap .18s ease, opacity .18s ease;
+}
+
+.jn-v15-dark-open:hover {
+  gap: 8px;
+  opacity: .68;
+}
+
+/* 5) Dense album inspired by the approved reference, on ivory rather than black. */
+.jn-site.is-album-route .jn-album-sidebar-v15 {
+  grid-template-columns: minmax(240px, .72fr) minmax(0, 1.6fr) !important;
+  gap: clamp(34px, 5vw, 80px) !important;
+  margin-bottom: 18px !important;
+  padding-bottom: 18px !important;
+}
+
+.jn-site.is-album-route .jn-album-sidebar-v15 h1 {
+  font-size: clamp(52px, 5.2vw, 82px) !important;
+}
+
+.jn-site.is-album-route .jn-album-filter-v15 {
+  justify-content: flex-end !important;
+  gap: 8px 18px !important;
+}
+
+.jn-site.is-album-route .jn-album-content-head-v15 {
+  min-height: 28px !important;
+  margin-bottom: 10px !important;
+}
+
+.jn-site.is-album-route .jn-album-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 26px 10px !important;
+}
+
+.jn-site.is-album-route .jn-album-image {
+  aspect-ratio: 1 / 1 !important;
+  background: #e8e4da !important;
+  border-color: rgba(23,26,23,.06) !important;
+}
+
+.jn-site.is-album-route .jn-album-image img {
+  object-fit: cover !important;
+}
+
+.jn-site.is-album-route .jn-album-meta {
+  margin-top: 6px !important;
+  font-size: 6.5px !important;
+  letter-spacing: .06em !important;
+}
+
+.jn-site.is-album-route .jn-album-card h2 {
+  margin-top: 4px !important;
+  font-size: 14px !important;
+  line-height: 1.02 !important;
+}
+
+/* 6) Defensive cleanup: ordinary photo shells should never expose black. */
+:is(
+  .jn-v15-archive-image,
+  .jn-v15-film-image,
+  .jn-v16-place-image,
+  .jn-album-image,
+  .jn-v15-about-image,
+  .jn-v15-feature-media,
+  .jn-v15-dark-stage,
+  .jn-reader-stage-v15
+) {
+  background-color: #e8e4da;
+}
+
+:is(
+  .jn-v15-feature-media,
+  .jn-v15-dark-stage,
+  .jn-reader-stage-v15
+) {
+  background-color: transparent;
+}
+
+/* 7) Slightly tighten long empty vertical runs without flattening the rhythm. */
+.jn-v15-moments {
+  padding-top: clamp(74px, 7vw, 112px) !important;
+  padding-bottom: clamp(74px, 7vw, 112px) !important;
+}
+
+.jn-v16-places {
+  padding-top: clamp(72px, 7vw, 108px) !important;
+  padding-bottom: clamp(62px, 6vw, 94px) !important;
+}
+
+@media (max-width: 1180px) {
+  .jn-site.is-album-route .jn-album-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .jn-v15-film {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 820px) {
+  .jn-v15-film {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 24px 10px !important;
+  }
+
+  .jn-v15-about-inner {
+    grid-template-columns: 1fr !important;
+    gap: 38px !important;
+  }
+
+  .jn-v15-about-image {
+    width: min(82%, 560px) !important;
+    justify-self: start !important;
+  }
+
+  .jn-site.is-album-route .jn-album-sidebar-v15 {
+    grid-template-columns: 1fr !important;
+    gap: 18px !important;
+  }
+
+  .jn-site.is-album-route .jn-album-filter-v15 {
+    justify-content: flex-start !important;
+  }
+
+  .jn-site.is-album-route .jn-album-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 20px 7px !important;
+  }
+
+  .jn-site.is-album-route .jn-album-meta {
+    font-size: 6px !important;
+  }
+
+  .jn-site.is-album-route .jn-album-card h2 {
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .jn-site.is-album-route {
+    padding-inline: 10px !important;
+  }
+
+  .jn-site.is-album-route .jn-album-page {
+    padding-top: 22px !important;
+  }
+
+  .jn-site.is-album-route .jn-album-sidebar-v15 h1 {
+    font-size: 52px !important;
+  }
+
+  .jn-site.is-album-route .jn-album-filter-v15 {
+    margin-inline: -10px !important;
+    padding-inline: 10px !important;
+  }
+
+  .jn-site.is-album-route .jn-album-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 18px 5px !important;
+  }
+
+  .jn-site.is-album-route .jn-album-card {
+    max-width: none !important;
+    width: auto !important;
+    margin: 0 !important;
+  }
+
+  .jn-site.is-album-route .jn-album-image {
+    aspect-ratio: 1 / 1 !important;
+  }
+
+  .jn-site.is-album-route .jn-album-meta {
+    margin-top: 5px !important;
+    font-size: 5.5px !important;
+  }
+
+  .jn-site.is-album-route .jn-album-card h2 {
+    display: none;
+  }
+
+  .jn-v15-film {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .jn-v15-section-title {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .jn-site.is-album-route .jn-album-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 20px 6px !important;
+  }
+}
