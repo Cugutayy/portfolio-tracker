@@ -1216,7 +1216,7 @@ export default function App() {
                   </div>
                   <div className="jn-v16-stats-row">
                     <div><strong>{all.length}</strong><em>Fotoğraf</em></div>
-                    <div><strong>{knownPlaces.length}</strong><em>Yer</em></div>
+                    <div><strong>{categoryStats.length}</strong><em>Tema</em></div>
                     <div><strong>{knownCountries.length}</strong><em>Ülke</em></div>
                     <div><strong>∞</strong><em>Devam</em></div>
                   </div>
