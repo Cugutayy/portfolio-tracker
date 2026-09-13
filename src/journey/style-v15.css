@@ -2603,134 +2603,100 @@ body {
 }
 
 
+
 /* ==========================================================================
-   V17 — light album + black-edge cleanup
-   Album returns to the airy ivory language of the homepage. Photo containers
-   that previously exposed black fallback backgrounds now use warm paper tones.
+   V21 — canonical responsive layer
+   Single source of truth for the approved light album, immersive mobile hero,
+   equal photo rhythm and paper-first presentation. Keep future overrides here.
    ========================================================================== */
 
-.jn-site.is-album-route {
-  min-height: 100vh;
-  background: var(--jn15-paper) !important;
-  color: var(--jn15-ink) !important;
-}
-
-.jn-site.is-album-route .jn-header {
-  color: var(--jn15-ink) !important;
-}
-
-.jn-site.is-album-route .jn-wordmark,
-.jn-site.is-album-route .jn-instagram-link,
-.jn-site.is-album-route .jn-header-actions button {
-  color: var(--jn15-ink) !important;
-}
-
-.jn-site.is-album-route .jn-nav {
-  color: var(--jn15-muted) !important;
-  border-color: var(--jn15-line) !important;
-}
-
-.jn-site.is-album-route .jn-nav > :is(a, button):hover,
-.jn-site.is-album-route .jn-nav-album {
-  color: var(--jn15-ink) !important;
-}
-
-.jn-site.is-album-route .jn-nav-album small {
-  color: var(--jn15-muted) !important;
-}
-
-.jn-site.is-album-route .jn-album-page {
-  padding-top: clamp(34px, 4vw, 58px) !important;
-}
-
-.jn-site.is-album-route .jn-album-sidebar-v15 {
-  border-bottom-color: var(--jn15-line) !important;
-}
-
-.jn-site.is-album-route .jn-album-sidebar-v15 .jn-back {
-  color: var(--jn15-muted) !important;
-}
-
-.jn-site.is-album-route .jn-album-sidebar-v15 h1 {
-  color: var(--jn15-ink) !important;
-}
-
-.jn-site.is-album-route .jn-album-sidebar-v15 h1 small {
-  color: var(--jn15-muted) !important;
-}
-
-.jn-site.is-album-route .jn-album-filter-v15 button {
-  color: var(--jn15-muted) !important;
-}
-
-.jn-site.is-album-route .jn-album-filter-v15 button[aria-pressed="true"],
-.jn-site.is-album-route .jn-album-filter-v15 button:hover {
-  color: var(--jn15-ink) !important;
-}
-
-.jn-site.is-album-route .jn-album-filter-v15 button::after {
-  background: var(--jn15-ink) !important;
-}
-
-.jn-site.is-album-route .jn-album-filter-v15 small {
-  color: var(--jn15-muted) !important;
-}
-
-.jn-site.is-album-route .jn-album-content-head-v15 button {
-  color: var(--jn15-muted) !important;
-}
-
-.jn-site.is-album-route .jn-search-row {
-  border-color: var(--jn15-line) !important;
-  color: var(--jn15-muted) !important;
-  background: rgba(255,255,255,.34) !important;
-}
-
-.jn-site.is-album-route .jn-search-row input {
-  color: var(--jn15-ink) !important;
-}
-
-.jn-site.is-album-route .jn-search-row input::placeholder {
-  color: rgba(23,26,23,.40) !important;
-}
-
-/* Larger, calmer archive cards: 4 desktop / 3 laptop / 2 tablet / 1 phone. */
-.jn-site.is-album-route .jn-album-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: clamp(30px, 2.6vw, 44px) clamp(12px, 1.25vw, 20px) !important;
-}
-
-.jn-site.is-album-route .jn-album-image {
-  aspect-ratio: 4 / 5 !important;
+/* ---------- Shared photo surfaces ---------- */
+:is(
+  .jn-v15-archive-image,
+  .jn-v15-film-image,
+  .jn-v16-place-image,
+  .jn-album-image,
+  .jn-v15-about-image
+) {
   background: #e8e4da !important;
-  border: 1px solid rgba(23,26,23,.07) !important;
 }
 
-.jn-site.is-album-route .jn-album-image img {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
+:is(
+  .jn-reader-stage-v15,
+  .jn-v15-feature-media,
+  .jn-v15-dark-stage
+) {
   background: transparent !important;
 }
 
-.jn-site.is-album-route .jn-album-meta {
+/* ---------- Homepage archive spotlight ---------- */
+.jn-v15-archive-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-auto-rows: auto !important;
+  gap: clamp(12px, 1.1vw, 18px) !important;
+  align-items: start !important;
+}
+
+.jn-v15-archive-card,
+.jn-v15-archive-card:nth-child(n) {
+  grid-column: auto !important;
+  grid-row: auto !important;
+  min-width: 0 !important;
+}
+
+.jn-v15-archive-card:nth-child(n) .jn-v15-archive-image {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 4 / 3 !important;
+  overflow: hidden !important;
+}
+
+.jn-v15-archive-card:nth-child(n) .jn-v15-archive-image img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+/* ---------- Moments: one strict visual rhythm ---------- */
+.jn-v15-film {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: clamp(10px, 1vw, 16px) !important;
+  align-items: start !important;
+  overflow: visible !important;
+}
+
+.jn-v15-film-card,
+.jn-v15-film-card:nth-child(n) {
+  min-width: 0 !important;
+  width: auto !important;
+  scroll-snap-align: unset !important;
+}
+
+.jn-v15-film-card:nth-child(n) .jn-v15-film-image {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 4 / 5 !important;
+  overflow: hidden !important;
+}
+
+.jn-v15-film-card:nth-child(n) .jn-v15-film-image img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+}
+
+.jn-v15-film-card small {
+  margin-top: 8px !important;
   color: var(--jn15-muted) !important;
 }
 
-.jn-site.is-album-route .jn-album-card h2 {
-  color: var(--jn15-ink) !important;
-  font-size: clamp(16px, 1.25vw, 20px) !important;
-}
-
-.jn-site.is-album-route .jn-footer {
-  color: var(--jn15-muted) !important;
-  border-color: var(--jn15-line) !important;
-}
-
-/* The old immersive feature used a black page-wide backdrop. With contain-fit
-   imagery that backdrop appeared as black bars around some photos. Keep the
-   same centered editorial composition, but on warm paper instead. */
+/* ---------- Paper-first immersive feature ---------- */
 .jn-v15-dark-feature {
   background: var(--jn15-paper) !important;
   color: var(--jn15-ink) !important;
@@ -2739,17 +2705,18 @@ body {
 }
 
 .jn-v15-dark-feature-inner {
-  padding-top: clamp(72px, 7vw, 108px);
-  padding-bottom: clamp(72px, 7vw, 108px);
+  padding-top: clamp(72px, 7vw, 108px) !important;
+  padding-bottom: clamp(72px, 7vw, 108px) !important;
 }
 
-.jn-v15-dark-head {
+.jn-v15-dark-head,
+.jn-v15-dark-caption {
   color: var(--jn15-muted) !important;
 }
 
-.jn-v15-dark-stage {
+.jn-v15-dark-stage,
+.jn-v15-dark-caption {
   width: min(86%, 1180px) !important;
-  background: transparent !important;
 }
 
 .jn-v15-dark-stage button {
@@ -2759,149 +2726,32 @@ body {
 }
 
 .jn-v15-dark-stage img {
+  display: block;
   width: auto !important;
   max-width: 100% !important;
   height: auto !important;
   max-height: 76vh !important;
   margin-inline: auto;
-  background: transparent !important;
   object-fit: contain !important;
-}
-
-.jn-v15-dark-caption {
-  width: min(86%, 1180px) !important;
-  color: var(--jn15-muted) !important;
-}
-
-/* Defensive neutral fallbacks: no black should leak around ordinary photo
-   containers when an image is loading or when its natural ratio leaves space. */
-.jn-v15-archive-image,
-.jn-v15-film-image,
-.jn-v16-place-image,
-.jn-album-image,
-.jn-reader-stage-v15,
-.jn-v15-feature-media,
-.jn-v15-dark-stage {
-  background-color: #e8e4da;
-}
-
-.jn-reader-stage-v15,
-.jn-v15-feature-media,
-.jn-v15-dark-stage {
-  background-color: transparent;
-}
-
-@media (max-width: 1180px) {
-  .jn-site.is-album-route .jn-album-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
-}
-
-@media (max-width: 820px) {
-  .jn-site.is-album-route {
-    padding-inline: 16px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-page {
-    padding-top: 28px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-sidebar-v15 {
-    gap: 20px !important;
-    margin-bottom: 20px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 30px 12px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-image {
-    aspect-ratio: 4 / 5 !important;
-  }
-
-  .jn-site.is-album-route .jn-album-card h2 {
-    font-size: 17px !important;
-  }
-
-  .jn-v15-dark-stage,
-  .jn-v15-dark-caption {
-    width: 100% !important;
-  }
-}
-
-@media (max-width: 560px) {
-  .jn-site.is-album-route {
-    padding-inline: 14px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-sidebar-v15 h1 {
-    font-size: 58px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-filter-v15 {
-    margin-inline: -14px;
-    padding: 0 14px 8px;
-    scroll-padding-inline: 14px;
-  }
-
-  .jn-site.is-album-route .jn-album-grid {
-    grid-template-columns: 1fr !important;
-    gap: 38px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-card {
-    width: 100%;
-    max-width: 520px;
-    margin-inline: auto;
-  }
-
-  .jn-site.is-album-route .jn-album-image {
-    aspect-ratio: 4 / 5 !important;
-  }
-
-  .jn-site.is-album-route .jn-album-meta {
-    margin-top: 10px !important;
-    font-size: 7px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-card h2 {
-    margin-top: 6px !important;
-    font-size: 20px !important;
-  }
-}
-
-
-/* ==========================================================================
-   V18 — airy dense gallery system
-   Keep the approved editorial density while removing page-wide black fields.
-   ========================================================================== */
-
-/* 1) "Anlar." becomes a strict equal-height editorial grid. */
-.jn-v15-film {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: clamp(12px, 1.15vw, 18px) !important;
-  align-items: start !important;
-}
-
-.jn-v15-film-card:nth-child(n) .jn-v15-film-image {
-  aspect-ratio: 4 / 5 !important;
-  background: #e8e4da !important;
-}
-
-.jn-v15-film-card:nth-child(n) .jn-v15-film-image img {
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
   background: transparent !important;
 }
 
-.jn-v15-film-card small {
-  margin-top: 9px !important;
-  color: var(--jn15-muted) !important;
+.jn-v15-dark-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--jn15-ink);
+  font: 500 9px/1 var(--jn15-sans);
+  white-space: nowrap;
+  transition: gap .18s ease, opacity .18s ease;
 }
 
-/* 2) Keep the cinematic cards, remove the page-wide black field around them. */
+.jn-v15-dark-open:hover {
+  gap: 8px;
+  opacity: .68;
+}
+
+/* ---------- Cinematic deck on paper, not a page-wide black field ---------- */
 .jn-v16-deck {
   background: var(--jn15-paper) !important;
   color: var(--jn15-ink) !important;
@@ -2926,7 +2776,7 @@ body {
   box-shadow: 0 12px 36px rgba(23,26,23,.06);
 }
 
-/* 3) About / closing section is now ivory instead of full black. */
+/* ---------- About / closing ---------- */
 .jn-v15-about {
   background: var(--jn15-paper) !important;
   color: var(--jn15-ink) !important;
@@ -2940,6 +2790,7 @@ body {
 
 .jn-v15-about-image {
   width: min(72%, 680px) !important;
+  background: transparent !important;
 }
 
 .jn-v15-about-image img {
@@ -2956,94 +2807,224 @@ body {
   border-bottom-color: var(--jn15-line) !important;
 }
 
-/* 4) The action is a real control now, not static caption text. */
-.jn-v15-dark-open {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--jn15-ink);
-  font: 500 9px/1 var(--jn15-sans);
-  white-space: nowrap;
-  transition: gap .18s ease, opacity .18s ease;
+/* ---------- Light dense Album route ---------- */
+.jn-site.is-album-route {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100vh;
+  padding-inline: var(--jn15-pad) !important;
+  background: var(--jn15-paper) !important;
+  color: var(--jn15-ink) !important;
 }
 
-.jn-v15-dark-open:hover {
-  gap: 8px;
-  opacity: .68;
+.jn-site.is-album-route .jn-header,
+.jn-site.is-album-route .jn-nav,
+.jn-site.is-album-route .jn-album-page,
+.jn-site.is-album-route .jn-footer {
+  width: min(100%, var(--jn15-shell));
+  margin-inline: auto;
 }
 
-/* 5) Dense album inspired by the approved reference, on ivory rather than black. */
+.jn-site.is-album-route .jn-header,
+.jn-site.is-album-route .jn-wordmark,
+.jn-site.is-album-route .jn-instagram-link,
+.jn-site.is-album-route .jn-header-actions button {
+  color: var(--jn15-ink) !important;
+}
+
+.jn-site.is-album-route .jn-nav {
+  color: var(--jn15-muted) !important;
+  border-color: var(--jn15-line) !important;
+}
+
+.jn-site.is-album-route .jn-nav > :is(a, button):hover,
+.jn-site.is-album-route .jn-nav-album {
+  color: var(--jn15-ink) !important;
+}
+
+.jn-site.is-album-route .jn-nav-album small {
+  color: var(--jn15-muted) !important;
+}
+
+.jn-site.is-album-route .jn-album-page {
+  padding: clamp(34px, 4vw, 58px) 0 112px !important;
+}
+
+.jn-site.is-album-route .jn-album-shell-v15 {
+  display: block !important;
+}
+
 .jn-site.is-album-route .jn-album-sidebar-v15 {
+  position: static !important;
+  display: grid !important;
   grid-template-columns: minmax(240px, .72fr) minmax(0, 1.6fr) !important;
   gap: clamp(34px, 5vw, 80px) !important;
+  align-items: end;
   margin-bottom: 18px !important;
   padding-bottom: 18px !important;
+  border-bottom: 1px solid var(--jn15-line) !important;
+}
+
+.jn-site.is-album-route .jn-album-sidebar-v15 .jn-back {
+  grid-column: 1 / -1;
+  width: max-content;
+  margin-bottom: 14px !important;
+  color: var(--jn15-muted) !important;
 }
 
 .jn-site.is-album-route .jn-album-sidebar-v15 h1 {
-  font-size: clamp(52px, 5.2vw, 82px) !important;
+  margin: 0 !important;
+  color: var(--jn15-ink) !important;
+  font: 400 clamp(52px, 5.2vw, 82px)/.88 var(--jn15-serif) !important;
+  letter-spacing: -.06em !important;
+}
+
+.jn-site.is-album-route .jn-album-sidebar-v15 h1 small {
+  display: inline-block;
+  margin-left: .18em;
+  color: var(--jn15-muted) !important;
+  font: 400 .34em/1 var(--jn15-serif);
+  letter-spacing: 0;
+  vertical-align: .55em;
 }
 
 .jn-site.is-album-route .jn-album-filter-v15 {
+  display: flex !important;
+  flex-wrap: wrap;
   justify-content: flex-end !important;
   gap: 8px 18px !important;
+  padding-bottom: 7px;
+}
+
+.jn-site.is-album-route .jn-album-filter-v15 button {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
+  min-width: max-content;
+  padding: 6px 0 8px;
+  color: var(--jn15-muted) !important;
+  font: 400 10px/1 var(--jn15-serif) !important;
+}
+
+.jn-site.is-album-route .jn-album-filter-v15 button::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 100%;
+  bottom: 0;
+  height: 1px;
+  background: var(--jn15-ink) !important;
+  transition: right .22s ease;
+}
+
+.jn-site.is-album-route .jn-album-filter-v15 button[aria-pressed="true"],
+.jn-site.is-album-route .jn-album-filter-v15 button:hover {
+  color: var(--jn15-ink) !important;
+}
+
+.jn-site.is-album-route .jn-album-filter-v15 button[aria-pressed="true"]::after {
+  right: 0;
+}
+
+.jn-site.is-album-route .jn-album-filter-v15 small {
+  color: var(--jn15-muted) !important;
+  font: 400 7px/1 var(--jn15-mono) !important;
 }
 
 .jn-site.is-album-route .jn-album-content-head-v15 {
   min-height: 28px !important;
   margin-bottom: 10px !important;
+  padding-bottom: 0 !important;
+  border: 0 !important;
+  justify-content: flex-end !important;
+}
+
+.jn-site.is-album-route .jn-album-content-head-v15 > div {
+  display: none;
+}
+
+.jn-site.is-album-route .jn-album-content-head-v15 button {
+  color: var(--jn15-muted) !important;
+  font: 500 8px/1 var(--jn15-mono);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.jn-site.is-album-route .jn-search-row {
+  margin-bottom: 18px !important;
+  border-color: var(--jn15-line) !important;
+  color: var(--jn15-muted) !important;
+  background: rgba(255,255,255,.34) !important;
+}
+
+.jn-site.is-album-route .jn-search-row input {
+  color: var(--jn15-ink) !important;
+}
+
+.jn-site.is-album-route .jn-search-row input::placeholder {
+  color: rgba(23,26,23,.40) !important;
 }
 
 .jn-site.is-album-route .jn-album-grid {
+  display: grid !important;
   grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  gap: 26px 10px !important;
+  gap: 22px 8px !important;
+  margin: 0 !important;
+  align-items: start !important;
+}
+
+.jn-site.is-album-route .jn-album-card,
+.jn-site.is-album-route .jn-album-card > button {
+  min-width: 0 !important;
+  width: 100% !important;
+  text-align: left;
 }
 
 .jn-site.is-album-route .jn-album-image {
+  width: 100% !important;
+  height: auto !important;
   aspect-ratio: 1 / 1 !important;
+  overflow: hidden !important;
   background: #e8e4da !important;
-  border-color: rgba(23,26,23,.06) !important;
+  border: 1px solid rgba(23,26,23,.06) !important;
 }
 
 .jn-site.is-album-route .jn-album-image img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: cover !important;
+  object-position: center !important;
+  background: transparent !important;
+  transition: transform .45s cubic-bezier(.2,.8,.2,1);
+}
+
+.jn-site.is-album-route .jn-album-card:hover .jn-album-image img {
+  transform: scale(1.014);
 }
 
 .jn-site.is-album-route .jn-album-meta {
   margin-top: 6px !important;
-  font-size: 6.5px !important;
+  color: var(--jn15-muted) !important;
+  font: 500 6.5px/1.15 var(--jn15-mono) !important;
   letter-spacing: .06em !important;
+  text-transform: uppercase;
 }
 
 .jn-site.is-album-route .jn-album-card h2 {
   margin-top: 4px !important;
-  font-size: 14px !important;
-  line-height: 1.02 !important;
+  color: var(--jn15-ink) !important;
+  font: 400 14px/1.02 var(--jn15-serif) !important;
+  letter-spacing: -.025em !important;
 }
 
-/* 6) Defensive cleanup: ordinary photo shells should never expose black. */
-:is(
-  .jn-v15-archive-image,
-  .jn-v15-film-image,
-  .jn-v16-place-image,
-  .jn-album-image,
-  .jn-v15-about-image,
-  .jn-v15-feature-media,
-  .jn-v15-dark-stage,
-  .jn-reader-stage-v15
-) {
-  background-color: #e8e4da;
+.jn-site.is-album-route .jn-footer {
+  color: var(--jn15-muted) !important;
+  border-color: var(--jn15-line) !important;
 }
 
-:is(
-  .jn-v15-feature-media,
-  .jn-v15-dark-stage,
-  .jn-reader-stage-v15
-) {
-  background-color: transparent;
-}
-
-/* 7) Slightly tighten long empty vertical runs without flattening the rhythm. */
+/* ---------- Spacing polish ---------- */
 .jn-v15-moments {
   padding-top: clamp(74px, 7vw, 112px) !important;
   padding-bottom: clamp(74px, 7vw, 112px) !important;
@@ -3058,28 +3039,15 @@ body {
   .jn-site.is-album-route .jn-album-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   }
+}
 
-  .jn-v15-film {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+@media (max-width: 980px) and (min-width: 761px) {
+  .jn-v15-archive-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
 
 @media (max-width: 820px) {
-  .jn-v15-film {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 24px 10px !important;
-  }
-
-  .jn-v15-about-inner {
-    grid-template-columns: 1fr !important;
-    gap: 38px !important;
-  }
-
-  .jn-v15-about-image {
-    width: min(82%, 560px) !important;
-    justify-self: start !important;
-  }
-
   .jn-site.is-album-route .jn-album-sidebar-v15 {
     grid-template-columns: 1fr !important;
     gap: 18px !important;
@@ -3091,168 +3059,22 @@ body {
 
   .jn-site.is-album-route .jn-album-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 20px 7px !important;
+    gap: 18px 6px !important;
   }
 
-  .jn-site.is-album-route .jn-album-meta {
-    font-size: 6px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-card h2 {
-    font-size: 12px !important;
-  }
-}
-
-@media (max-width: 560px) {
-  .jn-site.is-album-route {
-    padding-inline: 10px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-page {
-    padding-top: 22px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-sidebar-v15 h1 {
-    font-size: 52px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-filter-v15 {
-    margin-inline: -10px !important;
-    padding-inline: 10px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-    gap: 18px 5px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-card {
-    max-width: none !important;
-    width: auto !important;
-    margin: 0 !important;
-  }
-
-  .jn-site.is-album-route .jn-album-image {
-    aspect-ratio: 1 / 1 !important;
-  }
-
-  .jn-site.is-album-route .jn-album-meta {
-    margin-top: 5px !important;
-    font-size: 5.5px !important;
-  }
-
-  .jn-site.is-album-route .jn-album-card h2 {
-    display: none;
-  }
-
-  .jn-v15-film {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-
-  .jn-v15-section-title {
+  .jn-v15-about-inner {
     grid-template-columns: 1fr !important;
+    gap: 38px !important;
   }
-}
 
-@media (max-width: 350px) {
-  .jn-site.is-album-route .jn-album-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 20px 6px !important;
-  }
-}
-
-
-/* ==========================================================================
-   V19 — verified mobile composition
-   Explicitly overrides legacy V14/V15 mobile reel rules. Dense, equal tiles;
-   immersive mobile hero; no black fallback fields around ordinary imagery.
-   ========================================================================== */
-
-/* Ordinary photo surfaces always inherit the airy paper system. */
-.jn-v15-dark-feature,
-.jn-v15-about,
-.jn-reader-v15,
-.jn-site.is-album-route {
-  background: var(--jn15-paper) !important;
-}
-
-.jn-v15-dark-stage,
-.jn-reader-stage-v15,
-.jn-v15-feature-media,
-.jn-v15-about-image {
-  background: transparent !important;
-}
-
-/* Equal rhythm is non-negotiable for the Moments strip. */
-.jn-v15-film {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  gap: clamp(10px, 1vw, 16px) !important;
-  align-items: start !important;
-  overflow: visible !important;
-}
-
-.jn-v15-film-card {
-  min-width: 0 !important;
-  width: auto !important;
-  scroll-snap-align: unset !important;
-}
-
-.jn-v15-film-card:nth-child(n) .jn-v15-film-image {
-  width: 100% !important;
-  aspect-ratio: 4 / 5 !important;
-  height: auto !important;
-  overflow: hidden !important;
-  background: #e8e4da !important;
-}
-
-.jn-v15-film-card:nth-child(n) .jn-v15-film-image img {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  object-position: center !important;
-}
-
-/* Album is a dense photo wall on every screen, never a loose mixed-ratio layout. */
-.jn-site.is-album-route .jn-album-grid {
-  display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-  gap: 22px 8px !important;
-  align-items: start !important;
-}
-
-.jn-site.is-album-route .jn-album-card,
-.jn-site.is-album-route .jn-album-card > button {
-  min-width: 0 !important;
-  width: 100% !important;
-}
-
-.jn-site.is-album-route .jn-album-image {
-  width: 100% !important;
-  aspect-ratio: 1 / 1 !important;
-  height: auto !important;
-  overflow: hidden !important;
-  background: #e8e4da !important;
-}
-
-.jn-site.is-album-route .jn-album-image img {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  object-position: center !important;
-  background: transparent !important;
-}
-
-@media (max-width: 1180px) {
-  .jn-site.is-album-route .jn-album-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  .jn-v15-about-image {
+    width: min(82%, 560px) !important;
+    justify-self: start !important;
   }
 }
 
 @media (max-width: 760px) {
-  /* Compact chrome leaves more room for photography. */
+  /* compact chrome */
   .jn-site {
     width: calc(100% - 24px) !important;
   }
@@ -3270,10 +3092,7 @@ body {
     gap: 30px !important;
   }
 
-  /* MOBILE HERO:
-     The source is landscape. A materially taller hero therefore requires an
-     intentional editorial crop on narrow screens; keeping contain would always
-     make it visually short. */
+  /* immersive mobile hero */
   .jn-v15-hero {
     width: 100vw !important;
     margin-left: calc(50% - 50vw) !important;
@@ -3333,8 +3152,7 @@ body {
     border-color: rgba(255,255,255,.58) !important;
   }
 
-  /* HOMEPAGE ALBUM PREVIEW:
-     replace the old 78vw swipe cards with the dense reference-style wall. */
+  /* mobile album preview: dense 3-up contact sheet */
   .jn-mobile-reel {
     display: block !important;
     width: 100% !important;
@@ -3396,28 +3214,24 @@ body {
     display: none !important;
   }
 
-  /* The dense preview already performs the mobile archive role. Avoid showing a
-     second competing archive block immediately below it. */
+  /* contact sheet replaces the second archive module on mobile */
   .jn-v15-archive {
     display: none !important;
   }
 
-  /* Moments stays equal and deliberately quieter on mobile. */
   .jn-v15-film {
-    display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 22px 8px !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: visible !important;
   }
 
-  .jn-v15-film-card:nth-child(n) .jn-v15-film-image {
-    aspect-ratio: 4 / 5 !important;
+  .jn-v15-dark-stage,
+  .jn-v15-dark-caption {
+    width: 100% !important;
   }
 
-  /* Album route: exactly the compact multi-photo feeling from the approved
-     reference, but on warm paper instead of black. */
+  /* dense album route */
   .jn-site.is-album-route {
     width: 100% !important;
     padding-inline: 10px !important;
@@ -3465,10 +3279,6 @@ body {
     gap: 16px 5px !important;
   }
 
-  .jn-site.is-album-route .jn-album-image {
-    aspect-ratio: 1 / 1 !important;
-  }
-
   .jn-site.is-album-route .jn-album-meta {
     margin-top: 4px !important;
     font-size: 5.5px !important;
@@ -3477,21 +3287,6 @@ body {
 
   .jn-site.is-album-route .jn-album-card h2 {
     display: none !important;
-  }
-
-  /* Light closing area, no full-width black field. */
-  .jn-v15-about {
-    background: var(--jn15-paper) !important;
-    color: var(--jn15-ink) !important;
-  }
-
-  .jn-v15-about-copy p {
-    color: var(--jn15-muted) !important;
-  }
-
-  .jn-v15-about-copy a {
-    color: var(--jn15-ink) !important;
-    border-bottom-color: var(--jn15-line) !important;
   }
 }
 
@@ -3512,45 +3307,11 @@ body {
   }
 }
 
-
-/* ==========================================================================
-   V20 — homepage archive equality
-   The homepage "Albüm." spotlight is also a strict grid; no legacy nth-child
-   portrait/landscape spans survive.
-   ========================================================================== */
-.jn-v15-archive-grid {
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  grid-auto-rows: auto !important;
-  gap: clamp(12px, 1.1vw, 18px) !important;
-  align-items: start !important;
-}
-
-.jn-v15-archive-card,
-.jn-v15-archive-card:nth-child(n) {
-  grid-column: auto !important;
-  grid-row: auto !important;
-  min-width: 0 !important;
-}
-
-.jn-v15-archive-card:nth-child(n) .jn-v15-archive-image {
-  width: 100% !important;
-  height: auto !important;
-  aspect-ratio: 4 / 3 !important;
-  overflow: hidden !important;
-  background: #e8e4da !important;
-}
-
-.jn-v15-archive-card:nth-child(n) .jn-v15-archive-image img {
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  object-position: center !important;
-}
-
-@media (max-width: 980px) and (min-width: 761px) {
-  .jn-v15-archive-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+@media (prefers-reduced-motion: reduce) {
+  .jn-v15-archive-image img,
+  .jn-v15-film-image img,
+  .jn-album-image img {
+    transition: none !important;
+    transform: none !important;
   }
 }
