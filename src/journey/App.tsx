@@ -404,6 +404,7 @@ export default function App() {
   const returnScroll = useRef(0);
   const returnRoute = useRef("");
   const touchStartX = useRef<number | null>(null);
+  const prefetchedImages = useRef<Set<string>>(new Set());
 
   const all = Array.from(
     new Map([...photos, ...remotePhotos, ...drafts].map((photo) => [photo.id, photo])).values(),
@@ -660,18 +661,47 @@ export default function App() {
     readerRef.current?.focus({ preventScroll: true });
   }, [readerOpen]);
 
+  const runViewTransition = (update: () => void) => {
+    const reduceMotion =
+      typeof matchMedia === "function" &&
+      matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const doc = document as Document & {
+      startViewTransition?: (callback: () => void) => unknown;
+    };
+
+    if (reduceMotion || typeof doc.startViewTransition !== "function") {
+      update();
+      return;
+    }
+
+    doc.startViewTransition(update);
+  };
+
+  const prefetchPhoto = (photo?: Photo) => {
+    if (!photo?.src || prefetchedImages.current.has(photo.src)) return;
+    prefetchedImages.current.add(photo.src);
+    const image = new Image();
+    image.decoding = "async";
+    image.src = photo.src;
+  };
+
   const openNote = (photo: Photo, sequence: Photo[] = all) => {
     returnScroll.current = window.scrollY;
     returnRoute.current = route;
     setReaderIds(sequence.map((item) => item.id));
     setSlideDirection("");
-    history.pushState(null, "", `#note=${photo.id}`);
-    setRoute(location.hash);
+    prefetchPhoto(photo);
+    runViewTransition(() => {
+      history.pushState(null, "", `#note=${photo.id}`);
+      setRoute(location.hash);
+    });
   };
 
   const goHome = () => {
-    history.replaceState(null, "", location.pathname);
-    setRoute("");
+    runViewTransition(() => {
+      history.replaceState(null, "", location.pathname);
+      setRoute("");
+    });
     requestAnimationFrame(() => {
       window.scrollTo({ top: returnScroll.current, behavior: "auto" });
     });
@@ -679,8 +709,10 @@ export default function App() {
 
   const closeNote = () => {
     if (returnRoute.current === "#album") {
-      history.replaceState(null, "", "#album");
-      setRoute("#album");
+      runViewTransition(() => {
+        history.replaceState(null, "", "#album");
+        setRoute("#album");
+      });
       requestAnimationFrame(() => {
         window.scrollTo({ top: returnScroll.current, behavior: "auto" });
       });
@@ -696,8 +728,11 @@ export default function App() {
       (currentIndex + step + readerSequence.length) % readerSequence.length;
     const next = readerSequence[nextIndex];
     setSlideDirection(step > 0 ? "next" : "prev");
-    history.replaceState(null, "", `#note=${next.id}`);
-    setRoute(location.hash);
+    prefetchPhoto(next);
+    runViewTransition(() => {
+      history.replaceState(null, "", `#note=${next.id}`);
+      setRoute(location.hash);
+    });
   };
 
   const scrollToArchive = () => {
@@ -712,8 +747,10 @@ export default function App() {
   };
 
   const openAlbum = () => {
-    history.pushState(null, "", "#album");
-    setRoute("#album");
+    runViewTransition(() => {
+      history.pushState(null, "", "#album");
+      setRoute("#album");
+    });
     requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
   };
 
@@ -980,7 +1017,11 @@ export default function App() {
                 >
                   {filtered.map((photo) => (
                     <article className="jn-album-card" key={photo.id}>
-                      <button onClick={() => openNote(photo, filtered)}>
+                      <button
+                        onClick={() => openNote(photo, filtered)}
+                        onPointerEnter={() => prefetchPhoto(photo)}
+                        onFocus={() => prefetchPhoto(photo)}
+                      >
                         <div className="jn-album-image">
                           <Picture
                             photo={photo}
@@ -1090,7 +1131,11 @@ export default function App() {
               <div className="jn-v15-archive-grid">
                 {archiveSpotlight.map((photo) => (
                   <article className="jn-v15-archive-card" key={photo.id}>
-                    <button onClick={() => openNote(photo, archiveSpotlight)}>
+                    <button
+                      onClick={() => openNote(photo, archiveSpotlight)}
+                      onPointerEnter={() => prefetchPhoto(photo)}
+                      onFocus={() => prefetchPhoto(photo)}
+                    >
                       <div className="jn-v15-archive-image">
                         <Picture
                           photo={photo}
@@ -1175,7 +1220,11 @@ export default function App() {
               <div className="jn-v15-film">
                 {filmMoments.map((photo) => (
                   <article className="jn-v15-film-card" key={photo.id}>
-                    <button onClick={() => openNote(photo, filmMoments)}>
+                    <button
+                      onClick={() => openNote(photo, filmMoments)}
+                      onPointerEnter={() => prefetchPhoto(photo)}
+                      onFocus={() => prefetchPhoto(photo)}
+                    >
                       <div className="jn-v15-film-image">
                         <Picture photo={photo} sizes="(max-width: 760px) 62vw, 20vw" />
                       </div>
