@@ -477,7 +477,7 @@ export default function App() {
   const jaipurFeature = photoById("010");
   const waterFeature = photoById("020");
   const sunsetFeature = photoById("055");
-  const filmMoments = ["073", "107", "012", "103", "009"]
+  const filmMoments = ["073", "107", "012", "103", "009", "010", "055", "020"]
     .map((id) => photoById(id))
     .filter((photo): photo is Photo => Boolean(photo));
   const placeCards = [
@@ -1146,7 +1146,12 @@ export default function App() {
                   </div>
                   <div className="jn-v15-dark-caption">
                     <span>{waterFeature.summary}</span>
-                    <span>Fotoğrafı aç</span>
+                    <button
+                      className="jn-v15-dark-open"
+                      onClick={() => openNote(waterFeature)}
+                    >
+                      Fotoğrafı aç <ChevronRight size={14} strokeWidth={1.4} />
+                    </button>
                   </div>
                 </div>
               </section>
