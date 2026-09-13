@@ -62,14 +62,27 @@ type JourneyRow = {
 
 function saveSession(session: JourneySession | null) {
   try {
-    if (session) localStorage.setItem(sessionKey, JSON.stringify(session));
-    else localStorage.removeItem(sessionKey);
+    if (session) sessionStorage.setItem(sessionKey, JSON.stringify(session));
+    else sessionStorage.removeItem(sessionKey);
+    // Never keep long-lived auth tokens in persistent browser storage.
+    localStorage.removeItem(sessionKey);
   } catch {}
 }
 
 function readSession(): JourneySession | null {
   try {
-    const raw = localStorage.getItem(sessionKey);
+    let raw = sessionStorage.getItem(sessionKey);
+
+    // One-time migration from the previous persistent session format.
+    if (!raw) {
+      const legacy = localStorage.getItem(sessionKey);
+      if (legacy) {
+        sessionStorage.setItem(sessionKey, legacy);
+        localStorage.removeItem(sessionKey);
+        raw = legacy;
+      }
+    }
+
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
