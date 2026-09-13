@@ -397,6 +397,7 @@ export default function App() {
   );
   const [readerIds, setReaderIds] = useState<string[]>([]);
   const [slideDirection, setSlideDirection] = useState<"next" | "prev" | "">("");
+  const [activeChapter, setActiveChapter] = useState("journey-top");
 
   const searchInput = useRef<HTMLInputElement>(null);
   const archiveRef = useRef<HTMLElement>(null);
@@ -614,6 +615,31 @@ export default function App() {
   }, [route, remotePhotos.length, drafts.length]);
 
   useEffect(() => {
+    if (selected || albumOpen || typeof IntersectionObserver === "undefined") return;
+
+    const sections = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-jn-chapter]"),
+    );
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target?.id) setActiveChapter(visible.target.id);
+      },
+      {
+        rootMargin: "-32% 0px -52% 0px",
+        threshold: [0, 0.08, 0.2, 0.4, 0.65],
+      },
+    );
+
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [selected?.id, albumOpen, remotePhotos.length, drafts.length]);
+
+  useEffect(() => {
     if (!selected || !readerSequence.length) return;
     const currentIndex = readerIndex >= 0 ? readerIndex : 0;
     const nearby = [
@@ -766,6 +792,16 @@ export default function App() {
     openAlbum();
   };
 
+  const scrollToChapter = (id: string) => {
+    const node = document.getElementById(id);
+    if (!node) return;
+    node.scrollIntoView({
+      behavior:
+        matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+  };
+
   const openStudio = () => {
     returnScroll.current = window.scrollY;
     history.pushState(null, "", "#studio");
@@ -837,6 +873,28 @@ export default function App() {
           <a href="#places">Yerler</a>
           <a href="#about">Hakkında</a>
         </nav>
+
+        {!selected && !albumOpen && (
+          <aside className="jn-chapter-rail" aria-label="Sayfa bölümleri">
+            {[
+              ["journey-top", "01", "Giriş"],
+              ["journey-archive", "02", "Albüm"],
+              ["journey-moments", "03", "Anlar"],
+              ["places", "04", "Yerler"],
+              ["about", "05", "Hakkında"],
+            ].map(([id, number, label]) => (
+              <button
+                key={id}
+                className={activeChapter === id ? "is-active" : ""}
+                onClick={() => scrollToChapter(id)}
+                aria-label={label}
+              >
+                <span>{number}</span>
+                <em>{label}</em>
+              </button>
+            ))}
+          </aside>
+        )}
 
         {selected ? (
           <main className="jn-reader-v15" ref={readerRef} tabIndex={-1}>
@@ -1057,7 +1115,12 @@ export default function App() {
         ) : (
           <main className="jn-home-v15">
             {hero && (
-              <section className="jn-v15-hero" aria-labelledby="journey-hero-title">
+              <section
+                className="jn-v15-hero"
+                id="journey-top"
+                data-jn-chapter
+                aria-labelledby="journey-hero-title"
+              >
                 <div className="jn-v15-hero-media">
                   <img
                     src={heroAsset}
@@ -1113,7 +1176,12 @@ export default function App() {
               </div>
             </section>
 
-            <section className="jn-v15-archive" data-jn-reveal="section">
+            <section
+              className="jn-v15-archive"
+              id="journey-archive"
+              data-jn-chapter
+              data-jn-reveal="section"
+            >
               <aside className="jn-v15-archive-rail">
                 <h2>Albüm.</h2>
                 <ul>
@@ -1212,7 +1280,12 @@ export default function App() {
               </section>
             )}
 
-            <section className="jn-v15-moments" data-jn-reveal="section">
+            <section
+              className="jn-v15-moments"
+              id="journey-moments"
+              data-jn-chapter
+              data-jn-reveal="section"
+            >
               <div className="jn-v15-section-title">
                 <h2>Anlar.</h2>
                 <p>Birbirinden farklı kareler, aynı arşivin içinde aynı ritimde.</p>
@@ -1298,7 +1371,12 @@ export default function App() {
               </div>
             </section>
 
-            <section className="jn-v16-places" id="places" data-jn-reveal="section">
+            <section
+              className="jn-v16-places"
+              id="places"
+              data-jn-chapter
+              data-jn-reveal="section"
+            >
               <header className="jn-v16-places-head">
                 <div className="jn-v16-places-title">
                   <h2>Yerler.</h2>
@@ -1342,7 +1420,12 @@ export default function App() {
               </div>
             </section>
 
-            <section className="jn-v15-about" id="about" data-jn-reveal="section">
+            <section
+              className="jn-v15-about"
+              id="about"
+              data-jn-chapter
+              data-jn-reveal="section"
+            >
               <div className="jn-v15-about-inner">
                 {aboutPhoto && (
                   <figure className="jn-v15-about-image">
