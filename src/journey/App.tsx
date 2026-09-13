@@ -22,8 +22,6 @@ import {
   updateJourneyPassword,
 } from "./supabase";
 import "./style.css";
-import "./style-v13.css";
-import "./style-v14.css";
 import "./style-v15.css";
 
 const Studio = lazy(() => import("./studio"));
