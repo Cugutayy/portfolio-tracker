@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Journey Notes — Design Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Gloock&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&family=Newsreader:ital@0;1&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/journey/lab.css" />
+</head>
+<body>
+  <header class="lab-head">
+    <div class="lab-mark"><i></i><i></i></div>
+    <div>
+      <strong>Journey Notes</strong>
+      <span>Design Lab · private preview</span>
+    </div>
+    <a href="/">Canlı site ↗</a>
+  </header>
+
+  <main>
+    <section class="lab-intro">
+      <span class="eyebrow">DESIGN SYSTEM STUDIES · 2026</span>
+      <h1>Dört yön.<br><em>Aynı arşiv.</em></h1>
+      <p>Gerçek Journey fotoğraflarıyla; template değil, uygulanabilir tasarım prototipleri.</p>
+    </section>
+
+    <section class="study study-proof" id="proof">
+      <header class="study-head">
+        <div><span>01 / PROOF SHEET</span><h2>Albüm,<br>bir bakışta.</h2></div>
+        <p>Yoğun ama sakin. Her kare aynı matematikte; görüntünün kendisi ritmi kuruyor.</p>
+      </header>
+      <div class="proof-grid">
+        <figure class="wide"><img src="/journey/archive/010-small.webp" alt=""><figcaption>010 · Jaipur</figcaption></figure>
+        <figure><img src="/journey/archive/020-small.webp" alt=""><figcaption>020 · Doğa</figcaption></figure>
+        <figure><img src="/journey/archive/073-small.webp" alt=""><figcaption>073 · Sokak</figcaption></figure>
+        <figure><img src="/journey/archive/009-small.webp" alt=""><figcaption>009 · Belgrad</figcaption></figure>
+        <figure><img src="/journey/archive/107-small.webp" alt=""><figcaption>107 · Yol</figcaption></figure>
+        <figure><img src="/journey/archive/055-small.webp" alt=""><figcaption>055 · Günbatımı</figcaption></figure>
+        <figure><img src="/journey/archive/012-small.webp" alt=""><figcaption>012 · Doğa</figcaption></figure>
+        <figure><img src="/journey/archive/103-small.webp" alt=""><figcaption>103 · Mimari</figcaption></figure>
+        <figure><img src="/journey/archive/038-small.webp" alt=""><figcaption>038 · Sokak</figcaption></figure>
+        <figure><img src="/journey/archive/045-small.webp" alt=""><figcaption>045 · Doğa</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="study study-ascii" id="ascii">
+      <header class="study-head is-light">
+        <div><span>02 / ASCII LANDING</span><h2>Görüntü,<br><em>karaktere dönüşüyor.</em></h2></div>
+        <p>Snow hero’nun gerçek pikselleri Canvas üzerinde luminance → glyph dönüşümünden geçiyor. Pointer hareketi fotoğraf/ASCII karışımını değiştiriyor.</p>
+      </header>
+      <div class="ascii-stage" id="asciiStage">
+        <img id="asciiSource" src="/journey/hero-snow.webp" alt="" crossorigin="anonymous">
+        <canvas id="asciiCanvas" aria-label="Snow hero ASCII study"></canvas>
+        <div class="ascii-caption"><span>SNOW STUDY · LIVE CANVAS</span><span>MOVE POINTER</span></div>
+      </div>
+    </section>
+
+    <section class="study study-color" id="chromatic">
+      <header class="study-head">
+        <div><span>03 / CHROMATIC INDEX</span><h2>Renkler,<br>fotoğraftan gelir.</h2></div>
+        <p>Swatch’lar elle seçilmiyor. Aynı-origin thumbnail pikselleri taranıp gerçek average-color değerleri çıkarılıyor.</p>
+      </header>
+      <div class="color-list" id="colorList">
+        <article data-src="/journey/archive/073-small.webp"><div class="swatch"></div><img src="/journey/archive/073-small.webp" alt=""><span>073</span><strong>Sokak</strong><code>calculating…</code></article>
+        <article data-src="/journey/archive/020-small.webp"><div class="swatch"></div><img src="/journey/archive/020-small.webp" alt=""><span>020</span><strong>Doğa</strong><code>calculating…</code></article>
+        <article data-src="/journey/archive/010-small.webp"><div class="swatch"></div><img src="/journey/archive/010-small.webp" alt=""><span>010</span><strong>Mimari</strong><code>calculating…</code></article>
+        <article data-src="/journey/archive/055-small.webp"><div class="swatch"></div><img src="/journey/archive/055-small.webp" alt=""><span>055</span><strong>Doğa</strong><code>calculating…</code></article>
+        <article data-src="/journey/archive/009-small.webp"><div class="swatch"></div><img src="/journey/archive/009-small.webp" alt=""><span>009</span><strong>Sokak</strong><code>calculating…</code></article>
+        <article data-src="/journey/archive/107-small.webp"><div class="swatch"></div><img src="/journey/archive/107-small.webp" alt=""><span>107</span><strong>Doğa</strong><code>calculating…</code></article>
+      </div>
+    </section>
+
+    <section class="study study-field" id="field">
+      <div class="field-photo"><img src="/journey/archive/107-large.webp" alt=""></div>
+      <div class="field-copy">
+        <span class="eyebrow">04 / FIELD NOTE · 107</span>
+        <h2>Yol,<br><em>sessizlik,<br>ışık.</em></h2>
+        <p>Bir fotoğrafı büyütmek yerine ona nefes alanı vermek. Görsel ve not iki ayrı katman gibi değil, tek sayfanın iki ritmi gibi davranıyor.</p>
+        <dl><div><dt>Tür</dt><dd>Doğa</dd></div><div><dt>Arşiv</dt><dd>Journey Notes</dd></div><div><dt>Durum</dt><dd>Published</dd></div></dl>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lab-foot"><span>Journey Notes · Design Lab</span><span>not indexed · not linked</span></footer>
+  <script src="/journey/lab.js" defer></script>
+</body>
+</html>
