@@ -170,12 +170,7 @@ export default function MobileSwipeReader({
   };
 
   return (
-    <section
-      className="jn-reader-stage-v15 jn-native-swipe-stage"
-      style={{
-        aspectRatio: `${Math.max(1, photo.width)} / ${Math.max(1, photo.height)}`,
-      }}
-    >
+    <section className="jn-reader-stage-v15 jn-native-swipe-stage">
       <div
         className="jn-native-swipe-track"
         ref={trackRef}
