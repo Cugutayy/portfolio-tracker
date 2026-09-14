@@ -1113,7 +1113,7 @@ export default function App() {
                         <div className="jn-album-image">
                           <Picture
                             photo={photo}
-                            sizes="(max-width: 560px) 46vw, (max-width: 980px) 31vw, 20vw"
+                            sizes="(max-width: 760px) 48vw, (max-width: 980px) 31vw, 20vw"
                           />
                         </div>
                         <div className="jn-album-meta">
@@ -1195,7 +1195,7 @@ export default function App() {
                     onClick={() => openNote(photo, mobileReel)}
                     aria-label={photo.title || photo.place || "Fotoğrafı aç"}
                   >
-                    <Picture photo={photo} sizes="78vw" />
+                    <Picture photo={photo} sizes="48vw" />
                     {(photo.place || photo.title) && (
                       <span className="jn-mobile-reel-caption">
                         {photo.title || photo.place}
