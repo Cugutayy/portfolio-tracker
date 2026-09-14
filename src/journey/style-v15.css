@@ -3533,22 +3533,39 @@ body {
   }
 
   /* Mobile album: larger editorial cards instead of a tiny 3-up contact sheet. */
-  .jn-mobile-reel-track,
-  .jn-site.is-album-route .jn-album-grid {
+  .jn-mobile-reel-track {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 
-  .jn-mobile-reel-card,
+  .jn-mobile-reel-card {
+    aspect-ratio: 4 / 5 !important;
+  }
+
+  /* Album itself is intentionally more immersive than the homepage preview:
+     one large editorial photo per row on phones. */
+  .jn-site.is-album-route .jn-album-grid {
+    grid-template-columns: 1fr !important;
+    gap: 30px !important;
+  }
+
+  .jn-site.is-album-route .jn-album-card {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
   .jn-site.is-album-route .jn-album-image {
     aspect-ratio: 4 / 5 !important;
   }
 
-  .jn-site.is-album-route .jn-album-grid {
-    gap: 20px 8px !important;
+  .jn-site.is-album-route .jn-album-meta {
+    margin-top: 9px !important;
+    font-size: 7px !important;
   }
 
-  .jn-site.is-album-route .jn-album-meta {
+  .jn-site.is-album-route .jn-album-card h2 {
+    display: block !important;
     margin-top: 6px !important;
-    font-size: 6.5px !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
   }
 }
