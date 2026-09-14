@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Photo } from "./data";
 
@@ -44,6 +44,8 @@ export default function MobileSwipeReader({
 }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const committingRef = useRef(false);
+  const touchingRef = useRef(false);
+  const suppressScrollEndRef = useRef(false);
   const fallbackTimerRef = useRef<number | null>(null);
 
   const centerTrack = () => {
@@ -52,24 +54,42 @@ export default function MobileSwipeReader({
     track.scrollLeft = track.clientWidth;
   };
 
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    // A committed swipe changes the photo props but keeps this component
+    // mounted. Re-center synchronously before paint so the same image remains
+    // visually fixed while [prev,current,next] is recycled around it.
+    suppressScrollEndRef.current = true;
+    track.scrollLeft = track.clientWidth;
+    committingRef.current = false;
+
+    const releaseSuppression = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        suppressScrollEndRef.current = false;
+      });
+    });
+
+    return () => cancelAnimationFrame(releaseSuppression);
+  }, [photo.id]);
+
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
 
-    committingRef.current = false;
-
-    // Wait until layout has its final width, then position the current image
-    // in the middle of [previous, current, next].
-    requestAnimationFrame(() => {
-      centerTrack();
-      requestAnimationFrame(centerTrack);
-    });
-
     const resizeObserver =
       typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => centerTrack())
+        ? new ResizeObserver(() => {
+            suppressScrollEndRef.current = true;
+            centerTrack();
+            requestAnimationFrame(() => {
+              suppressScrollEndRef.current = false;
+            });
+          })
         : null;
     resizeObserver?.observe(track);
+
     track.addEventListener("scrollend", settleNativeScroll);
 
     return () => {
@@ -79,11 +99,18 @@ export default function MobileSwipeReader({
         clearTimeout(fallbackTimerRef.current);
       }
     };
-  }, [photo.id]);
+  }, []);
 
   const settleNativeScroll = () => {
     const track = trackRef.current;
-    if (!track || committingRef.current) return;
+    if (
+      !track ||
+      committingRef.current ||
+      touchingRef.current ||
+      suppressScrollEndRef.current
+    ) {
+      return;
+    }
 
     const width = Math.max(1, track.clientWidth);
     const position = track.scrollLeft / width;
@@ -102,8 +129,9 @@ export default function MobileSwipeReader({
       return;
     }
 
-    // Not enough travel: settle back to the current photo. This is only a
-    // short correction after native momentum, not a simulated drag.
+    // Not enough travel: return to the middle. Suppress the scrollend emitted
+    // by this programmatic correction so it cannot start another navigation.
+    suppressScrollEndRef.current = true;
     track.scrollTo({
       left: width,
       behavior:
@@ -111,13 +139,23 @@ export default function MobileSwipeReader({
           ? "auto"
           : "smooth",
     });
+    window.setTimeout(() => {
+      suppressScrollEndRef.current = false;
+    }, 280);
   };
 
   const handleScroll = () => {
     const track = trackRef.current as
       | (HTMLDivElement & { onscrollend?: ((event: Event) => void) | null })
       | null;
-    if (!track || "onscrollend" in track) return;
+    if (
+      !track ||
+      "onscrollend" in track ||
+      touchingRef.current ||
+      suppressScrollEndRef.current
+    ) {
+      return;
+    }
 
     // Fallback for older WebKit/Chromium. iOS 26.2+ uses native scrollend.
     if (fallbackTimerRef.current !== null) {
@@ -136,6 +174,21 @@ export default function MobileSwipeReader({
       <div
         className="jn-native-swipe-track"
         ref={trackRef}
+        onTouchStart={() => {
+          touchingRef.current = true;
+          if (fallbackTimerRef.current !== null) {
+            clearTimeout(fallbackTimerRef.current);
+            fallbackTimerRef.current = null;
+          }
+        }}
+        onTouchEnd={() => {
+          touchingRef.current = false;
+          // Native momentum continues after touchend. scrollend will commit
+          // once deceleration has actually finished.
+        }}
+        onTouchCancel={() => {
+          touchingRef.current = false;
+        }}
         onScroll={handleScroll}
         aria-label="Fotoğraflar arasında kaydır"
       >
