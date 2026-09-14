@@ -731,19 +731,26 @@ export default function App() {
       card.parentElement?.getBoundingClientRect().width ||
       window.innerWidth;
     const progress = Math.min(1, Math.abs(x) / Math.max(1, stageWidth * 0.32));
-    const rotation = Math.max(
-      -8.5,
-      Math.min(8.5, (x / Math.max(1, stageWidth)) * 11),
-    );
-    const liftY = Math.max(-18, Math.min(18, y * 0.12));
+    const reduceMotion =
+      typeof matchMedia === "function" &&
+      matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const rotation = reduceMotion
+      ? 0
+      : Math.max(
+          -8.5,
+          Math.min(8.5, (x / Math.max(1, stageWidth)) * 11),
+        );
+    const liftY = reduceMotion
+      ? 0
+      : Math.max(-18, Math.min(18, y * 0.12));
 
     card.style.transform =
       `translate3d(${x}px, ${liftY}px, 0) rotate(${rotation}deg)`;
     card.style.setProperty("--jn-swipe-progress", String(progress));
 
     if (underlay) {
-      const scale = 0.965 + progress * 0.035;
-      const rise = 9 * (1 - progress);
+      const scale = reduceMotion ? 1 : 0.965 + progress * 0.035;
+      const rise = reduceMotion ? 0 : 9 * (1 - progress);
       underlay.style.opacity = String(0.44 + progress * 0.56);
       underlay.style.transform =
         `translate3d(0, ${rise}px, 0) scale(${scale})`;
@@ -910,12 +917,19 @@ export default function App() {
       (Math.abs(gesture.velocityX) >= velocityThreshold &&
         Math.abs(projected) >= 34);
 
+    const reduceMotion =
+      typeof matchMedia === "function" &&
+      matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     if (!shouldCommit) {
-      animateSwipeSpring(
-        0,
-        gesture.dx,
-        gesture.velocityX,
-      );
+      if (reduceMotion) resetSwipeVisuals();
+      else {
+        animateSwipeSpring(
+          0,
+          gesture.dx,
+          gesture.velocityX,
+        );
+      }
       return;
     }
 
@@ -930,6 +944,12 @@ export default function App() {
       setSwipePreviewStep(step);
       const preview = readerNeighbor(step);
       if (preview) prefetchPhoto(preview);
+    }
+
+    if (reduceMotion) {
+      resetSwipeVisuals();
+      moveReader(step, true);
+      return;
     }
 
     animateSwipeSpring(
