@@ -563,7 +563,13 @@ export default function App() {
 
   useEffect(() => {
     const media = matchMedia("(max-width: 760px) and (pointer: coarse)");
-    const sync = () => setMobileSwipeReader(media.matches);
+    const sync = () => {
+      setMobileSwipeReader(media.matches);
+      if (media.matches) {
+        // Warm the gesture engine before a photo reader is opened.
+        void import("./MobileSwipeReader");
+      }
+    };
     sync();
     media.addEventListener?.("change", sync);
     return () => media.removeEventListener?.("change", sync);
