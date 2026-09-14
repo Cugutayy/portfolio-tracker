@@ -70,8 +70,10 @@ export default function MobileSwipeReader({
         ? new ResizeObserver(() => centerTrack())
         : null;
     resizeObserver?.observe(track);
+    track.addEventListener("scrollend", settleNativeScroll);
 
     return () => {
+      track.removeEventListener("scrollend", settleNativeScroll);
       resizeObserver?.disconnect();
       if (fallbackTimerRef.current !== null) {
         clearTimeout(fallbackTimerRef.current);
@@ -88,13 +90,13 @@ export default function MobileSwipeReader({
 
     // Native momentum has already finished here. We only decide which of the
     // three pages the user actually flung towards.
-    if (position > 1.17) {
+    if (position > 1.08) {
       committingRef.current = true;
       onStep(1);
       return;
     }
 
-    if (position < 0.83) {
+    if (position < 0.92) {
       committingRef.current = true;
       onStep(-1);
       return;
@@ -135,7 +137,6 @@ export default function MobileSwipeReader({
         className="jn-native-swipe-track"
         ref={trackRef}
         onScroll={handleScroll}
-        onScrollEnd={settleNativeScroll}
         aria-label="Fotoğraflar arasında kaydır"
       >
         <figure className="jn-native-swipe-slide" aria-hidden="true">
