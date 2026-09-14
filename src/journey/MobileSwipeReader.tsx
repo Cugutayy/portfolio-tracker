@@ -92,13 +92,13 @@ export default function MobileSwipeReader({
 
     // The viewport starts at exactly 1.00 (the middle slide). A modest native
     // pan is enough to commit; Safari itself provides the momentum.
-    if (position >= 1.12) {
+    if (position >= 1.06) {
       committingRef.current = true;
       onStepRef.current(1);
       return;
     }
 
-    if (position <= 0.88) {
+    if (position <= 0.94) {
       committingRef.current = true;
       onStepRef.current(-1);
       return;
@@ -118,19 +118,15 @@ export default function MobileSwipeReader({
     }, 240);
   };
 
-  const supportsNativeScrollEnd = () => {
-    const viewport = viewportRef.current as
-      | (HTMLDivElement & { onscrollend?: ((event: Event) => void) | null })
-      | null;
-    return Boolean(viewport && "onscrollend" in viewport);
-  };
-
-  const scheduleFallbackSettle = () => {
-    if (supportsNativeScrollEnd()) return;
+  const scheduleFallbackSettle = (delay = 190) => {
     if (fallbackTimerRef.current !== null) {
       clearTimeout(fallbackTimerRef.current);
     }
-    fallbackTimerRef.current = window.setTimeout(settle, 160);
+    // Keep this even on browsers that expose scrollend. Some WebKit builds
+    // expose the property but can miss/delay the event for nested horizontal
+    // scrollers. Re-scheduling on every scroll makes this fire only after
+    // native momentum has genuinely gone quiet.
+    fallbackTimerRef.current = window.setTimeout(settle, delay);
   };
 
   useEffect(() => {
@@ -175,19 +171,15 @@ export default function MobileSwipeReader({
           touchingRef.current = false;
           // iOS keeps decelerating after touchend. scrollend handles modern
           // Safari; this debounce is only a fallback if scrollend is absent.
-          scheduleFallbackSettle();
+          scheduleFallbackSettle(220);
         }}
         onTouchCancel={() => {
           touchingRef.current = false;
-          scheduleFallbackSettle();
+          scheduleFallbackSettle(160);
         }}
         onScroll={() => {
-          if (
-            !supportsNativeScrollEnd() &&
-            !touchingRef.current &&
-            !suppressSettleRef.current
-          ) {
-            scheduleFallbackSettle();
+          if (!touchingRef.current && !suppressSettleRef.current) {
+            scheduleFallbackSettle(190);
           }
         }}
         aria-label="Fotoğraflar arasında kaydır"
