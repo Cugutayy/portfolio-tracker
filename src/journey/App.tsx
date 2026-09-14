@@ -23,9 +23,9 @@ import {
 } from "./supabase";
 import "./style.css";
 import "./style-v15.css";
+import MobileSwipeReader from "./MobileSwipeReader";
 
 const Studio = lazy(() => import("./studio"));
-import MobileSwipeReader from "./MobileSwipeReader";
 const instagram = "https://www.instagram.com/journey_notess/";
 
 function Arrow({ back = false }: { back?: boolean }) {
@@ -563,12 +563,7 @@ export default function App() {
 
   useEffect(() => {
     const media = matchMedia("(max-width: 760px)");
-    const sync = () => {
-      const touchCapable =
-        typeof navigator !== "undefined" &&
-        (navigator.maxTouchPoints || 0) > 0;
-      setMobileSwipeReader(media.matches && touchCapable);
-    };
+    const sync = () => setMobileSwipeReader(media.matches);
     sync();
     media.addEventListener?.("change", sync);
     return () => media.removeEventListener?.("change", sync);
