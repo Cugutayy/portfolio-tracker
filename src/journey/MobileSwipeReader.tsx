@@ -118,11 +118,19 @@ export default function MobileSwipeReader({
     }, 240);
   };
 
+  const supportsNativeScrollEnd = () => {
+    const viewport = viewportRef.current as
+      | (HTMLDivElement & { onscrollend?: ((event: Event) => void) | null })
+      | null;
+    return Boolean(viewport && "onscrollend" in viewport);
+  };
+
   const scheduleFallbackSettle = () => {
+    if (supportsNativeScrollEnd()) return;
     if (fallbackTimerRef.current !== null) {
       clearTimeout(fallbackTimerRef.current);
     }
-    fallbackTimerRef.current = window.setTimeout(settle, 140);
+    fallbackTimerRef.current = window.setTimeout(settle, 160);
   };
 
   useEffect(() => {
@@ -174,7 +182,11 @@ export default function MobileSwipeReader({
           scheduleFallbackSettle();
         }}
         onScroll={() => {
-          if (!touchingRef.current && !suppressSettleRef.current) {
+          if (
+            !supportsNativeScrollEnd() &&
+            !touchingRef.current &&
+            !suppressSettleRef.current
+          ) {
             scheduleFallbackSettle();
           }
         }}
