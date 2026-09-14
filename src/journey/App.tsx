@@ -710,6 +710,14 @@ export default function App() {
     readerRef.current?.focus({ preventScroll: true });
   }, [readerOpen]);
 
+  useEffect(() => {
+    return () => {
+      if (swipeAnimationRef.current !== null) {
+        cancelAnimationFrame(swipeAnimationRef.current);
+      }
+    };
+  }, []);
+
   const mobileSwipeEnabled = () =>
     typeof matchMedia === "function" &&
     matchMedia("(max-width: 760px) and (pointer: coarse)").matches;
@@ -967,7 +975,10 @@ export default function App() {
     const gesture = swipeGestureRef.current;
     if (gesture.pointerId !== event.pointerId) return;
     gesture.pointerId = -1;
-    if (gesture.axis === "x") {
+    const reduceMotion =
+      typeof matchMedia === "function" &&
+      matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (gesture.axis === "x" && !reduceMotion) {
       animateSwipeSpring(0, gesture.dx, gesture.velocityX);
     } else {
       resetSwipeVisuals();
