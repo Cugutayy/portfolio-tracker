@@ -942,7 +942,6 @@ export default function App() {
             <div className="jn-reader-layout-v15">
               {mobileSwipeReader && swipePrevPhoto && swipeNextPhoto ? (
                 <MobileSwipeReader
-                  key={selected.id}
                   photo={selected}
                   previous={swipePrevPhoto}
                   next={swipeNextPhoto}
