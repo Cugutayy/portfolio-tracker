@@ -395,7 +395,6 @@ export default function App() {
   );
   const [readerIds, setReaderIds] = useState<string[]>([]);
   const [slideDirection, setSlideDirection] = useState<"next" | "prev" | "">("");
-  const [swipePreviewStep, setSwipePreviewStep] = useState<-1 | 0 | 1>(0);
   const [activeChapter, setActiveChapter] = useState("journey-top");
 
   const searchInput = useRef<HTMLInputElement>(null);
@@ -405,7 +404,8 @@ export default function App() {
   const returnRoute = useRef("");
   const swipeStageRef = useRef<HTMLElement>(null);
   const swipeCardRef = useRef<HTMLDivElement>(null);
-  const swipeUnderlayRef = useRef<HTMLDivElement>(null);
+  const swipePrevUnderlayRef = useRef<HTMLDivElement>(null);
+  const swipeNextUnderlayRef = useRef<HTMLDivElement>(null);
   const swipeFrameRef = useRef<number | null>(null);
   const swipeAnimationsRef = useRef<Animation[]>([]);
   const swipeAnimatingRef = useRef(false);
@@ -419,6 +419,7 @@ export default function App() {
     axis: "" as "" | "x" | "y",
     stageWidth: 0,
     reduceMotion: false,
+    previewStep: 0 as -1 | 0 | 1,
     samples: [] as Array<{ x: number; t: number }>,
   });
   const prefetchedImages = useRef<Set<string>>(new Set());
@@ -436,13 +437,17 @@ export default function App() {
   const readerIndex = selected
     ? readerSequence.findIndex((photo) => photo.id === selected.id)
     : -1;
-  const swipePreviewPhoto =
-    selected && swipePreviewStep !== 0 && readerSequence.length
+  const swipePrevPhoto =
+    selected && readerSequence.length
       ? readerSequence[
-          (Math.max(0, readerIndex) +
-            swipePreviewStep +
-            readerSequence.length) %
+          (Math.max(0, readerIndex) - 1 + readerSequence.length) %
             readerSequence.length
+        ]
+      : null;
+  const swipeNextPhoto =
+    selected && readerSequence.length
+      ? readerSequence[
+          (Math.max(0, readerIndex) + 1) % readerSequence.length
         ]
       : null;
   const filtered = all.filter(
@@ -746,7 +751,8 @@ export default function App() {
 
   const applySwipeVisuals = (x: number, y: number) => {
     const card = swipeCardRef.current;
-    const underlay = swipeUnderlayRef.current;
+    const prevUnderlay = swipePrevUnderlayRef.current;
+    const nextUnderlay = swipeNextUnderlayRef.current;
     const gesture = swipeGestureRef.current;
     if (!card) return;
 
@@ -762,11 +768,20 @@ export default function App() {
     card.style.transform =
       `translate3d(${x}px, ${liftY}px, 0) rotate(${rotation}deg)`;
 
-    if (underlay) {
+    const activeUnderlay = x < 0 ? nextUnderlay : prevUnderlay;
+    const inactiveUnderlay = x < 0 ? prevUnderlay : nextUnderlay;
+
+    if (inactiveUnderlay) {
+      inactiveUnderlay.style.opacity = "0";
+      inactiveUnderlay.style.transform =
+        "translate3d(0,7px,0) scale(.972)";
+    }
+
+    if (activeUnderlay && Math.abs(x) > 1) {
       const scale = gesture.reduceMotion ? 1 : 0.972 + progress * 0.028;
       const rise = gesture.reduceMotion ? 0 : 7 * (1 - progress);
-      underlay.style.opacity = String(0.36 + progress * 0.64);
-      underlay.style.transform =
+      activeUnderlay.style.opacity = String(0.36 + progress * 0.64);
+      activeUnderlay.style.transform =
         `translate3d(0, ${rise}px, 0) scale(${scale})`;
     }
   };
@@ -793,17 +808,18 @@ export default function App() {
     swipeStageRef.current?.classList.remove("is-swiping");
 
     const card = swipeCardRef.current;
-    const underlay = swipeUnderlayRef.current;
+    const prevUnderlay = swipePrevUnderlayRef.current;
+    const nextUnderlay = swipeNextUnderlayRef.current;
     if (card) {
       card.style.transform = "";
       card.style.opacity = "";
     }
-    if (underlay) {
+    [prevUnderlay, nextUnderlay].forEach((underlay) => {
+      if (!underlay) return;
       underlay.style.transform = "";
       underlay.style.opacity = "";
-    }
-
-    setSwipePreviewStep(0);
+    });
+    swipeGestureRef.current.previewStep = 0;
   };
 
   const animateSwipeRelease = (
@@ -813,7 +829,8 @@ export default function App() {
     commitStep?: -1 | 1,
   ) => {
     const card = swipeCardRef.current;
-    const underlay = swipeUnderlayRef.current;
+    const prevUnderlay = swipePrevUnderlayRef.current;
+    const nextUnderlay = swipeNextUnderlayRef.current;
     const gesture = swipeGestureRef.current;
     if (!card) {
       if (commitStep) moveReader(commitStep, true);
@@ -880,6 +897,10 @@ export default function App() {
     });
 
     const animations: Animation[] = [cardAnimation];
+    const underlay =
+      (commitStep ?? (initialX < 0 ? 1 : -1)) === 1
+        ? nextUnderlay
+        : prevUnderlay;
 
     if (underlay) {
       const progress = Math.min(
@@ -941,6 +962,7 @@ export default function App() {
     gesture.stageWidth = event.currentTarget.getBoundingClientRect().width;
     gesture.reduceMotion =
       matchMedia("(prefers-reduced-motion: reduce)").matches;
+    gesture.previewStep = 0;
     gesture.samples = [{ x: event.clientX, t: event.timeStamp }];
 
     swipeStageRef.current?.classList.add("is-swiping");
@@ -982,8 +1004,8 @@ export default function App() {
     }
 
     const step: -1 | 1 = dx < 0 ? 1 : -1;
-    if (Math.abs(dx) > 4 && swipePreviewStep !== step) {
-      setSwipePreviewStep(step);
+    if (Math.abs(dx) > 4 && gesture.previewStep !== step) {
+      gesture.previewStep = step;
       const preview = readerNeighbor(step);
       if (preview) prefetchPhoto(preview, true);
     }
@@ -1041,8 +1063,8 @@ export default function App() {
       (step === 1 ? -1 : 1) *
       (Math.max(window.innerWidth, cardWidth) + cardWidth * 0.34 + 48);
 
-    if (swipePreviewStep !== step) {
-      setSwipePreviewStep(step);
+    if (gesture.previewStep !== step) {
+      gesture.previewStep = step;
       const preview = readerNeighbor(step);
       if (preview) prefetchPhoto(preview, true);
     }
@@ -1298,23 +1320,41 @@ export default function App() {
                 onPointerUp={finishReaderSwipe}
                 onPointerCancel={cancelReaderSwipe}
               >
-                <div
-                  className={`jn-reader-swipe-underlay ${swipePreviewPhoto ? "is-ready" : ""}`}
-                  ref={swipeUnderlayRef}
-                  aria-hidden="true"
-                >
-                  {swipePreviewPhoto && (
+                {swipePrevPhoto && (
+                  <div
+                    className="jn-reader-swipe-underlay is-prev-preview"
+                    ref={swipePrevUnderlayRef}
+                    aria-hidden="true"
+                  >
                     <img
-                      src={swipePreviewPhoto.thumbnail || swipePreviewPhoto.src}
+                      src={swipePrevPhoto.thumbnail || swipePrevPhoto.src}
                       alt=""
-                      width={swipePreviewPhoto.width}
-                      height={swipePreviewPhoto.height}
+                      width={swipePrevPhoto.width}
+                      height={swipePrevPhoto.height}
                       loading="eager"
                       decoding="async"
                       draggable={false}
                     />
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {swipeNextPhoto && (
+                  <div
+                    className="jn-reader-swipe-underlay is-next-preview"
+                    ref={swipeNextUnderlayRef}
+                    aria-hidden="true"
+                  >
+                    <img
+                      src={swipeNextPhoto.thumbnail || swipeNextPhoto.src}
+                      alt=""
+                      width={swipeNextPhoto.width}
+                      height={swipeNextPhoto.height}
+                      loading="eager"
+                      decoding="async"
+                      draggable={false}
+                    />
+                  </div>
+                )}
 
                 <div
                   className="jn-reader-swipe-card"
