@@ -3435,102 +3435,53 @@ body {
 
 
 /* ==========================================================================
-   V22 — mobile reader direct-manipulation swipe
-   Apple-fluid gesture tracking + Tinder-style card physics on touch phones.
-   Desktop reader geometry remains unchanged.
+   V24 — Motion-powered mobile swipe
+   The custom PointerEvent physics engine was removed. Motion owns touch drag,
+   velocity and spring interpolation; desktop reader stays unchanged.
    ========================================================================== */
 
-/* The reader main receives programmatic focus for accessibility/keyboard
-   navigation. WebKit paints a blue focus ring around the entire main unless
-   explicitly suppressed; this container itself is not an interactive control. */
 .jn-reader-v15:focus,
 .jn-reader-v15:focus-visible {
   outline: none !important;
   box-shadow: none !important;
 }
 
-.jn-reader-swipe-card {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  max-width: 100%;
-}
-
-.jn-reader-swipe-card > img {
-  display: block;
-  width: auto !important;
-  max-width: 100%;
-  max-height: 74vh;
-  height: auto !important;
-  object-fit: contain !important;
-}
-
-.jn-reader-swipe-underlay {
+.jn-motion-swipe-underlay {
   display: none;
 }
 
 @media (max-width: 760px) and (pointer: coarse) {
-  .jn-reader-swipe-stage {
+  .jn-motion-swipe-stage {
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    touch-action: pan-y pinch-zoom;
-    -webkit-tap-highlight-color: transparent;
+    contain: layout paint style;
     overscroll-behavior-x: contain;
-    perspective: 1100px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: pan-y;
+    perspective: 1000px;
   }
 
-  .jn-reader-swipe-card {
+  .jn-motion-swipe-card {
+    position: relative;
     z-index: 2;
+    display: grid;
+    place-items: center;
     width: 100%;
-    transform: translate3d(0,0,0) rotate(0deg);
+    max-width: 100%;
     transform-origin: 50% 92%;
-    will-change: transform;
-    backface-visibility: hidden;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
     cursor: grab;
+    will-change: transform;
   }
 
-  .jn-reader-swipe-card:active {
+  .jn-motion-swipe-card:active {
     cursor: grabbing;
   }
 
-  .jn-reader-swipe-card > img {
-    width: 100% !important;
-    height: auto !important;
-    max-width: 100% !important;
-    max-height: 72svh !important;
-    object-fit: contain !important;
-    border-radius: 14px;
-    background: var(--jn15-paper) !important;
-    box-shadow:
-      0 1px 0 rgba(17,20,17,.04),
-      0 18px 44px rgba(17,20,17,.08);
-    pointer-events: none;
-    -webkit-user-drag: none;
-  }
-
-  .jn-reader-swipe-underlay {
-    position: absolute;
-    z-index: 1;
-    inset: 24px 14px 34px;
-    display: grid;
-    place-items: center;
-    opacity: 0;
-    transform: translate3d(0,9px,0) scale(.965);
-    transform-origin: 50% 92%;
-    pointer-events: none;
-    will-change: transform, opacity;
-  }
-
-  .jn-reader-swipe-underlay.is-ready {
-    opacity: .44;
-  }
-
-  .jn-reader-swipe-underlay > img {
+  .jn-motion-swipe-card > img {
     display: block;
     width: 100% !important;
     height: auto !important;
@@ -3539,91 +3490,63 @@ body {
     object-fit: contain !important;
     border-radius: 14px;
     background: var(--jn15-paper) !important;
-    box-shadow: 0 18px 44px rgba(17,20,17,.07);
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    backface-visibility: hidden;
   }
 
-  /* Buttons stay as the accessible/non-gesture fallback, but are visually
-     secondary to direct manipulation on touch phones. */
-  .jn-reader-swipe-stage .jn-reader-nav {
+  .jn-motion-swipe-underlay {
+    position: absolute;
+    z-index: 1;
+    inset: 16px 10px 24px;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    transform-origin: 50% 92%;
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+
+  .jn-motion-swipe-underlay > img {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100% !important;
+    max-height: 72svh !important;
+    object-fit: contain !important;
+    border-radius: 14px;
+    background: var(--jn15-paper) !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  .jn-motion-swipe-stage .jn-reader-nav {
     z-index: 5 !important;
-    width: 46px !important;
-    height: 46px !important;
+    width: 44px !important;
+    height: 44px !important;
     color: rgba(23,26,23,.72) !important;
     border: 1px solid rgba(23,26,23,.12) !important;
-    background: rgba(248,247,242,.74) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(1.08);
-    backdrop-filter: blur(16px) saturate(1.08);
-    box-shadow: 0 8px 28px rgba(17,20,17,.07);
-  }
-
-  .jn-reader-swipe-stage .jn-reader-nav.is-prev {
-    left: 22px !important;
-  }
-
-  .jn-reader-swipe-stage .jn-reader-nav.is-next {
-    right: 22px !important;
-  }
-}
-
-@media (max-width: 760px) and (pointer: coarse) and (prefers-reduced-motion: reduce) {
-  .jn-reader-swipe-card,
-  .jn-reader-swipe-underlay {
-    will-change: auto;
-  }
-
-  .jn-reader-swipe-card > img,
-  .jn-reader-swipe-underlay > img {
-    box-shadow: none;
-  }
-}
-
-
-/* ==========================================================================
-   V23 — mobile swipe performance pass
-   Keep the swipe on compositor-friendly transform/opacity work only.
-   ========================================================================== */
-@media (max-width: 760px) and (pointer: coarse) {
-  .jn-reader-swipe-stage {
-    contain: layout paint style;
-    transform: translateZ(0);
-  }
-
-  .jn-reader-swipe-card,
-  .jn-reader-swipe-underlay {
-    will-change: auto !important;
-    contain: paint;
-  }
-
-  .jn-reader-swipe-stage.is-swiping .jn-reader-swipe-card,
-  .jn-reader-swipe-stage.is-swiping .jn-reader-swipe-underlay {
-    will-change: transform, opacity !important;
-  }
-
-  .jn-reader-swipe-card > img,
-  .jn-reader-swipe-underlay > img {
-    box-shadow: none !important;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-  }
-
-  .jn-reader-swipe-stage .jn-reader-nav {
+    background: rgba(248,247,242,.94) !important;
+    box-shadow: 0 3px 12px rgba(17,20,17,.05) !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
-    background: rgba(248,247,242,.92) !important;
-    box-shadow: 0 3px 12px rgba(17,20,17,.05) !important;
-    transition: opacity 120ms linear;
   }
 
-  .jn-reader-swipe-stage.is-swiping .jn-reader-nav {
-    opacity: 0 !important;
-    pointer-events: none !important;
+  .jn-motion-swipe-stage .jn-reader-nav.is-prev {
+    left: 20px !important;
+  }
+
+  .jn-motion-swipe-stage .jn-reader-nav.is-next {
+    right: 20px !important;
   }
 }
 
 @media (max-width: 760px) and (pointer: coarse) and (prefers-reduced-motion: reduce) {
-  .jn-reader-swipe-stage,
-  .jn-reader-swipe-card > img,
-  .jn-reader-swipe-underlay > img {
-    transform: none;
+  .jn-motion-swipe-card,
+  .jn-motion-swipe-underlay {
+    will-change: auto;
   }
 }
