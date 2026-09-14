@@ -1,12 +1,4 @@
 import { useEffect, useRef } from "react";
-import { animate } from "motion";
-import {
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useTransform,
-  type PanInfo,
-} from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Photo } from "./data";
 
@@ -17,15 +9,28 @@ type Props = {
   onStep: (step: -1 | 1) => void;
 };
 
-function PreviewImage({ photo }: { photo: Photo }) {
+function SlideImage({
+  photo,
+  current = false,
+}: {
+  photo: Photo;
+  current?: boolean;
+}) {
   return (
     <img
-      src={photo.thumbnail || photo.src}
-      alt=""
+      src={photo.src}
+      srcSet={
+        photo.thumbnail && photo.thumbnail !== photo.src
+          ? `${photo.thumbnail} ${photo.smallWidth || 960}w, ${photo.src} ${photo.largeWidth || Math.min(photo.width, 3200)}w`
+          : undefined
+      }
+      sizes="100vw"
+      alt={current ? photo.title || photo.place || "Seyahat fotoğrafı" : ""}
       width={photo.width}
       height={photo.height}
       loading="eager"
       decoding="async"
+      fetchPriority={current ? "high" : "low"}
       draggable={false}
     />
   );
@@ -37,171 +42,120 @@ export default function MobileSwipeReader({
   next,
   onStep,
 }: Props) {
-  const x = useMotionValue(0);
-  const reducedMotion = useReducedMotion();
-  const animationRef = useRef<ReturnType<typeof animate> | null>(null);
-  const lockedRef = useRef(false);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const committingRef = useRef(false);
+  const fallbackTimerRef = useRef<number | null>(null);
 
-  const rotate = useTransform(x, [-220, 0, 220], [-8.5, 0, 8.5]);
-  const nextOpacity = useTransform(x, (value) =>
-    Math.min(1, Math.max(0, -value / 105)),
-  );
-  const previousOpacity = useTransform(x, (value) =>
-    Math.min(1, Math.max(0, value / 105)),
-  );
-  const nextScale = useTransform(
-    x,
-    (value) => 0.97 + Math.min(1, Math.max(0, -value / 125)) * 0.03,
-  );
-  const previousScale = useTransform(
-    x,
-    (value) => 0.97 + Math.min(1, Math.max(0, value / 125)) * 0.03,
-  );
+  const centerTrack = () => {
+    const track = trackRef.current;
+    if (!track) return;
+    track.scrollLeft = track.clientWidth;
+  };
 
   useEffect(() => {
-    x.set(0);
-    lockedRef.current = false;
-    animationRef.current?.stop();
-    animationRef.current = null;
+    const track = trackRef.current;
+    if (!track) return;
+
+    committingRef.current = false;
+
+    // Wait until layout has its final width, then position the current image
+    // in the middle of [previous, current, next].
+    requestAnimationFrame(() => {
+      centerTrack();
+      requestAnimationFrame(centerTrack);
+    });
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => centerTrack())
+        : null;
+    resizeObserver?.observe(track);
+
     return () => {
-      animationRef.current?.stop();
+      resizeObserver?.disconnect();
+      if (fallbackTimerRef.current !== null) {
+        clearTimeout(fallbackTimerRef.current);
+      }
     };
-  }, [photo.id, x]);
+  }, [photo.id]);
 
-  const settle = (info: PanInfo) => {
-    if (lockedRef.current) return;
+  const settleNativeScroll = () => {
+    const track = trackRef.current;
+    if (!track || committingRef.current) return;
 
-    const offset = info.offset.x;
-    const velocity = info.velocity.x;
-    // Motion reports velocity in px/s. Project ~180ms ahead so a short,
-    // quick flick can commit even when the finger hasn't travelled far.
-    const projected = offset + velocity * 0.18;
-    const viewport = Math.max(320, window.innerWidth);
-    const distanceThreshold = Math.min(58, viewport * 0.13);
-    const velocityThreshold = 260;
+    const width = Math.max(1, track.clientWidth);
+    const position = track.scrollLeft / width;
 
-    const commits =
-      Math.abs(offset) >= distanceThreshold ||
-      Math.abs(velocity) >= velocityThreshold ||
-      Math.abs(projected) >= distanceThreshold * 1.08;
-
-    if (!commits) {
-      animationRef.current?.stop();
-      animationRef.current = animate(x, 0, {
-        type: "spring",
-        stiffness: reducedMotion ? 900 : 520,
-        damping: reducedMotion ? 80 : 38,
-        mass: 0.72,
-        velocity,
-      });
+    // Native momentum has already finished here. We only decide which of the
+    // three pages the user actually flung towards.
+    if (position > 1.17) {
+      committingRef.current = true;
+      onStep(1);
       return;
     }
 
-    const directionSignal =
-      Math.abs(projected) > 18 ? projected : offset || velocity;
-    const step: -1 | 1 = directionSignal < 0 ? 1 : -1;
-    const target =
-      (step === 1 ? -1 : 1) *
-      (viewport + Math.max(180, viewport * 0.38));
-
-    lockedRef.current = true;
-    animationRef.current?.stop();
-
-    if (reducedMotion) {
-      x.set(target);
-      onStep(step);
+    if (position < 0.83) {
+      committingRef.current = true;
+      onStep(-1);
       return;
     }
 
-    animationRef.current = animate(x, target, {
-      type: "spring",
-      stiffness: 285,
-      damping: 29,
-      mass: 0.78,
-      velocity,
-      restSpeed: 18,
-      restDelta: 2,
-      onComplete: () => onStep(step),
+    // Not enough travel: settle back to the current photo. This is only a
+    // short correction after native momentum, not a simulated drag.
+    track.scrollTo({
+      left: width,
+      behavior:
+        matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
     });
   };
 
-  const stepWithButton = (step: -1 | 1) => {
-    if (lockedRef.current) return;
-    lockedRef.current = true;
-    animationRef.current?.stop();
+  const handleScroll = () => {
+    const track = trackRef.current as
+      | (HTMLDivElement & { onscrollend?: ((event: Event) => void) | null })
+      | null;
+    if (!track || "onscrollend" in track) return;
 
-    const target =
-      (step === 1 ? -1 : 1) *
-      (window.innerWidth + Math.max(160, window.innerWidth * 0.32));
-
-    if (reducedMotion) {
-      onStep(step);
-      return;
+    // Fallback for older WebKit/Chromium. iOS 26.2+ uses native scrollend.
+    if (fallbackTimerRef.current !== null) {
+      clearTimeout(fallbackTimerRef.current);
     }
-
-    animationRef.current = animate(x, target, {
-      type: "spring",
-      stiffness: 300,
-      damping: 30,
-      mass: 0.8,
-      onComplete: () => onStep(step),
-    });
+    fallbackTimerRef.current = window.setTimeout(settleNativeScroll, 120);
   };
 
   return (
-    <section className="jn-reader-stage-v15 jn-motion-swipe-stage">
-      <motion.div
-        className="jn-motion-swipe-underlay is-prev-preview"
-        style={{ opacity: previousOpacity, scale: previousScale }}
-        aria-hidden="true"
+    <section
+      className="jn-reader-stage-v15 jn-native-swipe-stage"
+      style={{
+        aspectRatio: `${Math.max(1, photo.width)} / ${Math.max(1, photo.height)}`,
+      }}
+    >
+      <div
+        className="jn-native-swipe-track"
+        ref={trackRef}
+        onScroll={handleScroll}
+        onScrollEnd={settleNativeScroll}
+        aria-label="Fotoğraflar arasında kaydır"
       >
-        <PreviewImage photo={previous} />
-      </motion.div>
-
-      <motion.div
-        className="jn-motion-swipe-underlay is-next-preview"
-        style={{ opacity: nextOpacity, scale: nextScale }}
-        aria-hidden="true"
-      >
-        <PreviewImage photo={next} />
-      </motion.div>
-
-      <motion.div
-        className="jn-motion-swipe-card"
-        drag="x"
-        dragMomentum={false}
-        style={{
-          x,
-          rotate: reducedMotion ? 0 : rotate,
-          touchAction: "pan-y",
-        }}
-        onDragStart={() => {
-          animationRef.current?.stop();
-          lockedRef.current = false;
-        }}
-        onDragEnd={(_, info) => settle(info)}
-      >
-        <img
-          src={photo.src}
-          srcSet={
-            photo.thumbnail && photo.thumbnail !== photo.src
-              ? `${photo.thumbnail} ${photo.smallWidth || 960}w, ${photo.src} ${photo.largeWidth || Math.min(photo.width, 3200)}w`
-              : undefined
-          }
-          sizes="94vw"
-          alt={photo.title || photo.place || "Seyahat fotoğrafı"}
-          width={photo.width}
-          height={photo.height}
-          loading="eager"
-          decoding="async"
-          fetchPriority="high"
-          draggable={false}
-        />
-      </motion.div>
+        <figure className="jn-native-swipe-slide" aria-hidden="true">
+          <SlideImage photo={previous} />
+        </figure>
+        <figure className="jn-native-swipe-slide is-current">
+          <SlideImage photo={photo} current />
+        </figure>
+        <figure className="jn-native-swipe-slide" aria-hidden="true">
+          <SlideImage photo={next} />
+        </figure>
+      </div>
 
       <button
         className="jn-reader-nav is-prev"
-        onClick={() => stepWithButton(-1)}
+        onClick={() => {
+          if (committingRef.current) return;
+          committingRef.current = true;
+          onStep(-1);
+        }}
         aria-label="Önceki fotoğraf"
       >
         <ChevronLeft size={21} strokeWidth={1.25} />
@@ -209,7 +163,11 @@ export default function MobileSwipeReader({
 
       <button
         className="jn-reader-nav is-next"
-        onClick={() => stepWithButton(1)}
+        onClick={() => {
+          if (committingRef.current) return;
+          committingRef.current = true;
+          onStep(1);
+        }}
         aria-label="Sonraki fotoğraf"
       >
         <ChevronRight size={21} strokeWidth={1.25} />
