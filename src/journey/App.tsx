@@ -1113,7 +1113,7 @@ export default function App() {
                         <div className="jn-album-image">
                           <Picture
                             photo={photo}
-                            sizes="(max-width: 760px) 48vw, (max-width: 980px) 31vw, 20vw"
+                            sizes="(max-width: 760px) 94vw, (max-width: 980px) 31vw, 20vw"
                           />
                         </div>
                         <div className="jn-album-meta">
