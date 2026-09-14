@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import {
   ArrowUpRight,
   ChevronLeft,
@@ -395,6 +395,7 @@ export default function App() {
   );
   const [readerIds, setReaderIds] = useState<string[]>([]);
   const [slideDirection, setSlideDirection] = useState<"next" | "prev" | "">("");
+  const [swipePreviewStep, setSwipePreviewStep] = useState<-1 | 0 | 1>(0);
   const [activeChapter, setActiveChapter] = useState("journey-top");
 
   const searchInput = useRef<HTMLInputElement>(null);
@@ -402,7 +403,22 @@ export default function App() {
   const readerRef = useRef<HTMLElement>(null);
   const returnScroll = useRef(0);
   const returnRoute = useRef("");
-  const touchStartX = useRef<number | null>(null);
+  const swipeCardRef = useRef<HTMLDivElement>(null);
+  const swipeUnderlayRef = useRef<HTMLDivElement>(null);
+  const swipeAnimationRef = useRef<number | null>(null);
+  const swipeAnimatingRef = useRef(false);
+  const swipeGestureRef = useRef({
+    pointerId: -1,
+    startX: 0,
+    startY: 0,
+    lastX: 0,
+    lastY: 0,
+    lastTime: 0,
+    velocityX: 0,
+    dx: 0,
+    dy: 0,
+    axis: "" as "" | "x" | "y",
+  });
   const prefetchedImages = useRef<Set<string>>(new Set());
 
   const all = Array.from(
@@ -418,6 +434,15 @@ export default function App() {
   const readerIndex = selected
     ? readerSequence.findIndex((photo) => photo.id === selected.id)
     : -1;
+  const swipePreviewPhoto =
+    selected && swipePreviewStep !== 0 && readerSequence.length
+      ? readerSequence[
+          (Math.max(0, readerIndex) +
+            swipePreviewStep +
+            readerSequence.length) %
+            readerSequence.length
+        ]
+      : null;
   const filtered = all.filter(
     (photo) =>
       (filter === "Tümü" || photo.category === filter) &&
@@ -685,6 +710,250 @@ export default function App() {
     readerRef.current?.focus({ preventScroll: true });
   }, [readerOpen]);
 
+  const mobileSwipeEnabled = () =>
+    typeof matchMedia === "function" &&
+    matchMedia("(max-width: 760px) and (pointer: coarse)").matches;
+
+  const readerNeighbor = (step: -1 | 1) => {
+    if (!readerSequence.length) return null;
+    const currentIndex = readerIndex >= 0 ? readerIndex : 0;
+    return readerSequence[
+      (currentIndex + step + readerSequence.length) % readerSequence.length
+    ];
+  };
+
+  const setSwipeVisuals = (x: number, y: number) => {
+    const card = swipeCardRef.current;
+    const underlay = swipeUnderlayRef.current;
+    if (!card) return;
+
+    const stageWidth =
+      card.parentElement?.getBoundingClientRect().width ||
+      window.innerWidth;
+    const progress = Math.min(1, Math.abs(x) / Math.max(1, stageWidth * 0.32));
+    const rotation = Math.max(
+      -8.5,
+      Math.min(8.5, (x / Math.max(1, stageWidth)) * 11),
+    );
+    const liftY = Math.max(-18, Math.min(18, y * 0.12));
+
+    card.style.transform =
+      `translate3d(${x}px, ${liftY}px, 0) rotate(${rotation}deg)`;
+    card.style.setProperty("--jn-swipe-progress", String(progress));
+
+    if (underlay) {
+      const scale = 0.965 + progress * 0.035;
+      const rise = 9 * (1 - progress);
+      underlay.style.opacity = String(0.44 + progress * 0.56);
+      underlay.style.transform =
+        `translate3d(0, ${rise}px, 0) scale(${scale})`;
+    }
+  };
+
+  const resetSwipeVisuals = () => {
+    if (swipeAnimationRef.current !== null) {
+      cancelAnimationFrame(swipeAnimationRef.current);
+      swipeAnimationRef.current = null;
+    }
+    swipeAnimatingRef.current = false;
+    const card = swipeCardRef.current;
+    const underlay = swipeUnderlayRef.current;
+    if (card) {
+      card.style.transform = "";
+      card.style.removeProperty("--jn-swipe-progress");
+    }
+    if (underlay) {
+      underlay.style.transform = "";
+      underlay.style.opacity = "";
+    }
+    setSwipePreviewStep(0);
+  };
+
+  const animateSwipeSpring = (
+    targetX: number,
+    initialX: number,
+    initialVelocityX: number,
+    onRest?: () => void,
+  ) => {
+    if (swipeAnimationRef.current !== null) {
+      cancelAnimationFrame(swipeAnimationRef.current);
+    }
+
+    swipeAnimatingRef.current = true;
+    let x = initialX;
+    let velocity = initialVelocityX * 1000;
+    let last = performance.now();
+    const exiting = Math.abs(targetX) > 1;
+    const stiffness = exiting ? 250 : 420;
+    const damping = exiting ? 27 : 34;
+    const mass = 1;
+
+    const frame = (now: number) => {
+      const dt = Math.min(0.032, Math.max(0.001, (now - last) / 1000));
+      last = now;
+
+      const displacement = x - targetX;
+      const acceleration =
+        (-stiffness * displacement - damping * velocity) / mass;
+      velocity += acceleration * dt;
+      x += velocity * dt;
+
+      setSwipeVisuals(x, swipeGestureRef.current.dy);
+
+      const distance = Math.abs(targetX - x);
+      const settled =
+        exiting
+          ? distance < 2 || Math.abs(x) >= Math.abs(targetX)
+          : distance < 0.45 && Math.abs(velocity) < 8;
+
+      if (settled) {
+        swipeAnimationRef.current = null;
+        swipeAnimatingRef.current = false;
+        if (exiting) {
+          onRest?.();
+        } else {
+          resetSwipeVisuals();
+        }
+        return;
+      }
+
+      swipeAnimationRef.current = requestAnimationFrame(frame);
+    };
+
+    swipeAnimationRef.current = requestAnimationFrame(frame);
+  };
+
+  const beginReaderSwipe = (event: ReactPointerEvent<HTMLElement>) => {
+    if (!mobileSwipeEnabled() || swipeAnimatingRef.current) return;
+    if (event.pointerType === "mouse") return;
+    if ((event.target as HTMLElement).closest("button")) return;
+
+    const gesture = swipeGestureRef.current;
+    gesture.pointerId = event.pointerId;
+    gesture.startX = event.clientX;
+    gesture.startY = event.clientY;
+    gesture.lastX = event.clientX;
+    gesture.lastY = event.clientY;
+    gesture.lastTime = event.timeStamp;
+    gesture.velocityX = 0;
+    gesture.dx = 0;
+    gesture.dy = 0;
+    gesture.axis = "";
+
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
+
+  const moveReaderSwipe = (event: ReactPointerEvent<HTMLElement>) => {
+    const gesture = swipeGestureRef.current;
+    if (
+      !mobileSwipeEnabled() ||
+      gesture.pointerId !== event.pointerId ||
+      swipeAnimatingRef.current
+    ) {
+      return;
+    }
+
+    const dx = event.clientX - gesture.startX;
+    const dy = event.clientY - gesture.startY;
+
+    if (!gesture.axis && Math.hypot(dx, dy) > 7) {
+      gesture.axis = Math.abs(dx) > Math.abs(dy) * 1.12 ? "x" : "y";
+    }
+    if (gesture.axis !== "x") return;
+
+    event.preventDefault();
+
+    const dt = Math.max(1, event.timeStamp - gesture.lastTime);
+    const instantVelocity = (event.clientX - gesture.lastX) / dt;
+    gesture.velocityX =
+      gesture.velocityX * 0.68 + instantVelocity * 0.32;
+    gesture.lastX = event.clientX;
+    gesture.lastY = event.clientY;
+    gesture.lastTime = event.timeStamp;
+    gesture.dx = dx;
+    gesture.dy = dy;
+
+    const step: -1 | 1 = dx < 0 ? 1 : -1;
+    if (Math.abs(dx) > 5 && swipePreviewStep !== step) {
+      setSwipePreviewStep(step);
+      const preview = readerNeighbor(step);
+      if (preview) prefetchPhoto(preview);
+    }
+
+    setSwipeVisuals(dx, dy);
+  };
+
+  const finishReaderSwipe = (event: ReactPointerEvent<HTMLElement>) => {
+    const gesture = swipeGestureRef.current;
+    if (gesture.pointerId !== event.pointerId) return;
+
+    try {
+      event.currentTarget.releasePointerCapture?.(event.pointerId);
+    } catch {}
+
+    gesture.pointerId = -1;
+
+    if (gesture.axis !== "x") {
+      resetSwipeVisuals();
+      return;
+    }
+
+    const cardWidth =
+      swipeCardRef.current?.getBoundingClientRect().width ||
+      window.innerWidth;
+    const distanceThreshold = Math.min(126, cardWidth * 0.24);
+    const velocityThreshold = 0.52;
+    const projected =
+      gesture.dx + gesture.velocityX * 145;
+    const shouldCommit =
+      Math.abs(gesture.dx) >= distanceThreshold ||
+      (Math.abs(gesture.velocityX) >= velocityThreshold &&
+        Math.abs(projected) >= 34);
+
+    if (!shouldCommit) {
+      animateSwipeSpring(
+        0,
+        gesture.dx,
+        gesture.velocityX,
+      );
+      return;
+    }
+
+    const step: -1 | 1 =
+      projected < 0 || (projected === 0 && gesture.dx < 0) ? 1 : -1;
+    const direction = step === 1 ? -1 : 1;
+    const exitX =
+      direction *
+      (Math.max(window.innerWidth, cardWidth) + cardWidth * 0.56 + 72);
+
+    if (swipePreviewStep !== step) {
+      setSwipePreviewStep(step);
+      const preview = readerNeighbor(step);
+      if (preview) prefetchPhoto(preview);
+    }
+
+    animateSwipeSpring(
+      exitX,
+      gesture.dx,
+      gesture.velocityX,
+      () => {
+        resetSwipeVisuals();
+        moveReader(step, true);
+      },
+    );
+  };
+
+  const cancelReaderSwipe = (event: ReactPointerEvent<HTMLElement>) => {
+    const gesture = swipeGestureRef.current;
+    if (gesture.pointerId !== event.pointerId) return;
+    gesture.pointerId = -1;
+    if (gesture.axis === "x") {
+      animateSwipeSpring(0, gesture.dx, gesture.velocityX);
+    } else {
+      resetSwipeVisuals();
+    }
+  };
+
   const runViewTransition = (update: () => void) => {
     const reduceMotion =
       typeof matchMedia === "function" &&
@@ -745,7 +1014,7 @@ export default function App() {
     goHome();
   };
 
-  const moveReader = (step: number) => {
+  const moveReader = (step: number, interactive = false) => {
     if (!selected || !readerSequence.length) return;
     const currentIndex = readerIndex >= 0 ? readerIndex : 0;
     const nextIndex =
@@ -753,10 +1022,14 @@ export default function App() {
     const next = readerSequence[nextIndex];
     setSlideDirection(step > 0 ? "next" : "prev");
     prefetchPhoto(next);
-    runViewTransition(() => {
+
+    const update = () => {
       history.replaceState(null, "", `#note=${next.id}`);
       setRoute(location.hash);
-    });
+    };
+
+    if (interactive) update();
+    else runViewTransition(update);
   };
 
   const scrollToArchive = () => {
@@ -907,19 +1180,37 @@ export default function App() {
 
             <div className="jn-reader-layout-v15">
               <section
-                className={`jn-reader-stage-v15 ${slideDirection ? `is-slide-${slideDirection}` : ""}`}
-                onTouchStart={(event) => {
-                  touchStartX.current = event.touches[0]?.clientX ?? null;
-                }}
-                onTouchEnd={(event) => {
-                  if (touchStartX.current === null) return;
-                  const endX = event.changedTouches[0]?.clientX ?? touchStartX.current;
-                  const delta = endX - touchStartX.current;
-                  touchStartX.current = null;
-                  if (Math.abs(delta) < 42) return;
-                  moveReader(delta < 0 ? 1 : -1);
-                }}
+                className={`jn-reader-stage-v15 jn-reader-swipe-stage ${slideDirection ? `is-slide-${slideDirection}` : ""}`}
+                onPointerDown={beginReaderSwipe}
+                onPointerMove={moveReaderSwipe}
+                onPointerUp={finishReaderSwipe}
+                onPointerCancel={cancelReaderSwipe}
               >
+                <div
+                  className={`jn-reader-swipe-underlay ${swipePreviewPhoto ? "is-ready" : ""}`}
+                  ref={swipeUnderlayRef}
+                  aria-hidden="true"
+                >
+                  {swipePreviewPhoto && (
+                    <Picture
+                      photo={swipePreviewPhoto}
+                      sizes="(max-width: 760px) 94vw, 72vw"
+                    />
+                  )}
+                </div>
+
+                <div
+                  className="jn-reader-swipe-card"
+                  ref={swipeCardRef}
+                  key={selected.id}
+                >
+                  <Picture
+                    photo={selected}
+                    priority
+                    sizes="(max-width: 760px) 94vw, 72vw"
+                  />
+                </div>
+
                 <button
                   className="jn-reader-nav is-prev"
                   onClick={() => moveReader(-1)}
@@ -927,11 +1218,6 @@ export default function App() {
                 >
                   <ChevronLeft size={21} strokeWidth={1.25} />
                 </button>
-                <Picture
-                  photo={selected}
-                  priority
-                  sizes="(max-width: 760px) 94vw, 72vw"
-                />
                 <button
                   className="jn-reader-nav is-next"
                   onClick={() => moveReader(1)}
