@@ -3576,3 +3576,54 @@ body {
     box-shadow: none;
   }
 }
+
+
+/* ==========================================================================
+   V23 — mobile swipe performance pass
+   Keep the swipe on compositor-friendly transform/opacity work only.
+   ========================================================================== */
+@media (max-width: 760px) and (pointer: coarse) {
+  .jn-reader-swipe-stage {
+    contain: layout paint style;
+    transform: translateZ(0);
+  }
+
+  .jn-reader-swipe-card,
+  .jn-reader-swipe-underlay {
+    will-change: auto !important;
+    contain: paint;
+  }
+
+  .jn-reader-swipe-stage.is-swiping .jn-reader-swipe-card,
+  .jn-reader-swipe-stage.is-swiping .jn-reader-swipe-underlay {
+    will-change: transform, opacity !important;
+  }
+
+  .jn-reader-swipe-card > img,
+  .jn-reader-swipe-underlay > img {
+    box-shadow: none !important;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+
+  .jn-reader-swipe-stage .jn-reader-nav {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    background: rgba(248,247,242,.92) !important;
+    box-shadow: 0 3px 12px rgba(17,20,17,.05) !important;
+    transition: opacity 120ms linear;
+  }
+
+  .jn-reader-swipe-stage.is-swiping .jn-reader-nav {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}
+
+@media (max-width: 760px) and (pointer: coarse) and (prefers-reduced-motion: reduce) {
+  .jn-reader-swipe-stage,
+  .jn-reader-swipe-card > img,
+  .jn-reader-swipe-underlay > img {
+    transform: none;
+  }
+}
