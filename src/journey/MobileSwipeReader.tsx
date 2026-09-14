@@ -77,8 +77,8 @@ export default function MobileSwipeReader({
     // quick flick can commit even when the finger hasn't travelled far.
     const projected = offset + velocity * 0.18;
     const viewport = Math.max(320, window.innerWidth);
-    const distanceThreshold = Math.min(76, viewport * 0.16);
-    const velocityThreshold = 320;
+    const distanceThreshold = Math.min(58, viewport * 0.13);
+    const velocityThreshold = 260;
 
     const commits =
       Math.abs(offset) >= distanceThreshold ||
@@ -170,8 +170,6 @@ export default function MobileSwipeReader({
         className="jn-motion-swipe-card"
         drag="x"
         dragMomentum={false}
-        dragElastic={1}
-        dragConstraints={false}
         style={{
           x,
           rotate: reducedMotion ? 0 : rotate,
