@@ -42,102 +42,71 @@ export default function MobileSwipeReader({
   next,
   onStep,
 }: Props) {
-  const trackRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const onStepRef = useRef(onStep);
   const committingRef = useRef(false);
   const touchingRef = useRef(false);
-  const suppressScrollEndRef = useRef(false);
+  const suppressSettleRef = useRef(false);
   const fallbackTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     onStepRef.current = onStep;
   }, [onStep]);
 
-  const centerTrack = () => {
-    const track = trackRef.current;
-    if (!track) return;
-    track.scrollLeft = track.clientWidth;
+  const centerViewport = () => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    viewport.scrollLeft = viewport.clientWidth;
   };
 
   useLayoutEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
+    const viewport = viewportRef.current;
+    if (!viewport) return;
 
-    // A committed swipe changes the photo props but keeps this component
-    // mounted. Re-center synchronously before paint so the same image remains
-    // visually fixed while [prev,current,next] is recycled around it.
-    suppressScrollEndRef.current = true;
-    track.scrollLeft = track.clientWidth;
     committingRef.current = false;
+    suppressSettleRef.current = true;
+    viewport.scrollLeft = viewport.clientWidth;
 
-    const releaseSuppression = requestAnimationFrame(() => {
+    const release = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        suppressScrollEndRef.current = false;
+        suppressSettleRef.current = false;
       });
     });
 
-    return () => cancelAnimationFrame(releaseSuppression);
+    return () => cancelAnimationFrame(release);
   }, [photo.id]);
 
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-
-    const resizeObserver =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(() => {
-            suppressScrollEndRef.current = true;
-            centerTrack();
-            requestAnimationFrame(() => {
-              suppressScrollEndRef.current = false;
-            });
-          })
-        : null;
-    resizeObserver?.observe(track);
-
-    track.addEventListener("scrollend", settleNativeScroll);
-
-    return () => {
-      track.removeEventListener("scrollend", settleNativeScroll);
-      resizeObserver?.disconnect();
-      if (fallbackTimerRef.current !== null) {
-        clearTimeout(fallbackTimerRef.current);
-      }
-    };
-  }, []);
-
-  const settleNativeScroll = () => {
-    const track = trackRef.current;
+  const settle = () => {
+    const viewport = viewportRef.current;
     if (
-      !track ||
+      !viewport ||
       committingRef.current ||
       touchingRef.current ||
-      suppressScrollEndRef.current
+      suppressSettleRef.current
     ) {
       return;
     }
 
-    const width = Math.max(1, track.clientWidth);
-    const position = track.scrollLeft / width;
+    const width = Math.max(1, viewport.clientWidth);
+    const position = viewport.scrollLeft / width;
 
-    // Native momentum has already finished here. We only decide which of the
-    // three pages the user actually flung towards.
-    if (position > 1.08) {
+    // The viewport starts at exactly 1.00 (the middle slide). A modest native
+    // pan is enough to commit; Safari itself provides the momentum.
+    if (position >= 1.12) {
       committingRef.current = true;
       onStepRef.current(1);
       return;
     }
 
-    if (position < 0.92) {
+    if (position <= 0.88) {
       committingRef.current = true;
       onStepRef.current(-1);
       return;
     }
 
-    // Not enough travel: return to the middle. Suppress the scrollend emitted
-    // by this programmatic correction so it cannot start another navigation.
-    suppressScrollEndRef.current = true;
-    track.scrollTo({
+    // A tiny exploratory drag returns to center.
+    suppressSettleRef.current = true;
+    viewport.scrollTo({
       left: width,
       behavior:
         matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -145,35 +114,48 @@ export default function MobileSwipeReader({
           : "smooth",
     });
     window.setTimeout(() => {
-      suppressScrollEndRef.current = false;
-    }, 280);
+      suppressSettleRef.current = false;
+    }, 240);
   };
 
-  const handleScroll = () => {
-    const track = trackRef.current as
-      | (HTMLDivElement & { onscrollend?: ((event: Event) => void) | null })
-      | null;
-    if (
-      !track ||
-      "onscrollend" in track ||
-      touchingRef.current ||
-      suppressScrollEndRef.current
-    ) {
-      return;
-    }
-
-    // Fallback for older WebKit/Chromium. iOS 26.2+ uses native scrollend.
+  const scheduleFallbackSettle = () => {
     if (fallbackTimerRef.current !== null) {
       clearTimeout(fallbackTimerRef.current);
     }
-    fallbackTimerRef.current = window.setTimeout(settleNativeScroll, 120);
+    fallbackTimerRef.current = window.setTimeout(settle, 140);
   };
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const handleScrollEnd = () => settle();
+    const handleResize = () => {
+      if (touchingRef.current || committingRef.current) return;
+      suppressSettleRef.current = true;
+      centerViewport();
+      requestAnimationFrame(() => {
+        suppressSettleRef.current = false;
+      });
+    };
+
+    viewport.addEventListener("scrollend", handleScrollEnd);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      viewport.removeEventListener("scrollend", handleScrollEnd);
+      window.removeEventListener("resize", handleResize);
+      if (fallbackTimerRef.current !== null) {
+        clearTimeout(fallbackTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
     <section className="jn-reader-stage-v15 jn-native-swipe-stage">
       <div
-        className="jn-native-swipe-track"
-        ref={trackRef}
+        className="jn-native-swipe-viewport"
+        ref={viewportRef}
         onTouchStart={() => {
           touchingRef.current = true;
           if (fallbackTimerRef.current !== null) {
@@ -183,24 +165,32 @@ export default function MobileSwipeReader({
         }}
         onTouchEnd={() => {
           touchingRef.current = false;
-          // Native momentum continues after touchend. scrollend will commit
-          // once deceleration has actually finished.
+          // iOS keeps decelerating after touchend. scrollend handles modern
+          // Safari; this debounce is only a fallback if scrollend is absent.
+          scheduleFallbackSettle();
         }}
         onTouchCancel={() => {
           touchingRef.current = false;
+          scheduleFallbackSettle();
         }}
-        onScroll={handleScroll}
+        onScroll={() => {
+          if (!touchingRef.current && !suppressSettleRef.current) {
+            scheduleFallbackSettle();
+          }
+        }}
         aria-label="Fotoğraflar arasında kaydır"
       >
-        <figure className="jn-native-swipe-slide" aria-hidden="true">
-          <SlideImage photo={previous} />
-        </figure>
-        <figure className="jn-native-swipe-slide is-current">
-          <SlideImage photo={photo} current />
-        </figure>
-        <figure className="jn-native-swipe-slide" aria-hidden="true">
-          <SlideImage photo={next} />
-        </figure>
+        <div className="jn-native-swipe-strip">
+          <figure className="jn-native-swipe-slide" aria-hidden="true">
+            <SlideImage photo={previous} />
+          </figure>
+          <figure className="jn-native-swipe-slide is-current">
+            <SlideImage photo={photo} current />
+          </figure>
+          <figure className="jn-native-swipe-slide" aria-hidden="true">
+            <SlideImage photo={next} />
+          </figure>
+        </div>
       </div>
 
       <button
