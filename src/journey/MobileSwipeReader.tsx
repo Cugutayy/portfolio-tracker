@@ -43,10 +43,15 @@ export default function MobileSwipeReader({
   onStep,
 }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const onStepRef = useRef(onStep);
   const committingRef = useRef(false);
   const touchingRef = useRef(false);
   const suppressScrollEndRef = useRef(false);
   const fallbackTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    onStepRef.current = onStep;
+  }, [onStep]);
 
   const centerTrack = () => {
     const track = trackRef.current;
@@ -119,13 +124,13 @@ export default function MobileSwipeReader({
     // three pages the user actually flung towards.
     if (position > 1.08) {
       committingRef.current = true;
-      onStep(1);
+      onStepRef.current(1);
       return;
     }
 
     if (position < 0.92) {
       committingRef.current = true;
-      onStep(-1);
+      onStepRef.current(-1);
       return;
     }
 
@@ -208,7 +213,7 @@ export default function MobileSwipeReader({
         onClick={() => {
           if (committingRef.current) return;
           committingRef.current = true;
-          onStep(-1);
+          onStepRef.current(-1);
         }}
         aria-label="Önceki fotoğraf"
       >
@@ -220,7 +225,7 @@ export default function MobileSwipeReader({
         onClick={() => {
           if (committingRef.current) return;
           committingRef.current = true;
-          onStep(1);
+          onStepRef.current(1);
         }}
         aria-label="Sonraki fotoğraf"
       >
