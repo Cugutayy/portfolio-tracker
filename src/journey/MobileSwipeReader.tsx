@@ -175,6 +175,10 @@ export default function MobileSwipeReader({
           rotate: reducedMotion ? 0 : rotate,
           touchAction: "pan-y",
         }}
+        onDragStart={() => {
+          animationRef.current?.stop();
+          lockedRef.current = false;
+        }}
         onDragEnd={(_, info) => settle(info)}
       >
         <img
