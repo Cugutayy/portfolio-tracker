@@ -3435,9 +3435,8 @@ body {
 
 
 /* ==========================================================================
-   V24 — Motion-powered mobile swipe
-   The custom PointerEvent physics engine was removed. Motion owns touch drag,
-   velocity and spring interpolation; desktop reader stays unchanged.
+   V25 — native iOS horizontal reader
+   No custom drag engine. Safari/WebKit owns pan + momentum.
    ========================================================================== */
 
 .jn-reader-v15:focus,
@@ -3446,85 +3445,59 @@ body {
   box-shadow: none !important;
 }
 
-.jn-motion-swipe-underlay {
-  display: none;
-}
-
-@media (max-width: 760px) and (pointer: coarse) {
-  .jn-motion-swipe-stage {
+@media (max-width: 760px) {
+  .jn-native-swipe-stage {
     position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    contain: layout paint style;
-    overscroll-behavior-x: contain;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: pan-y;
-    perspective: 1000px;
-  }
-
-  .jn-motion-swipe-card {
-    position: relative;
-    z-index: 2;
-    display: grid;
-    place-items: center;
     width: 100%;
-    max-width: 100%;
-    transform-origin: 50% 92%;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-touch-callout: none;
-    cursor: grab;
-    will-change: transform;
-  }
-
-  .jn-motion-swipe-card:active {
-    cursor: grabbing;
-  }
-
-  .jn-motion-swipe-card > img {
-    display: block;
-    width: 100% !important;
-    height: auto !important;
-    max-width: 100% !important;
-    max-height: 72svh !important;
-    object-fit: contain !important;
-    border-radius: 14px;
+    overflow: hidden;
+    isolation: isolate;
     background: var(--jn15-paper) !important;
-    pointer-events: none;
-    user-select: none;
-    -webkit-user-select: none;
-    -webkit-user-drag: none;
-    backface-visibility: hidden;
   }
 
-  .jn-motion-swipe-underlay {
-    position: absolute;
-    z-index: 1;
-    inset: 16px 10px 24px;
+  .jn-native-swipe-track {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scroll-behavior: auto;
+    background: var(--jn15-paper);
+  }
+
+  .jn-native-swipe-track::-webkit-scrollbar {
+    display: none;
+  }
+
+  .jn-native-swipe-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    margin: 0;
     display: grid;
     place-items: center;
-    opacity: 0;
-    transform-origin: 50% 92%;
-    pointer-events: none;
-    will-change: transform, opacity;
+    overflow: hidden;
+    background: var(--jn15-paper);
   }
 
-  .jn-motion-swipe-underlay > img {
+  .jn-native-swipe-slide img {
     display: block;
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     max-width: 100% !important;
     max-height: 72svh !important;
     object-fit: contain !important;
-    border-radius: 14px;
     background: var(--jn15-paper) !important;
     user-select: none;
     -webkit-user-select: none;
     -webkit-user-drag: none;
+    pointer-events: none;
   }
 
-  .jn-motion-swipe-stage .jn-reader-nav {
-    z-index: 5 !important;
+  .jn-native-swipe-stage .jn-reader-nav {
+    z-index: 4 !important;
     width: 44px !important;
     height: 44px !important;
     color: rgba(23,26,23,.72) !important;
@@ -3535,18 +3508,11 @@ body {
     backdrop-filter: none !important;
   }
 
-  .jn-motion-swipe-stage .jn-reader-nav.is-prev {
-    left: 20px !important;
+  .jn-native-swipe-stage .jn-reader-nav.is-prev {
+    left: 18px !important;
   }
 
-  .jn-motion-swipe-stage .jn-reader-nav.is-next {
-    right: 20px !important;
-  }
-}
-
-@media (max-width: 760px) and (pointer: coarse) and (prefers-reduced-motion: reduce) {
-  .jn-motion-swipe-card,
-  .jn-motion-swipe-underlay {
-    will-change: auto;
+  .jn-native-swipe-stage .jn-reader-nav.is-next {
+    right: 18px !important;
   }
 }
