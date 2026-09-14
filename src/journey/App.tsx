@@ -403,21 +403,23 @@ export default function App() {
   const readerRef = useRef<HTMLElement>(null);
   const returnScroll = useRef(0);
   const returnRoute = useRef("");
+  const swipeStageRef = useRef<HTMLElement>(null);
   const swipeCardRef = useRef<HTMLDivElement>(null);
   const swipeUnderlayRef = useRef<HTMLDivElement>(null);
-  const swipeAnimationRef = useRef<number | null>(null);
+  const swipeFrameRef = useRef<number | null>(null);
+  const swipeAnimationsRef = useRef<Animation[]>([]);
   const swipeAnimatingRef = useRef(false);
+  const swipePendingRef = useRef({ x: 0, y: 0 });
   const swipeGestureRef = useRef({
     pointerId: -1,
     startX: 0,
     startY: 0,
-    lastX: 0,
-    lastY: 0,
-    lastTime: 0,
-    velocityX: 0,
     dx: 0,
     dy: 0,
     axis: "" as "" | "x" | "y",
+    stageWidth: 0,
+    reduceMotion: false,
+    samples: [] as Array<{ x: number; t: number }>,
   });
   const prefetchedImages = useRef<Set<string>>(new Set());
 
@@ -669,10 +671,15 @@ export default function App() {
       readerSequence[(currentIndex - 1 + readerSequence.length) % readerSequence.length],
       readerSequence[(currentIndex + 1) % readerSequence.length],
     ];
+    const lightweight =
+      typeof matchMedia === "function" &&
+      matchMedia("(max-width: 760px) and (pointer: coarse)").matches;
     nearby.forEach((photo) => {
       if (!photo?.src) return;
       const image = new Image();
-      image.src = photo.src;
+      image.decoding = "async";
+      image.src =
+        lightweight && photo.thumbnail ? photo.thumbnail : photo.src;
     });
   }, [selected?.id, readerIds.join("|"), remotePhotos.length, drafts.length]);
 
@@ -712,9 +719,11 @@ export default function App() {
 
   useEffect(() => {
     return () => {
-      if (swipeAnimationRef.current !== null) {
-        cancelAnimationFrame(swipeAnimationRef.current);
+      if (swipeFrameRef.current !== null) {
+        cancelAnimationFrame(swipeFrameRef.current);
       }
+      swipeAnimationsRef.current.forEach((animation) => animation.cancel());
+      swipeAnimationsRef.current = [];
     };
   }, []);
 
@@ -730,112 +739,189 @@ export default function App() {
     ];
   };
 
-  const setSwipeVisuals = (x: number, y: number) => {
+  const cancelSwipeAnimations = () => {
+    swipeAnimationsRef.current.forEach((animation) => animation.cancel());
+    swipeAnimationsRef.current = [];
+  };
+
+  const applySwipeVisuals = (x: number, y: number) => {
     const card = swipeCardRef.current;
     const underlay = swipeUnderlayRef.current;
+    const gesture = swipeGestureRef.current;
     if (!card) return;
 
-    const stageWidth =
-      card.parentElement?.getBoundingClientRect().width ||
-      window.innerWidth;
-    const progress = Math.min(1, Math.abs(x) / Math.max(1, stageWidth * 0.32));
-    const reduceMotion =
-      typeof matchMedia === "function" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const rotation = reduceMotion
+    const stageWidth = gesture.stageWidth || window.innerWidth;
+    const progress = Math.min(1, Math.abs(x) / Math.max(1, stageWidth * 0.3));
+    const rotation = gesture.reduceMotion
       ? 0
-      : Math.max(
-          -8.5,
-          Math.min(8.5, (x / Math.max(1, stageWidth)) * 11),
-        );
-    const liftY = reduceMotion
+      : Math.max(-7.5, Math.min(7.5, (x / Math.max(1, stageWidth)) * 10));
+    const liftY = gesture.reduceMotion
       ? 0
-      : Math.max(-18, Math.min(18, y * 0.12));
+      : Math.max(-10, Math.min(10, y * 0.08));
 
     card.style.transform =
       `translate3d(${x}px, ${liftY}px, 0) rotate(${rotation}deg)`;
-    card.style.setProperty("--jn-swipe-progress", String(progress));
 
     if (underlay) {
-      const scale = reduceMotion ? 1 : 0.965 + progress * 0.035;
-      const rise = reduceMotion ? 0 : 9 * (1 - progress);
-      underlay.style.opacity = String(0.44 + progress * 0.56);
+      const scale = gesture.reduceMotion ? 1 : 0.972 + progress * 0.028;
+      const rise = gesture.reduceMotion ? 0 : 7 * (1 - progress);
+      underlay.style.opacity = String(0.36 + progress * 0.64);
       underlay.style.transform =
         `translate3d(0, ${rise}px, 0) scale(${scale})`;
     }
   };
 
+  const scheduleSwipeVisuals = (x: number, y: number) => {
+    swipePendingRef.current = { x, y };
+    if (swipeFrameRef.current !== null) return;
+
+    swipeFrameRef.current = requestAnimationFrame(() => {
+      swipeFrameRef.current = null;
+      const pending = swipePendingRef.current;
+      applySwipeVisuals(pending.x, pending.y);
+    });
+  };
+
   const resetSwipeVisuals = () => {
-    if (swipeAnimationRef.current !== null) {
-      cancelAnimationFrame(swipeAnimationRef.current);
-      swipeAnimationRef.current = null;
+    if (swipeFrameRef.current !== null) {
+      cancelAnimationFrame(swipeFrameRef.current);
+      swipeFrameRef.current = null;
     }
+
+    cancelSwipeAnimations();
     swipeAnimatingRef.current = false;
+    swipeStageRef.current?.classList.remove("is-swiping");
+
     const card = swipeCardRef.current;
     const underlay = swipeUnderlayRef.current;
     if (card) {
       card.style.transform = "";
-      card.style.removeProperty("--jn-swipe-progress");
+      card.style.opacity = "";
     }
     if (underlay) {
       underlay.style.transform = "";
       underlay.style.opacity = "";
     }
+
     setSwipePreviewStep(0);
   };
 
-  const animateSwipeSpring = (
+  const animateSwipeRelease = (
     targetX: number,
     initialX: number,
-    initialVelocityX: number,
-    onRest?: () => void,
+    velocityX: number,
+    commitStep?: -1 | 1,
   ) => {
-    if (swipeAnimationRef.current !== null) {
-      cancelAnimationFrame(swipeAnimationRef.current);
+    const card = swipeCardRef.current;
+    const underlay = swipeUnderlayRef.current;
+    const gesture = swipeGestureRef.current;
+    if (!card) {
+      if (commitStep) moveReader(commitStep, true);
+      return;
     }
 
+    if (gesture.reduceMotion) {
+      resetSwipeVisuals();
+      if (commitStep) moveReader(commitStep, true);
+      return;
+    }
+
+    cancelSwipeAnimations();
     swipeAnimatingRef.current = true;
-    let x = initialX;
-    let velocity = initialVelocityX * 1000;
-    let last = performance.now();
-    const exiting = Math.abs(targetX) > 1;
-    const stiffness = exiting ? 250 : 420;
-    const damping = exiting ? 27 : 34;
-    const mass = 1;
+    swipeStageRef.current?.classList.add("is-swiping");
 
-    const frame = (now: number) => {
-      const dt = Math.min(0.032, Math.max(0.001, (now - last) / 1000));
-      last = now;
+    const exiting = typeof commitStep === "number";
+    const stageWidth = gesture.stageWidth || window.innerWidth;
+    const currentRotation = Math.max(
+      -7.5,
+      Math.min(7.5, (initialX / Math.max(1, stageWidth)) * 10),
+    );
+    const currentLift = Math.max(-10, Math.min(10, gesture.dy * 0.08));
+    const fromTransform =
+      `translate3d(${initialX}px, ${currentLift}px, 0) rotate(${currentRotation}deg)`;
 
-      const displacement = x - targetX;
-      const acceleration =
-        (-stiffness * displacement - damping * velocity) / mass;
-      velocity += acceleration * dt;
-      x += velocity * dt;
+    let duration = 235;
+    let cardFrames: Keyframe[];
 
-      setSwipeVisuals(x, swipeGestureRef.current.dy);
+    if (exiting) {
+      const remaining = Math.max(1, Math.abs(targetX - initialX));
+      const speed = Math.max(0.85, Math.abs(velocityX) * 1.8);
+      duration = Math.max(155, Math.min(290, remaining / speed));
+      const exitRotation = targetX < 0 ? -10 : 10;
+      cardFrames = [
+        { transform: fromTransform, opacity: 1 },
+        {
+          transform: `translate3d(${targetX}px, ${Math.max(-12, Math.min(12, gesture.dy * 0.1))}px, 0) rotate(${exitRotation}deg)`,
+          opacity: 0.96,
+        },
+      ];
+    } else {
+      const overshoot = Math.max(
+        -7,
+        Math.min(7, -initialX * 0.055),
+      );
+      duration = Math.max(190, Math.min(260, 205 + Math.abs(initialX) * 0.16));
+      cardFrames = [
+        { transform: fromTransform, offset: 0 },
+        {
+          transform: `translate3d(${overshoot}px, 0, 0) rotate(${overshoot * 0.08}deg)`,
+          offset: 0.78,
+        },
+        { transform: "translate3d(0,0,0) rotate(0deg)", offset: 1 },
+      ];
+    }
 
-      const distance = Math.abs(targetX - x);
-      const settled =
+    const cardAnimation = card.animate(cardFrames, {
+      duration,
+      easing: exiting
+        ? "cubic-bezier(.18,.72,.22,1)"
+        : "cubic-bezier(.2,.82,.22,1)",
+      fill: "forwards",
+    });
+
+    const animations: Animation[] = [cardAnimation];
+
+    if (underlay) {
+      const progress = Math.min(
+        1,
+        Math.abs(initialX) / Math.max(1, stageWidth * 0.3),
+      );
+      const fromScale = 0.972 + progress * 0.028;
+      const fromRise = 7 * (1 - progress);
+      const underlayAnimation = underlay.animate(
         exiting
-          ? distance < 2 || Math.abs(x) >= Math.abs(targetX)
-          : distance < 0.45 && Math.abs(velocity) < 8;
+          ? [
+              {
+                opacity: 0.36 + progress * 0.64,
+                transform: `translate3d(0,${fromRise}px,0) scale(${fromScale})`,
+              },
+              { opacity: 1, transform: "translate3d(0,0,0) scale(1)" },
+            ]
+          : [
+              {
+                opacity: 0.36 + progress * 0.64,
+                transform: `translate3d(0,${fromRise}px,0) scale(${fromScale})`,
+              },
+              { opacity: 0, transform: "translate3d(0,7px,0) scale(.972)" },
+            ],
+        {
+          duration,
+          easing: "cubic-bezier(.2,.8,.2,1)",
+          fill: "forwards",
+        },
+      );
+      animations.push(underlayAnimation);
+    }
 
-      if (settled) {
-        swipeAnimationRef.current = null;
-        swipeAnimatingRef.current = false;
-        if (exiting) {
-          onRest?.();
-        } else {
-          resetSwipeVisuals();
-        }
-        return;
-      }
+    swipeAnimationsRef.current = animations;
 
-      swipeAnimationRef.current = requestAnimationFrame(frame);
-    };
-
-    swipeAnimationRef.current = requestAnimationFrame(frame);
+    cardAnimation.finished
+      .catch(() => undefined)
+      .then(() => {
+        if (swipeAnimationsRef.current[0] !== cardAnimation) return;
+        resetSwipeVisuals();
+        if (commitStep) moveReader(commitStep, true);
+      });
   };
 
   const beginReaderSwipe = (event: ReactPointerEvent<HTMLElement>) => {
@@ -843,18 +929,21 @@ export default function App() {
     if (event.pointerType === "mouse") return;
     if ((event.target as HTMLElement).closest("button")) return;
 
+    cancelSwipeAnimations();
+
     const gesture = swipeGestureRef.current;
     gesture.pointerId = event.pointerId;
     gesture.startX = event.clientX;
     gesture.startY = event.clientY;
-    gesture.lastX = event.clientX;
-    gesture.lastY = event.clientY;
-    gesture.lastTime = event.timeStamp;
-    gesture.velocityX = 0;
     gesture.dx = 0;
     gesture.dy = 0;
     gesture.axis = "";
+    gesture.stageWidth = event.currentTarget.getBoundingClientRect().width;
+    gesture.reduceMotion =
+      matchMedia("(prefers-reduced-motion: reduce)").matches;
+    gesture.samples = [{ x: event.clientX, t: event.timeStamp }];
 
+    swipeStageRef.current?.classList.add("is-swiping");
     event.currentTarget.setPointerCapture?.(event.pointerId);
   };
 
@@ -871,31 +960,35 @@ export default function App() {
     const dx = event.clientX - gesture.startX;
     const dy = event.clientY - gesture.startY;
 
-    if (!gesture.axis && Math.hypot(dx, dy) > 7) {
-      gesture.axis = Math.abs(dx) > Math.abs(dy) * 1.12 ? "x" : "y";
+    if (!gesture.axis && Math.hypot(dx, dy) > 6) {
+      gesture.axis = Math.abs(dx) > Math.abs(dy) * 1.08 ? "x" : "y";
+      if (gesture.axis === "y") {
+        swipeStageRef.current?.classList.remove("is-swiping");
+      }
     }
     if (gesture.axis !== "x") return;
 
     event.preventDefault();
 
-    const dt = Math.max(1, event.timeStamp - gesture.lastTime);
-    const instantVelocity = (event.clientX - gesture.lastX) / dt;
-    gesture.velocityX =
-      gesture.velocityX * 0.68 + instantVelocity * 0.32;
-    gesture.lastX = event.clientX;
-    gesture.lastY = event.clientY;
-    gesture.lastTime = event.timeStamp;
     gesture.dx = dx;
     gesture.dy = dy;
-
-    const step: -1 | 1 = dx < 0 ? 1 : -1;
-    if (Math.abs(dx) > 5 && swipePreviewStep !== step) {
-      setSwipePreviewStep(step);
-      const preview = readerNeighbor(step);
-      if (preview) prefetchPhoto(preview);
+    gesture.samples.push({ x: event.clientX, t: event.timeStamp });
+    const cutoff = event.timeStamp - 90;
+    while (
+      gesture.samples.length > 2 &&
+      gesture.samples[0].t < cutoff
+    ) {
+      gesture.samples.shift();
     }
 
-    setSwipeVisuals(dx, dy);
+    const step: -1 | 1 = dx < 0 ? 1 : -1;
+    if (Math.abs(dx) > 4 && swipePreviewStep !== step) {
+      setSwipePreviewStep(step);
+      const preview = readerNeighbor(step);
+      if (preview) prefetchPhoto(preview, true);
+    }
+
+    scheduleSwipeVisuals(dx, dy);
   };
 
   const finishReaderSwipe = (event: ReactPointerEvent<HTMLElement>) => {
@@ -906,6 +999,7 @@ export default function App() {
       event.currentTarget.releasePointerCapture?.(event.pointerId);
     } catch {}
 
+    gesture.samples.push({ x: event.clientX, t: event.timeStamp });
     gesture.pointerId = -1;
 
     if (gesture.axis !== "x") {
@@ -913,73 +1007,56 @@ export default function App() {
       return;
     }
 
+    const recent = gesture.samples.filter(
+      (sample) => sample.t >= event.timeStamp - 90,
+    );
+    const first = recent[0];
+    const last = recent[recent.length - 1];
+    const velocityX =
+      first && last && last.t > first.t
+        ? (last.x - first.x) / (last.t - first.t)
+        : 0;
+
     const cardWidth =
       swipeCardRef.current?.getBoundingClientRect().width ||
+      gesture.stageWidth ||
       window.innerWidth;
-    const distanceThreshold = Math.min(126, cardWidth * 0.24);
-    const velocityThreshold = 0.52;
-    const projected =
-      gesture.dx + gesture.velocityX * 145;
+    const distanceThreshold = Math.min(88, cardWidth * 0.18);
+    const velocityThreshold = 0.28;
+    const projected = gesture.dx + velocityX * 220;
     const shouldCommit =
       Math.abs(gesture.dx) >= distanceThreshold ||
-      (Math.abs(gesture.velocityX) >= velocityThreshold &&
-        Math.abs(projected) >= 34);
-
-    const reduceMotion =
-      typeof matchMedia === "function" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches;
+      (Math.abs(velocityX) >= velocityThreshold &&
+        Math.abs(projected) >= 24);
 
     if (!shouldCommit) {
-      if (reduceMotion) resetSwipeVisuals();
-      else {
-        animateSwipeSpring(
-          0,
-          gesture.dx,
-          gesture.velocityX,
-        );
-      }
+      animateSwipeRelease(0, gesture.dx, velocityX);
       return;
     }
 
-    const step: -1 | 1 =
-      projected < 0 || (projected === 0 && gesture.dx < 0) ? 1 : -1;
-    const direction = step === 1 ? -1 : 1;
+    const directionSource =
+      Math.abs(projected) >= 18 ? projected : gesture.dx;
+    const step: -1 | 1 = directionSource < 0 ? 1 : -1;
     const exitX =
-      direction *
-      (Math.max(window.innerWidth, cardWidth) + cardWidth * 0.56 + 72);
+      (step === 1 ? -1 : 1) *
+      (Math.max(window.innerWidth, cardWidth) + cardWidth * 0.34 + 48);
 
     if (swipePreviewStep !== step) {
       setSwipePreviewStep(step);
       const preview = readerNeighbor(step);
-      if (preview) prefetchPhoto(preview);
+      if (preview) prefetchPhoto(preview, true);
     }
 
-    if (reduceMotion) {
-      resetSwipeVisuals();
-      moveReader(step, true);
-      return;
-    }
-
-    animateSwipeSpring(
-      exitX,
-      gesture.dx,
-      gesture.velocityX,
-      () => {
-        resetSwipeVisuals();
-        moveReader(step, true);
-      },
-    );
+    animateSwipeRelease(exitX, gesture.dx, velocityX, step);
   };
 
   const cancelReaderSwipe = (event: ReactPointerEvent<HTMLElement>) => {
     const gesture = swipeGestureRef.current;
     if (gesture.pointerId !== event.pointerId) return;
     gesture.pointerId = -1;
-    const reduceMotion =
-      typeof matchMedia === "function" &&
-      matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (gesture.axis === "x" && !reduceMotion) {
-      animateSwipeSpring(0, gesture.dx, gesture.velocityX);
+
+    if (gesture.axis === "x" && !gesture.reduceMotion) {
+      animateSwipeRelease(0, gesture.dx, 0);
     } else {
       resetSwipeVisuals();
     }
@@ -1001,12 +1078,15 @@ export default function App() {
     doc.startViewTransition(update);
   };
 
-  const prefetchPhoto = (photo?: Photo) => {
-    if (!photo?.src || prefetchedImages.current.has(photo.src)) return;
-    prefetchedImages.current.add(photo.src);
+  const prefetchPhoto = (photo?: Photo, lightweight = false) => {
+    if (!photo?.src) return;
+    const source =
+      lightweight && photo.thumbnail ? photo.thumbnail : photo.src;
+    if (prefetchedImages.current.has(source)) return;
+    prefetchedImages.current.add(source);
     const image = new Image();
     image.decoding = "async";
-    image.src = photo.src;
+    image.src = source;
   };
 
   const openNote = (photo: Photo, sequence: Photo[] = all) => {
@@ -1212,6 +1292,7 @@ export default function App() {
             <div className="jn-reader-layout-v15">
               <section
                 className={`jn-reader-stage-v15 jn-reader-swipe-stage ${slideDirection ? `is-slide-${slideDirection}` : ""}`}
+                ref={swipeStageRef}
                 onPointerDown={beginReaderSwipe}
                 onPointerMove={moveReaderSwipe}
                 onPointerUp={finishReaderSwipe}
@@ -1223,9 +1304,14 @@ export default function App() {
                   aria-hidden="true"
                 >
                   {swipePreviewPhoto && (
-                    <Picture
-                      photo={swipePreviewPhoto}
-                      sizes="(max-width: 760px) 94vw, 72vw"
+                    <img
+                      src={swipePreviewPhoto.thumbnail || swipePreviewPhoto.src}
+                      alt=""
+                      width={swipePreviewPhoto.width}
+                      height={swipePreviewPhoto.height}
+                      loading="eager"
+                      decoding="async"
+                      draggable={false}
                     />
                   )}
                 </div>
