@@ -25,7 +25,7 @@ import "./style.css";
 import "./style-v15.css";
 
 const Studio = lazy(() => import("./studio"));
-const MobileSwipeReader = lazy(() => import("./MobileSwipeReader"));
+import MobileSwipeReader from "./MobileSwipeReader";
 const instagram = "https://www.instagram.com/journey_notess/";
 
 function Arrow({ back = false }: { back?: boolean }) {
@@ -562,13 +562,12 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const media = matchMedia("(max-width: 760px) and (pointer: coarse)");
+    const media = matchMedia("(max-width: 760px)");
     const sync = () => {
-      setMobileSwipeReader(media.matches);
-      if (media.matches) {
-        // Warm the gesture engine before a photo reader is opened.
-        void import("./MobileSwipeReader");
-      }
+      const touchCapable =
+        typeof navigator !== "undefined" &&
+        (navigator.maxTouchPoints || 0) > 0;
+      setMobileSwipeReader(media.matches && touchCapable);
     };
     sync();
     media.addEventListener?.("change", sync);
@@ -947,25 +946,13 @@ export default function App() {
 
             <div className="jn-reader-layout-v15">
               {mobileSwipeReader && swipePrevPhoto && swipeNextPhoto ? (
-                <Suspense
-                  fallback={
-                    <section className="jn-reader-stage-v15">
-                      <Picture
-                        photo={selected}
-                        priority
-                        sizes="94vw"
-                      />
-                    </section>
-                  }
-                >
-                  <MobileSwipeReader
-                    key={selected.id}
-                    photo={selected}
-                    previous={swipePrevPhoto}
-                    next={swipeNextPhoto}
-                    onStep={(step) => moveReader(step, true)}
-                  />
-                </Suspense>
+                <MobileSwipeReader
+                  key={selected.id}
+                  photo={selected}
+                  previous={swipePrevPhoto}
+                  next={swipeNextPhoto}
+                  onStep={(step) => moveReader(step, true)}
+                />
               ) : (
                 <section
                   className={`jn-reader-stage-v15 ${slideDirection ? `is-slide-${slideDirection}` : ""}`}
