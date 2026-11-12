@@ -189,7 +189,7 @@ body:has(.venus-hub) { background: #1c281f; }
 /* Continuation beneath the painting: dark botanical museum archive.
    No white parchment / stock UI card break. */
 .vv-archive {
-  padding:clamp(90px,9vw,160px) clamp(25px,6.5vw,112px) 100px;
+  padding:clamp(58px,6.3vw,104px) clamp(25px,6.5vw,112px) 100px;
   position:relative;
   background:
     radial-gradient(ellipse 70% 60% at 0% 5%,rgba(101,93,68,.17),transparent 72%),
@@ -311,3 +311,24 @@ body:has(.venus-hub) { background: #1c281f; }
   html:has(.venus-hub) { scroll-behavior:auto; }
   .venus-hub *, .venus-hub *::before, .venus-hub *::after { transition:none !important; }
 }
+
+
+/* Original approved Option 07 used four specific editorial thumbnails.
+   Crop only those image regions from the existing first-party reference asset;
+   the source stays local, reliable, and sharp. */
+.vv-research-image { position:relative; }
+.vv-research-image::after {
+  content:'';
+  position:absolute; inset:0;
+  background-image:url('/hub/option07-reference.png');
+  background-repeat:no-repeat;
+  background-size:1387% auto;
+  background-position:8.1% 90.7%;
+  border-radius:inherit;
+  pointer-events:none;
+  transition:filter .35s ease;
+}
+.vv-research-item:nth-child(2) .vv-research-image::after { background-position:34.2% 90.7%; }
+.vv-research-item:nth-child(3) .vv-research-image::after { background-position:56.5% 90.7%; }
+.vv-research-item:nth-child(4) .vv-research-image::after { background-position:81.1% 90.7%; }
+.vv-research-item:hover .vv-research-image::after { filter:brightness(1.12) saturate(1.07); }
