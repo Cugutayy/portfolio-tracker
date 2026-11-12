@@ -1,5 +1,5 @@
-/* Full-screen original artwork preview. Loaded after the editorial gallery styles.
- * The opening frame is deliberately uncluttered. All content begins below 100svh. */
+/* Full painting composition on desktop, matched to the approved 1672 × 941 frame.
+ * At wider viewport ratios the hero extends slightly below the fold rather than zooming the art. */
 
 html:has(.venus-hub) {scroll-behavior:smooth; scroll-padding-top:0;}
 .venus-hub {background:#1a241b; color:#eee0ca;}
@@ -9,9 +9,9 @@ body:has(.venus-hub) {background:#1a241b;}
   display:block;
   position:relative;
   width:100%;
-  height:100svh;
+  height:auto;
   min-height:100svh;
-  aspect-ratio:auto;
+  aspect-ratio:1672 / 941;
   margin:0;
   padding:0;
   overflow:hidden;
@@ -27,14 +27,14 @@ body:has(.venus-hub) {background:#1a241b;}
   z-index:-3;
   overflow:hidden;
 }
-.vv-painting-original {
+.vv-painting img.vv-painting-original {
   display:block;
   position:absolute;
   inset:0;
   width:100%;
   height:100%;
   object-fit:cover;
-  object-position:center 48%;
+  object-position:center center;
   filter:none;
   transform:none;
   image-rendering:auto;
@@ -208,7 +208,7 @@ body:has(.venus-hub) {background:#1a241b;}
     aspect-ratio:auto;
     padding:0;
   }
-  .vv-painting-original {object-fit:cover;object-position:50% 42%;filter:none;}
+  .vv-painting img.vv-painting-original {width:100%;height:100%;object-fit:cover;object-position:50% 42%;filter:none;}
   .vv-painting-shade {
     background:linear-gradient(180deg,rgba(11,17,13,.43) 0%,rgba(11,17,13,.08) 20%,transparent 57%,rgba(11,17,13,.19) 100%);
   }
