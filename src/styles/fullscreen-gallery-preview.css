@@ -35,14 +35,14 @@ body:has(.venus-hub) {background:#1a241b;}
   background-image:url('/x/venus-4k.jpg');
   background-size:cover;
   background-position:center center;
-  filter:blur(34px) brightness(.48) saturate(.72);
+  filter:blur(36px) brightness(.55) saturate(.73);
   transform:scale(1.03);
   pointer-events:none;
 }
 .vv-painting img.vv-painting-original {
   z-index:1;
-  -webkit-mask-image:radial-gradient(ellipse 72% 70% at 50% 50%, #000 70%, transparent 100%);
-  mask-image:radial-gradient(ellipse 72% 70% at 50% 50%, #000 70%, transparent 100%);
+  -webkit-mask-image:radial-gradient(ellipse 69% 65% at 50% 45%, #000 49%, transparent 100%);
+  mask-image:radial-gradient(ellipse 69% 65% at 50% 45%, #000 49%, transparent 100%);
   display:block;
   position:absolute;
   inset:0;
@@ -51,7 +51,7 @@ body:has(.venus-hub) {background:#1a241b;}
   object-fit:contain;
   object-position:center center;
   filter:sepia(.08) saturate(.86) brightness(.91);
-  transform:scale(.84);
+  transform:translateY(-6%) scale(.87);
   image-rendering:auto;
   user-select:none;
   -webkit-user-drag:none;
