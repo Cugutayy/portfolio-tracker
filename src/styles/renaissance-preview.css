@@ -31,17 +31,27 @@ body:has(.venus-hub) { background: #1c281f; }
   inset:0;
   width:100%; height:100%;
   object-fit:fill;
-  object-position:center;
-  filter: sepia(.15) saturate(.78) contrast(.96) brightness(.81);
+  object-position:center top;
+  /* The 4K source is a widescreen painting; keep its natural depth/scale.
+     Stretching it to a 4:3 stage makes Venus much too close. */
+  height:75%;
+  filter: sepia(.18) saturate(.82) contrast(.96) brightness(.80);
   transform:translateZ(0);
 }
 .vv-painting-shade {
   position:absolute; inset:0;
   z-index:-2;
   background:
-    radial-gradient(ellipse 54% 46% at 48% 37%, transparent 35%, rgba(17,24,19,.07) 85%, rgba(14,22,17,.16) 100%),
-    linear-gradient(180deg,rgba(24,27,20,.30) 0%,rgba(25,31,23,.03) 25%,rgba(29,39,30,.03) 38%,rgba(20,32,23,.34) 49%,rgba(18,29,21,.58) 67%,rgba(16,27,20,.75) 83%,rgba(17,28,20,.88) 100%),
-    linear-gradient(90deg,rgba(14,22,17,.20),transparent 36%,transparent 76%,rgba(15,22,17,.15));
+    radial-gradient(ellipse 65% 45% at 47% 24%, transparent 20%, rgba(15,24,18,.10) 92%),
+    linear-gradient(180deg,
+      rgba(22,27,21,.24) 0%,
+      rgba(22,29,22,.04) 27%,
+      rgba(21,31,22,.17) 43%,
+      rgba(19,30,22,.45) 57%,
+      rgba(18,29,21,.78) 69%,
+      rgba(18,29,21,.97) 79%,
+      #17251c 100%),
+    linear-gradient(90deg,rgba(14,22,17,.16),transparent 35%,transparent 76%,rgba(15,22,17,.12));
   pointer-events:none;
 }
 
