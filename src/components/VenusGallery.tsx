@@ -1,5 +1,6 @@
 import '../styles/venus-gallery.css'
 import '../styles/renaissance-preview.css'
+import '../styles/fullscreen-gallery-preview.css'
 
 type Props = { lang: string; setLang: (language: string) => void }
 
@@ -31,11 +32,28 @@ export function VenusGallery({ lang, setLang }: Props) {
   return (
     <div className="venus-hub">
       <main>
-        <section className="vv-stage" id="top" aria-label="SNMEZ — seçilmiş projeler ve araştırmalar">
-          <picture className="vv-painting" aria-hidden="true">
-            <source media="(min-width: 1300px)" srcSet="/x/venus-4k.jpg" />
-            <img src="/x/venus-2k.jpg" alt="" fetchPriority="high" />
-          </picture>
+        <section className="vv-stage" id="top" aria-label="Sandro Botticelli — Venüs’ün Doğuşu, tam ekran sanat eseri">
+          <div className="vv-painting" aria-hidden="true">
+            <img
+              className="vv-painting-original"
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/The_Birth_of_Venus_%28Botticelli%29_1.jpg/3840px-The_Birth_of_Venus_%28Botticelli%29_1.jpg"
+              srcSet="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/The_Birth_of_Venus_%28Botticelli%29_1.jpg/3840px-The_Birth_of_Venus_%28Botticelli%29_1.jpg 3840w, https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/The_Birth_of_Venus_%28Botticelli%29_1.jpg/7680px-The_Birth_of_Venus_%28Botticelli%29_1.jpg 7680w"
+              sizes="100vw"
+              width="9360"
+              height="5581"
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+              alt=""
+              onError={(event) => {
+                const image = event.currentTarget
+                if (image.dataset.fallback) return
+                image.dataset.fallback = 'local'
+                image.srcSet = ''
+                image.src = '/x/venus-4k.jpg'
+              }}
+            />
+          </div>
           <div className="vv-painting-shade" aria-hidden="true" />
 
           <nav className="vv-nav" aria-label="Main navigation">
@@ -51,12 +69,16 @@ export function VenusGallery({ lang, setLang }: Props) {
             </div>
           </nav>
 
-          <div className="vv-introduction">
-            <h1>Portfolio</h1>
-            <p>Projects, research and experiments.</p>
-            <span className="vv-introduction-rule" aria-hidden="true" />
-          </div>
 
+        </section>
+
+        <section className="vv-collections" aria-label="Seçilmiş projeler ve araştırmalar">
+          <div className="vv-collections-inner">
+            <header className="vv-collection-heading">
+              <span className="vv-kicker">SNMEZ / {tr ? 'SEÇİLMİŞ ÇALIŞMALAR' : 'SELECTED WORKS'} / 01—08</span>
+              <h2>{tr ? 'Seçilmiş Çalışmalar' : 'Selected Works'}</h2>
+              <p>{tr ? 'Projeler, araştırmalar ve deneyler.' : 'Projects, research and experiments.'}</p>
+            </header>
           <div className="vv-featured" id="featured" aria-label="Selected works">
             {featured.map(item => (
               <a key={item.no} className="vv-feature" href={item.href}>
@@ -77,6 +99,7 @@ export function VenusGallery({ lang, setLang }: Props) {
                 </a>
               ))}
             </div>
+          </div>
           </div>
         </section>
 
