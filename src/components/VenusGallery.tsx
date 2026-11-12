@@ -1,131 +1,21 @@
+import { useEffect } from 'react'
 import '../styles/venus-gallery.css'
 
-type Language = 'tr' | 'en' | 'zh'
-type Props = { lang: string; setLang: (lang: string) => void }
-type Entry = { number: string; title: string; description: [string, string]; href: string; image?: string; imageAlt?: string; restricted?: boolean }
+/** The exact approved Option 07 desktop stage, with semantic interactive links above the image. */
+type Props = { lang: string; setLang: (language: string) => void }
+const approvedMarkup = "\n<main><section id=\"top\" class=\"vv-stage\" aria-label=\"SNMEZ Hub — referans görseliyle birebir açılış\">\n<img class=\"vv-stage-img\" src=\"/hub/option07-reference.png\" srcset=\"/hub/option07-reference.png 1672w, /hub/option07-4k.png 3840w, /hub/option07-8k.png 7680w\" sizes=\"100vw\" alt=\"SNMEZ Hub — Venüs'ün Doğuşu üzerine hazırlanmış görsel galeri; 4 seçilmiş proje ve 4 araştırma.\" width=\"1672\" height=\"941\" fetchpriority=\"high\">\n<a class=\"vv-click-zone vv-nav-work\" href=\"#archive\" aria-label=\"Projeler\"></a><a class=\"vv-click-zone vv-nav-hub\" href=\"#top\" aria-label=\"Hub\"></a>\n<a class=\"vv-click-zone vv-nav-notes\" href=\"https://journeynotess.com/\" target=\"_blank\" rel=\"noopener noreferrer\" aria-label=\"Journey Notes\"></a>\n<a class=\"vv-click-zone vv-nav-about\" href=\"mailto:s.cagatay.sonmez@gmail.com\" aria-label=\"About / Contact\"></a>\n<a class=\"vv-click-zone vv-work1\" href=\"https://xx-arena.vercel.app/\" aria-label=\"XX Arena\"></a>\n<a class=\"vv-click-zone vv-work2\" href=\"https://snmez.xyz/tracker/\" aria-label=\"Portfolio Tracker\"></a>\n<a class=\"vv-click-zone vv-work3\" href=\"mailto:s.cagatay.sonmez@gmail.com?subject=Motorsport%20ML%20Eri%C5%9Fim\" aria-label=\"Motorsport ML — Erişim iste\"></a>\n<a class=\"vv-click-zone vv-work4\" href=\"https://alsancak-runners.vercel.app/\" aria-label=\"Alsancak Runners\"></a>\n<a class=\"vv-click-zone vv-r1\" href=\"https://snmez.xyz/tez/\" aria-label=\"BIST Tezi\"></a>\n<a class=\"vv-click-zone vv-r2\" href=\"https://snmez.xyz/pattern-bot.html\" aria-label=\"Pattern Bot\"></a>\n<a class=\"vv-click-zone vv-r3\" href=\"https://snmez.xyz/jane-street.html\" aria-label=\"Jane Street Trader\"></a>\n<a class=\"vv-click-zone vv-r4\" href=\"https://snmez.xyz/brain/\" aria-label=\"On-chain Analiz / Arz Mutabakatı\"></a>\n</section>\n<section class=\"vv-mobile-hero\" aria-label=\"SNMEZ Hub\"><img class=\"vv-mobile-painting\" src=\"/hub/option07-reference.png\" alt=\"\" aria-hidden=\"true\">\n<nav class=\"vv-mobile-nav\"><a href=\"#top\">SNMEZ</a><a href=\"#archive\">WORKS ↓</a></nav>\n<div class=\"vv-mobile-intro\"><h1>Hub</h1><p>Projects, research and experiments.</p></div>\n<div class=\"vv-mobile-worklist\">\n<a href=\"https://xx-arena.vercel.app/\"><small>01</small><strong>XX Arena</strong></a>\n<a href=\"https://snmez.xyz/tracker/\"><small>02</small><strong>Portfolio Tracker</strong></a>\n<a href=\"mailto:s.cagatay.sonmez@gmail.com?subject=Motorsport%20ML%20Eri%C5%9Fim\"><small>03</small><strong>Motorsport ML</strong></a>\n<a href=\"https://alsancak-runners.vercel.app/\"><small>04</small><strong>Alsancak Runners</strong></a>\n</div><a class=\"vv-mobile-scroll\" href=\"#research-mobile\">RESEARCH ↓</a>\n</section>\n<section class=\"vv-archive\" id=\"archive\">\n<div class=\"vv-archive-inner\">\n<div class=\"vv-archive-header\"><span class=\"vv-kicker\">SNMEZ / INDEX / 14</span><h2 id=\"research-mobile\">Diğer Çalışmalar</h2><p>Projeler, araştırmalar ve deneyler.</p></div>\n<div class=\"vv-archive-grid\"><a class=\"vv-entry\" href=\"https://snmez.xyz/#/x\" target=\"_blank\" rel=\"noopener noreferrer\">\n<div class=\"vv-cover\"><img src=\"https://snmez.xyz/x/rooms/sahil.jpg\" loading=\"lazy\" alt=\"\"></div>\n<div class=\"vv-entry-copy\"><small>09 / SELECTED WORKS</small><h3>X × Atlas</h3><p>3D / 360° dijital mekân arşivi</p></div><span class=\"vv-entry-arrow\" aria-hidden=\"true\">↗</span></a>\n<a class=\"vv-entry\" href=\"mailto:s.cagatay.sonmez@gmail.com?subject=Albion%20Eri%C5%9Fim\" >\n<div class=\"vv-cover\"><img src=\"https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&amp;fit=crop&amp;w=650&amp;q=85\" loading=\"lazy\" alt=\"\"></div>\n<div class=\"vv-entry-copy\"><small>10 / SELECTED WORKS</small><h3>Albion Piyasa Tarayıcı</h3><p>Oyun ekonomisi · Erişim iste</p></div><span class=\"vv-entry-arrow\" aria-hidden=\"true\">↗</span></a>\n<a class=\"vv-entry\" href=\"mailto:s.cagatay.sonmez@gmail.com?subject=Sentiment%20Trading%20Eri%C5%9Fim\" >\n<div class=\"vv-cover\"><img src=\"https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&amp;fit=crop&amp;w=650&amp;q=85\" loading=\"lazy\" alt=\"\"></div>\n<div class=\"vv-entry-copy\"><small>11 / SELECTED WORKS</small><h3>Sentiment Trading</h3><p>BIST 30 · Erişim iste</p></div><span class=\"vv-entry-arrow\" aria-hidden=\"true\">↗</span></a>\n<a class=\"vv-entry\" href=\"mailto:s.cagatay.sonmez@gmail.com?subject=Trend%20Bot%20Eri%C5%9Fim\" >\n<div class=\"vv-cover\"><img src=\"https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&amp;fit=crop&amp;w=650&amp;q=85\" loading=\"lazy\" alt=\"\"></div>\n<div class=\"vv-entry-copy\"><small>12 / SELECTED WORKS</small><h3>Multi-Asset Trend Bot</h3><p>29 varlık · Erişim iste</p></div><span class=\"vv-entry-arrow\" aria-hidden=\"true\">↗</span></a>\n<a class=\"vv-entry\" href=\"mailto:s.cagatay.sonmez@gmail.com?subject=KediDex%20Eri%C5%9Fim\" >\n<div class=\"vv-cover\"><img src=\"https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&amp;fit=crop&amp;w=650&amp;q=85\" loading=\"lazy\" alt=\"\"></div>\n<div class=\"vv-entry-copy\"><small>13 / SELECTED WORKS</small><h3>KediDex</h3><p>Kedi tanıma oyunu · Erişim iste</p></div><span class=\"vv-entry-arrow\" aria-hidden=\"true\">↗</span></a>\n<a class=\"vv-entry\" href=\"https://journeynotess.com/\" target=\"_blank\" rel=\"noopener noreferrer\">\n<div class=\"vv-cover\"><img src=\"https://snmez.xyz/journey/portrait-hq.avif\" loading=\"lazy\" alt=\"\"></div>\n<div class=\"vv-entry-copy\"><small>14 / SELECTED WORKS</small><h3>Journey Notes</h3><p>Fotoğraf ve seyahat günlüğü</p></div><span class=\"vv-entry-arrow\" aria-hidden=\"true\">↗</span></a></div>\n</div></section>\n</main><footer class=\"vv-footer\"><span>bir zambak gibi, yavaşça</span><div><a href=\"https://github.com/Cugutayy\">GitHub</a><a href=\"mailto:s.cagatay.sonmez@gmail.com\">Contact</a><a href=\"#top\">↑ Top</a></div></footer>\n"
 
-const featured: Entry[] = [
-  { number: '01', title: 'XX Arena', description: ['Yatırım Yarışması', 'Investment Competition'], href: 'https://xx-arena.vercel.app/' },
-  { number: '02', title: 'Portfolio Tracker', description: ['Yatırım Analizi ve Takibi', 'Portfolio Analysis & Tracking'], href: '/tracker/' },
-  { number: '03', title: 'Motorsport ML', description: ['Makine Öğrenmesi', 'Machine Learning'], href: '#/f1', restricted: true },
-  { number: '04', title: 'Alsancak Runners', description: ['Koşu Topluluğu', 'Running Community'], href: 'https://alsancak-runners.vercel.app/' },
-]
-
-const research: Entry[] = [
-  { number: '05', title: 'BIST Tezi', description: ['Halka arzların uzun dönem performansı', 'Long-run IPO performance'], href: '/tez/', image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=480&q=85', imageAlt: 'Financial research desk and papers' },
-  { number: '06', title: 'Pattern Bot', description: ['Piyasa desenleri ve stratejiler', 'Market patterns and strategies'], href: '/pattern-bot.html', image: 'https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=480&q=85', imageAlt: 'Code used to analyze financial market patterns' },
-  { number: '07', title: 'Jane Street Trader', description: ['Nicel işlem deneyimleri', 'Quantitative trading practice'], href: '/jane-street.html', image: 'https://images.unsplash.com/photo-1509228627152-72ae9ae6848d?auto=format&fit=crop&w=480&q=85', imageAlt: 'Mathematics on a blackboard' },
-  { number: '08', title: 'On-chain Analiz', description: ['Zincir üstü veri ve piyasa dinamikleri', 'On-chain data and market dynamics'], href: '/brain/', image: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?auto=format&fit=crop&w=480&q=85', imageAlt: 'Physical Bitcoin coin' },
-]
-
-const archive: Entry[] = [
-  { number: '09', title: 'X × Atlas', description: ['3D / 360° mekân arşivi', '3D / 360° archive of places'], href: '#/x', image: '/x/rooms/sahil.jpg', imageAlt: 'A photographed coastal setting from X Atlas' },
-  { number: '10', title: 'Albion Piyasa Tarayıcı', description: ['Oyun ekonomisi · Erişim iste', 'Game economy · Request access'], href: '#/albion', image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=480&q=85', imageAlt: 'Video gaming scene', restricted: true },
-  { number: '11', title: 'Sentiment Trading', description: ['BIST 30 · Erişim iste', 'BIST 30 · Request access'], href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Sentiment%20Trading%20eri%C5%9Fim', image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=480&q=85', imageAlt: 'Market trading monitor', restricted: true },
-  { number: '12', title: 'Multi-Asset Trend Bot', description: ['29 varlık · Erişim iste', '29 assets · Request access'], href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Trend%20Bot%20eri%C5%9Fim', image: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=480&q=85', imageAlt: 'Financial analysis graph', restricted: true },
-  { number: '13', title: 'KediDex', description: ['Kedi tanıma oyunu · Erişim iste', 'Cat recognition game · Request access'], href: 'mailto:s.cagatay.sonmez@gmail.com?subject=KediDex%20eri%C5%9Fim', image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=480&q=85', imageAlt: 'Photograph of a cat', restricted: true },
-  { number: '14', title: 'Journey Notes', description: ['Fotoğraf ve seyahat günlüğü', 'Photography and travel journal'], href: 'https://journeynotess.com/', image: '/journey/portrait-hq.avif', imageAlt: 'Photograph from the Journey Notes archive' },
-]
-
-function isExternal(url: string) {
-  return url.startsWith('https://')
-}
-
-export function VenusGallery({ lang, setLang }: Props) {
-  const l: Language = lang === 'en' ? 'en' : lang === 'zh' ? 'zh' : 'tr'
-  const en = l !== 'tr'
-  const words = (tr: string, eng: string) => en ? eng : tr
-
-  return (
-    <div className="venus-hub" id="top">
-      <div className="venus-hub-art" aria-hidden="true" />
-      <div className="venus-hub-shade" aria-hidden="true" />
-
-      <div className="venus-hub-opening">
-        <nav className="venus-hub-nav" aria-label={words('Ana gezinme', 'Main navigation')}>
-          <a className="venus-hub-brand" href="#top" aria-label="SNMEZ">SNMEZ</a>
-          <div className="venus-hub-nav-right">
-            <a href="#selected-works">{words('PROJELER', 'WORKS')}</a>
-            <a href="#top" aria-current="page">HUB</a>
-            <a href="https://journeynotess.com/" target="_blank" rel="noreferrer">{words('NOTLAR', 'NOTES')}</a>
-            <a href="mailto:s.cagatay.sonmez@gmail.com">ABOUT</a>
-            <div className="venus-hub-languages" aria-label={words('Dil seçimi', 'Language selection')}>
-              <button type="button" aria-pressed={l === 'tr'} className={l === 'tr' ? 'is-active' : ''} onClick={() => setLang('tr')}>TR</button>
-              <button type="button" aria-pressed={l === 'en'} className={l === 'en' ? 'is-active' : ''} onClick={() => setLang('en')}>EN</button>
-              <button type="button" aria-pressed={l === 'zh'} className={l === 'zh' ? 'is-active' : ''} onClick={() => setLang('zh')}>中文</button>
-            </div>
-          </div>
-        </nav>
-
-        <section className="venus-hub-hero" aria-labelledby="venus-hub-title">
-          <h1 id="venus-hub-title">Hub</h1>
-          <p>{words('Projeler, araştırmalar ve deneyler.', 'Projects, research and experiments.')}</p>
-        </section>
-
-        <section className="venus-hub-selected" id="selected-works" aria-label={words('Seçilmiş projeler', 'Selected projects')}>
-          {featured.map((item) => (
-            <a key={item.number} className="venus-hub-featured-item" href={item.href}
-              {...(isExternal(item.href) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-              <span className="venus-hub-number">{item.number}</span>
-              <h2>{item.title}</h2>
-              <span className="venus-hub-description">{item.description[en ? 1 : 0]}</span>
-              <span className="venus-hub-arrow" aria-hidden="true">↗</span>
-            </a>
-          ))}
-        </section>
-
-        <section className="venus-hub-research" id="research" aria-labelledby="venus-hub-research-title">
-          <h2 id="venus-hub-research-title">{words('Araştırmalar & Geliştirme', 'Research & Development')}</h2>
-          <div className="venus-hub-research-grid">
-            {research.map((item) => (
-              <a key={item.number} className="venus-hub-research-item" href={item.href}>
-                <img src={item.image} alt={item.imageAlt} loading="lazy" width="120" height="114" />
-                <span className="venus-hub-research-copy">
-                  <strong>{item.title}</strong>
-                  <small>{item.description[en ? 1 : 0]}</small>
-                  <span className="venus-hub-arrow" aria-hidden="true">↗</span>
-                </span>
-              </a>
-            ))}
-          </div>
-        </section>
-        <a className="venus-hub-scroll" href="#archive" aria-label={words('Diğer projelere kaydır', 'Scroll to other projects')}>{words('DİĞER PROJELER', 'MORE PROJECTS')} <span aria-hidden="true">↓</span></a>
-      </div>
-
-      <section className="venus-hub-archive" id="archive" aria-labelledby="venus-hub-archive-title">
-        <div className="venus-hub-archive-inner">
-          <div className="venus-hub-archive-heading">
-            <span className="venus-hub-archive-kicker">SNMEZ / 09–14</span>
-            <h2 id="venus-hub-archive-title">{words('Diğer Çalışmalar', 'Other Works')}</h2>
-            <p>{words('Dijital projeler, araştırmalar ve kişisel deneyler.', 'Digital projects, research and personal experiments.')}</p>
-          </div>
-          <div className="venus-hub-archive-grid">
-            {archive.map((item) => (
-              <a key={item.number} className="venus-hub-archive-item" href={item.href}
-                {...(isExternal(item.href) ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-                <div className="venus-hub-archive-photo">
-                  <img src={item.image} alt={item.imageAlt} loading="lazy" decoding="async" />
-                </div>
-                <div className="venus-hub-archive-copy">
-                  <span className="venus-hub-archive-item-number">{item.number}</span>
-                  <h3>{item.title}</h3>
-                  <p>{item.description[en ? 1 : 0]}</p>
-                </div>
-                <span className="venus-hub-archive-arrow" aria-hidden="true">↗</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <footer className="venus-hub-footer">
-        <span>bir zambak gibi, yavaşça</span>
-        <div>
-          <a href="mailto:s.cagatay.sonmez@gmail.com">E-mail</a>
-          <a href="https://github.com/Cugutayy" target="_blank" rel="noopener noreferrer">GitHub</a>
-          <a href="#top">{words('Yukarı', 'Back to top')} ↑</a>
-        </div>
-      </footer>
-    </div>
-  )
+export function VenusGallery(_props: Props) {
+  useEffect(() => {
+    // Load cover imagery without creating empty or misaligned photo placeholders.
+    const images = Array.from(document.querySelectorAll<HTMLImageElement>('.vv-entry .vv-cover img'))
+    const listeners = images.map(img => {
+      const reveal = () => { if (img.naturalWidth > 0) img.closest('.vv-entry')?.classList.add('vv-is-loaded') }
+      if (img.complete) reveal()
+      img.addEventListener('load', reveal)
+      return () => img.removeEventListener('load', reveal)
+    })
+    return () => listeners.forEach(remove => remove())
+  }, [])
+  return <div className="venus-hub" dangerouslySetInnerHTML={{ __html: approvedMarkup }} />
 }
