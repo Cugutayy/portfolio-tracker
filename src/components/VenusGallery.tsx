@@ -1,4 +1,5 @@
 import '../styles/venus-gallery.css'
+import '../styles/renaissance-preview.css'
 
 type Props = { lang: string; setLang: (language: string) => void }
 
@@ -40,9 +41,9 @@ export function VenusGallery({ lang, setLang }: Props) {
           <nav className="vv-nav" aria-label="Main navigation">
             <a href="#top" className="vv-brand" aria-label="SNMEZ — başa dön">SNMEZ</a>
             <div className="vv-nav-links">
-              <a href="#featured">{tr ? 'PROJELER' : 'WORKS'}</a>
+              <a href="#featured">WORKS</a>
               <a href="https://journeynotess.com/" target="_blank" rel="noreferrer">NOTES</a>
-              <a href="mailto:s.cagatay.sonmez@gmail.com">{tr ? 'HAKKINDA' : 'ABOUT'}</a>
+              <a href="mailto:s.cagatay.sonmez@gmail.com">ABOUT</a>
               <div className="vv-language" aria-label="Language selection">
                 <button type="button" className={lang === 'tr' ? 'is-active' : ''} onClick={() => setLang('tr')} aria-pressed={lang === 'tr'}>TR</button>
                 <button type="button" className={lang === 'en' ? 'is-active' : ''} onClick={() => setLang('en')} aria-pressed={lang === 'en'}>EN</button>
@@ -51,7 +52,9 @@ export function VenusGallery({ lang, setLang }: Props) {
           </nav>
 
           <div className="vv-introduction">
-            <p>{tr ? 'Projeler, araştırmalar ve deneyler.' : 'Projects, research and experiments.'}</p>
+            <h1>Portfolio</h1>
+            <p>Projects, research and experiments.</p>
+            <span className="vv-introduction-rule" aria-hidden="true" />
           </div>
 
           <div className="vv-featured" id="featured" aria-label="Selected works">
@@ -59,7 +62,7 @@ export function VenusGallery({ lang, setLang }: Props) {
               <a key={item.no} className="vv-feature" href={item.href}>
                 <span className="vv-feature-number">{item.no}</span>
                 <h2>{item.name}</h2>
-                <span className="vv-feature-description">{tr ? item.description : item.en}</span>
+                <span className="vv-feature-description">{tr ? item.description : item.en}</span><span className="vv-feature-linkmark" aria-hidden="true">↗</span>
               </a>
             ))}
           </div>
@@ -70,7 +73,7 @@ export function VenusGallery({ lang, setLang }: Props) {
               {research.map(item => (
                 <a href={item.href} key={item.title} className="vv-research-item">
                   <span className="vv-research-image"><img src={item.image} alt="" loading="lazy" /></span>
-                  <span className="vv-research-copy"><strong>{item.title}</strong><small>{tr ? item.description : item.en}</small></span>
+                  <span className="vv-research-copy"><strong>{item.title}</strong><small>{tr ? item.description : item.en}</small><span className="vv-research-linkmark" aria-hidden="true">↗</span></span>
                 </a>
               ))}
             </div>
