@@ -6,7 +6,7 @@
   "description": "S. Çağatay Sönmez — Project Hub",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node tools/build-option07-assets.mjs && vite build",
     "preview": "vite preview",
     "relay": "node tools/albion-relay/relay.mjs",
     "relay:debug": "node tools/albion-relay/relay.mjs --debug",
