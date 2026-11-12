@@ -1,0 +1,303 @@
+/* Renaissance Portfolio — reference-driven preview, 12 Nov 2026
+   Optically aligned to the 1448 × 1086 approved concept.
+   All text and project navigation are real HTML elements. */
+
+.venus-hub {
+  --vv-cream: #f0e4d2;
+  --vv-ink: #eee0c9;
+  --vv-bronze: #cda777;
+  --vv-serif: 'Instrument Serif', Georgia, serif;
+  --vv-mono: 'DM Mono', monospace;
+  background: #1c281f;
+  color: var(--vv-cream);
+}
+body:has(.venus-hub) { background: #1c281f; }
+.venus-hub a:focus-visible, .venus-hub button:focus-visible { outline: 1px solid #ead1a2; outline-offset: 4px; }
+
+/* Stage keeps the exact 4:3 editorial proportions of the concept. */
+.vv-stage {
+  display: block;
+  position: relative;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: 4 / 3;
+  background: #1d291f;
+  isolation: isolate;
+  overflow: hidden;
+}
+.vv-painting { position:absolute; inset:0; z-index:-3; display:block; width:100%; height:100%; overflow:hidden; }
+.vv-painting img {
+  position:absolute;
+  inset:0;
+  width:100%; height:100%;
+  object-fit:fill;
+  object-position:center;
+  filter: sepia(.15) saturate(.78) contrast(.96) brightness(.81);
+  transform:translateZ(0);
+}
+.vv-painting-shade {
+  position:absolute; inset:0;
+  z-index:-2;
+  background:
+    radial-gradient(ellipse 54% 46% at 48% 37%, transparent 35%, rgba(17,24,19,.07) 85%, rgba(14,22,17,.16) 100%),
+    linear-gradient(180deg,rgba(24,27,20,.30) 0%,rgba(25,31,23,.03) 25%,rgba(29,39,30,.03) 38%,rgba(20,32,23,.34) 49%,rgba(18,29,21,.58) 67%,rgba(16,27,20,.75) 83%,rgba(17,28,20,.88) 100%),
+    linear-gradient(90deg,rgba(14,22,17,.20),transparent 36%,transparent 76%,rgba(15,22,17,.15));
+  pointer-events:none;
+}
+
+/* The masthead aligns with the artwork, never sits in a glass navigation bar. */
+.vv-nav {
+  position:absolute; z-index:5;
+  top:3.5%; left:4.3%; right:6.3%;
+  display:flex; align-items:center; justify-content:space-between; gap:35px;
+  text-shadow:0 2px 10px rgba(20,26,18,.4);
+  color:#f2e6d3;
+}
+.vv-brand {
+  font:400 clamp(19px,1.82vw,31px)/1 var(--vv-serif);
+  letter-spacing:.32em;
+  white-space:nowrap;
+}
+.vv-nav-links { display:flex; align-items:center; gap:clamp(23px,3.3vw,55px); }
+.vv-nav-links > a { font:400 clamp(11px,1.08vw,17px)/1.2 var(--vv-serif); letter-spacing:.018em; }
+.vv-nav-links > a::after { background:rgba(233,211,175,.85); }
+.vv-language { display:flex; align-items:center; gap:11px; }
+.vv-language button { font:400 clamp(11px,.94vw,16px)/1.1 var(--vv-serif); color:#efe1cb; padding:8px 10px; border-radius:4px; }
+.vv-language button.is-active { border:1px solid rgba(207,166,107,.87); color:#e4bd84; }
+
+/* Hero title is the single most legible gesture in the composition. */
+.vv-introduction {
+  position:absolute;
+  z-index:1;
+  top:16.8%; left:6.45%;
+  max-width:62%;
+  color:#f4e8d8;
+}
+.vv-introduction h1 {
+  font:italic 400 clamp(77px,8.75vw,151px)/.92 var(--vv-serif);
+  letter-spacing:-.037em;
+  margin:0 0 .14em;
+  color:#f4e8d8;
+  text-shadow:0 2px 24px rgba(10,23,17,.27);
+}
+.vv-introduction p {
+  font:italic 400 clamp(18px,2.07vw,34px)/1.17 var(--vv-serif);
+  margin:0;
+  color:#eee0c8;
+  text-shadow:0 2px 12px rgba(10,23,17,.35);
+}
+.vv-introduction-rule {
+  display:block;
+  width:clamp(30px,3vw,48px);
+  height:2px;
+  margin-top:clamp(20px,2.1vw,35px);
+  background:#d4af75;
+  box-shadow:0 1px 9px rgba(7,17,10,.15);
+}
+
+/* Four projects: 01—04, exactly one typographic register. */
+.vv-featured {
+  position:absolute; z-index:2;
+  top:54%; left:6.5%; right:6.6%;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:clamp(20px,2.7vw,49px);
+  align-items:start;
+}
+.vv-feature {
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  min-width:0;
+  text-shadow:0 2px 13px rgba(13,24,17,.60);
+}
+.vv-feature-number { font:400 clamp(12px,1.1vw,18px)/1.1 var(--vv-serif); color:#ebdac2; letter-spacing:0; }
+.vv-feature h2 {
+  width:fit-content;
+  font:italic 400 clamp(23px,2.5vw,41px)/1.04 var(--vv-serif);
+  white-space:nowrap;
+  letter-spacing:-.013em;
+  margin:clamp(8px,.75vw,12px) 0 7px;
+  color:#f3e6d2;
+}
+.vv-feature-description { font:400 clamp(13px,1.25vw,21px)/1.14 var(--vv-serif); color:#eadcc7; }
+.vv-feature-linkmark { display:block; font:400 clamp(15px,1.3vw,23px)/1 var(--vv-serif); margin-top:clamp(10px,1.1vw,18px); color:#e2c494; transition:transform .3s cubic-bezier(.2,.8,.2,1),opacity .3s; }
+.vv-feature:hover .vv-feature-linkmark { transform:translate(2px,-2px); opacity:1; }
+.vv-feature:hover h2, .vv-research-item:hover strong { color:#ffe3b2; text-decoration:none; }
+
+/* Research is part of the painting, not a disconnected card section. */
+.vv-research {
+  position:absolute;
+  top:69.6%; left:4.85%; right:4.9%;
+  color:#f2e6d5;
+}
+.vv-research > h2 {
+  font:italic 400 clamp(26px,2.9vw,49px)/1.06 var(--vv-serif);
+  letter-spacing:-.013em;
+  margin:0 0 clamp(17px,1.8vw,31px);
+}
+.vv-research-items {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  column-gap:clamp(22px,2.8vw,48px);
+  align-items:start;
+}
+.vv-research-item {
+  display:grid;
+  grid-template-columns:minmax(75px,42%) minmax(0,1fr);
+  gap:clamp(14px,1.55vw,26px);
+  align-items:start;
+  min-width:0;
+  text-shadow:0 2px 8px rgba(13,24,17,.44);
+}
+.vv-research-image {
+  display:block;
+  width:100%;
+  aspect-ratio:1 / 1;
+  border:1px solid rgba(202,159,103,.61);
+  border-radius:9px;
+  padding:0;
+  background:rgba(31,37,27,.35);
+  overflow:hidden;
+  box-shadow:0 3px 15px rgba(8,18,11,.18);
+}
+.vv-research-image img {
+  display:block; width:100%; height:100%; object-fit:cover;
+  filter:sepia(.22) saturate(.73) contrast(.95) brightness(.92);
+  transition:filter .5s ease,transform .6s ease;
+}
+.vv-research-item:hover img { transform:scale(1.028); filter:sepia(.12) saturate(.90) contrast(.99) brightness(.98); }
+.vv-research-copy { display:flex; flex-direction:column; gap:0; padding-top:5px; min-width:0; }
+.vv-research-copy strong { font:400 clamp(16px,1.53vw,27px)/1.03 var(--vv-serif); letter-spacing:-.016em; color:#f1e7d9; }
+.vv-research-copy small {
+  font:400 clamp(13px,1.17vw,20px)/1.18 var(--vv-serif);
+  color:#eadfce;
+  margin-top:12px;
+}
+.vv-research-linkmark { font:400 clamp(15px,1.18vw,20px)/1 var(--vv-serif); margin-top:11px; color:#e3c18c; }
+
+/* Continuation beneath the painting: dark botanical museum archive.
+   No white parchment / stock UI card break. */
+.vv-archive {
+  padding:clamp(90px,9vw,160px) clamp(25px,6.5vw,112px) 100px;
+  position:relative;
+  background:
+    radial-gradient(ellipse 70% 60% at 0% 5%,rgba(101,93,68,.17),transparent 72%),
+    radial-gradient(ellipse 65% 50% at 100% 85%,rgba(100,90,62,.11),transparent 70%),
+    linear-gradient(180deg,#17241a 0%,#1c271e 24%,#202a20 78%,#19231a 100%);
+  color:#f0e3d0;
+}
+.vv-archive::before {
+  content:'';
+  position:absolute; inset:0;
+  pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.48' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='.16'/%3E%3C/svg%3E");
+  opacity:.18;
+  mix-blend-mode:screen;
+}
+.vv-archive-header { margin-bottom:clamp(49px,5vw,75px); }
+.vv-kicker { color:#d4b991; letter-spacing:.20em; font-size:10px; }
+.vv-archive-header h2 {
+  font:italic 400 clamp(55px,6.3vw,108px)/.98 var(--vv-serif);
+  margin:20px 0 14px;
+  letter-spacing:-.025em;
+  color:#f0e1ca;
+}
+.vv-archive-header p { color:#c6b79e; font:italic 400 clamp(19px,1.7vw,28px)/1.2 var(--vv-serif); }
+.vv-archive-side { color:#bb9f76; }
+.vv-archive-side i { background:rgba(197,167,118,.5); }
+.vv-archive-grid { border-top:1px solid rgba(214,184,139,.22); column-gap:clamp(38px,6.2vw,100px); }
+.vv-entry { border-bottom:1px solid rgba(214,184,139,.22); gap:clamp(22px,2.5vw,41px); }
+.vv-cover { background:#303727; border:1px solid rgba(211,176,124,.56); padding:5px; border-radius:3px; }
+.vv-cover img { filter:sepia(.22) saturate(.73) contrast(.96) brightness(.85); }
+.vv-entry-copy small { color:#bda581; }
+.vv-entry-copy h3 { color:#f2e5d1; font:400 clamp(31px,2.5vw,48px)/1.05 var(--vv-serif); margin:19px 0 8px; }
+.vv-entry-copy p { color:#cbbba3; }
+.vv-entry-invite { color:#c2a57a; margin-top:20px; }
+.vv-entry:hover .vv-entry-invite, .vv-entry:focus-visible .vv-entry-invite { color:#e7c89b; }
+.vv-archive-colophon { color:#ad9776; }
+.vv-footer { background:#192219; border-top:1px solid rgba(215,182,136,.18); }
+
+/* 1024px: keep visual hierarchy, avoid overlap in four-column research. */
+@media(max-width:1100px) and (min-width:721px) {
+  .vv-featured { top:54.4%; left:5%; right:5%; gap:18px; }
+  .vv-feature h2 { font-size:clamp(22px,2.65vw,30px); }
+  .vv-research { top:70%; left:5%; right:5%; }
+  .vv-research-items { gap:16px; }
+  .vv-research-item { grid-template-columns:34% minmax(0,1fr); gap:9px; }
+  .vv-research-copy strong { font-size:clamp(14px,1.65vw,19px); }
+  .vv-research-copy small { font-size:clamp(11px,1.3vw,15px); margin-top:7px; }
+  .vv-research-linkmark { font-size:15px; margin-top:8px; }
+}
+
+/* Native mobile version of the same art direction, not a scaled desktop image. */
+@media(max-width:720px) {
+  .vv-stage {
+    display:flex;
+    flex-direction:column;
+    aspect-ratio:auto;
+    min-height:100svh;
+    height:auto;
+    padding:25px 21px 83px;
+  }
+  .vv-painting img { object-fit:cover; object-position:51% 0%; filter:sepia(.17) saturate(.80) contrast(.96) brightness(.75); }
+  .vv-painting-shade {
+    background:
+      linear-gradient(180deg,rgba(18,24,20,.43) 0%,rgba(20,27,21,.15) 16%,rgba(19,28,21,.35) 29%,rgba(16,27,20,.74) 50%,rgba(16,27,20,.94) 71%,#17251b 100%);
+  }
+  .vv-nav { position:relative; top:auto; left:auto; right:auto; gap:10px; z-index:4; }
+  .vv-brand { font-size:20px; letter-spacing:.25em; }
+  .vv-nav-links { gap:11px; }
+  .vv-nav-links > a { font-size:12px; }
+  .vv-nav-links > a:nth-of-type(2), .vv-nav-links > a:nth-of-type(3) { display:none; }
+  .vv-language { gap:3px; }
+  .vv-language button { font-size:11px; padding:6px; }
+  .vv-introduction { position:relative; top:auto; left:auto; max-width:100%; margin-top:clamp(105px,19svh,220px); }
+  .vv-introduction h1 { font-size:clamp(82px,20vw,129px); margin-bottom:11px; }
+  .vv-introduction p { font-size:clamp(20px,5.0vw,26px); }
+  .vv-introduction-rule { width:40px; margin-top:22px; }
+  .vv-featured { position:relative; top:auto; left:auto; right:auto; grid-template-columns:repeat(2,minmax(0,1fr)); gap:31px 22px; margin-top:clamp(110px,19svh,190px); }
+  .vv-feature-number { font-size:13px; }
+  .vv-feature h2 { font-size:clamp(26px,5.7vw,35px); white-space:normal; }
+  .vv-feature-description { font-size:16px; }
+  .vv-feature-linkmark { font-size:18px; margin-top:12px; }
+  .vv-research { position:relative; top:auto; left:auto; right:auto; margin-top:83px; }
+  .vv-research > h2 { font-size:clamp(35px,8.2vw,53px); margin-bottom:24px; }
+  .vv-research-items { grid-template-columns:repeat(2,minmax(0,1fr)); gap:25px 15px; }
+  .vv-research-item { display:grid; grid-template-columns:78px 1fr; gap:11px; }
+  .vv-research-image { border-radius:7px; }
+  .vv-research-copy { padding-top:0; }
+  .vv-research-copy strong { font-size:20px; }
+  .vv-research-copy small { font-size:15px; margin-top:6px; }
+  .vv-research-linkmark { font-size:16px; margin-top:8px; }
+  .vv-archive { padding:94px 22px 78px; }
+  .vv-archive-header h2 { font-size:clamp(54px,10.5vw,86px); }
+  .vv-archive-grid { grid-template-columns:1fr; }
+  .vv-entry { grid-template-columns:clamp(120px,31vw,190px) minmax(0,1fr); gap:21px; padding:30px 0; }
+  .vv-entry-copy h3 { font-size:clamp(29px,5vw,39px); }
+  .vv-entry-copy p { font-size:17px; }
+}
+@media(max-width:425px) {
+  .vv-stage { padding:20px 17px 69px; }
+  .vv-brand { font-size:17px; letter-spacing:.21em; }
+  .vv-nav-links { gap:8px; }
+  .vv-nav-links > a { font-size:10px; }
+  .vv-introduction h1 { font-size:clamp(70px,19vw,89px); }
+  .vv-featured { gap:29px 12px; }
+  .vv-feature h2 { font-size:25px; }
+  .vv-feature-description { font-size:14px; }
+  .vv-research-items { gap:26px 14px; }
+  .vv-research-item { display:block; }
+  .vv-research-image { width:clamp(90px,27vw,118px); margin-bottom:10px; }
+  .vv-research-copy strong { font-size:20px; }
+  .vv-research-copy small { font-size:15px; }
+  .vv-archive { padding:82px 17px 66px; }
+  .vv-entry { grid-template-columns:104px minmax(0,1fr); gap:17px; padding:25px 0; }
+  .vv-entry-copy h3 { font-size:29px; }
+  .vv-entry-copy p { font-size:15px; }
+  .vv-entry-invite { font-size:9px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  html:has(.venus-hub) { scroll-behavior:auto; }
+  .venus-hub *, .venus-hub *::before, .venus-hub *::after { transition:none !important; }
+}
