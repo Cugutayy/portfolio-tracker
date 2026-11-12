@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import '../styles/venus-gallery.css'
 import '../styles/renaissance-preview.css'
 import '../styles/fullscreen-gallery-preview.css'
@@ -29,12 +30,89 @@ const archive = [
 
 export function VenusGallery({ lang, setLang }: Props) {
   const tr = lang !== 'en'
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const imageRef = useRef<HTMLImageElement>(null)
+  const stageRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const image = imageRef.current
+    const stage = stageRef.current
+    if (!canvas || !image || !stage) return
+
+    // Extend only the painting's own outermost pixels, not the central figures.
+    // The complete source is uniformly scaled so Venus matches the approved distance.
+    const draw = () => {
+      const width = stage.clientWidth
+      const height = stage.clientHeight
+      if (!image.naturalWidth || !image.naturalHeight || width <= 720 || !height) return
+      const dpr = Math.min(window.devicePixelRatio || 1, 2.5)
+      canvas.width = Math.round(width * dpr)
+      canvas.height = Math.round(height * dpr)
+      const ctx = canvas.getContext('2d', { alpha: false })
+      if (!ctx) return
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
+      const sw = image.naturalWidth
+      const sh = image.naturalHeight
+      const paintingHeight = Math.min(height * .855, width * .99 / (sw / sh))
+      const paintingWidth = paintingHeight * sw / sh
+      const x = (width - paintingWidth) / 2
+      const y = 0
+      const right = width - x - paintingWidth
+      const bottom = height - paintingHeight
+      const bandX = Math.max(1, Math.floor(sw * .10))
+      const bandY = Math.max(1, Math.floor(sh * .12))
+
+      // Fallback underlay also fills the four narrow corners.
+      ctx.drawImage(image, 0, 0, width, height)
+
+      // Mirror the genuine outer strips so the painting fills the viewport
+      // without zooming in on the central composition.
+      if (x > 0) {
+        ctx.save()
+        ctx.translate(x, 0)
+        ctx.scale(-1, 1)
+        ctx.drawImage(image, 0, 0, bandX, sh, 0, y, x, paintingHeight)
+        ctx.restore()
+      }
+      if (right > 0) {
+        ctx.save()
+        ctx.translate(width, 0)
+        ctx.scale(-1, 1)
+        ctx.drawImage(image, sw - bandX, 0, bandX, sh, 0, y, right, paintingHeight)
+        ctx.restore()
+      }
+      if (bottom > 0) {
+        ctx.save()
+        ctx.translate(0, height)
+        ctx.scale(1, -1)
+        ctx.drawImage(image, 0, sh - bandY, sw, bandY, x, 0, paintingWidth, bottom)
+        ctx.restore()
+      }
+      // The complete, unaltered masterpiece stays sharp in the center.
+      ctx.drawImage(image, 0, 0, sw, sh, x, y, paintingWidth, paintingHeight)
+      canvas.style.opacity = '1'
+    }
+
+    image.addEventListener('load', draw)
+    if (image.complete) draw()
+    const resizeObserver = new ResizeObserver(draw)
+    resizeObserver.observe(stage)
+    return () => {
+      image.removeEventListener('load', draw)
+      resizeObserver.disconnect()
+    }
+  }, [])
+
   return (
     <div className="venus-hub">
       <main>
-        <section className="vv-stage" id="top" aria-label="Sandro Botticelli — Venüs’ün Doğuşu, tam ekran sanat eseri">
+        <section ref={stageRef} className="vv-stage" id="top" aria-label="Sandro Botticelli — Venüs’ün Doğuşu, tam ekran sanat eseri">
           <div className="vv-painting" aria-hidden="true">
             <img
+              ref={imageRef}
               className="vv-painting-original"
               src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/The_Birth_of_Venus_%28Botticelli%29_1.jpg/3840px-The_Birth_of_Venus_%28Botticelli%29_1.jpg"
               srcSet="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/The_Birth_of_Venus_%28Botticelli%29_1.jpg/3840px-The_Birth_of_Venus_%28Botticelli%29_1.jpg 3840w, https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/The_Birth_of_Venus_%28Botticelli%29_1.jpg/7680px-The_Birth_of_Venus_%28Botticelli%29_1.jpg 7680w"
@@ -53,6 +131,7 @@ export function VenusGallery({ lang, setLang }: Props) {
                 image.src = '/x/venus-4k.jpg'
               }}
             />
+            <canvas ref={canvasRef} className="vv-painting-canvas" aria-hidden="true" />
           </div>
           <div className="vv-painting-shade" aria-hidden="true" />
 
