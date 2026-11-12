@@ -46,7 +46,7 @@ export function VenusGallery({ lang, setLang }: Props) {
       const width = stage.clientWidth
       const height = stage.clientHeight
       if (!image.naturalWidth || !image.naturalHeight || width <= 720 || !height) return
-      const dpr = Math.min(window.devicePixelRatio || 1, 2.5)
+      const dpr = Math.min(window.devicePixelRatio || 1, 2, 5000 / Math.max(width, height))
       canvas.width = Math.round(width * dpr)
       canvas.height = Math.round(height * dpr)
       const ctx = canvas.getContext('2d', { alpha: false })
