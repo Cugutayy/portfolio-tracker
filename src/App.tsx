@@ -1,8 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
-import { Navbar } from './components/Navbar'
-import { Hero } from './components/Hero'
-import { ProjectCards } from './components/ProjectCards'
-import { Footer } from './components/Footer'
+import { useState, useEffect } from 'react'
+import { VenusGallery } from './components/VenusGallery'
 import { XPage } from './components/XPage'
 
 const I18N: Record<string, Record<string, string>> = {
@@ -13,30 +10,10 @@ const I18N: Record<string, Record<string, string>> = {
 
 export default function App() {
   const [lang, setLang] = useState('tr')
-  const [dark, setDark] = useState(true)
   const [page, setPage] = useState<'hub' | 'f1' | 'albion' | 'x'>('hub')
-  const artRef = useRef<HTMLDivElement>(null)
   const t = (key: string) => I18N[lang]?.[key] || key
 
-  // scroll parallax: the fixed artwork receives a restrained five-percent scale.
-  useEffect(() => {
-    let raf = 0
-    const onScroll = () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => {
-        const vh = window.innerHeight || 1
-        const kPar = Math.min(1, window.scrollY / (vh * 1.6))
-        // gentle GPU-composited zoom keeps the still artwork from feeling frozen
-        if (artRef.current) artRef.current.style.transform = `scale(${(1 + kPar * 0.05).toFixed(3)})`
-      })
-    }
-    onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf) }
-  }, [page])
-
   useEffect(() => { document.documentElement.lang = lang }, [lang])
-  useEffect(() => { document.documentElement.setAttribute('data-theme', dark ? 'dark' : '') }, [dark])
 
   // Hash-based routing
   useEffect(() => {
@@ -60,20 +37,7 @@ export default function App() {
     return <XPage />
   }
 
-  return (
-    <>
-      {/* site-wide fixed Botticelli backdrop */}
-      <div className="site-lily" aria-hidden ref={artRef} />
-      <div className="site-scrim" aria-hidden />
-
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <Navbar lang={lang} setLang={setLang} dark={dark} setDark={setDark} t={t} />
-        <Hero lang={lang} />
-        <ProjectCards t={t} />
-        <Footer />
-      </div>
-    </>
-  )
+  return <VenusGallery lang={lang} setLang={setLang} />
 }
 
 /** Access-denied screen for restricted routes (#/f1, #/albion). */
