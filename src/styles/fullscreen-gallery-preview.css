@@ -32,10 +32,10 @@ body:has(.venus-hub) {background:#1a241b;}
   position:absolute;
   inset:-7%;
   z-index:0;
-  background-image:url('/x/venus-4k.jpg');
+  background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/The_Birth_of_Venus_%28Botticelli%29_1.jpg/3840px-The_Birth_of_Venus_%28Botticelli%29_1.jpg');
   background-size:cover;
   background-position:center center;
-  filter:blur(36px) brightness(.55) saturate(.73);
+  filter:blur(26px) brightness(.65) sepia(.08) saturate(.77);
   transform:scale(1.03);
   pointer-events:none;
 }
@@ -50,7 +50,7 @@ body:has(.venus-hub) {background:#1a241b;}
   height:100%;
   object-fit:contain;
   object-position:center center;
-  filter:sepia(.08) saturate(.86) brightness(.91);
+  filter:sepia(.12) saturate(.82) brightness(.89);
   transform:translateY(-6%) scale(.87);
   image-rendering:auto;
   user-select:none;
