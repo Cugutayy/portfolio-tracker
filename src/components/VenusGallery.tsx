@@ -1,124 +1,124 @@
-import { ArrowDown, ArrowRight, ArrowUpRight } from 'lucide-react'
+import { ArrowDown, ArrowRight, ArrowUpRight, LockKeyhole } from 'lucide-react'
+import { rooms, type Caption, type GalleryProject } from './venus-projects'
 import '../styles/venus-gallery.css'
 
 type Props = { lang: string; setLang: (language: string) => void }
-type Work = {
-  title: string
-  description: string
-  en: string
-  href: string
-  image?: string
-}
+type Locale = 0 | 1
 
-const featured: Work[] = [
-  { title: 'XX Arena', description: 'Sosyal yatırım yarışması', en: 'Social investing competition', href: 'https://xx-arena.vercel.app/' },
-  { title: 'Portfolio Tracker', description: 'Portföy analizi ve takibi', en: 'Portfolio analysis and tracking', href: '/tracker/' },
-  { title: 'Motorsport ML', description: 'Yarış sonuçları için makine öğrenmesi', en: 'Machine learning for race prediction', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Motorsport%20ML%20Eri%C5%9Fim' },
-  { title: 'Alsancak Runners', description: 'İzmir koşu topluluğu', en: 'İzmir running community', href: 'https://alsancak-runners.vercel.app/' },
-]
+const painting = '/hub/gallery/venus'
+const imageCredit = 'https://commons.wikimedia.org/wiki/File:Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg'
 
-const research: Work[] = [
-  { title: 'BIST Tezi', description: 'Halka arzların uzun dönem performansı', en: 'Long-run IPO performance', href: '/tez/' },
-  { title: 'Pattern Bot', description: 'Piyasa desenleri ve stratejiler', en: 'Market patterns and strategies', href: '/pattern-bot.html' },
-  { title: 'Jane Street Trader', description: 'Nicel işlem deneyimleri', en: 'Quantitative trading experiments', href: '/jane-street.html' },
-  { title: 'On-chain Analiz', description: 'Zincir üstü veri ve piyasa dinamikleri', en: 'On-chain data and market dynamics', href: '/brain/' },
-]
+function GalleryCard({ project, locale, lead }: { project: GalleryProject; locale: Locale; lead?: boolean }) {
+  const title = typeof project.title === 'string' ? project.title : project.title[locale]
+  const access = project.href.startsWith('mailto:')
+  const Action = access ? LockKeyhole : project.href.startsWith('https://') ? ArrowUpRight : ArrowRight
 
-const archive: Work[] = [
-  { title: 'X × Atlas', description: '3B ve 360° mekân arşivi', en: '3D and 360° spatial archive', image: '/x/rooms/sahil.jpg', href: '#/x' },
-  { title: 'Journey Notes', description: 'Fotoğraf ve seyahat günlüğü', en: 'Photography and travel journal', image: '/journey/hero-snow.avif', href: 'https://journeynotess.com/' },
-  { title: 'Albion Piyasa Tarayıcı', description: 'Oyun ekonomisi', en: 'In-game economy', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Albion%20Eri%C5%9Fim' },
-  { title: 'Sentiment Trading', description: 'BIST 30', en: 'BIST 30', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Sentiment%20Trading%20Eri%C5%9Fim' },
-  { title: 'Multi-Asset Trend Bot', description: '29 varlık için trend takibi', en: 'Trend tracking across 29 assets', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Trend%20Bot%20Eri%C5%9Fim' },
-  { title: 'KediDex', description: 'Kedi tanıma oyunu', en: 'Cat identification game', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=KediDex%20Eri%C5%9Fim' },
-]
-
-function WorkLink({ work, tr }: { work: Work; tr: boolean }) {
-  const requiresAccess = work.href.startsWith('mailto:')
-  const isExternal = work.href.startsWith('https://')
-  const Icon = isExternal || requiresAccess ? ArrowUpRight : ArrowRight
   return (
-    <a className={'vv-work' + (work.image ? ' vv-work-illustrated' : '')} href={work.href}>
-      {work.image && <img className="vv-work-image" src={work.image} loading="lazy" alt="" />}
+    <a
+      className={['vv-work', lead && 'vv-showcase', project.image && 'vv-work--illustrated'].filter(Boolean).join(' ')}
+      href={project.href}
+    >
+      {project.image && (
+        <div className="vv-work-image">
+          <img src={project.image} alt="" loading="lazy" decoding="async" />
+        </div>
+      )}
       <div className="vv-work-content">
-        <h3>{work.title}</h3>
-        <p>{tr ? work.description : work.en}</p>
-        {requiresAccess && <span className="vv-access">{tr ? 'Erişim iste' : 'Request access'}</span>}
+        <p className="vv-field">{project.field[locale]}</p>
+        <h3>{title}</h3>
+        <p className="vv-description">{project.description[locale]}</p>
+        {project.notes && (
+          <ul className="vv-notes">
+            {project.notes.map((note) => <li key={note[0]}>{note[locale]}</li>)}
+          </ul>
+        )}
+        <div className="vv-work-action">
+          {(access || lead) && <span>{access ? (locale ? 'Request access' : 'Erişim iste') : (locale ? 'Open the 3D model' : '3B modeli aç')}</span>}
+          <Action size={lead ? 21 : 17} strokeWidth={1.5} aria-hidden="true" />
+        </div>
       </div>
-      <Icon className="vv-work-arrow" size={19} strokeWidth={1.5} aria-hidden="true" />
     </a>
   )
 }
 
 export function VenusGallery({ lang, setLang }: Props) {
-  const tr = lang !== 'en'
+  const locale: Locale = lang === 'en' ? 1 : 0
+  const t = (...copy: Caption) => copy[locale]
+  const artTitle = t('Venüs’ün Doğuşu', 'The Birth of Venus')
+
   return (
     <div className="venus-hub" id="top">
+      <picture className="vv-art">
+        <source media="(max-width: 800px) and (orientation: portrait)" srcSet={painting + '-portrait.webp'} type="image/webp" />
+        <source media="(min-width: 1024px)" srcSet={painting + '-8k.webp'} type="image/webp" />
+        <img src={painting + '-mobile.webp'} alt={artTitle + ' — Sandro Botticelli'} fetchPriority="high" />
+      </picture>
+
       <header className="vv-hero" aria-labelledby="vv-title">
-        <figure className="vv-art">
-          <img src="/x/venus-2k.jpg" alt={tr ? 'Sandro Botticelli’nin Venüs’ün Doğuşu tablosu' : 'The Birth of Venus by Sandro Botticelli'} fetchPriority="high" />
-        </figure>
         <div className="vv-shell vv-hero-inner">
           <div className="vv-header-inner">
-            <a href="#top" className="vv-brand" aria-label={tr ? 'SNMEZ, başa dön' : 'SNMEZ, back to top'}>SNMEZ</a>
-            <nav className="vv-nav" aria-label={tr ? 'Ana menü' : 'Main navigation'}>
-              <a href="#featured">{tr ? 'Projeler' : 'Projects'}</a>
-              <a href="https://journeynotess.com/">{tr ? 'Notlar' : 'Notes'}</a>
-              <a href="mailto:s.cagatay.sonmez@gmail.com">{tr ? 'İletişim' : 'Contact'}</a>
-              <div className="vv-language" aria-label={tr ? 'Dil' : 'Language'}>
-                <button type="button" lang="tr" onClick={() => setLang('tr')} aria-pressed={tr}>TR</button>
-                <button type="button" lang="en" onClick={() => setLang('en')} aria-pressed={!tr}>EN</button>
+            <a href="#top" className="vv-brand" aria-label={t('SNMEZ, başa dön', 'SNMEZ, back to top')}>SNMEZ</a>
+            <nav className="vv-nav" aria-label={t('Ana menü', 'Main navigation')}>
+              <a href="#featured">{t('Projeler', 'Projects')}</a>
+              <a href="https://journeynotess.com/">{t('Notlar', 'Notes')}</a>
+              <a href="mailto:s.cagatay.sonmez@gmail.com">{t('İletişim', 'Contact')}</a>
+              <div className="vv-language" aria-label={t('Dil', 'Language')}>
+                <button type="button" lang="tr" onClick={() => setLang('tr')} aria-pressed={locale === 0}>TR</button>
+                <button type="button" lang="en" onClick={() => setLang('en')} aria-pressed={locale === 1}>EN</button>
               </div>
             </nav>
           </div>
+
           <div className="vv-hero-copy">
             <h1 id="vv-title">Hub</h1>
-            <p className="vv-intro">{tr ? 'Projeler, araştırmalar ve deneyler.' : 'Projects, research and experiments.'}</p>
+            <p className="vv-intro">{t('Projeler, araştırmalar ve deneyler.', 'Projects, research and experiments.')}</p>
           </div>
-          <a className="vv-hero-link" href="#featured">{tr ? 'Projeleri incele' : 'Browse projects'} <ArrowDown size={17} strokeWidth={1.55} aria-hidden="true" /></a>
+
+          <div className="vv-hero-foot">
+            <a className="vv-enter" href="#featured">
+              <span className="vv-enter-arrow"><ArrowDown size={20} strokeWidth={1.35} aria-hidden="true" /></span>
+              {t('Projeleri keşfet', 'Explore projects')}
+            </a>
+            <div className="vv-credit">
+              <span>Sandro Botticelli <i>{artTitle}</i></span>
+              <a href={painting + '-8k-detail.webp'} target="_blank" rel="noreferrer" aria-label={t('Tabloyu 8K çözünürlükte aç', 'Open the artwork in 8K')}>
+                8K <ArrowUpRight size={12} strokeWidth={1.6} aria-hidden="true" />
+              </a>
+            </div>
+          </div>
         </div>
       </header>
 
-      <main className="vv-shell">
-        <section id="featured" className="vv-section" aria-labelledby="vv-featured-title">
-          <h2 id="vv-featured-title">{tr ? 'Seçili projeler' : 'Selected projects'}</h2>
-          <a className="vv-showcase" href="/ege-edebiyat/">
-            <img className="vv-showcase-image" src="/hub/ege-edebiyat.webp" alt={tr ? 'Edebiyat Fakültesi ve bağlı kanatların 3B modeli' : '3D model of the Faculty of Letters and its adjoining wings'} width="1400" height="700" decoding="async" />
-            <div className="vv-showcase-copy">
-              <p className="vv-category">{tr ? 'Bornova, İzmir · 3B mimari' : 'Bornova, İzmir · 3D architecture'}</p>
-              <h3>{tr ? 'Ege Üniversitesi Edebiyat Fakültesi' : 'Ege University Faculty of Letters'}</h3>
-              <p>{tr ? 'Fotoğraflar ve hava görüntüleriyle modellenen fakülte, dekanlık girişi ve çevresindeki kanatlar.' : 'The faculty, dean’s entrance and adjoining wings reconstructed from photographs and aerial imagery.'}</p>
+      <main className="vv-exhibition">
+        <div className="vv-shell">
+          {rooms.map((room, roomIndex) => (
+            <section id={room.id} className={'vv-section' + (roomIndex === 0 ? ' vv-section--lead' : '')} key={room.id} aria-labelledby={'vv-heading-' + room.id}>
+              <header className="vv-section-header">
+                <h2 id={'vv-heading-' + room.id}>{room.title[locale]}</h2>
+                {roomIndex === 0 && (
+                  <nav className="vv-index" aria-label={t('Proje bölümleri', 'Project sections')}>
+                    {rooms.slice(1).map((item) => <a href={'#' + item.id} key={item.id}>{item.title[locale]}</a>)}
+                  </nav>
+                )}
+              </header>
+              <div className={'vv-grid vv-grid--' + room.id}>
+                {room.projects.map((project, index) => (
+                  <GalleryCard project={project} locale={locale} key={project.href} lead={roomIndex === 0 && index === 0} />
+                ))}
+              </div>
+            </section>
+          ))}
+
+          <footer className="vv-footer">
+            <span>SNMEZ</span>
+            <div>
+              <a href={imageCredit}>{t('Tablo kaynağı', 'Artwork source')}</a>
+              <a href="https://github.com/Cugutayy">GitHub</a>
+              <a href="#top">{t('Başa dön', 'Back to top')}</a>
             </div>
-            <ArrowRight className="vv-work-arrow" size={20} strokeWidth={1.5} aria-hidden="true" />
-          </a>
-          <div className="vv-grid">
-            {featured.map(work => <WorkLink key={work.title} work={work} tr={tr} />)}
-          </div>
-        </section>
-
-        <section className="vv-section" aria-labelledby="vv-research-title">
-          <h2 id="vv-research-title">{tr ? 'Araştırmalar' : 'Research'}</h2>
-          <div className="vv-grid">
-            {research.map(work => <WorkLink key={work.title} work={work} tr={tr} />)}
-          </div>
-        </section>
-
-        <section className="vv-section" id="archive" aria-labelledby="vv-archive-title">
-          <h2 id="vv-archive-title">{tr ? 'Arşiv' : 'Archive'}</h2>
-          <div className="vv-grid">
-            {archive.map(work => <WorkLink key={work.title} work={work} tr={tr} />)}
-          </div>
-        </section>
-      </main>
-
-      <footer className="vv-shell vv-footer">
-        <span>SNMEZ</span>
-        <div>
-          <a href="https://github.com/Cugutayy">GitHub</a>
-          <a href="mailto:s.cagatay.sonmez@gmail.com">{tr ? 'İletişim' : 'Contact'}</a>
-          <a href="#top">{tr ? 'Başa dön' : 'Back to top'}</a>
+          </footer>
         </div>
-      </footer>
+      </main>
     </div>
   )
 }
