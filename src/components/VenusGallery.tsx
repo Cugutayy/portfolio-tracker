@@ -1,118 +1,125 @@
+import { ArrowDown, ArrowRight, ArrowUpRight } from 'lucide-react'
 import '../styles/venus-gallery.css'
 
 type Props = { lang: string; setLang: (language: string) => void }
+type Work = {
+  title: string
+  description: string
+  en: string
+  href: string
+  image?: string
+}
 
-const featured = [
-  { no: '01', name: 'XX Arena', description: 'Yatırım Yarışması', en: 'Investment competition', href: 'https://xx-arena.vercel.app/' },
-  { no: '02', name: 'Portfolio Tracker', description: 'Yatırım Analizi ve Takibi', en: 'Investment analysis and tracking', href: 'https://snmez.xyz/tracker/' },
-  { no: '03', name: 'Motorsport ML', description: 'Makine Öğrenmesi', en: 'Machine learning', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Motorsport%20ML%20Eri%C5%9Fim' },
-  { no: '04', name: 'Alsancak Runners', description: 'Koşu Topluluğu', en: 'Running community', href: 'https://alsancak-runners.vercel.app/' },
+const featured: Work[] = [
+  { title: 'XX Arena', description: 'Sosyal yatırım yarışması', en: 'Social investing competition', href: 'https://xx-arena.vercel.app/' },
+  { title: 'Portfolio Tracker', description: 'Portföy analizi ve takibi', en: 'Portfolio analysis and tracking', href: '/tracker/' },
+  { title: 'Motorsport ML', description: 'Yarış sonuçları için makine öğrenmesi', en: 'Machine learning for race prediction', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Motorsport%20ML%20Eri%C5%9Fim' },
+  { title: 'Alsancak Runners', description: 'İzmir koşu topluluğu', en: 'İzmir running community', href: 'https://alsancak-runners.vercel.app/' },
 ]
 
-const research = [
-  { title: 'BIST Tezi', description: 'Halka arzların uzun dönem performansı', en: 'Long-run IPO performance', image: '/x/rooms/sanat.jpg', href: 'https://snmez.xyz/tez/' },
-  { title: 'Pattern Bot', description: 'Piyasa desenleri ve stratejiler', en: 'Market patterns and strategies', image: '/x/rooms/mekan.jpg', href: 'https://snmez.xyz/pattern-bot.html' },
-  { title: 'Jane Street Trader', description: 'Nicel işlem deneyimleri', en: 'Quantitative trading experiments', image: '/x/rooms/koleksiyon.jpg', href: 'https://snmez.xyz/jane-street.html' },
-  { title: 'On-chain Analiz', description: 'Zincir üstü veri ve piyasa dinamikleri', en: 'On-chain data and market dynamics', image: '/x/rooms/sarap.jpg', href: 'https://snmez.xyz/brain/' },
+const research: Work[] = [
+  { title: 'BIST Tezi', description: 'Halka arzların uzun dönem performansı', en: 'Long-run IPO performance', href: '/tez/' },
+  { title: 'Pattern Bot', description: 'Piyasa desenleri ve stratejiler', en: 'Market patterns and strategies', href: '/pattern-bot.html' },
+  { title: 'Jane Street Trader', description: 'Nicel işlem deneyimleri', en: 'Quantitative trading experiments', href: '/jane-street.html' },
+  { title: 'On-chain Analiz', description: 'Zincir üstü veri ve piyasa dinamikleri', en: 'On-chain data and market dynamics', href: '/brain/' },
 ]
 
-const archive = [
-  { no: '09', title: 'X × Atlas', description: '3D / 360° dijital mekân arşivi', en: 'A 3D / 360° spatial archive', image: '/x/rooms/sahil.jpg', href: 'https://snmez.xyz/#/x' },
-  { no: '10', title: 'Albion Piyasa Tarayıcı', description: 'Oyun ekonomisi · Erişim iste', en: 'Game economy · Request access', image: '/x/rooms/sanat.jpg', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Albion%20Eri%C5%9Fim' },
-  { no: '11', title: 'Sentiment Trading', description: 'BIST 30 · Erişim iste', en: 'BIST 30 · Request access', image: '/x/rooms/koleksiyon.jpg', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Sentiment%20Trading%20Eri%C5%9Fim' },
-  { no: '12', title: 'Multi-Asset Trend Bot', description: '29 varlık · Erişim iste', en: '29 assets · Request access', image: '/x/rooms/mekan.jpg', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Trend%20Bot%20Eri%C5%9Fim' },
-  { no: '13', title: 'KediDex', description: 'Kedi tanıma oyunu · Erişim iste', en: 'Cat identification game · Request access', image: '/kedidex/icons/icon-512.png', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=KediDex%20Eri%C5%9Fim', icon: true },
-  { no: '14', title: 'Journey Notes', description: 'Fotoğraf ve seyahat günlüğü', en: 'Photography and travel journal', image: '/journey/portrait-hq.avif', href: 'https://journeynotess.com/' },
+const archive: Work[] = [
+  { title: 'X × Atlas', description: '3B ve 360° mekân arşivi', en: '3D and 360° spatial archive', image: '/x/rooms/sahil.jpg', href: '#/x' },
+  { title: 'Journey Notes', description: 'Fotoğraf ve seyahat günlüğü', en: 'Photography and travel journal', image: '/journey/hero-snow.avif', href: 'https://journeynotess.com/' },
+  { title: 'Albion Piyasa Tarayıcı', description: 'Oyun ekonomisi', en: 'In-game economy', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Albion%20Eri%C5%9Fim' },
+  { title: 'Sentiment Trading', description: 'BIST 30', en: 'BIST 30', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Sentiment%20Trading%20Eri%C5%9Fim' },
+  { title: 'Multi-Asset Trend Bot', description: '29 varlık için trend takibi', en: 'Trend tracking across 29 assets', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=Trend%20Bot%20Eri%C5%9Fim' },
+  { title: 'KediDex', description: 'Kedi tanıma oyunu', en: 'Cat identification game', href: 'mailto:s.cagatay.sonmez@gmail.com?subject=KediDex%20Eri%C5%9Fim' },
 ]
+
+function WorkLink({ work, tr }: { work: Work; tr: boolean }) {
+  const requiresAccess = work.href.startsWith('mailto:')
+  const isExternal = work.href.startsWith('https://')
+  const Icon = isExternal || requiresAccess ? ArrowUpRight : ArrowRight
+  return (
+    <a className={'vv-work' + (work.image ? ' vv-work-illustrated' : '')} href={work.href}>
+      {work.image && <img className="vv-work-image" src={work.image} loading="lazy" alt="" />}
+      <div className="vv-work-content">
+        <h3>{work.title}</h3>
+        <p>{tr ? work.description : work.en}</p>
+        {requiresAccess && <span className="vv-access">{tr ? 'Erişim iste' : 'Request access'}</span>}
+      </div>
+      <Icon className="vv-work-arrow" size={19} strokeWidth={1.5} aria-hidden="true" />
+    </a>
+  )
+}
 
 export function VenusGallery({ lang, setLang }: Props) {
   const tr = lang !== 'en'
   return (
-    <div className="venus-hub">
-      <main>
-        <section className="vv-stage" id="top" aria-label="SNMEZ — seçilmiş projeler ve araştırmalar">
-          <picture className="vv-painting" aria-hidden="true">
-            <source media="(min-width: 1300px)" srcSet="/x/venus-4k.jpg" />
-            <img src="/x/venus-2k.jpg" alt="" fetchPriority="high" />
-          </picture>
-          <div className="vv-painting-shade" aria-hidden="true" />
-
-          <nav className="vv-nav" aria-label="Main navigation">
-            <a href="#top" className="vv-brand" aria-label="SNMEZ — başa dön">SNMEZ</a>
-            <div className="vv-nav-links">
-              <a href="#featured">{tr ? 'PROJELER' : 'WORKS'}</a>
-              <a href="https://journeynotess.com/" target="_blank" rel="noreferrer">NOTES</a>
-              <a href="mailto:s.cagatay.sonmez@gmail.com">{tr ? 'HAKKINDA' : 'ABOUT'}</a>
-              <div className="vv-language" aria-label="Language selection">
-                <button type="button" className={lang === 'tr' ? 'is-active' : ''} onClick={() => setLang('tr')} aria-pressed={lang === 'tr'}>TR</button>
-                <button type="button" className={lang === 'en' ? 'is-active' : ''} onClick={() => setLang('en')} aria-pressed={lang === 'en'}>EN</button>
-              </div>
+    <div className="venus-hub" id="top">
+      <header className="vv-header">
+        <div className="vv-shell vv-header-inner">
+          <a href="#top" className="vv-brand" aria-label={tr ? 'SNMEZ, başa dön' : 'SNMEZ, back to top'}>SNMEZ</a>
+          <nav className="vv-nav" aria-label={tr ? 'Ana menü' : 'Main navigation'}>
+            <a href="#featured">{tr ? 'Projeler' : 'Projects'}</a>
+            <a href="https://journeynotess.com/">{tr ? 'Notlar' : 'Notes'}</a>
+            <a href="mailto:s.cagatay.sonmez@gmail.com">{tr ? 'İletişim' : 'Contact'}</a>
+            <div className="vv-language" aria-label={tr ? 'Dil' : 'Language'}>
+              <button type="button" lang="tr" onClick={() => setLang('tr')} aria-pressed={tr}>TR</button>
+              <button type="button" lang="en" onClick={() => setLang('en')} aria-pressed={!tr}>EN</button>
             </div>
           </nav>
+        </div>
+      </header>
 
-          <div className="vv-introduction">
-            <p>{tr ? 'Projeler, araştırmalar ve deneyler.' : 'Projects, research and experiments.'}</p>
+      <main className="vv-shell">
+        <section className="vv-hero" aria-labelledby="vv-title">
+          <div className="vv-hero-copy">
+            <p className="vv-author">S. Çağatay Sönmez</p>
+            <h1 id="vv-title">{tr ? <>Projeler ve<br />araştırmalar</> : <>Projects and<br />research</>}</h1>
+            <p className="vv-intro">{tr ? 'Finans, yazılım ve mekân üzerine çalışmalar.' : 'Work in finance, software and spatial research.'}</p>
+            <a className="vv-hero-link" href="#featured">{tr ? 'Projeleri incele' : 'Browse projects'} <ArrowDown size={17} strokeWidth={1.55} aria-hidden="true" /></a>
           </div>
+          <figure className="vv-art">
+            <img src="/x/venus-2k.jpg" alt={tr ? 'Sandro Botticelli’nin Venüs’ün Doğuşu tablosu' : 'The Birth of Venus by Sandro Botticelli'} fetchPriority="high" />
+            <figcaption><span>Sandro Botticelli</span><i>{tr ? 'Venüs’ün Doğuşu' : 'The Birth of Venus'}</i></figcaption>
+          </figure>
+        </section>
 
-          <div className="vv-featured" id="featured" aria-label="Selected works">
-            {featured.map(item => (
-              <a key={item.no} className="vv-feature" href={item.href}>
-                <span className="vv-feature-number">{item.no}</span>
-                <h2>{item.name}</h2>
-                <span className="vv-feature-description">{tr ? item.description : item.en}</span>
-              </a>
-            ))}
-          </div>
-
-          <div className="vv-research" aria-label="Research and development">
-            <h2>{tr ? 'Araştırmalar & Geliştirme' : 'Research & Development'}</h2>
-            <div className="vv-research-items">
-              {research.map(item => (
-                <a href={item.href} key={item.title} className="vv-research-item">
-                  <span className="vv-research-image"><img src={item.image} alt="" loading="lazy" /></span>
-                  <span className="vv-research-copy"><strong>{item.title}</strong><small>{tr ? item.description : item.en}</small></span>
-                </a>
-              ))}
+        <section id="featured" className="vv-section" aria-labelledby="vv-featured-title">
+          <h2 id="vv-featured-title">{tr ? 'Seçili projeler' : 'Selected projects'}</h2>
+          <a className="vv-showcase" href="/ege-edebiyat/">
+            <img className="vv-showcase-image" src="/hub/ege-edebiyat.webp" alt={tr ? 'Edebiyat Fakültesi ve bağlı kanatların 3B modeli' : '3D model of the Faculty of Letters and its adjoining wings'} width="1400" height="700" decoding="async" />
+            <div className="vv-showcase-copy">
+              <p className="vv-category">{tr ? 'Bornova, İzmir · 3B mimari' : 'Bornova, İzmir · 3D architecture'}</p>
+              <h3>{tr ? 'Ege Üniversitesi Edebiyat Fakültesi' : 'Ege University Faculty of Letters'}</h3>
+              <p>{tr ? 'Fotoğraflar ve hava görüntüleriyle modellenen fakülte, dekanlık girişi ve çevresindeki kanatlar.' : 'The faculty, dean’s entrance and adjoining wings reconstructed from photographs and aerial imagery.'}</p>
+              <span className="vv-showcase-link">{tr ? '3B modeli aç' : 'Open the 3D model'} <ArrowUpRight size={19} strokeWidth={1.5} aria-hidden="true" /></span>
             </div>
+          </a>
+          <div className="vv-grid">
+            {featured.map(work => <WorkLink key={work.title} work={work} tr={tr} />)}
           </div>
         </section>
 
-        <section className="vv-archive" id="archive" aria-labelledby="vv-archive-title">
-          <div className="vv-archive-inner">
-            <header className="vv-archive-header">
-              <div>
-                <span className="vv-kicker">SNMEZ / {tr ? 'KOLEKSİYON' : 'COLLECTION'} / 09—14</span>
-                <h2 id="vv-archive-title">{tr ? 'Diğer Çalışmalar' : 'Other Works'}</h2>
-                <p>{tr ? 'Projeler, araştırmalar ve deneyler.' : 'Projects, research and experiments.'}</p>
-              </div>
-              <div className="vv-archive-side" aria-hidden="true"><span>09</span><i /><span>14</span></div>
-            </header>
+        <section className="vv-section" aria-labelledby="vv-research-title">
+          <h2 id="vv-research-title">{tr ? 'Araştırmalar' : 'Research'}</h2>
+          <div className="vv-grid">
+            {research.map(work => <WorkLink key={work.title} work={work} tr={tr} />)}
+          </div>
+        </section>
 
-            <div className="vv-archive-grid">
-              {archive.map(item => (
-                <a key={item.no} className="vv-entry" href={item.href} target={item.href.startsWith('http') ? '_blank' : undefined} rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}>
-                  <div className={'vv-cover' + (item.icon ? ' vv-cover-icon' : '')}>
-                    <img src={item.image} loading="lazy" alt="" />
-                  </div>
-                  <div className="vv-entry-copy">
-                    <small>{item.no} / {tr ? 'SEÇİLMİŞ ÇALIŞMA' : 'SELECTED WORK'}</small>
-                    <h3>{item.title}</h3>
-                    <p>{tr ? item.description : item.en}</p>
-                    <span className="vv-entry-invite">{tr ? 'Çalışmayı keşfet' : 'Explore the work'}</span>
-                  </div>
-                </a>
-              ))}
-            </div>
-            <div className="vv-archive-colophon"><span>SNMEZ · {tr ? 'Dijital koleksiyon' : 'Digital collection'}</span><span>IX — XIV</span></div>
+        <section className="vv-section" id="archive" aria-labelledby="vv-archive-title">
+          <h2 id="vv-archive-title">{tr ? 'Arşiv' : 'Archive'}</h2>
+          <div className="vv-grid">
+            {archive.map(work => <WorkLink key={work.title} work={work} tr={tr} />)}
           </div>
         </section>
       </main>
-      <footer className="vv-footer">
-        <span>bir zambak gibi, yavaşça</span>
+
+      <footer className="vv-shell vv-footer">
+        <span>SNMEZ</span>
         <div>
-          <a href="https://github.com/Cugutayy" target="_blank" rel="noreferrer">GitHub</a>
-          <a href="mailto:s.cagatay.sonmez@gmail.com">Contact</a>
-          <a href="#top">Top</a>
+          <a href="https://github.com/Cugutayy">GitHub</a>
+          <a href="mailto:s.cagatay.sonmez@gmail.com">{tr ? 'İletişim' : 'Contact'}</a>
+          <a href="#top">{tr ? 'Başa dön' : 'Back to top'}</a>
         </div>
       </footer>
     </div>

@@ -1,0 +1,47 @@
+:root{font-family:"Segoe UI",system-ui,sans-serif;color:#182623;background:#eaece8;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}
+button,a{-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{opacity:.45;cursor:default}
+a{color:#1a5449;text-underline-offset:3px}
+button:focus-visible,a:focus-visible,canvas:focus-visible{outline:2px solid #216554;outline-offset:4px}
+[hidden]{display:none!important}
+#model{display:block;width:100vw;height:100dvh;touch-action:none;cursor:grab;outline-offset:-2px}
+#model:active{cursor:grabbing}
+.header{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;padding:clamp(1rem,3vw,2.7rem);pointer-events:none}
+.heading p{margin:0 0 .46rem;color:#4a625b;font-size:.82rem;font-weight:650;letter-spacing:.065em;text-transform:uppercase}
+h1{font-family:Georgia,serif;font-size:clamp(1.7rem,4.2vw,3.5rem);font-weight:500;letter-spacing:-.046em;line-height:1.03;margin:0}
+.heading small{display:block;margin-top:.68rem;font-size:.84rem;color:#455753;font-weight:540}
+.header-actions{display:flex;gap:.42rem;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+.project-link{font-size:.84rem;font-weight:620;white-space:nowrap;padding:.55rem .38rem;pointer-events:auto}
+@media(max-width:700px){.project-link{font-size:.75rem}}
+.action,.dock{background:#fcfcf4f4;border:1px solid #a8b0a5;box-shadow:0 6px 27px #142b2214;border-radius:11px}
+.action{padding:.62rem .88rem;white-space:nowrap;pointer-events:auto}
+.action:active,.dock button:active{background:#dce5db}
+.controls{position:fixed;bottom:1.27rem;left:50%;transform:translateX(-50%);max-width:calc(100% - 1rem);text-align:center;display:grid;justify-items:center;gap:.49rem}
+.dock{display:flex;padding:.25rem;gap:.18rem}
+.dock button{background:none;border:0;border-radius:.45rem;padding:.64rem .75rem;font-size:.86rem;white-space:nowrap;font-weight:620}
+.dock button[aria-pressed=true]{background:#224b3d;color:#fcfcf3}
+.help{color:#384d45;background:#eaece8e8;border-radius:5px;padding:.12rem .37rem;font-size:.76rem;margin:0}
+.touch-help{display:none}
+@media(pointer:coarse),(max-width:700px){.mouse-help{display:none}.touch-help{display:inline}}
+.compass{position:fixed;right:clamp(1rem,3vw,2.7rem);bottom:clamp(1.4rem,3vw,2.7rem);width:2.8rem;height:2.8rem;border:1px solid #a8b0a5;background:#fcfcf4ed;border-radius:50%;display:grid;place-items:center;pointer-events:none}
+#needle{display:grid;place-content:center;justify-items:center;height:100%;width:100%;font-size:.68rem;font-weight:750;gap:.09rem}
+#needle b{width:0;height:0;border-left:.21rem solid transparent;border-right:.21rem solid transparent;border-bottom:.52rem solid #3e645a}
+.context{position:fixed;left:clamp(.6rem,3vw,2.7rem);bottom:clamp(1.3rem,3vw,2.7rem);font-size:.82rem}
+.context[aria-pressed=true]::before{content:"";display:inline-block;background:#3d7154;width:.52rem;height:.52rem;border-radius:50%;margin-right:.35rem}
+#status{position:fixed;inset:46% 1rem auto;text-align:center;color:#3a554c;pointer-events:none}
+dialog{border:1px solid #abb7ae;border-radius:15px;width:min(34rem,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);padding:1.6rem;background:#fafbf6;color:#182623}
+dialog::backdrop{background:#18262370}
+.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.dialog-head h2{font-size:1.24rem;margin:0;font-weight:650}
+dialog p,dialog li{font-size:.92rem;line-height:1.48}
+dialog ul{padding-left:1.2rem}dialog li+li{margin-top:.28rem}
+#download{display:inline-block;background:#224b3d;color:white;border-radius:7px;padding:.65rem .8rem;text-decoration:none}
+@media(max-width:700px){
+ .header{padding:.85rem}.heading p{font-size:.68rem}.heading small{font-size:.73rem}
+ .header .action{font-size:.75rem;padding:.56rem}
+ .controls{bottom:.65rem;width:calc(100% - .65rem)}
+ .dock button{padding:.58rem .52rem;font-size:.73rem}.help{font-size:.67rem}
+ .compass,.context{bottom:5rem}.context{font-size:.70rem;padding:.52rem}
+}

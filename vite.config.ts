@@ -21,7 +21,13 @@ export default defineConfig({
     dedupe: ['react', 'react-dom']
   },
   build: {
-    rollupOptions: { input: { main: path.resolve(__dirname, 'index.html'), journey: path.resolve(__dirname, 'journey/index.html') } },
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        journey: path.resolve(__dirname, 'journey/index.html'),
+        egeEdebiyat: path.resolve(__dirname, 'ege-edebiyat/index.html'),
+      },
+    },
     outDir: 'dist',
     emptyOutDir: true
   }
