@@ -54,35 +54,32 @@ export function VenusGallery({ lang, setLang }: Props) {
   const tr = lang !== 'en'
   return (
     <div className="venus-hub" id="top">
-      <header className="vv-header">
-        <div className="vv-shell vv-header-inner">
-          <a href="#top" className="vv-brand" aria-label={tr ? 'SNMEZ, başa dön' : 'SNMEZ, back to top'}>SNMEZ</a>
-          <nav className="vv-nav" aria-label={tr ? 'Ana menü' : 'Main navigation'}>
-            <a href="#featured">{tr ? 'Projeler' : 'Projects'}</a>
-            <a href="https://journeynotess.com/">{tr ? 'Notlar' : 'Notes'}</a>
-            <a href="mailto:s.cagatay.sonmez@gmail.com">{tr ? 'İletişim' : 'Contact'}</a>
-            <div className="vv-language" aria-label={tr ? 'Dil' : 'Language'}>
-              <button type="button" lang="tr" onClick={() => setLang('tr')} aria-pressed={tr}>TR</button>
-              <button type="button" lang="en" onClick={() => setLang('en')} aria-pressed={!tr}>EN</button>
-            </div>
-          </nav>
+      <header className="vv-hero" aria-labelledby="vv-title">
+        <figure className="vv-art">
+          <img src="/x/venus-2k.jpg" alt={tr ? 'Sandro Botticelli’nin Venüs’ün Doğuşu tablosu' : 'The Birth of Venus by Sandro Botticelli'} fetchPriority="high" />
+        </figure>
+        <div className="vv-shell vv-hero-inner">
+          <div className="vv-header-inner">
+            <a href="#top" className="vv-brand" aria-label={tr ? 'SNMEZ, başa dön' : 'SNMEZ, back to top'}>SNMEZ</a>
+            <nav className="vv-nav" aria-label={tr ? 'Ana menü' : 'Main navigation'}>
+              <a href="#featured">{tr ? 'Projeler' : 'Projects'}</a>
+              <a href="https://journeynotess.com/">{tr ? 'Notlar' : 'Notes'}</a>
+              <a href="mailto:s.cagatay.sonmez@gmail.com">{tr ? 'İletişim' : 'Contact'}</a>
+              <div className="vv-language" aria-label={tr ? 'Dil' : 'Language'}>
+                <button type="button" lang="tr" onClick={() => setLang('tr')} aria-pressed={tr}>TR</button>
+                <button type="button" lang="en" onClick={() => setLang('en')} aria-pressed={!tr}>EN</button>
+              </div>
+            </nav>
+          </div>
+          <div className="vv-hero-copy">
+            <h1 id="vv-title">Hub</h1>
+            <p className="vv-intro">{tr ? 'Projeler, araştırmalar ve deneyler.' : 'Projects, research and experiments.'}</p>
+          </div>
+          <a className="vv-hero-link" href="#featured">{tr ? 'Projeleri incele' : 'Browse projects'} <ArrowDown size={17} strokeWidth={1.55} aria-hidden="true" /></a>
         </div>
       </header>
 
       <main className="vv-shell">
-        <section className="vv-hero" aria-labelledby="vv-title">
-          <div className="vv-hero-copy">
-            <p className="vv-author">S. Çağatay Sönmez</p>
-            <h1 id="vv-title">{tr ? <>Projeler ve<br />araştırmalar</> : <>Projects and<br />research</>}</h1>
-            <p className="vv-intro">{tr ? 'Finans, yazılım ve mekân üzerine çalışmalar.' : 'Work in finance, software and spatial research.'}</p>
-            <a className="vv-hero-link" href="#featured">{tr ? 'Projeleri incele' : 'Browse projects'} <ArrowDown size={17} strokeWidth={1.55} aria-hidden="true" /></a>
-          </div>
-          <figure className="vv-art">
-            <img src="/x/venus-2k.jpg" alt={tr ? 'Sandro Botticelli’nin Venüs’ün Doğuşu tablosu' : 'The Birth of Venus by Sandro Botticelli'} fetchPriority="high" />
-            <figcaption><span>Sandro Botticelli</span><i>{tr ? 'Venüs’ün Doğuşu' : 'The Birth of Venus'}</i></figcaption>
-          </figure>
-        </section>
-
         <section id="featured" className="vv-section" aria-labelledby="vv-featured-title">
           <h2 id="vv-featured-title">{tr ? 'Seçili projeler' : 'Selected projects'}</h2>
           <a className="vv-showcase" href="/ege-edebiyat/">
@@ -91,8 +88,8 @@ export function VenusGallery({ lang, setLang }: Props) {
               <p className="vv-category">{tr ? 'Bornova, İzmir · 3B mimari' : 'Bornova, İzmir · 3D architecture'}</p>
               <h3>{tr ? 'Ege Üniversitesi Edebiyat Fakültesi' : 'Ege University Faculty of Letters'}</h3>
               <p>{tr ? 'Fotoğraflar ve hava görüntüleriyle modellenen fakülte, dekanlık girişi ve çevresindeki kanatlar.' : 'The faculty, dean’s entrance and adjoining wings reconstructed from photographs and aerial imagery.'}</p>
-              <span className="vv-showcase-link">{tr ? '3B modeli aç' : 'Open the 3D model'} <ArrowUpRight size={19} strokeWidth={1.5} aria-hidden="true" /></span>
             </div>
+            <ArrowRight className="vv-work-arrow" size={20} strokeWidth={1.5} aria-hidden="true" />
           </a>
           <div className="vv-grid">
             {featured.map(work => <WorkLink key={work.title} work={work} tr={tr} />)}
