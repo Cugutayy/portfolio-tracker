@@ -60,23 +60,21 @@ export function VenusGallery({ lang, setLang }: Props) {
           <source media="(min-width: 1024px)" srcSet={painting + '-8k.webp'} type="image/webp" width={7680} height={4823} />
           <img src={painting + '-mobile.webp'} alt={artTitle + ' — Sandro Botticelli'} width={2250} height={1413} fetchPriority="high" />
         </picture>
+        <div className="vv-header-inner">
+          <a href="#top" className="vv-brand" aria-label={t('SNMEZ, başa dön', 'SNMEZ, back to top')}>SNMEZ</a>
+          <nav className="vv-nav" aria-label={t('Ana menü', 'Main navigation')}>
+            <div className="vv-language" role="group" aria-label={t('Dil', 'Language')}>
+              <button type="button" lang="tr" onClick={() => setLang('tr')} aria-pressed={locale === 0}>TR</button>
+              <button type="button" lang="en" onClick={() => setLang('en')} aria-pressed={locale === 1}>EN</button>
+            </div>
+            <a href="#featured">{t('Projeler', 'Projects')}</a>
+            <a href="mailto:s.cagatay.sonmez@gmail.com">{t('İletişim', 'Contact')}</a>
+          </nav>
+        </div>
       </header>
 
       <main className="vv-exhibition" id="featured">
         <div className="vv-shell">
-          <div className="vv-header-inner">
-            <a href="#top" className="vv-brand" aria-label={t('SNMEZ, başa dön', 'SNMEZ, back to top')}>SNMEZ</a>
-            <nav className="vv-nav" aria-label={t('Ana menü', 'Main navigation')}>
-              <a href="#featured">{t('Projeler', 'Projects')}</a>
-              <a href="https://journeynotess.com/">{t('Notlar', 'Notes')}</a>
-              <a href="mailto:s.cagatay.sonmez@gmail.com">{t('İletişim', 'Contact')}</a>
-              <div className="vv-language" aria-label={t('Dil', 'Language')}>
-                <button type="button" lang="tr" onClick={() => setLang('tr')} aria-pressed={locale === 0}>TR</button>
-                <button type="button" lang="en" onClick={() => setLang('en')} aria-pressed={locale === 1}>EN</button>
-              </div>
-            </nav>
-          </div>
-
           <section className="vv-section" aria-labelledby="vv-title">
             <header className="vv-section-header">
               <h1 id="vv-title">{t('Projeler', 'Projects')}</h1>
