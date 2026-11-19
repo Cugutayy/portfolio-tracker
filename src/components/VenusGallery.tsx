@@ -1,5 +1,6 @@
 import { ArrowRight, ArrowUpRight, LockKeyhole } from 'lucide-react'
-import { useLayoutEffect } from 'react'
+import { useLayoutEffect, useRef } from 'react'
+import { fitVenusArtwork } from './venus-artwork'
 import { rooms, type Caption, type GalleryProject } from './venus-projects'
 import '../styles/venus-gallery.css'
 
@@ -45,6 +46,14 @@ export function VenusGallery({ lang, setLang }: Props) {
   const locale: Locale = lang === 'en' ? 1 : 0
   const t = (...copy: Caption) => copy[locale]
   const artTitle = t('Venüs’ün Doğuşu', 'The Birth of Venus')
+  const artwork = useRef<HTMLImageElement>(null)
+  const artworkCanvas = useRef<HTMLCanvasElement>(null)
+
+  useLayoutEffect(() => {
+    if (artwork.current && artworkCanvas.current) {
+      return fitVenusArtwork(artwork.current, artworkCanvas.current)
+    }
+  }, [])
 
   useLayoutEffect(() => {
     const id = window.location.hash.slice(1)
@@ -58,8 +67,9 @@ export function VenusGallery({ lang, setLang }: Props) {
       <header className="vv-hero">
         <picture className="vv-art">
           <source media="(min-width: 1024px)" srcSet={painting + '-8k.webp'} type="image/webp" width={7680} height={4823} />
-          <img src={painting + '-mobile.webp'} alt={artTitle + ' — Sandro Botticelli'} width={2250} height={1413} fetchPriority="high" />
+          <img ref={artwork} src={painting + '-mobile.webp'} alt={artTitle + ' — Sandro Botticelli'} width={2250} height={1413} fetchPriority="high" />
         </picture>
+        <canvas ref={artworkCanvas} className="vv-art-adjustment" aria-hidden="true" hidden />
         <div className="vv-header-inner">
           <a href="#top" className="vv-brand" aria-label={t('SNMEZ, başa dön', 'SNMEZ, back to top')}>SNMEZ</a>
           <nav className="vv-nav" aria-label={t('Ana menü', 'Main navigation')}>
