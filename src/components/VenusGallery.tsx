@@ -17,15 +17,15 @@ function GalleryCard({ project, locale, id }: { project: GalleryProject; locale:
 
   return (
     <a className="vv-work" id={id} href={project.href}>
-      {project.image && (
-        <div className="vv-work-image">
-          <img src={project.image} alt="" loading="lazy" decoding="async" />
-        </div>
-      )}
       <div className="vv-work-content">
         <p className="vv-field">{project.field[locale]}</p>
         <h3>{title}</h3>
         <p className="vv-description">{project.description[locale]}</p>
+        {project.image && (
+          <div className="vv-work-image">
+            <img src={project.image} alt="" loading="lazy" decoding="async" />
+          </div>
+        )}
         {project.notes && (
           <ul className="vv-notes">
             {project.notes.map((note) => <li key={note[0]}>{note[locale]}</li>)}
@@ -57,7 +57,7 @@ export function VenusGallery({ lang, setLang }: Props) {
     <div className="venus-hub" id="top">
       <header className="vv-hero">
         <picture className="vv-art">
-          <source media="(min-width: 1024px)" srcSet={painting + '-8k.webp'} type="image/webp" />
+          <source media="(min-width: 1024px)" srcSet={painting + '-8k.webp'} type="image/webp" width={7680} height={4823} />
           <img src={painting + '-mobile.webp'} alt={artTitle + ' — Sandro Botticelli'} width={2250} height={1413} fetchPriority="high" />
         </picture>
       </header>
