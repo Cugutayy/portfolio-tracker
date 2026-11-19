@@ -1,6 +1,6 @@
 import {
-  ACESFilmicToneMapping, AmbientLight, Box3, Color, DirectionalLight, GridHelper,
-  HemisphereLight, Mesh, MeshStandardMaterial, PCFShadowMap, PerspectiveCamera, PlaneGeometry,
+  ACESFilmicToneMapping, AmbientLight, Box3, Color, DirectionalLight, Fog, HemisphereLight,
+  Mesh, MeshStandardMaterial, PCFShadowMap, PerspectiveCamera, PlaneGeometry,
   Scene, SRGBColorSpace, Vector3, WebGLRenderer,
 } from "three";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
@@ -11,37 +11,34 @@ const modelUrl = new URL("./ege-edebiyat-fakulte-modeli.glb", import.meta.url);
 $("download").href = modelUrl.href;
 const canvas = $("model");
 const scene = new Scene();
-scene.background = new Color("#eaece8");
-const camera = new PerspectiveCamera(36, 1, .12, 1800);
+scene.background = new Color("#dce6ec");
+scene.fog = new Fog(scene.background, 325, 740);
+const camera = new PerspectiveCamera(36, 1, .42, 1200);
 const control = new OrbitControls(camera, canvas);
 control.minDistance = 8;
 control.maxDistance = 570;
 control.maxPolarAngle = Math.PI*.557;
 control.panSpeed = .68;
 control.rotateSpeed = .82;
-const keyLight = new DirectionalLight(0xfff4e0, 2.1);
+const keyLight = new DirectionalLight(0xfffaf2, 1.92);
 keyLight.position.set(-85,135,68);
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.set(2048,2048);
 Object.assign(keyLight.shadow.camera,{left:-145,right:145,top:131,bottom:-131,near:.5,far:425});
-keyLight.shadow.normalBias = .15;
+keyLight.shadow.normalBias = .075;
 keyLight.shadow.bias = -.00018;
-scene.add(keyLight, new HemisphereLight(0xf1f6ff,0x8a8070,1.48), new AmbientLight(0xf8fcff,.23));
-
-const pad = new Mesh(new PlaneGeometry(312,246),new MeshStandardMaterial({color:0xbfc6b6,roughness:1}));
-pad.rotation.x=-Math.PI/2;
-pad.position.set(-5,-.12,1);
-pad.receiveShadow = true;
-scene.add(pad);
-const grid = new GridHelper(780,78,0xc4c9c1,0xd6dad2);
-grid.position.y=-.19;
-scene.add(grid);
+scene.add(keyLight, new HemisphereLight(0xeff7ff,0x8b887b,1.64), new AmbientLight(0xf7fbff,.24));
+const outside = new Mesh(new PlaneGeometry(1180,1180),new MeshStandardMaterial({color:0xb5bbaf,roughness:1}));
+outside.rotation.x = -Math.PI/2;
+outside.position.y = -.325;
+outside.receiveShadow = true;
+scene.add(outside);
 
 const contextGroups = ["Eczacılık Kanadı","İletişim Kanadı","Batı Bağlantıları"];
 const viewpoints = {
   all: [[-2,5,-2],[148,115,181]],
-  entrance: [[65.0,7.5,39.0],[63.6,1.82,85.7]],
-  roof: [[-3,1,-2],[-3.016,327,-1.4]],
+  entrance: [[62.1,5.9,46.5],[68.3,2.75,84.1]],
+  roof: [[-5,1,2],[-5.016,366,2.6]],
   new: [[-85,5,43],[-157,24,83]],
 };
 let renderer, modelRoot, pending = 0, flight, mode = "all";
@@ -92,7 +89,8 @@ function go(view, animated=true) {
   const [target,next] = viewpoints[view];
   frameTarget.fromArray(target);
   framePosition.fromArray(next);
-  const widen = camera.aspect < 1.10 ? 1+Math.min(1.06,(1.10-camera.aspect)*1.66) : 1;
+  const limit = view === "entrance" ? .31 : 1.06;
+  const widen = 1 + Math.max(0, Math.min(limit, (1.10 - camera.aspect) * 1.66));
   if (widen>1) framePosition.sub(frameTarget).multiplyScalar(widen).add(frameTarget);
   framePosition.y=Math.max(framePosition.y,eyeFloor);
   if (animated && mayMove()) {
@@ -166,11 +164,17 @@ async function start() {
   resize();
   const imported = await new GLTFLoader().loadAsync(modelUrl.href);
   modelRoot = imported.scene;
-  const structural = new Set(["plaster","terracotta","soffit","cobalt","charcoal","new-shell","neutral","flat-roof"]);
+  const structural = new Set(["plaster","terracotta","soffit","cobalt","charcoal","new-shell","neutral","flat-roof","step-face","step-tread"]);
+  const terrain = new Set(["site-soil","terrace","lawn","campus-road","road-edge","curb-white","curb-pink","tactile-base","tactile-rib"]);
+  const landscape = new Set([
+    "broad-bark","pale-bark","pale-bark-dark","needle-bark","leaf-green","leaf-light","leaf-olive",
+    "needles","needles-light","stone","stone-light","stone-weathered","lamp-post","lamp-head","flag-cloth",
+  ]);
   modelRoot.traverse((node)=>{
     if (!node.isMesh) return;
-    node.receiveShadow=structural.has(node.material.name);
-    node.castShadow=structural.has(node.material.name);
+    const material = node.material.name;
+    node.receiveShadow=structural.has(material) || terrain.has(material) || landscape.has(material);
+    node.castShadow=structural.has(material) || landscape.has(material);
   });
   renderer.shadowMap.needsUpdate=true;
   scene.add(modelRoot);
