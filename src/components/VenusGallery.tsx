@@ -1,7 +1,7 @@
-import { ArrowRight, ArrowUpRight, LockKeyhole } from 'lucide-react'
+import { LockKeyhole } from 'lucide-react'
 import { useLayoutEffect, useRef } from 'react'
 import { fitVenusArtwork } from './venus-artwork'
-import { rooms, type Caption, type GalleryProject } from './venus-projects'
+import { projects, type Caption, type GalleryProject } from './venus-projects'
 import '../styles/venus-gallery.css'
 
 type Props = { lang: string; setLang: (language: string) => void }
@@ -10,34 +10,24 @@ type Locale = 0 | 1
 const painting = '/hub/gallery/venus'
 const imageCredit = 'https://commons.wikimedia.org/wiki/File:Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg'
 
-function GalleryCard({ project, locale, id }: { project: GalleryProject; locale: Locale; id?: string }) {
+function GalleryCard({ project, locale, number }: { project: GalleryProject; locale: Locale; number: number }) {
   const title = typeof project.title === 'string' ? project.title : project.title[locale]
   const access = project.href.startsWith('mailto:')
-  const isModel = project.href === '/ege-edebiyat/'
-  const Action = access ? LockKeyhole : project.href.startsWith('https://') ? ArrowUpRight : ArrowRight
+  const accessLabel = locale ? 'Request access' : 'Erişim iste'
 
   return (
-    <a className="vv-work" id={id} href={project.href}>
-      <div className="vv-work-content">
-        <p className="vv-field">{project.field[locale]}</p>
-        <h3>{title}</h3>
-        <p className="vv-description">{project.description[locale]}</p>
-        {project.image && (
-          <div className="vv-work-image">
-            <img src={project.image} alt="" loading="lazy" decoding="async" />
-          </div>
-        )}
-        {project.notes && (
-          <ul className="vv-notes">
-            {project.notes.map((note) => <li key={note[0]}>{note[locale]}</li>)}
-          </ul>
-        )}
-        <div className="vv-work-action">
-          {isModel && <span>{locale ? 'Open the 3D model' : '3B modeli aç'}</span>}
-          {access && <span>{locale ? 'Request access' : 'Erişim iste'}</span>}
-          <Action size={16} strokeWidth={1.5} aria-hidden="true" />
-        </div>
-      </div>
+    <a
+      className={project.image ? 'vv-work vv-work--photograph' : 'vv-work'}
+      id={project.anchor}
+      href={project.href}
+      aria-label={access ? `${title} · ${accessLabel}` : undefined}
+    >
+      {project.image && (
+        <img className="vv-work-image" data-fit={project.fit} src={project.image} alt="" loading="lazy" decoding="async" />
+      )}
+      <span className="vv-work-number" aria-hidden="true">{String(number).padStart(2, '0')}</span>
+      {access && <LockKeyhole className="vv-work-lock" size={14} strokeWidth={1.6} aria-hidden="true" />}
+      <span className="vv-work-title">{title}</span>
     </a>
   )
 }
@@ -57,7 +47,7 @@ export function VenusGallery({ lang, setLang }: Props) {
 
   useLayoutEffect(() => {
     const id = window.location.hash.slice(1)
-    if (rooms.some(room => room.id === id)) {
+    if (id === 'featured' || projects.some(project => project.anchor === id)) {
       document.getElementById(id)?.scrollIntoView({ behavior: 'instant' })
     }
   }, [])
@@ -86,21 +76,11 @@ export function VenusGallery({ lang, setLang }: Props) {
       <main className="vv-exhibition" id="featured">
         <div className="vv-shell">
           <section className="vv-section" aria-labelledby="vv-title">
-            <header className="vv-section-header">
-              <h1 id="vv-title">{t('Projeler', 'Projects')}</h1>
-              <nav className="vv-index" aria-label={t('Proje bölümleri', 'Project sections')}>
-                {rooms.slice(1).map((room) => <a href={'#' + room.id} key={room.id}>{room.title[locale]}</a>)}
-              </nav>
-            </header>
+            <h1 id="vv-title">{t('Projeler', 'Projects')}</h1>
             <div className="vv-grid">
-              {rooms.flatMap((room, roomIndex) => room.projects.map((project, projectIndex) => (
-                <GalleryCard
-                  project={project}
-                  locale={locale}
-                  key={project.href}
-                  id={roomIndex > 0 && projectIndex === 0 ? room.id : undefined}
-                />
-              )))}
+              {projects.map((project, index) => (
+                <GalleryCard project={project} locale={locale} key={project.href} number={index + 1} />
+              ))}
             </div>
           </section>
 
