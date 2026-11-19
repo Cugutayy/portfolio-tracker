@@ -33,7 +33,39 @@ body:has(.venus-hub)::after { content: none; }
   pointer-events: none;
   background: var(--vv-backdrop) center top / cover no-repeat;
 }
-.vv-art { display: block; }
+.vv-hero {
+  --vv-canvas-width: calc(100svh * 7680 / 4823);
+  --vv-side-width: max(0px, calc((100% - var(--vv-canvas-width)) / 2));
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+}
+
+/* Let the painting's edge colors carry into the space on wider screens. */
+.vv-hero::before,
+.vv-hero::after {
+  content: '';
+  position: absolute;
+  inset-block: -12px;
+  width: calc(var(--vv-side-width) + 24px);
+  z-index: -1;
+  transform: scaleX(-1);
+  filter: blur(10px);
+  background:
+    linear-gradient(var(--vv-side-shade), transparent 16px, #25362b8c 47%, #25362bdc),
+    var(--vv-backdrop) var(--vv-side-edge) center / auto calc(100% - 24px) no-repeat #25362b;
+}
+.vv-hero::before {
+  left: -12px;
+  --vv-side-edge: left;
+  --vv-side-shade: to right;
+}
+.vv-hero::after {
+  right: -12px;
+  --vv-side-edge: right;
+  --vv-side-shade: to left;
+}
+.vv-art { display: block; width: min(100%, var(--vv-canvas-width)); margin-inline: auto; }
 .vv-art img { display: block; width: 100%; height: auto; }
 
 .vv-exhibition {
