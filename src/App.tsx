@@ -10,7 +10,7 @@ const I18N: Record<string, Record<string, string>> = {
 
 export default function App() {
   const [lang, setLang] = useState('tr')
-  const [page, setPage] = useState<'hub' | 'f1' | 'albion' | 'x'>('hub')
+  const [page, setPage] = useState<'hub' | 'locked' | 'x'>('hub')
   const t = (key: string) => I18N[lang]?.[key] || key
 
   useEffect(() => { document.documentElement.lang = lang }, [lang])
@@ -18,9 +18,9 @@ export default function App() {
   // Hash-based routing
   useEffect(() => {
     const handleHash = () => {
-      if (window.location.hash === '#/f1') setPage('f1')
-      else if (window.location.hash === '#/albion') setPage('albion')
-      else if (window.location.hash.startsWith('#/x')) setPage('x')
+      const hash = window.location.hash
+      if (hash === '#/f1' || hash === '#/albion' || hash === '#/pattern-bot') setPage('locked')
+      else if (hash.startsWith('#/x')) setPage('x')
       else setPage('hub')
     }
     handleHash()
@@ -28,8 +28,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHash)
   }, [])
 
-  // F1 & Albion are access-restricted — outsiders get a locked screen.
-  if (page === 'f1' || page === 'albion') {
+  if (page === 'locked') {
     return <LockedPage t={t} />
   }
 
@@ -40,7 +39,6 @@ export default function App() {
   return <VenusGallery lang={lang} setLang={setLang} />
 }
 
-/** Access-denied screen for restricted routes (#/f1, #/albion). */
 function LockedPage({ t }: { t: (k: string) => string }) {
   return (
     <div className="font-ui" style={{

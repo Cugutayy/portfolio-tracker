@@ -110,7 +110,7 @@ export const rooms: GalleryRoom[] = [
           'Kripto fiyat serilerinde Wyckoff birikim ve dağılım fazlarını arayan piyasa tarayıcısı.',
           'A market scanner that looks for Wyckoff accumulation and distribution phases in crypto prices.',
         ],
-        href: '/pattern-bot.html',
+        href: requestAccess('Pattern Bot'),
         notes: [['Wyckoff fazları', 'Wyckoff phases'], ['OHLC fiyat serileri', 'OHLC price series']],
       },
       {
